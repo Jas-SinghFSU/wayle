@@ -1,3 +1,10 @@
+/// Device-related command handling
+pub mod device;
+/// Server and default device command handling
+pub mod server;
+/// Stream-related command handling
+pub mod stream;
+
 use tokio::sync::oneshot;
 
 use crate::services::{

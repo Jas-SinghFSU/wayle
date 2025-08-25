@@ -18,7 +18,7 @@ use crate::services::audio::{
 /// Thread-safe storage for audio devices
 pub type DeviceStore = Arc<RwLock<HashMap<DeviceKey, Device>>>;
 
-/// Thread-safe storage for audio streams  
+/// Thread-safe storage for audio streams
 pub type StreamStore = Arc<RwLock<HashMap<StreamKey, StreamInfo>>>;
 
 /// Thread-safe storage for default device information

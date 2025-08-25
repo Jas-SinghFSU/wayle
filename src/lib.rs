@@ -16,7 +16,7 @@
 //! // Create configuration store with defaults
 //! let config_runtime = ConfigRuntime::with_defaults();
 //!
-//! // Access configuration values  
+//! // Access configuration values
 //! let config = config_runtime.get_current();
 //! println!("Config loaded: {:?}", config.general);
 //! ```

@@ -1,9 +1,9 @@
-/// PulseAudio command handling  
-pub mod command_handler;
 /// Command definitions
 pub mod commands;
 /// Data conversion utilities
 pub mod conversion;
+/// PulseAudio command handling
+pub mod dispatcher;
 /// Event subscription and handling
 mod events;
 /// Type definitions and aliases
@@ -14,9 +14,9 @@ use std::{
     sync::{Arc, RwLock},
 };
 
-use command_handler::{handle_external_command, handle_internal_command};
 pub use commands::Command;
 pub use conversion::{convert_volume_from_pulse, convert_volume_to_pulse};
+use dispatcher::{handle_external_command, handle_internal_command};
 use libpulse_binding::context::{Context, FlagSet as ContextFlags};
 use tokio::sync::mpsc;
 use tokio_util::sync::CancellationToken;

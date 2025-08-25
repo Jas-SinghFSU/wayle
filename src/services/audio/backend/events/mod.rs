@@ -7,13 +7,17 @@ use tokio_util::sync::CancellationToken;
 use tracing::info;
 
 use super::types::{
-    ChangeNotification, DeviceStore, EventSender, InternalCommand, InternalCommandSender,
-    StreamStore,
+    ChangeNotification, DeviceStore, EventSender, InternalCommandSender, StreamStore,
 };
-use crate::services::{
-    AudioError, AudioEvent, DeviceType, StreamType,
-    audio::types::{DeviceKey, StreamKey},
-};
+use crate::services::AudioError;
+
+mod device;
+mod server;
+mod stream;
+
+use device::handle_device_change;
+use server::handle_server_change;
+use stream::handle_stream_change;
 
 type SubscriptionCallback = Option<Box<dyn FnMut(Option<Facility>, Option<Operation>, u32)>>;
 
@@ -139,87 +143,5 @@ async fn process_change_notification(
         ChangeNotification::Server { operation, .. } => {
             handle_server_change(operation, command_tx).await;
         }
-    }
-}
-
-async fn handle_device_change(
-    facility: Facility,
-    operation: Operation,
-    index: u32,
-    devices: &DeviceStore,
-    events_tx: &EventSender,
-    command_tx: &InternalCommandSender,
-) {
-    let device_type = match facility {
-        Facility::Sink => DeviceType::Output,
-        Facility::Source => DeviceType::Input,
-        _ => return,
-    };
-    let device_key = DeviceKey::new(index, device_type);
-
-    match operation {
-        Operation::Removed => {
-            let removed_device = if let Ok(mut devices_guard) = devices.write() {
-                devices_guard.remove(&device_key)
-            } else {
-                None
-            };
-
-            if removed_device.is_some() {
-                let _ = events_tx.send(AudioEvent::DeviceRemoved(device_key));
-            }
-        }
-        Operation::New | Operation::Changed => {
-            let _ = command_tx.send(InternalCommand::RefreshDevice {
-                device_key,
-                facility,
-            });
-        }
-    }
-}
-
-async fn handle_stream_change(
-    facility: Facility,
-    operation: Operation,
-    stream_index: u32,
-    streams: &StreamStore,
-    events_tx: &EventSender,
-    command_tx: &InternalCommandSender,
-) {
-    let stream_type = match facility {
-        Facility::SinkInput => StreamType::Playback,
-        Facility::SourceOutput => StreamType::Record,
-        _ => return,
-    };
-
-    let stream_key = StreamKey {
-        stream_type,
-        index: stream_index,
-    };
-
-    match operation {
-        Operation::Removed => {
-            let removed_stream = if let Ok(mut streams_guard) = streams.write() {
-                streams_guard.remove(&stream_key)
-            } else {
-                None
-            };
-
-            if removed_stream.is_some() {
-                let _ = events_tx.send(AudioEvent::StreamRemoved(stream_key));
-            }
-        }
-        Operation::New | Operation::Changed => {
-            let _ = command_tx.send(InternalCommand::RefreshStream {
-                stream_key,
-                facility,
-            });
-        }
-    }
-}
-
-async fn handle_server_change(operation: Operation, command_tx: &InternalCommandSender) {
-    if operation == Operation::Changed {
-        let _ = command_tx.send(InternalCommand::RefreshServerInfo);
     }
 }

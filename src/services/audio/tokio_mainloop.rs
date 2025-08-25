@@ -619,12 +619,10 @@ impl MainInner {
                     }
                 }
                 Item::Timer { .. } => {
-                    // This shouldn't happen - defer_enable called on a Timer
-                    // But ignore it instead of panicking
+                    // ignore
                 }
                 Item::Event { .. } => {
-                    // This shouldn't happen - defer_enable called on an Event
-                    // But ignore it instead of panicking
+                    // ignore
                 }
             }
         }
