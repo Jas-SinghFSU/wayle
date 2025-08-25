@@ -34,10 +34,10 @@ pub(crate) fn trigger_server_info_query(
                     .values()
                     .find(|device| {
                         if let Device::Sink(sink) = device {
-                            sink.name == sink_name
-                        } else {
-                            false
+                            return sink.name == sink_name;
                         }
+
+                        false
                     })
                     .cloned();
 

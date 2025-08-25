@@ -26,22 +26,26 @@ pub(crate) fn trigger_device_discovery(
 
     let devices_clone = Arc::clone(devices);
     let events_tx_clone = events_tx.clone();
+
     introspect.get_sink_info_list(move |sink_list| {
         if let ListResult::Item(sink) = sink_list {
             let sink_info = create_device_info_from_sink(sink);
             let device_key = sink_info.key();
             let device_data = Device::Sink(sink_info);
+
             process_device_update(device_key, device_data, &devices_clone, &events_tx_clone);
         }
     });
 
     let devices_clone = Arc::clone(devices);
     let events_tx_clone = events_tx.clone();
+
     introspect.get_source_info_list(move |source_list| {
         if let ListResult::Item(source) = source_list {
             let source_info = create_device_info_from_source(source);
             let device_key = source_info.key();
             let device_data = Device::Source(source_info);
+
             process_device_update(device_key, device_data, &devices_clone, &events_tx_clone);
         }
     });
@@ -55,6 +59,7 @@ pub(crate) fn trigger_device_refresh(
     facility: Facility,
 ) {
     let introspect = context.introspect();
+
     let devices_clone = Arc::clone(devices);
     let events_tx_clone = events_tx.clone();
 
@@ -64,6 +69,7 @@ pub(crate) fn trigger_device_refresh(
                 if let ListResult::Item(sink) = sink_list {
                     let sink_info = create_device_info_from_sink(sink);
                     let device_data = Device::Sink(sink_info);
+
                     process_device_update(
                         device_key,
                         device_data,
@@ -78,6 +84,7 @@ pub(crate) fn trigger_device_refresh(
                 if let ListResult::Item(source) = source_list {
                     let source_info = create_device_info_from_source(source);
                     let device_data = Device::Source(source_info);
+
                     process_device_update(
                         device_key,
                         device_data,
