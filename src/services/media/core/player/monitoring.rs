@@ -1,14 +1,14 @@
-use std::sync::{Arc, Weak};
+use std::sync::Arc;
 
 use futures::StreamExt;
+use tokio_util::sync::CancellationToken;
 use tracing::{debug, instrument};
 
+use super::Player;
 use crate::services::media::{
     proxy::MediaPlayer2PlayerProxy,
     types::{LoopMode, PlaybackState, PlayerId, ShuffleMode, Volume},
 };
-
-use super::Player;
 
 /// Monitors D-Bus properties and updates the reactive Player model.
 pub(crate) struct PlayerMonitor;
@@ -22,20 +22,21 @@ impl PlayerMonitor {
         player_id: PlayerId,
         player: Arc<Player>,
         proxy: MediaPlayer2PlayerProxy<'static>,
+        cancellation_token: CancellationToken,
     ) {
         debug!("Starting property monitoring for player: {}", player_id);
 
-        let weak = Arc::downgrade(&player);
         tokio::spawn(async move {
-            Self::monitor_properties(player_id, weak, proxy).await;
+            Self::monitor_properties(player_id, player, proxy, cancellation_token).await;
         });
     }
 
     #[instrument(skip(player, proxy))]
     async fn monitor_properties(
         player_id: PlayerId,
-        player: Weak<Player>,
+        player: Arc<Player>,
         proxy: MediaPlayer2PlayerProxy<'static>,
+        cancellation_token: CancellationToken,
     ) {
         let mut playback_status_changes = proxy.receive_playback_status_changed().await;
         let mut loop_status_changes = proxy.receive_loop_status_changed().await;
@@ -47,12 +48,11 @@ impl PlayerMonitor {
         let mut can_seek_changes = proxy.receive_can_seek_changed().await;
 
         loop {
-            let Some(player) = player.upgrade() else {
-                debug!("Player dropped, stopping monitor");
-                return;
-            };
-
             tokio::select! {
+                _ = cancellation_token.cancelled() => {
+                    debug!("Player {} monitor received cancellation, stopping", player_id);
+                    return;
+                }
                 Some(change) = playback_status_changes.next() => {
                     if let Ok(status) = change.get().await {
                         let state = PlaybackState::from(status.as_str());
@@ -105,14 +105,15 @@ impl PlayerMonitor {
                 }
 
                 else => {
-                    debug!("All property streams ended for player {}", player_id);
+                    debug!("All property streams ended for player {}, exiting monitor", player_id);
                     break;
                 }
             }
-
-            drop(player);
         }
 
-        debug!("Property monitoring ended for player {}", player_id);
+        debug!(
+            "Property monitoring fully terminated for player {}",
+            player_id
+        );
     }
 }

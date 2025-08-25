@@ -3,28 +3,73 @@ use libpulse_binding::context::{
     subscribe::{Facility, InterestMaskSet, Operation},
 };
 use tokio::sync::mpsc;
+use tokio_util::sync::CancellationToken;
+use tracing::info;
 
-use crate::services::{
-    AudioEvent, DeviceType, AudioError, StreamType,
-    audio::{device::DeviceKey, stream::StreamKey},
-};
-
-use super::super::discovery::{broadcast_device_list, broadcast_stream_list};
 use super::types::{
-    ChangeNotification, DefaultDevice, DeviceListSender, DeviceStore, EventSender, InternalCommand,
-    InternalCommandSender, StreamListSender, StreamStore,
+    ChangeNotification, DeviceStore, EventSender, InternalCommand, InternalCommandSender,
+    StreamStore,
+};
+use crate::services::{
+    AudioError, AudioEvent, DeviceType, StreamType,
+    audio::types::{DeviceKey, StreamKey},
 };
 
 type SubscriptionCallback = Option<Box<dyn FnMut(Option<Facility>, Option<Operation>, u32)>>;
 
-/// Setup PulseAudio event subscription
+/// Start the event processor task
+///
+/// This function:
+/// 1. Sets up PulseAudio event subscription
+/// 2. Spawns a task to process change notifications
+/// 3. Manages its own lifecycle
 ///
 /// # Errors
 /// Returns error if PulseAudio subscription setup fails
-pub fn setup_event_subscription(
+pub fn start_event_processor(
+    context: &mut Context,
+    devices: DeviceStore,
+    streams: StreamStore,
+    events_tx: EventSender,
+    internal_command_tx: InternalCommandSender,
+    cancellation_token: CancellationToken,
+) -> Result<(), AudioError> {
+    let (change_tx, mut change_rx) = mpsc::unbounded_channel::<ChangeNotification>();
+
+    setup_subscription(context, change_tx)?;
+
+    tokio::spawn(async move {
+        loop {
+            tokio::select! {
+                _ = cancellation_token.cancelled() => {
+                    info!("Event processor cancelled, stopping");
+                    return;
+                }
+                Some(notification) = change_rx.recv() => {
+                    process_change_notification(
+                        notification,
+                        &devices,
+                        &streams,
+                        &events_tx,
+                        &internal_command_tx
+                    )
+                    .await;
+                }
+                else => {
+                    info!("Change notification channel closed");
+                    return;
+                }
+            }
+        }
+    });
+
+    Ok(())
+}
+
+/// Setup PulseAudio event subscription (internal)
+fn setup_subscription(
     context: &mut Context,
     change_tx: mpsc::UnboundedSender<ChangeNotification>,
-    _command_tx: InternalCommandSender,
 ) -> Result<(), AudioError> {
     let interest_mask = InterestMaskSet::SINK
         | InterestMaskSet::SOURCE
@@ -34,32 +79,30 @@ pub fn setup_event_subscription(
 
     let subscription_callback: SubscriptionCallback =
         Some(Box::new(move |facility, operation, index| {
-            let notification = match (facility, operation) {
-                (Some(facil @ (Facility::Sink | Facility::Source)), Some(oper)) => {
-                    Some(ChangeNotification::Device {
-                        facility: facil,
-                        operation: oper,
-                        index,
-                    })
-                }
-                (Some(facil @ (Facility::SinkInput | Facility::SourceOutput)), Some(oper)) => {
-                    Some(ChangeNotification::Stream {
-                        facility: facil,
-                        operation: oper,
-                        index,
-                    })
-                }
-                (Some(facil @ Facility::Server), Some(oper)) => Some(ChangeNotification::Server {
-                    facility: facil,
-                    operation: oper,
-                    index,
-                }),
-                _ => None,
+            let (Some(facility), Some(operation)) = (facility, operation) else {
+                return;
             };
 
-            if let Some(notification) = notification {
-                let _ = change_tx.send(notification);
-            }
+            let notification = match facility {
+                Facility::Sink | Facility::Source => ChangeNotification::Device {
+                    facility,
+                    operation,
+                    index,
+                },
+                Facility::SinkInput | Facility::SourceOutput => ChangeNotification::Stream {
+                    facility,
+                    operation,
+                    index,
+                },
+                Facility::Server => ChangeNotification::Server {
+                    facility,
+                    operation,
+                    index,
+                },
+                _ => return,
+            };
+
+            let _ = change_tx.send(notification);
         }));
 
     context.set_subscribe_callback(subscription_callback);
@@ -69,17 +112,13 @@ pub fn setup_event_subscription(
     Ok(())
 }
 
-/// Process change notifications from PulseAudio
+/// Process change notifications from PulseAudio (internal)
 #[allow(clippy::too_many_arguments)]
-pub async fn process_change_notification(
+async fn process_change_notification(
     notification: ChangeNotification,
     devices: &DeviceStore,
     streams: &StreamStore,
-    _default_input: &DefaultDevice,
-    _default_output: &DefaultDevice,
     events_tx: &EventSender,
-    device_list_tx: &DeviceListSender,
-    stream_list_tx: &StreamListSender,
     command_tx: &InternalCommandSender,
 ) {
     match notification {
@@ -88,48 +127,17 @@ pub async fn process_change_notification(
             operation,
             index,
         } => {
-            handle_device_change(
-                facility,
-                operation,
-                index,
-                devices,
-                events_tx,
-                device_list_tx,
-                command_tx,
-            )
-            .await;
+            handle_device_change(facility, operation, index, devices, events_tx, command_tx).await;
         }
         ChangeNotification::Stream {
             facility,
             operation,
             index,
         } => {
-            handle_stream_change(
-                facility,
-                operation,
-                index,
-                streams,
-                events_tx,
-                stream_list_tx,
-                command_tx,
-            )
-            .await;
+            handle_stream_change(facility, operation, index, streams, events_tx, command_tx).await;
         }
-        ChangeNotification::Server {
-            facility,
-            operation,
-            index,
-        } => {
-            handle_server_change(
-                facility,
-                operation,
-                index,
-                devices,
-                events_tx,
-                device_list_tx,
-                command_tx,
-            )
-            .await;
+        ChangeNotification::Server { operation, .. } => {
+            handle_server_change(operation, command_tx).await;
         }
     }
 }
@@ -140,7 +148,6 @@ async fn handle_device_change(
     index: u32,
     devices: &DeviceStore,
     events_tx: &EventSender,
-    device_list_tx: &DeviceListSender,
     command_tx: &InternalCommandSender,
 ) {
     let device_type = match facility {
@@ -150,6 +157,10 @@ async fn handle_device_change(
     };
     let device_key = DeviceKey::new(index, device_type);
 
+    // OPTIMIZE: Each individual device sends a RefreshDevices which could be further optimized
+    // by adding more granularity to the changes. This approach is currently fine for now since
+    // the amount of device changes is often low. But if this becomes a problem, we can tackle it
+    // later.
     match operation {
         Operation::Removed => {
             let removed_device = if let Ok(mut devices_guard) = devices.write() {
@@ -158,18 +169,15 @@ async fn handle_device_change(
                 None
             };
 
-            if let Some(device_info) = removed_device {
-                let _ = events_tx.send(AudioEvent::DeviceRemoved(device_info));
+            if removed_device.is_some() {
+                let _ = events_tx.send(AudioEvent::DeviceRemoved(device_key));
             }
-            broadcast_device_list(device_list_tx, devices);
         }
         Operation::New => {
             let _ = command_tx.send(InternalCommand::RefreshDevices);
-            broadcast_device_list(device_list_tx, devices);
         }
         Operation::Changed => {
             let _ = command_tx.send(InternalCommand::RefreshDevices);
-            broadcast_device_list(device_list_tx, devices);
         }
     }
 }
@@ -180,7 +188,6 @@ async fn handle_stream_change(
     stream_index: u32,
     streams: &StreamStore,
     events_tx: &EventSender,
-    stream_list_tx: &StreamListSender,
     command_tx: &InternalCommandSender,
 ) {
     let stream_type = match facility {
@@ -194,6 +201,9 @@ async fn handle_stream_change(
         index: stream_index,
     };
 
+    // OPTIMIZE: Streams can be further optimized to refresh individual items instead of the whole
+    // list of streams. If this becomes a bottleneck (unlikely) we can make these events more
+    // granular.
     match operation {
         Operation::Removed => {
             let removed_stream = if let Ok(mut streams_guard) = streams.write() {
@@ -202,38 +212,21 @@ async fn handle_stream_change(
                 None
             };
 
-            if let Some(stream_info) = removed_stream {
-                let _ = events_tx.send(AudioEvent::StreamRemoved(stream_info));
+            if removed_stream.is_some() {
+                let _ = events_tx.send(AudioEvent::StreamRemoved(stream_key));
             }
-            broadcast_stream_list(stream_list_tx, streams);
         }
         Operation::New => {
             let _ = command_tx.send(InternalCommand::RefreshStreams);
-            broadcast_stream_list(stream_list_tx, streams);
         }
         Operation::Changed => {
             let _ = command_tx.send(InternalCommand::RefreshStreams);
-            broadcast_stream_list(stream_list_tx, streams);
         }
     }
 }
 
-async fn handle_server_change(
-    _facility: Facility,
-    operation: Operation,
-    _index: u32,
-    _devices: &DeviceStore,
-    _events_tx: &EventSender,
-    device_list_tx: &DeviceListSender,
-    command_tx: &InternalCommandSender,
-) {
-    match operation {
-        Operation::Changed => {
-            let _ = command_tx.send(InternalCommand::RefreshServerInfo);
-            broadcast_device_list(device_list_tx, _devices);
-        }
-        _ => {
-            broadcast_device_list(device_list_tx, _devices);
-        }
+async fn handle_server_change(operation: Operation, command_tx: &InternalCommandSender) {
+    if operation == Operation::Changed {
+        let _ = command_tx.send(InternalCommand::RefreshServerInfo);
     }
 }

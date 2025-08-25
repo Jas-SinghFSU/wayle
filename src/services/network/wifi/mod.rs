@@ -1,16 +1,15 @@
-use std::ops::Deref;
-use std::sync::Arc;
+use std::{ops::Deref, sync::Arc};
 
 use futures::stream::Stream;
 use monitoring::WifiMonitor;
+use tokio_util::sync::CancellationToken;
 use zbus::{Connection, zvariant::OwnedObjectPath};
-
-use crate::{services::common::Property, unwrap_bool, watch_all};
 
 use super::{
     AccessPointProxy, NetworkError, NetworkManagerProxy, NetworkStatus, SSID,
     core::{access_point::AccessPoint, device::wifi::DeviceWifi},
 };
+use crate::{services::common::Property, unwrap_bool, watch_all};
 
 mod controls;
 mod monitoring;
@@ -89,13 +88,15 @@ impl Wifi {
     pub async fn get_live(
         connection: &Connection,
         device_path: OwnedObjectPath,
+        cancellation_token: CancellationToken,
     ) -> Result<Arc<Self>, NetworkError> {
-        let device_arc = DeviceWifi::get_live(connection, device_path).await?;
+        let device_arc =
+            DeviceWifi::get_live(connection, device_path, cancellation_token.child_token()).await?;
         let device = DeviceWifi::clone(&device_arc);
 
         let wifi = Self::from_device(connection, device.clone()).await?;
 
-        WifiMonitor::start(connection, &wifi).await?;
+        WifiMonitor::start(connection, &wifi, cancellation_token).await?;
 
         Ok(Arc::new(wifi))
     }

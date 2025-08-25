@@ -1,6 +1,7 @@
 //! NetworkManager Wireless Device interface.
 
 use std::collections::HashMap;
+
 use zbus::{
     proxy,
     zvariant::{OwnedObjectPath, OwnedValue},

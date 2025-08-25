@@ -1,32 +1,37 @@
-use std::{sync::Arc, sync::Weak};
+use std::sync::Arc;
 
 use futures::StreamExt;
+use tokio_util::sync::CancellationToken;
 use tracing::warn;
 use zbus::{Connection, zvariant::OwnedObjectPath};
 
+use super::Settings;
 use crate::services::network::{
     NetworkError, SettingsProxy, core::settings_connection::ConnectionSettings,
 };
 
-use super::Settings;
-
 pub(super) struct SettingsMonitor;
 
 impl SettingsMonitor {
-    pub(super) async fn start(zbus_connection: &Connection, settings: Arc<Settings>) {
-        let weak_settings = Arc::downgrade(&settings);
+    pub(super) async fn start(
+        zbus_connection: &Connection,
+        settings: Arc<Settings>,
+        cancellation_token: CancellationToken,
+    ) {
         let zbus_connection = zbus_connection.clone();
 
         tokio::spawn(async move {
-            if let Err(e) = Self::monitor(weak_settings, &zbus_connection).await {
+            if let Err(e) = Self::monitor(settings, &zbus_connection, cancellation_token).await {
                 warn!("Failed to start SettingsMonitor: {e}");
             }
         });
     }
 
+    #[allow(clippy::cognitive_complexity)]
     async fn monitor(
-        weak_settings: Weak<Settings>,
+        settings: Arc<Settings>,
         zbus_connection: &Connection,
+        cancellation_token: CancellationToken,
     ) -> Result<(), NetworkError> {
         let settings_proxy = SettingsProxy::new(zbus_connection).await?;
 
@@ -37,12 +42,11 @@ impl SettingsMonitor {
         let mut version_id_changed = settings_proxy.receive_version_id_changed().await;
 
         loop {
-            let Some(settings) = weak_settings.upgrade() else {
-                warn!("Settings dropped, stopping monitor");
-                return Ok(());
-            };
-
             tokio::select! {
+                _ = cancellation_token.cancelled() => {
+                    tracing::debug!("SettingsMonitor cancelled");
+                    return Ok(());
+                }
                 Some(event) = async { connection_added.as_mut().ok()?.next().await }, if
                     connection_added.is_ok() => {
                         if let Ok(args) = event.args() {
@@ -76,8 +80,6 @@ impl SettingsMonitor {
                     break;
                 }
             }
-
-            drop(settings);
         }
 
         Ok(())

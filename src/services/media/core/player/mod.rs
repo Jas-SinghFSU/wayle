@@ -1,21 +1,28 @@
 pub(crate) mod monitoring;
 
-use std::sync::Arc;
-use std::time::Duration;
+use std::{sync::Arc, time::Duration};
 
-use crate::{unwrap_bool, unwrap_string_or, watch_all};
 use futures::Stream;
 use monitoring::PlayerMonitor;
-use zbus::fdo::PropertiesProxy;
-use zbus::names::{InterfaceName, MemberName};
-use zbus::{Connection, names::OwnedBusName, zvariant::ObjectPath};
+use tokio_util::sync::CancellationToken;
+use zbus::{
+    Connection,
+    fdo::PropertiesProxy,
+    names::{InterfaceName, MemberName, OwnedBusName},
+    zvariant::ObjectPath,
+};
 
-use crate::services::common::Property;
-use crate::services::media::types::{LoopMode, PlaybackState, PlayerId, ShuffleMode, Volume};
-use crate::services::media::{
-    MediaError,
-    core::metadata::TrackMetadata,
-    proxy::{MediaPlayer2PlayerProxy, MediaPlayer2Proxy},
+use crate::{
+    services::{
+        common::Property,
+        media::{
+            MediaError,
+            core::metadata::TrackMetadata,
+            proxy::{MediaPlayer2PlayerProxy, MediaPlayer2Proxy},
+            types::{LoopMode, PlaybackState, PlayerId, ShuffleMode, Volume},
+        },
+    },
+    unwrap_bool, unwrap_string_or, watch_all,
 };
 
 /// Reactive player model with fine-grained property updates.
@@ -125,7 +132,7 @@ impl Player {
         );
         let desktop_entry = base_proxy.desktop_entry().await.ok();
 
-        let metadata = TrackMetadata::new(player_proxy.clone()).await;
+        let metadata = TrackMetadata::get(&player_proxy).await;
         let player = Self::new(player_id, identity, player_proxy.clone(), metadata);
         player.desktop_entry.set(desktop_entry);
 
@@ -137,6 +144,7 @@ impl Player {
     pub(crate) async fn get_live(
         connection: &Connection,
         player_id: PlayerId,
+        cancellation_token: CancellationToken,
     ) -> Result<Arc<Self>, MediaError> {
         let bus_name = OwnedBusName::try_from(player_id.bus_name())
             .map_err(|e| MediaError::InitializationFailed(format!("Invalid bus name: {e}")))?;
@@ -161,14 +169,20 @@ impl Player {
         );
         let desktop_entry = base_proxy.desktop_entry().await.ok();
 
-        let metadata = TrackMetadata::new(player_proxy.clone()).await;
+        let metadata =
+            TrackMetadata::get_live(player_proxy.clone(), cancellation_token.child_token()).await;
         let player = Self::new(player_id.clone(), identity, player_proxy.clone(), metadata);
         player.desktop_entry.set(desktop_entry);
 
         Self::refresh_properties(&player, &player_proxy).await;
 
         let player = Arc::new(player);
-        PlayerMonitor::start(player_id, Arc::clone(&player), player_proxy);
+        PlayerMonitor::start(
+            player_id,
+            Arc::clone(&player),
+            player_proxy,
+            cancellation_token,
+        );
 
         Ok(player)
     }

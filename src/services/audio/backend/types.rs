@@ -9,25 +9,25 @@ use libpulse_binding::{
 };
 use tokio::sync::{broadcast, mpsc};
 
-use crate::services::{
-    AudioEvent, DeviceInfo, StreamInfo,
-    audio::{device::DeviceKey, stream::StreamKey},
+use crate::services::audio::{
+    events::AudioEvent,
+    types::{Device, DeviceKey, StreamInfo, StreamKey},
 };
 
 /// Thread-safe storage for audio devices
-pub type DeviceStore = Arc<RwLock<HashMap<DeviceKey, DeviceInfo>>>;
+pub type DeviceStore = Arc<RwLock<HashMap<DeviceKey, Device>>>;
 
 /// Thread-safe storage for audio streams  
 pub type StreamStore = Arc<RwLock<HashMap<StreamKey, StreamInfo>>>;
 
 /// Thread-safe storage for default device information
-pub type DefaultDevice = Arc<RwLock<Option<DeviceInfo>>>;
+pub type DefaultDevice = Arc<RwLock<Option<Device>>>;
 
 /// Channel sender for audio events
 pub type EventSender = broadcast::Sender<AudioEvent>;
 
 /// Channel sender for device list updates
-pub type DeviceListSender = broadcast::Sender<Vec<DeviceInfo>>;
+pub type DeviceListSender = broadcast::Sender<Vec<Device>>;
 
 /// Channel sender for stream list updates
 pub type StreamListSender = broadcast::Sender<Vec<StreamInfo>>;
@@ -40,9 +40,6 @@ pub(super) type InternalCommandSender = mpsc::UnboundedSender<InternalCommand>;
 
 /// Thread-safe storage for server information
 pub type ServerInfo = Arc<RwLock<Option<String>>>;
-
-pub(super) type ExternalCommandReceiver = mpsc::UnboundedReceiver<ExternalCommand>;
-pub(super) type InternalCommandReceiver = mpsc::UnboundedReceiver<InternalCommand>;
 
 /// Change notifications from PulseAudio subscription
 #[derive(Debug, Clone)]
@@ -87,7 +84,7 @@ pub enum InternalCommand {
     RefreshServerInfo,
 }
 
-/// External commands from user/API requests
+/// External commands from service requests
 #[derive(Debug)]
 pub enum ExternalCommand {
     /// Set device volume
@@ -134,6 +131,13 @@ pub enum ExternalCommand {
         stream_key: StreamKey,
         /// Destination device
         device_key: DeviceKey,
+    },
+    /// Set device port
+    SetPort {
+        /// Device to modify.
+        device_key: DeviceKey,
+        /// Port name to activate.
+        port: String,
     },
     /// Shutdown backend
     Shutdown,

@@ -1,4 +1,4 @@
-use std::{path::PathBuf, time::Instant};
+use std::{any, path::PathBuf, time::Instant};
 
 use toml::Value;
 
@@ -173,7 +173,7 @@ impl ConfigChange {
         let handle_err = |_e: toml::de::Error| -> ConfigError {
             ConfigError::TypeMismatch {
                 path: self.path.clone(),
-                expected_type: std::any::type_name::<T>(),
+                expected_type: any::type_name::<T>(),
                 actual_value: self.new_value.clone(),
             }
         };

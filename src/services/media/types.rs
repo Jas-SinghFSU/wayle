@@ -1,5 +1,4 @@
-use std::fmt;
-use std::ops::Deref;
+use std::{fmt, ops::Deref};
 
 /// Unique identifier for a media player
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]

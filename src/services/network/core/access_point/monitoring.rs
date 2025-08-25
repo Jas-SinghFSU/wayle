@@ -1,14 +1,14 @@
-use std::sync::{Arc, Weak};
+use std::sync::Arc;
 
 use futures::StreamExt;
+use tokio_util::sync::CancellationToken;
 use tracing::debug;
 use zbus::{Connection, zvariant::OwnedObjectPath};
 
+use super::{AccessPoint, BSSID, SSID, SecurityType};
 use crate::services::network::{
     AccessPointProxy, NM80211ApFlags, NM80211ApSecurityFlags, NM80211Mode,
 };
-
-use super::{AccessPoint, BSSID, SSID, SecurityType};
 
 /// Monitors D-Bus properties and updates the reactive AccessPoint model.
 pub(super) struct AccessPointMonitor;
@@ -18,22 +18,25 @@ impl AccessPointMonitor {
         access_point: Arc<AccessPoint>,
         zbus_connection: &Connection,
         path: OwnedObjectPath,
+        cancellation_token: CancellationToken,
     ) {
-        let weak = Arc::downgrade(&access_point);
-
         let Ok(proxy) = AccessPointProxy::new(zbus_connection, path).await else {
             debug!("Failed to create proxy for access point monitoring");
             return;
         };
 
         tokio::spawn(async move {
-            Self::monitor(weak, proxy).await;
+            Self::monitor(access_point, proxy, cancellation_token).await;
         });
     }
 
     #[allow(clippy::cognitive_complexity)]
     #[allow(clippy::too_many_lines)]
-    async fn monitor(weak: Weak<AccessPoint>, proxy: AccessPointProxy<'static>) {
+    async fn monitor(
+        access_point: Arc<AccessPoint>,
+        proxy: AccessPointProxy<'static>,
+        cancellation_token: CancellationToken,
+    ) {
         let mut flag_changes = proxy.receive_flags_changed().await;
         let mut wpa_flags_changes = proxy.receive_wpa_flags_changed().await;
         let mut rsn_flags_changes = proxy.receive_rsn_flags_changed().await;
@@ -46,12 +49,11 @@ impl AccessPointMonitor {
         let mut last_seen_changes = proxy.receive_last_seen_changed().await;
 
         loop {
-            let Some(access_point) = weak.upgrade() else {
-                debug!("AccessPoint dropped, stopping monitor");
-                return;
-            };
-
             tokio::select! {
+                _ = cancellation_token.cancelled() => {
+                    debug!("AccessPointMonitor cancelled");
+                    return;
+                }
                 Some(change) = flag_changes.next() => {
                     if let Ok(new_flags) = change.get().await {
                         let flags = NM80211ApFlags::from_bits_truncate(new_flags);
@@ -136,8 +138,6 @@ impl AccessPointMonitor {
                     break;
                 }
             }
-
-            drop(access_point);
         }
 
         debug!("Property monitoring ended for access point");

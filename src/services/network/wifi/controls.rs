@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+
 use zbus::{
     Connection,
     zvariant::{OwnedObjectPath, OwnedValue, Value},
@@ -151,7 +152,6 @@ impl WifiControls {
 
         let mut settings = HashMap::new();
 
-        // Connection section for the settings
         let mut connection = HashMap::new();
         connection.insert(
             "type".to_string(),
@@ -160,7 +160,6 @@ impl WifiControls {
         connection.insert("id".to_string(), to_owned(Value::from(ssid_string))?);
         settings.insert("connection".to_string(), connection);
 
-        // Wireless section for the settings
         let mut wireless = HashMap::new();
         wireless.insert("ssid".to_string(), to_owned(Value::from(ssid_bytes))?);
 
@@ -177,7 +176,6 @@ impl WifiControls {
 
         settings.insert("802-11-wireless".to_string(), wireless);
 
-        // Security section (if password provided) for the settings
         if let Some(pwd) = password {
             let mut security = HashMap::new();
             security.insert("key-mgmt".to_string(), to_owned(Value::from("wpa-psk"))?);

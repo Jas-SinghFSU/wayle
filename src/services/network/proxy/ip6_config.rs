@@ -1,6 +1,7 @@
 //! NetworkManager IPv6 Configuration interface.
 
 use std::collections::HashMap;
+
 use zbus::{proxy, zvariant::OwnedValue};
 
 /// (Address, Prefix, Gateway)

@@ -1,7 +1,7 @@
 /// PulseAudio backend implementation
 pub mod backend;
-/// Device management domain
-pub mod device;
+/// Core domain models
+pub mod core;
 /// Discovery functionality
 pub mod discovery;
 /// Error types
@@ -10,20 +10,20 @@ pub mod error;
 pub mod events;
 /// Audio service implementation
 mod service;
-/// Stream management domain
-pub mod stream;
 /// Tokio mainloop for PulseAudio
 pub mod tokio_mainloop;
+/// Types for the audio service
+pub mod types;
 /// Volume control domain
 pub mod volume;
 
-pub use device::{
-    DeviceIndex, DeviceInfo, DeviceManager, DeviceStreams, DeviceType, DeviceVolumeController,
-};
+pub use core::{AudioStream, InputDevice, OutputDevice};
+
 pub use error::AudioError;
 pub use events::AudioEvent;
 pub use service::AudioService;
-pub use stream::{
-    StreamIndex, StreamInfo, StreamManager, StreamStreams, StreamType, StreamVolumeController,
+pub use types::{
+    AudioFormat, ChannelMap, DeviceInfo, DeviceKey, DevicePort, DeviceState, DeviceType, MediaInfo,
+    SampleFormat, SampleSpec, StreamInfo, StreamKey, StreamState, StreamType,
 };
 pub use volume::{Volume, VolumeError};

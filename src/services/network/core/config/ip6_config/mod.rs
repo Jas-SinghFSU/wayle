@@ -1,16 +1,17 @@
-use crate::{unwrap_i32, unwrap_string, unwrap_vec};
-use std::collections::HashMap;
-use std::net::Ipv6Addr;
-use std::sync::Arc;
+use std::{collections::HashMap, net::Ipv6Addr, sync::Arc};
+
 use tracing::debug;
 use zbus::{
     Connection,
     zvariant::{OwnedObjectPath, OwnedValue},
 };
 
-use crate::services::{
-    common::Property,
-    network::{NetworkError, proxy::ip6_config::IP6ConfigProxy},
+use crate::{
+    services::{
+        common::Property,
+        network::{NetworkError, proxy::ip6_config::IP6ConfigProxy},
+    },
+    unwrap_i32, unwrap_string, unwrap_vec,
 };
 
 /// IPv6 Configuration Set.

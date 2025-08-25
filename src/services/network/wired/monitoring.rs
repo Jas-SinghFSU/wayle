@@ -2,11 +2,11 @@ use std::sync::Arc;
 
 use tokio::task::JoinHandle;
 use tokio_stream::StreamExt;
+use tokio_util::sync::CancellationToken;
 use zbus::Connection;
 
-use crate::services::network::{DeviceProxy, NMDeviceState, NetworkError, NetworkStatus};
-
 use super::Wired;
+use crate::services::network::{DeviceProxy, NMDeviceState, NetworkError, NetworkStatus};
 
 pub(crate) struct WiredMonitor;
 
@@ -14,13 +14,15 @@ impl WiredMonitor {
     pub async fn start(
         connection: &Connection,
         wired: &Arc<Wired>,
+        cancellation_token: CancellationToken,
     ) -> Result<JoinHandle<()>, NetworkError> {
-        Self::spawn_monitoring_task(connection, wired).await
+        Self::spawn_monitoring_task(connection, wired, cancellation_token).await
     }
 
     async fn spawn_monitoring_task(
         connection: &Connection,
         wired: &Arc<Wired>,
+        cancellation_token: CancellationToken,
     ) -> Result<JoinHandle<()>, NetworkError> {
         let connectivity_prop = wired.connectivity.clone();
         let device_path = wired.device.object_path.clone();
@@ -34,6 +36,10 @@ impl WiredMonitor {
         let handle = tokio::spawn(async move {
             loop {
                 tokio::select! {
+                    _ = cancellation_token.cancelled() => {
+                        tracing::debug!("WiredMonitor cancelled");
+                        return;
+                    }
                     Some(change) = connectivity_changed.next() => {
                         if let Ok(new_connectivity) = change.get().await {
                             let device_state = NMDeviceState::from_u32(new_connectivity);

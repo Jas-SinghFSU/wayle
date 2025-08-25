@@ -1,6 +1,7 @@
 //! NetworkManager DHCP6 Configuration interface.
 
 use std::collections::HashMap;
+
 use zbus::{proxy, zvariant::Value as Variant};
 
 /// IPv6 DHCP Client State.

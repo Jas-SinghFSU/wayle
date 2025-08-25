@@ -1,297 +1,176 @@
-use std::{
-    collections::HashMap,
-    sync::{Arc, RwLock},
-};
+use std::sync::Arc;
 
-use async_stream::stream;
-use async_trait::async_trait;
 use tokio::sync::{broadcast, mpsc};
+use tokio_util::sync::CancellationToken;
 
-use super::{
-    backend::{
-        CommandSender, DefaultDevice, DeviceListSender, DeviceStore, EventSender, ExternalCommand,
-        PulseBackend, ServerInfo, StreamListSender, StreamStore,
+use crate::services::{
+    audio::{
+        backend::{CommandSender, EventSender, PulseBackend},
+        core::{AudioStream, InputDevice, OutputDevice},
+        discovery::AudioDiscovery,
+        error::AudioError,
+        types::{DeviceKey, StreamKey},
     },
-    device::{DeviceInfo, DeviceKey, DeviceManager, DeviceType, DeviceVolumeController},
-    error::AudioError,
-    events::AudioEvent,
-    stream::{StreamInfo, StreamKey, StreamManager, StreamVolumeController},
-    volume::Volume,
+    common::Property,
 };
 
-/// Audio service implementation
+/// Audio service with reactive properties.
 ///
-/// Provides device and stream management through PulseAudio backend.
+/// Provides access to audio devices and streams through reactive Property fields
+/// that automatically update when the underlying PulseAudio state changes.
 pub struct AudioService {
-    pub(super) command_tx: CommandSender,
+    command_tx: CommandSender,
+    event_tx: EventSender,
+    cancellation_token: CancellationToken,
 
-    pub(super) device_list_tx: DeviceListSender,
-    pub(super) stream_list_tx: StreamListSender,
-    pub(super) events_tx: EventSender,
+    /// Output devices (speakers, headphones)
+    pub output_devices: Property<Vec<Arc<OutputDevice>>>,
 
-    pub(super) devices: DeviceStore,
-    pub(super) streams: StreamStore,
-    pub(super) default_input: DefaultDevice,
-    pub(super) default_output: DefaultDevice,
-    pub(super) server_info: ServerInfo,
+    /// Input devices (microphones)
+    pub input_devices: Property<Vec<Arc<InputDevice>>>,
 
-    pub(super) monitoring_handle: Option<tokio::task::JoinHandle<()>>,
-}
+    /// Default output device
+    pub default_output: Property<Option<Arc<OutputDevice>>>,
 
-impl Clone for AudioService {
-    fn clone(&self) -> Self {
-        Self {
-            command_tx: self.command_tx.clone(),
-            device_list_tx: self.device_list_tx.clone(),
-            stream_list_tx: self.stream_list_tx.clone(),
-            events_tx: self.events_tx.clone(),
-            devices: Arc::clone(&self.devices),
-            streams: Arc::clone(&self.streams),
-            default_input: Arc::clone(&self.default_input),
-            default_output: Arc::clone(&self.default_output),
-            server_info: Arc::clone(&self.server_info),
-            monitoring_handle: None,
-        }
-    }
+    /// Default input device
+    pub default_input: Property<Option<Arc<InputDevice>>>,
+
+    /// Playback streams
+    pub playback_streams: Property<Vec<Arc<AudioStream>>>,
+
+    /// Recording streams
+    pub recording_streams: Property<Vec<Arc<AudioStream>>>,
 }
 
 impl AudioService {
-    /// Create a new PulseAudio service with default settings
+    /// Creates a new audio service instance.
+    ///
+    /// Initializes PulseAudio connection and discovers available devices and streams.
     ///
     /// # Errors
-    /// Returns error if PulseAudio connection fails or service initialization fails
+    /// Returns error if PulseAudio connection fails or service initialization fails.
     pub async fn new() -> Result<Self, AudioError> {
-        const DEVICE_BUFFER_SIZE: usize = 100;
-        const STREAM_BUFFER_SIZE: usize = 100;
-        const EVENTS_BUFFER_SIZE: usize = 100;
-
         let (command_tx, command_rx) = mpsc::unbounded_channel();
+        let (event_tx, _) = broadcast::channel(100);
+        let cancellation_token = CancellationToken::new();
 
-        let (device_list_tx, _) = broadcast::channel(DEVICE_BUFFER_SIZE);
-        let (stream_list_tx, _) = broadcast::channel(STREAM_BUFFER_SIZE);
-        let (events_tx, _) = broadcast::channel(EVENTS_BUFFER_SIZE);
+        let output_devices = Property::new(Vec::new());
+        let input_devices = Property::new(Vec::new());
+        let default_output = Property::new(None);
+        let default_input = Property::new(None);
+        let playback_streams = Property::new(Vec::new());
+        let recording_streams = Property::new(Vec::new());
 
-        let devices = Arc::new(RwLock::new(HashMap::new()));
-        let streams = Arc::new(RwLock::new(HashMap::new()));
-        let default_input = Arc::new(RwLock::new(None));
-        let default_output = Arc::new(RwLock::new(None));
-        let server_info = Arc::new(RwLock::new(None));
-
-        let monitoring_handle = PulseBackend::spawn_monitoring_task(
+        PulseBackend::start(
             command_rx,
-            device_list_tx.clone(),
-            stream_list_tx.clone(),
-            events_tx.clone(),
-            Arc::clone(&devices),
-            Arc::clone(&streams),
-            Arc::clone(&default_input),
-            Arc::clone(&default_output),
-            Arc::clone(&server_info),
+            event_tx.clone(),
+            cancellation_token.child_token(),
         )
         .await?;
 
-        Ok(AudioService {
+        AudioDiscovery::start(
+            event_tx.subscribe(),
+            output_devices.clone(),
+            input_devices.clone(),
+            playback_streams.clone(),
+            recording_streams.clone(),
+            default_input.clone(),
+            default_output.clone(),
+            cancellation_token.child_token(),
+        )
+        .await?;
+
+        Ok(Self {
             command_tx,
-            device_list_tx,
-            stream_list_tx,
-            events_tx,
-            devices,
-            streams,
-            default_input,
+            event_tx,
+            cancellation_token,
+            output_devices,
+            input_devices,
             default_output,
-            server_info,
-            monitoring_handle: Some(monitoring_handle),
+            default_input,
+            playback_streams,
+            recording_streams,
         })
     }
 
-    /// Gracefully shutdown the service
-    ///
-    /// Stops background monitoring and cleans up resources.
+    /// Get a specific output device.
     ///
     /// # Errors
-    /// Returns error if shutdown operations fail
-    pub async fn shutdown(mut self) -> Result<(), AudioError> {
-        let _ = self.command_tx.send(ExternalCommand::Shutdown);
-
-        if let Some(handle) = self.monitoring_handle.take() {
-            let _ = handle.await;
-        }
-
-        Ok(())
+    /// Returns error if device not found or backend query fails.
+    pub async fn output_device(&self, key: DeviceKey) -> Result<Arc<OutputDevice>, AudioError> {
+        OutputDevice::get(&self.command_tx, key).await
     }
 
-    /// Stream of all audio events
-    pub fn events(&self) -> impl futures::Stream<Item = AudioEvent> + Send {
-        let mut events_rx = self.events_tx.subscribe();
-        stream! {
-            while let Ok(event) = events_rx.recv().await {
-                yield event;
-            }
-        }
+    /// Get a specific output device with monitoring.
+    ///
+    /// # Errors
+    /// Returns error if device not found, backend query fails, or monitoring setup fails.
+    pub async fn output_device_monitored(
+        &self,
+        key: DeviceKey,
+    ) -> Result<Arc<OutputDevice>, AudioError> {
+        OutputDevice::get_live(
+            &self.command_tx,
+            self.event_tx.subscribe(),
+            key,
+            self.cancellation_token.child_token(),
+        )
+        .await
+    }
+
+    /// Get a specific input device.
+    ///
+    /// # Errors
+    /// Returns error if device not found or backend query fails.
+    pub async fn input_device(&self, key: DeviceKey) -> Result<Arc<InputDevice>, AudioError> {
+        InputDevice::get(&self.command_tx, key).await
+    }
+
+    /// Get a specific input device with monitoring.
+    ///
+    /// # Errors
+    /// Returns error if device not found, backend query fails, or monitoring setup fails.
+    pub async fn input_device_monitored(
+        &self,
+        key: DeviceKey,
+    ) -> Result<Arc<InputDevice>, AudioError> {
+        InputDevice::get_live(
+            &self.command_tx,
+            self.event_tx.subscribe(),
+            key,
+            self.cancellation_token.child_token(),
+        )
+        .await
+    }
+
+    /// Get a specific audio stream.
+    ///
+    /// # Errors
+    /// Returns error if stream not found or backend query fails.
+    pub async fn audio_stream(&self, key: StreamKey) -> Result<Arc<AudioStream>, AudioError> {
+        AudioStream::get(&self.command_tx, key).await
+    }
+
+    /// Get a specific audio stream with monitoring.
+    ///
+    /// # Errors
+    /// Returns error if stream not found, backend query fails, or monitoring setup fails.
+    pub async fn audio_stream_monitored(
+        &self,
+        key: StreamKey,
+    ) -> Result<Arc<AudioStream>, AudioError> {
+        AudioStream::get_live(
+            &self.command_tx,
+            self.event_tx.subscribe(),
+            key,
+            self.cancellation_token.child_token(),
+        )
+        .await
     }
 }
 
 impl Drop for AudioService {
     fn drop(&mut self) {
-        if let Some(handle) = self.monitoring_handle.take() {
-            handle.abort();
-        }
-    }
-}
-
-#[async_trait]
-impl DeviceManager for AudioService {
-    type Error = AudioError;
-
-    async fn device(&self, device: DeviceKey) -> Result<DeviceInfo, Self::Error> {
-        let devices = self
-            .devices
-            .read()
-            .map_err(|e| AudioError::LockPoisoned(format!("shared data lock: {e}")))?;
-        devices
-            .values()
-            .find(|d| d.index.0 == device.index && d.device_type == device.device_type)
-            .cloned()
-            .ok_or(AudioError::DeviceNotFound(device.index, device.device_type))
-    }
-
-    async fn devices_by_type(
-        &self,
-        device_type: DeviceType,
-    ) -> Result<Vec<DeviceInfo>, Self::Error> {
-        let devices = self
-            .devices
-            .read()
-            .map_err(|e| AudioError::LockPoisoned(format!("shared data lock: {e}")))?;
-        let filtered_devices: Vec<DeviceInfo> = devices
-            .values()
-            .filter(|d| d.device_type == device_type)
-            .cloned()
-            .collect();
-        Ok(filtered_devices)
-    }
-
-    async fn default_input(&self) -> Result<Option<DeviceInfo>, Self::Error> {
-        let input = self
-            .default_input
-            .read()
-            .map_err(|e| AudioError::LockPoisoned(format!("shared data lock: {e}")))?;
-        Ok(input.clone())
-    }
-
-    async fn default_output(&self) -> Result<Option<DeviceInfo>, Self::Error> {
-        let output = self
-            .default_output
-            .read()
-            .map_err(|e| AudioError::LockPoisoned(format!("shared data lock: {e}")))?;
-        Ok(output.clone())
-    }
-
-    async fn set_default_input(&self, device_key: DeviceKey) -> Result<(), Self::Error> {
-        self.command_tx
-            .send(ExternalCommand::SetDefaultInput { device_key })
-            .map_err(|e| AudioError::LockPoisoned(format!("shared data lock: {e}")))?;
-        Ok(())
-    }
-
-    async fn set_default_output(&self, device_key: DeviceKey) -> Result<(), Self::Error> {
-        self.command_tx
-            .send(ExternalCommand::SetDefaultOutput { device_key })
-            .map_err(|e| AudioError::LockPoisoned(format!("shared data lock: {e}")))?;
-        Ok(())
-    }
-}
-
-#[async_trait]
-impl DeviceVolumeController for AudioService {
-    type Error = AudioError;
-
-    async fn set_device_volume(
-        &self,
-        device_key: DeviceKey,
-        level: f64,
-    ) -> Result<(), Self::Error> {
-        println!(
-            "Setting volume for device '{}-{:?}': {}",
-            device_key.index, device_key.device_type, level
-        );
-        let device_info = self.device(device_key).await?;
-        let channel_count = device_info.volume.channels();
-        let volume = Volume::new(vec![level; channel_count]);
-        let pulse_volume = PulseBackend::convert_volume_to_pulse(&volume);
-        self.command_tx
-            .send(ExternalCommand::SetDeviceVolume {
-                device_key,
-                volume: pulse_volume,
-            })
-            .map_err(|e| AudioError::LockPoisoned(format!("shared data lock: {e}")))?;
-        Ok(())
-    }
-
-    async fn set_device_mute(&self, device_key: DeviceKey, muted: bool) -> Result<(), Self::Error> {
-        self.command_tx
-            .send(ExternalCommand::SetDeviceMute { device_key, muted })
-            .map_err(|e| AudioError::LockPoisoned(format!("shared data lock: {e}")))?;
-        Ok(())
-    }
-}
-
-#[async_trait]
-impl StreamManager for AudioService {
-    type Error = AudioError;
-
-    async fn stream(&self, stream_key: StreamKey) -> Result<StreamInfo, Self::Error> {
-        let streams = self
-            .streams
-            .read()
-            .map_err(|e| AudioError::LockPoisoned(format!("shared data lock: {e}")))?;
-        streams
-            .get(&stream_key)
-            .cloned()
-            .ok_or(AudioError::StreamNotFound(
-                stream_key.index,
-                stream_key.stream_type,
-            ))
-    }
-
-    async fn move_stream(
-        &self,
-        stream_key: StreamKey,
-        device_key: DeviceKey,
-    ) -> Result<(), Self::Error> {
-        self.command_tx
-            .send(ExternalCommand::MoveStream {
-                stream_key,
-                device_key,
-            })
-            .map_err(|e| AudioError::LockPoisoned(format!("shared data lock: {e}")))?;
-        Ok(())
-    }
-}
-
-#[async_trait]
-impl StreamVolumeController for AudioService {
-    type Error = AudioError;
-
-    async fn set_stream_volume(
-        &self,
-        stream_key: StreamKey,
-        volume: Volume,
-    ) -> Result<(), Self::Error> {
-        let pulse_volume = PulseBackend::convert_volume_to_pulse(&volume);
-        self.command_tx
-            .send(ExternalCommand::SetStreamVolume {
-                stream_key,
-                volume: pulse_volume,
-            })
-            .map_err(|e| AudioError::LockPoisoned(format!("shared data lock: {e}")))?;
-        Ok(())
-    }
-
-    async fn set_stream_mute(&self, stream_key: StreamKey, muted: bool) -> Result<(), Self::Error> {
-        self.command_tx
-            .send(ExternalCommand::SetStreamMute { stream_key, muted })
-            .map_err(|e| AudioError::LockPoisoned(format!("shared data lock: {e}")))?;
-        Ok(())
+        self.cancellation_token.cancel();
     }
 }

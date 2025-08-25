@@ -1,5 +1,6 @@
-use crate::{Result, WayleError};
 use std::{fs, path::Path};
+
+use crate::{Result, WayleError};
 
 /// Creates a default configuration file if it doesn't exist
 pub fn create_default_config_file(path: &Path) -> Result<()> {

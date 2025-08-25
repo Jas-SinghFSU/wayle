@@ -1,5 +1,6 @@
-use crate::{Result, WayleError};
 use std::path::{Path, PathBuf};
+
+use crate::{Result, WayleError};
 
 /// Tracks import chains for circular detection
 pub struct CircularDetector {

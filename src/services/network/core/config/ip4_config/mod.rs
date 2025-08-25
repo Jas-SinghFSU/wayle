@@ -1,16 +1,17 @@
-use crate::{unwrap_i32, unwrap_string, unwrap_vec};
-use std::collections::HashMap;
-use std::net::Ipv4Addr;
-use std::sync::Arc;
+use std::{collections::HashMap, net::Ipv4Addr, sync::Arc};
+
 use tracing::debug;
 use zbus::{
     Connection,
     zvariant::{OwnedObjectPath, OwnedValue},
 };
 
-use crate::services::{
-    common::Property,
-    network::{NetworkError, proxy::ip4_config::IP4ConfigProxy},
+use crate::{
+    services::{
+        common::Property,
+        network::{NetworkError, proxy::ip4_config::IP4ConfigProxy},
+    },
+    unwrap_i32, unwrap_string, unwrap_vec,
 };
 
 /// IPv4 configuration for a network device.

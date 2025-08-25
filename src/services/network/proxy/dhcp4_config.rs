@@ -1,6 +1,7 @@
 //! NetworkManager DHCP4 Configuration interface.
 
 use std::collections::HashMap;
+
 use zbus::{proxy, zvariant::Value as Variant};
 
 /// IPv4 DHCP Client State.

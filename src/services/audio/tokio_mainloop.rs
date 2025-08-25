@@ -5,7 +5,7 @@
 //! Copyright (c) Daniel De Graaf <code@danieldg.net>
 //! Licensed under MIT OR Apache-2.0
 //!
-//! Modified for this project with safety improvements and documentation.
+//! Modified for this project with slight adjustments.
 //! Incorporated into this GPL-3.0 project under compatible license terms.
 
 #![allow(unsafe_code)]
@@ -15,11 +15,14 @@
 #![allow(clippy::cognitive_complexity)]
 use std::{
     cell::{Cell, UnsafeCell},
-    fmt,
+    cmp, fmt,
     future::{Future, poll_fn},
-    os::raw::c_void,
-    os::unix::io::{AsRawFd, RawFd},
+    os::{
+        raw::c_void,
+        unix::io::{AsRawFd, RawFd},
+    },
     pin::Pin,
+    ptr,
     rc::{Rc, Weak},
     task,
     time::{Duration, SystemTime, UNIX_EPOCH},
@@ -29,14 +32,17 @@ use libc::timeval;
 use libpulse_binding::{
     context::{self, Context},
     def::{Retval, RetvalActual},
-    mainloop::api::{
-        DeferEventCb, DeferEventDestroyCb, IoEventCb, IoEventDestroyCb, Mainloop as MainloopTrait,
-        MainloopApi, MainloopInnerType, MainloopInternalType, TimeEventCb, TimeEventDestroyCb,
-    },
-    mainloop::events::{
-        deferred::DeferEventInternal,
-        io::{FlagSet as IoEventFlagSet, IoEventInternal},
-        timer::TimeEventInternal,
+    mainloop::{
+        api::{
+            DeferEventCb, DeferEventDestroyCb, IoEventCb, IoEventDestroyCb,
+            Mainloop as MainloopTrait, MainloopApi, MainloopInnerType, MainloopInternalType,
+            TimeEventCb, TimeEventDestroyCb,
+        },
+        events::{
+            deferred::DeferEventInternal,
+            io::{FlagSet as IoEventFlagSet, IoEventInternal},
+            timer::TimeEventInternal,
+        },
     },
 };
 use tokio::io::unix::AsyncFd;
@@ -91,7 +97,9 @@ impl Item {
             Item::Defer { dead, .. } | Item::Timer { dead, .. } => {
                 *dead = true;
             }
-            Item::Event { .. } => unreachable!(),
+            Item::Event { dead, .. } => {
+                dead.set(true);
+            }
         }
     }
 }
@@ -170,7 +178,7 @@ impl TokioMain {
     pub fn new() -> Self {
         let mut mi = Rc::new(MainInner {
             api: MainloopApi {
-                userdata: std::ptr::null_mut(),
+                userdata: ptr::null_mut(),
                 io_new: Some(MainInner::io_new),
                 io_enable: Some(MainInner::io_enable),
                 io_free: Some(MainInner::io_free),
@@ -285,7 +293,7 @@ impl TokioMain {
 
                     if let Some(ts) = ts.get() {
                         if wake.is_some() {
-                            wake = std::cmp::min(wake, Some(ts));
+                            wake = cmp::min(wake, Some(ts));
                         } else {
                             wake = Some(ts);
                         }
@@ -494,24 +502,18 @@ impl MainInner {
     extern "C" fn io_enable(e: *mut IoEventInternal, new: IoEventFlagSet) {
         unsafe {
             let item: *mut Item = e.cast();
-            match &*item {
-                Item::Event { main, events, .. } => {
-                    events.set(new);
-                    MainInner::wake(main);
-                }
-                _ => panic!(),
+            if let Item::Event { main, events, .. } = &*item {
+                events.set(new);
+                MainInner::wake(main);
             }
         }
     }
     extern "C" fn io_free(e: *mut IoEventInternal) {
         unsafe {
             let item: *mut Item = e.cast();
-            match &*item {
-                Item::Event { dead, afd, .. } => {
-                    dead.set(true);
-                    afd.set(None);
-                }
-                _ => panic!(),
+            if let Item::Event { dead, afd, .. } = &*item {
+                dead.set(true);
+                afd.set(None);
             }
         }
     }

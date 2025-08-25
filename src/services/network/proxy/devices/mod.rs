@@ -1,6 +1,7 @@
 //! NetworkManager Device interfaces.
 
 use std::collections::HashMap;
+
 use zbus::{
     proxy,
     zvariant::{OwnedObjectPath, OwnedValue},

@@ -1,6 +1,7 @@
 //! NetworkManager DNS Manager interface.
 
 use std::collections::HashMap;
+
 use zbus::{proxy, zvariant::OwnedValue};
 
 /// DNS Configuration State.

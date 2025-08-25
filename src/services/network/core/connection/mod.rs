@@ -1,15 +1,19 @@
 mod monitoring;
 use std::sync::Arc;
 
-use crate::services::network::NetworkError;
-use crate::{unwrap_bool, unwrap_path, unwrap_string, unwrap_u32, unwrap_vec};
 use monitoring::ActiveConnectionMonitor;
+use tokio_util::sync::CancellationToken;
 use tracing::warn;
 use zbus::{Connection, zvariant::OwnedObjectPath};
 
-use crate::services::{
-    common::Property,
-    network::{ConnectionActiveProxy, NMActivationStateFlags, NMActiveConnectionState},
+use crate::{
+    services::{
+        common::Property,
+        network::{
+            ConnectionActiveProxy, NMActivationStateFlags, NMActiveConnectionState, NetworkError,
+        },
+    },
+    unwrap_bool, unwrap_path, unwrap_string, unwrap_u32, unwrap_vec,
 };
 
 /// Active network connection in NetworkManager.
@@ -104,10 +108,17 @@ impl ActiveConnection {
     pub async fn get_live(
         connection: &Connection,
         path: OwnedObjectPath,
+        cancellation_token: CancellationToken,
     ) -> Result<Arc<Self>, NetworkError> {
         let active_connection = Self::from_path(connection, path.clone()).await?;
 
-        ActiveConnectionMonitor::start(active_connection.clone(), connection, path).await;
+        ActiveConnectionMonitor::start(
+            active_connection.clone(),
+            connection,
+            path,
+            cancellation_token,
+        )
+        .await;
 
         Ok(active_connection)
     }

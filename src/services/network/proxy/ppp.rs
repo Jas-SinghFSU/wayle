@@ -1,6 +1,7 @@
 //! NetworkManager PPP interface.
 
 use std::collections::HashMap;
+
 use zbus::{proxy, zvariant::OwnedValue};
 
 /// Helper interface for a PPP plugin.

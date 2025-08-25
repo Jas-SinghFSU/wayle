@@ -1,14 +1,18 @@
-use std::collections::HashMap;
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
 use futures::StreamExt;
 use tokio::sync::RwLock;
+use tokio_util::sync::CancellationToken;
 use tracing::{debug, instrument, warn};
 use zbus::{Connection, fdo::DBusProxy};
 
-use crate::runtime_state::RuntimeState;
-use crate::services::common::Property;
-use crate::services::media::{MediaError, PlayerId, core::Player};
+use crate::{
+    core::state::RuntimeState,
+    services::{
+        common::Property,
+        media::{MediaError, PlayerId, core::Player},
+    },
+};
 
 const MPRIS_BUS_PREFIX: &str = "org.mpris.MediaPlayer2.";
 
@@ -29,6 +33,7 @@ impl MprisMonitoring {
         player_list: Property<Vec<Arc<Player>>>,
         active_player: Property<Option<Arc<Player>>>,
         ignored_patterns: Vec<String>,
+        cancellation_token: CancellationToken,
     ) -> Result<(), MediaError> {
         Self::discover_existing_players(
             connection,
@@ -36,6 +41,7 @@ impl MprisMonitoring {
             &player_list,
             &active_player,
             &ignored_patterns,
+            &cancellation_token,
         )
         .await?;
 
@@ -45,7 +51,10 @@ impl MprisMonitoring {
                 .keys()
                 .find(|id| id.bus_name() == saved_player_id)
             {
-                let pl = Player::get_live(connection, player_id.clone()).await?;
+                let pl = players_map
+                    .get(player_id)
+                    .cloned()
+                    .ok_or_else(|| MediaError::PlayerNotFound(player_id.clone()))?;
                 active_player.set(Some(pl));
                 debug!("Restored active player from state: {}", saved_player_id);
             }
@@ -57,6 +66,7 @@ impl MprisMonitoring {
             player_list,
             active_player,
             ignored_patterns,
+            cancellation_token,
         );
 
         Ok(())
@@ -68,6 +78,7 @@ impl MprisMonitoring {
         player_list: &Property<Vec<Arc<Player>>>,
         active_player: &Property<Option<Arc<Player>>>,
         ignored_patterns: &[String],
+        cancellation_token: &CancellationToken,
     ) -> Result<(), MediaError> {
         let dbus_proxy = DBusProxy::new(connection)
             .await
@@ -87,6 +98,7 @@ impl MprisMonitoring {
                     player_list,
                     active_player,
                     player_id,
+                    cancellation_token.child_token(),
                 )
                 .await;
             }
@@ -101,10 +113,12 @@ impl MprisMonitoring {
         player_list: Property<Vec<Arc<Player>>>,
         active_player: Property<Option<Arc<Player>>>,
         ignored_patterns: Vec<String>,
+        cancellation_token: CancellationToken,
     ) {
         let connection = connection.clone();
 
         tokio::spawn(async move {
+            debug!("MprisMonitoring task spawned");
             let Ok(dbus_proxy) = DBusProxy::new(&connection).await else {
                 warn!("Failed to create DBus proxy for name monitoring");
                 return;
@@ -115,7 +129,13 @@ impl MprisMonitoring {
                 return;
             };
 
-            while let Some(signal) = name_owner_changed.next().await {
+            loop {
+                tokio::select! {
+                    _ = cancellation_token.cancelled() => {
+                        debug!("MprisMonitoring received cancellation signal, stopping all discovery");
+                        return;
+                    }
+                    Some(signal) = name_owner_changed.next() => {
                 let Ok(args) = signal.args() else { continue };
 
                 if !args.name().starts_with(MPRIS_BUS_PREFIX) {
@@ -134,15 +154,19 @@ impl MprisMonitoring {
                         &player_list,
                         &active_player,
                         player_id.clone(),
+                        cancellation_token.child_token(),
                     )
                     .await;
                 } else if is_player_removed {
                     Self::handle_player_removed(&players, &player_list, &active_player, player_id)
                         .await;
                 }
+                    }
+                    else => {
+                        return;
+                    }
+                }
             }
-
-            debug!("Name monitoring ended");
         });
     }
 
@@ -152,8 +176,9 @@ impl MprisMonitoring {
         player_list: &Property<Vec<Arc<Player>>>,
         active_player: &Property<Option<Arc<Player>>>,
         player_id: PlayerId,
+        cancellation_token: CancellationToken,
     ) {
-        match Player::get_live(connection, player_id.clone()).await {
+        match Player::get_live(connection, player_id.clone(), cancellation_token).await {
             Ok(player) => {
                 let mut players_map = players.write().await;
                 players_map.insert(player_id.clone(), Arc::clone(&player));
@@ -183,11 +208,11 @@ impl MprisMonitoring {
         let mut players_map = players.write().await;
         players_map.remove(&player_id);
 
-        if let Some(current_active) = active_player.get() {
-            if current_active.id == player_id {
-                let new_active = players_map.values().next().cloned();
-                active_player.set(new_active);
-            }
+        if let Some(current_active) = active_player.get()
+            && current_active.id == player_id
+        {
+            let new_active = players_map.values().next().cloned();
+            active_player.set(new_active);
         }
 
         let current_list = player_list.get();

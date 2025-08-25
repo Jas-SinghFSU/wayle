@@ -1,21 +1,25 @@
 mod controls;
 mod monitoring;
 
-use crate::{unwrap_bool, unwrap_string, unwrap_u32};
+use std::{collections::HashMap, sync::Arc};
+
 use controls::ConnectionSettingsControls;
 use monitoring::ConnectionSettingsMonitor;
-use std::{collections::HashMap, sync::Arc};
+use tokio_util::sync::CancellationToken;
 use zbus::{
     Connection,
     zvariant::{self, OwnedObjectPath, OwnedValue},
 };
 
-use crate::services::{
-    common::Property,
-    network::{
-        NMConnectionSettingsFlags, NetworkError, core::access_point::SSID,
-        proxy::settings::connection::SettingsConnectionProxy,
+use crate::{
+    services::{
+        common::Property,
+        network::{
+            NMConnectionSettingsFlags, NetworkError, core::access_point::SSID,
+            proxy::settings::connection::SettingsConnectionProxy,
+        },
     },
+    unwrap_bool, unwrap_string, unwrap_u32,
 };
 
 /// Connection Settings Profile.
@@ -75,11 +79,13 @@ impl ConnectionSettings {
     pub async fn get_live(
         connection: &Connection,
         path: OwnedObjectPath,
+        cancellation_token: CancellationToken,
     ) -> Result<Arc<Self>, NetworkError> {
         let properties = Self::fetch_properties(connection, &path).await?;
         let settings = Arc::new(Self::from_props(path.clone(), properties, connection));
 
-        ConnectionSettingsMonitor::start(settings.clone(), connection, path).await?;
+        ConnectionSettingsMonitor::start(settings.clone(), connection, path, cancellation_token)
+            .await?;
 
         Ok(settings)
     }
@@ -99,7 +105,8 @@ impl ConnectionSettings {
         &self,
         properties: HashMap<String, HashMap<String, OwnedValue>>,
     ) -> Result<(), NetworkError> {
-        ConnectionSettingsControls::update(&self.connection, &self.object_path.get(), properties).await
+        ConnectionSettingsControls::update(&self.connection, &self.object_path.get(), properties)
+            .await
     }
 
     /// Update the connection without immediately saving to disk.
@@ -120,8 +127,12 @@ impl ConnectionSettings {
         &self,
         properties: HashMap<String, HashMap<String, OwnedValue>>,
     ) -> Result<(), NetworkError> {
-        ConnectionSettingsControls::update_unsaved(&self.connection, &self.object_path.get(), properties)
-            .await
+        ConnectionSettingsControls::update_unsaved(
+            &self.connection,
+            &self.object_path.get(),
+            properties,
+        )
+        .await
     }
 
     /// Delete the connection.
@@ -166,8 +177,12 @@ impl ConnectionSettings {
         &self,
         setting_name: &str,
     ) -> Result<HashMap<String, HashMap<String, OwnedValue>>, NetworkError> {
-        ConnectionSettingsControls::get_secrets(&self.connection, &self.object_path.get(), setting_name)
-            .await
+        ConnectionSettingsControls::get_secrets(
+            &self.connection,
+            &self.object_path.get(),
+            setting_name,
+        )
+        .await
     }
 
     /// Clear the secrets belonging to this network connection profile.

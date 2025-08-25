@@ -1,18 +1,19 @@
 mod monitoring;
 
-use std::ops::Deref;
-use std::sync::Arc;
+use std::{ops::Deref, sync::Arc};
 
 use monitoring::DeviceWiredMonitor;
+use tokio_util::sync::CancellationToken;
 use zbus::{Connection, zvariant::OwnedObjectPath};
 
-use crate::services::{
-    common::Property,
-    network::{DeviceProxy, NMDeviceType, NetworkError, wired_proxy::DeviceWiredProxy},
-};
-use crate::{unwrap_string, unwrap_u32, unwrap_vec};
-
 use super::Device;
+use crate::{
+    services::{
+        common::Property,
+        network::{DeviceProxy, NMDeviceType, NetworkError, wired_proxy::DeviceWiredProxy},
+    },
+    unwrap_string, unwrap_u32, unwrap_vec,
+};
 
 /// Speed in megabits per second (Mb/s).
 pub type SpeedMbps = u32;
@@ -77,15 +78,22 @@ impl DeviceWired {
     pub async fn get_live(
         connection: &Connection,
         device_path: OwnedObjectPath,
+        cancellation_token: CancellationToken,
     ) -> Result<Arc<Self>, NetworkError> {
         Self::verify_is_ethernet_device(connection, &device_path).await?;
 
-        let base_device = Device::get_live(connection, device_path.clone()).await?;
+        let base_device = Device::get_live(
+            connection,
+            device_path.clone(),
+            cancellation_token.child_token(),
+        )
+        .await?;
         let base = Device::clone(&base_device);
         let wired_props = Self::fetch_wired_properties(connection, &device_path).await?;
         let device = Arc::new(Self::from_props(base, wired_props));
 
-        DeviceWiredMonitor::start(device.clone(), connection, device_path).await?;
+        DeviceWiredMonitor::start(device.clone(), connection, device_path, cancellation_token)
+            .await?;
 
         Ok(device)
     }

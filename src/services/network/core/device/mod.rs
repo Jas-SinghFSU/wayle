@@ -5,20 +5,22 @@ pub mod wifi;
 /// Wired (ethernet) device functionality and management.
 pub mod wired;
 
-use crate::{
-    unwrap_bool, unwrap_bool_or, unwrap_path, unwrap_string, unwrap_u32, unwrap_u32_or, unwrap_vec,
-};
-use monitoring::DeviceMonitor;
 use std::sync::Arc;
+
+use monitoring::DeviceMonitor;
+use tokio_util::sync::CancellationToken;
 use zbus::{Connection, zvariant::OwnedObjectPath};
 
-use crate::services::{
-    common::Property,
-    network::{
-        LldpNeighbor, NMConnectivityState, NMDeviceCapabilities, NMDeviceInterfaceFlags,
-        NMDeviceState, NMDeviceStateReason, NMDeviceType, NMMetered, NetworkError,
-        proxy::devices::DeviceProxy,
+use crate::{
+    services::{
+        common::Property,
+        network::{
+            LldpNeighbor, NMConnectivityState, NMDeviceCapabilities, NMDeviceInterfaceFlags,
+            NMDeviceState, NMDeviceStateReason, NMDeviceType, NMMetered, NetworkError,
+            proxy::devices::DeviceProxy,
+        },
     },
+    unwrap_bool, unwrap_bool_or, unwrap_path, unwrap_string, unwrap_u32, unwrap_u32_or, unwrap_vec,
 };
 
 /// Wrapper around zbus::Connection that implements Debug.
@@ -226,6 +228,7 @@ impl Device {
     pub(crate) async fn get_live(
         connection: &Connection,
         object_path: OwnedObjectPath,
+        cancellation_token: CancellationToken,
     ) -> Result<Arc<Self>, NetworkError> {
         let device = Self::from_path(connection, object_path.clone())
             .await
@@ -236,7 +239,7 @@ impl Device {
             })?;
 
         let device = Arc::new(device);
-        DeviceMonitor::start(device.clone(), connection, object_path).await?;
+        DeviceMonitor::start(device.clone(), connection, object_path, cancellation_token).await?;
 
         Ok(device)
     }

@@ -3,3 +3,6 @@ test-integration = "test config_store -- --test-threads=1"
 test-unit = "test --lib"
 test-all = "test -- --test-threads=1"
 fmt-check = "fmt --all -- --check"
+format = "fmt --all"
+fix-all = "clippy --fix --allow-dirty --allow-staged -- -W clippy::all"
+

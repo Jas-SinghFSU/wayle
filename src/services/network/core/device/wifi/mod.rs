@@ -1,23 +1,24 @@
 mod monitoring;
 
-use std::sync::Arc;
-use std::{collections::HashMap, ops::Deref};
+use std::{collections::HashMap, ops::Deref, sync::Arc};
 
-use crate::{unwrap_i64_or, unwrap_path_or, unwrap_string, unwrap_u32, unwrap_vec};
 use monitoring::DeviceWifiMonitor;
+use tokio_util::sync::CancellationToken;
 use tracing::warn;
 use zbus::{Connection, zvariant::OwnedObjectPath};
 
-use crate::services::{
-    common::Property,
-    network::{
-        NMDeviceType, NetworkError,
-        proxy::devices::{DeviceProxy, wireless::DeviceWirelessProxy},
-        types::NM80211Mode,
-    },
-};
-
 use super::Device;
+use crate::{
+    services::{
+        common::Property,
+        network::{
+            NMDeviceType, NetworkError,
+            proxy::devices::{DeviceProxy, wireless::DeviceWirelessProxy},
+            types::NM80211Mode,
+        },
+    },
+    unwrap_i64_or, unwrap_path_or, unwrap_string, unwrap_u32, unwrap_vec,
+};
 
 /// Bitrate in kilobits per second (Kb/s).
 pub type BitrateKbps = u32;
@@ -107,16 +108,23 @@ impl DeviceWifi {
     pub async fn get_live(
         connection: &Connection,
         device_path: OwnedObjectPath,
+        cancellation_token: CancellationToken,
     ) -> Result<Arc<Self>, NetworkError> {
         Self::verify_is_wifi_device(connection, &device_path).await?;
 
-        let base_arc = Device::get_live(connection, device_path.clone()).await?;
+        let base_arc = Device::get_live(
+            connection,
+            device_path.clone(),
+            cancellation_token.child_token(),
+        )
+        .await?;
         let base = Device::clone(&base_arc);
 
         let wifi_props = Self::fetch_wifi_properties(connection, &device_path).await?;
         let device = Arc::new(Self::from_props(base, wifi_props));
 
-        DeviceWifiMonitor::start(device.clone(), connection, device_path).await?;
+        DeviceWifiMonitor::start(device.clone(), connection, device_path, cancellation_token)
+            .await?;
 
         Ok(device)
     }

@@ -1,5 +1,5 @@
-use std::collections::HashMap;
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
+
 use zbus::{
     Connection,
     zvariant::{OwnedObjectPath, OwnedValue},

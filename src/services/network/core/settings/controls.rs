@@ -5,9 +5,7 @@ use zbus::{
     zvariant::{OwnedObjectPath, OwnedValue},
 };
 
-use crate::services::network::{
-    NMSettingsAddConnection2Flags, NetworkError, SettingsProxy,
-};
+use crate::services::network::{NMSettingsAddConnection2Flags, NetworkError, SettingsProxy};
 
 pub(super) struct SettingsController;
 

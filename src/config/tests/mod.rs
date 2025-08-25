@@ -5,6 +5,8 @@
 
 #![allow(clippy::panic)]
 
+use std::{env, panic};
+
 use crate::config::{Config, ConfigPaths};
 
 #[test]
@@ -87,11 +89,11 @@ fn config_paths_valid() {
     let config_dir_result = ConfigPaths::config_dir();
     assert!(config_dir_result.is_ok() || config_dir_result.is_err());
 
-    let main_config = std::panic::catch_unwind(ConfigPaths::main_config);
+    let main_config = panic::catch_unwind(ConfigPaths::main_config);
 
-    let runtime_config = std::panic::catch_unwind(ConfigPaths::runtime_config);
+    let runtime_config = panic::catch_unwind(ConfigPaths::runtime_config);
 
-    if std::env::var("HOME").is_ok() {
+    if env::var("HOME").is_ok() {
         assert!(main_config.is_ok());
         assert!(runtime_config.is_ok());
 

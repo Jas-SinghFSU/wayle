@@ -1,19 +1,15 @@
-//! Command-line interface for configuration management.
-//!
-//! Provides a hierarchical command system for interacting with Wayle's
-//! reactive configuration store. Commands are organized by category
-//! and automatically generate help text from metadata.
+/// Application CLI parser and command definitions.
+pub mod app;
+/// Configuration management CLI commands.
+pub mod config;
+/// Media player control CLI commands.
+pub mod media;
+/// Panel management CLI commands.
+pub mod panel;
 
-mod commands;
-pub mod formatting;
-mod registry;
-mod service;
-mod types;
+pub use app::{Cli, Commands};
 
-#[cfg(test)]
-mod tests;
-
-pub use commands::config::GetCommand;
-pub use registry::CommandRegistry;
-pub use service::CliService;
-pub use types::{CliError, Command, CommandResult};
+/// Result type for CLI operations that return output.
+pub type CliResult = Result<String, String>;
+/// Result type for CLI operations that perform actions.
+pub type CliAction = Result<(), String>;

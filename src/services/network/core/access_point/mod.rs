@@ -1,13 +1,16 @@
 use std::sync::Arc;
 
-use crate::{unwrap_i32_or, unwrap_string, unwrap_u8, unwrap_u32, unwrap_vec};
+use tokio_util::sync::CancellationToken;
 use zbus::{Connection, zvariant::OwnedObjectPath};
 
-use crate::services::{
-    common::Property,
-    network::{
-        AccessPointProxy, NM80211ApFlags, NM80211ApSecurityFlags, NM80211Mode, NetworkError,
+use crate::{
+    services::{
+        common::Property,
+        network::{
+            AccessPointProxy, NM80211ApFlags, NM80211ApSecurityFlags, NM80211Mode, NetworkError,
+        },
     },
+    unwrap_i32_or, unwrap_string, unwrap_u8, unwrap_u32, unwrap_vec,
 };
 
 mod monitoring;
@@ -106,6 +109,7 @@ impl AccessPoint {
     pub async fn get_live(
         connection: &Connection,
         path: OwnedObjectPath,
+        cancellation_token: CancellationToken,
     ) -> Result<Arc<Self>, NetworkError> {
         let access_point =
             Self::from_path(connection, path.clone())
@@ -119,7 +123,7 @@ impl AccessPoint {
                     },
                 })?;
 
-        AccessPointMonitor::start(access_point.clone(), connection, path).await;
+        AccessPointMonitor::start(access_point.clone(), connection, path, cancellation_token).await;
 
         Ok(access_point)
     }

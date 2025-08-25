@@ -1,9 +1,10 @@
-use tracing::{instrument, warn};
-use zbus::Connection;
-
 use std::sync::Arc;
-use zbus::zvariant::OwnedObjectPath;
 
+use tokio_util::sync::CancellationToken;
+use tracing::{instrument, warn};
+use zbus::{Connection, zvariant::OwnedObjectPath};
+
+use super::{ConnectionType, NetworkError, Wifi, Wired};
 use crate::services::{
     common::Property,
     network::{
@@ -23,8 +24,6 @@ use crate::services::{
     },
 };
 
-use super::{ConnectionType, NetworkError, Wifi, Wired};
-
 /// Manages network connectivity through NetworkManager D-Bus interface.
 ///
 /// Provides unified access to both WiFi and wired network interfaces,
@@ -33,6 +32,7 @@ use super::{ConnectionType, NetworkError, Wifi, Wired};
 /// network status changes.
 pub struct NetworkService {
     zbus_connection: Connection,
+    cancellation_token: CancellationToken,
     /// NetworkManager Settings interface for managing connection profiles.
     pub settings: Arc<Settings>,
     /// Current WiFi device state, if available.
@@ -75,17 +75,22 @@ impl NetworkService {
             NetworkError::ServiceInitializationFailed(format!("D-Bus connection failed: {err}"))
         })?;
 
-        let settings = Settings::get_live(&connection).await.map_err(|err| {
-            NetworkError::ServiceInitializationFailed(format!(
-                "Failed to initialize Settings: {err}"
-            ))
-        })?;
+        let cancellation_token = CancellationToken::new();
+
+        let settings = Settings::get_live(&connection, cancellation_token.child_token())
+            .await
+            .map_err(|err| {
+                NetworkError::ServiceInitializationFailed(format!(
+                    "Failed to initialize Settings: {err}"
+                ))
+            })?;
 
         let wifi_device_path = NetworkServiceDiscovery::wifi_device_path(&connection).await?;
         let wired_device_path = NetworkServiceDiscovery::wired_device_path(&connection).await?;
 
         let wifi = if let Some(path) = wifi_device_path {
-            match Wifi::get_live(&connection, path.clone()).await {
+            match Wifi::get_live(&connection, path.clone(), cancellation_token.child_token()).await
+            {
                 Ok(wifi) => Some(wifi),
                 Err(e) => {
                     warn!("Failed to create WiFi service from path {}: {}", path, e);
@@ -97,7 +102,8 @@ impl NetworkService {
         };
 
         let wired = if let Some(path) = wired_device_path {
-            match Wired::get_live(&connection, path.clone()).await {
+            match Wired::get_live(&connection, path.clone(), cancellation_token.child_token()).await
+            {
                 Ok(wired) => Some(wired),
                 Err(e) => {
                     warn!("Failed to create Wired service from path {}: {}", path, e);
@@ -110,10 +116,18 @@ impl NetworkService {
 
         let primary = Property::new(ConnectionType::Unknown);
 
-        NetworkMonitoring::start(&connection, wifi.clone(), wired.clone(), primary.clone()).await?;
+        NetworkMonitoring::start(
+            &connection,
+            wifi.clone(),
+            wired.clone(),
+            primary.clone(),
+            cancellation_token.child_token(),
+        )
+        .await?;
 
         let service = Self {
             zbus_connection: connection.clone(),
+            cancellation_token,
             settings,
             wifi,
             wired,
@@ -147,7 +161,12 @@ impl NetworkService {
         &self,
         path: OwnedObjectPath,
     ) -> Result<Arc<ActiveConnection>, NetworkError> {
-        ActiveConnection::get_live(&self.zbus_connection, path).await
+        ActiveConnection::get_live(
+            &self.zbus_connection,
+            path,
+            self.cancellation_token.child_token(),
+        )
+        .await
     }
 
     /// Wi-Fi Access Point.
@@ -172,7 +191,12 @@ impl NetworkService {
         &self,
         path: OwnedObjectPath,
     ) -> Result<Arc<AccessPoint>, NetworkError> {
-        AccessPoint::get_live(&self.zbus_connection, path).await
+        AccessPoint::get_live(
+            &self.zbus_connection,
+            path,
+            self.cancellation_token.child_token(),
+        )
+        .await
     }
 
     /// Represents a single network connection configuration.
@@ -197,7 +221,12 @@ impl NetworkService {
         &self,
         path: OwnedObjectPath,
     ) -> Result<Arc<ConnectionSettings>, NetworkError> {
-        ConnectionSettings::get_live(&self.zbus_connection, path).await
+        ConnectionSettings::get_live(
+            &self.zbus_connection,
+            path,
+            self.cancellation_token.child_token(),
+        )
+        .await
     }
 
     /// Represents a network device.
@@ -219,7 +248,12 @@ impl NetworkService {
         &self,
         path: OwnedObjectPath,
     ) -> Result<Arc<Device>, NetworkError> {
-        Device::get_live(&self.zbus_connection, path).await
+        Device::get_live(
+            &self.zbus_connection,
+            path,
+            self.cancellation_token.child_token(),
+        )
+        .await
     }
 
     /// Represents a Wi-Fi device.
@@ -244,7 +278,12 @@ impl NetworkService {
         &self,
         path: OwnedObjectPath,
     ) -> Result<Arc<DeviceWifi>, NetworkError> {
-        DeviceWifi::get_live(&self.zbus_connection, path).await
+        DeviceWifi::get_live(
+            &self.zbus_connection,
+            path,
+            self.cancellation_token.child_token(),
+        )
+        .await
     }
 
     /// Represents a wired Ethernet device.
@@ -269,7 +308,12 @@ impl NetworkService {
         &self,
         path: OwnedObjectPath,
     ) -> Result<Arc<DeviceWired>, NetworkError> {
-        DeviceWired::get_live(&self.zbus_connection, path).await
+        DeviceWired::get_live(
+            &self.zbus_connection,
+            path,
+            self.cancellation_token.child_token(),
+        )
+        .await
     }
 
     /// IPv4 Configuration Set.
@@ -312,5 +356,11 @@ impl NetworkService {
         path: OwnedObjectPath,
     ) -> Result<Arc<Dhcp6Config>, NetworkError> {
         Dhcp6Config::get(&self.zbus_connection, path).await
+    }
+}
+
+impl Drop for NetworkService {
+    fn drop(&mut self) {
+        self.cancellation_token.cancel();
     }
 }

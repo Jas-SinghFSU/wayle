@@ -1,14 +1,14 @@
-use std::sync::{Arc, Weak};
+use std::sync::Arc;
 
 use futures::StreamExt;
+use tokio_util::sync::CancellationToken;
 use tracing::debug;
 use zbus::{Connection, zvariant::OwnedObjectPath};
 
+use super::ActiveConnection;
 use crate::services::network::{
     ConnectionActiveProxy, NMActivationStateFlags, NMActiveConnectionState,
 };
-
-use super::ActiveConnection;
 
 /// Monitors D-Bus properties and updates the reactive ActiveConnection model.
 pub(crate) struct ActiveConnectionMonitor;
@@ -18,22 +18,25 @@ impl ActiveConnectionMonitor {
         active_connection: Arc<ActiveConnection>,
         zbus_connection: &Connection,
         path: OwnedObjectPath,
+        cancellation_token: CancellationToken,
     ) {
-        let weak = Arc::downgrade(&active_connection);
-
         let Ok(proxy) = ConnectionActiveProxy::new(zbus_connection, path).await else {
             debug!("Failed to create proxy for active connection monitoring");
             return;
         };
 
         tokio::spawn(async move {
-            Self::monitor(weak, proxy).await;
+            Self::monitor(active_connection, proxy, cancellation_token).await;
         });
     }
 
     #[allow(clippy::cognitive_complexity)]
     #[allow(clippy::too_many_lines)]
-    async fn monitor(weak: Weak<ActiveConnection>, proxy: ConnectionActiveProxy<'static>) {
+    async fn monitor(
+        active_connection: Arc<ActiveConnection>,
+        proxy: ConnectionActiveProxy<'static>,
+        cancellation_token: CancellationToken,
+    ) {
         let mut connection_changes = proxy.receive_connection_changed().await;
         let mut specific_object_changes = proxy.receive_specific_object_changed().await;
         let mut id_changes = proxy.receive_id_changed().await;
@@ -52,12 +55,11 @@ impl ActiveConnectionMonitor {
         let mut controller_changed = proxy.receive_controller_changed().await;
 
         loop {
-            let Some(active_connection) = weak.upgrade() else {
-                debug!("ActiveConnection dropped, stopping monitor");
-                return;
-            };
-
             tokio::select! {
+                _ = cancellation_token.cancelled() => {
+                    debug!("ActiveConnectionMonitor cancelled");
+                    return;
+                }
                 Some(change) = connection_changes.next() => {
                     if let Ok(new_connection) = change.get().await {
                         active_connection.connection_path.set(new_connection);
@@ -145,8 +147,6 @@ impl ActiveConnectionMonitor {
                     break;
                 }
             }
-
-            drop(active_connection);
         }
 
         debug!("Property monitoring ended for active connection");

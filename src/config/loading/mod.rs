@@ -2,17 +2,19 @@ mod circular_detection;
 mod file_creation;
 mod merging;
 
-use super::Config;
-use crate::{Result, WayleError};
-use circular_detection::CircularDetector;
-use file_creation::create_default_config_file;
-use merging::merge_toml_configs;
 use std::{
     collections::HashSet,
     fs,
     path::{Path, PathBuf},
 };
+
+use circular_detection::CircularDetector;
+use file_creation::create_default_config_file;
+use merging::merge_toml_configs;
 use toml::Value;
+
+use super::Config;
+use crate::{Result, WayleError};
 
 impl Config {
     /// Loads a configuration file with support for importing other TOML files

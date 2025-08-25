@@ -19,13 +19,12 @@ mod tests;
 
 pub use clock::ClockConfig;
 pub use error::{Result, WayleError};
-pub use media::MediaConfig;
-pub use paths::ConfigPaths;
-pub use styling::*;
-
 use general::GeneralConfig;
+pub use media::MediaConfig;
 use modules::ModulesConfig;
+pub use paths::ConfigPaths;
 use serde::{Deserialize, Serialize};
+pub use styling::*;
 
 /// Main configuration structure for Wayle.
 ///

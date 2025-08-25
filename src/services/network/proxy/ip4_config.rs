@@ -1,6 +1,7 @@
 //! NetworkManager IPv4 Configuration interface.
 
 use std::collections::HashMap;
+
 use zbus::{proxy, zvariant::OwnedValue};
 
 /// IPv4 Configuration Set.

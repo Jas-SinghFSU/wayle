@@ -1,14 +1,15 @@
 mod controls;
 mod monitoring;
 
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
-use futures::{Stream, future::join_all};
+use futures::{Stream, StreamExt, future::join_all};
 use monitoring::SettingsMonitor;
-use zbus::Connection;
-
-use std::collections::HashMap;
-use zbus::zvariant::{OwnedObjectPath, OwnedValue};
+use tokio_util::sync::CancellationToken;
+use zbus::{
+    Connection,
+    zvariant::{OwnedObjectPath, OwnedValue},
+};
 
 use super::{access_point::SSID, settings_connection::ConnectionSettings};
 use crate::{
@@ -18,7 +19,6 @@ use crate::{
     },
     unwrap_bool, unwrap_string, unwrap_u64, unwrap_vec,
 };
-use futures::StreamExt;
 
 /// Connection Settings Profile Manager.
 ///
@@ -60,11 +60,14 @@ impl Settings {
     /// # Errors
     ///
     /// Returns `NetworkError::DbusError` if DBus operations fail.
-    pub async fn get_live(zbus_connection: &Connection) -> Result<Arc<Self>, NetworkError> {
+    pub async fn get_live(
+        zbus_connection: &Connection,
+        cancellation_token: CancellationToken,
+    ) -> Result<Arc<Self>, NetworkError> {
         let properties = Self::from_connection(zbus_connection).await?;
         let settings = Arc::new(properties);
 
-        SettingsMonitor::start(zbus_connection, settings.clone()).await;
+        SettingsMonitor::start(zbus_connection, settings.clone(), cancellation_token).await;
 
         Ok(settings)
     }

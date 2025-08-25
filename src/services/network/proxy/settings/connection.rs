@@ -1,6 +1,7 @@
 //! NetworkManager Settings Connection interface.
 
 use std::collections::HashMap;
+
 use zbus::{proxy, zvariant::OwnedValue};
 
 /// Connection Settings Profile.

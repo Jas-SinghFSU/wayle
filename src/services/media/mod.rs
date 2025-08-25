@@ -17,6 +17,7 @@ mod monitoring;
 mod proxy;
 
 pub use core::{Player, TrackMetadata, UNKNOWN_METADATA};
+
 pub use error::MediaError;
 pub use service::{Config, MediaService};
 pub use types::*;

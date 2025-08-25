@@ -1,16 +1,16 @@
 pub(crate) mod monitoring;
 
-use std::collections::HashMap;
-use std::sync::Arc;
-use std::time::Duration;
+use std::{collections::HashMap, sync::Arc, time::Duration};
 
 use futures::stream::Stream;
 use monitoring::TrackMetadataMonitor;
+use tokio_util::sync::CancellationToken;
 use zbus::zvariant::OwnedValue;
 
-use crate::services::common::Property;
-use crate::services::media::proxy::MediaPlayer2PlayerProxy;
-use crate::watch_all;
+use crate::{
+    services::{common::Property, media::proxy::MediaPlayer2PlayerProxy},
+    watch_all,
+};
 
 /// Default value for unknown metadata fields.
 pub const UNKNOWN_METADATA: &str = "Unknown";
@@ -41,10 +41,10 @@ pub struct TrackMetadata {
 }
 
 impl TrackMetadata {
-    /// Create metadata with D-Bus monitoring.
+    /// Get metadata snapshot without monitoring.
     ///
-    /// Fetches initial metadata and starts monitoring for changes.
-    pub async fn new(proxy: MediaPlayer2PlayerProxy<'static>) -> Arc<Self> {
+    /// Fetches current metadata without setting up monitoring for changes.
+    pub async fn get(proxy: &MediaPlayer2PlayerProxy<'_>) -> Arc<Self> {
         let metadata = Self::unknown();
         let metadata = Arc::new(metadata);
 
@@ -52,7 +52,24 @@ impl TrackMetadata {
             Self::update_from_dbus(&metadata, metadata_map);
         }
 
-        TrackMetadataMonitor::start(Arc::clone(&metadata), proxy);
+        metadata
+    }
+
+    /// Get metadata with live monitoring.
+    ///
+    /// Fetches initial metadata and starts monitoring for changes.
+    pub async fn get_live(
+        proxy: MediaPlayer2PlayerProxy<'static>,
+        cancellation_token: CancellationToken,
+    ) -> Arc<Self> {
+        let metadata = Self::unknown();
+        let metadata = Arc::new(metadata);
+
+        if let Ok(metadata_map) = proxy.metadata().await {
+            Self::update_from_dbus(&metadata, metadata_map);
+        }
+
+        TrackMetadataMonitor::start(Arc::clone(&metadata), proxy, cancellation_token);
 
         metadata
     }

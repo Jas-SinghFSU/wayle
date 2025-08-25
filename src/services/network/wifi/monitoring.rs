@@ -2,8 +2,10 @@ use std::sync::Arc;
 
 use tokio::task::JoinHandle;
 use tokio_stream::StreamExt;
+use tokio_util::sync::CancellationToken;
 use zbus::{Connection, proxy::PropertyStream, zvariant::OwnedObjectPath};
 
+use super::Wifi;
 use crate::services::{
     common::Property,
     network::{
@@ -12,8 +14,6 @@ use crate::services::{
         wireless::DeviceWirelessProxy,
     },
 };
-
-use super::Wifi;
 
 type SsidStream = PropertyStream<'static, Vec<u8>>;
 type StrengthStream = PropertyStream<'static, u8>;
@@ -24,13 +24,20 @@ impl WifiMonitor {
     pub async fn start(
         connection: &Connection,
         wifi: &Wifi,
+        cancellation_token: CancellationToken,
     ) -> Result<JoinHandle<()>, NetworkError> {
         let access_points = &wifi.access_points;
         let device = &wifi.device;
 
-        Self::populate_existing_access_points(connection, device, access_points).await;
+        Self::populate_existing_access_points(
+            connection,
+            device,
+            access_points,
+            &cancellation_token,
+        )
+        .await;
 
-        let handle = Self::spawn_monitoring_task(connection, wifi).await?;
+        let handle = Self::spawn_monitoring_task(connection, wifi, cancellation_token).await?;
 
         Ok(handle)
     }
@@ -39,6 +46,7 @@ impl WifiMonitor {
         connection: &Connection,
         device: &DeviceWifi,
         access_points: &Property<Vec<Arc<AccessPoint>>>,
+        cancellation_token: &CancellationToken,
     ) {
         let existing_paths = device.access_points.get();
         let mut initial_aps = Vec::with_capacity(existing_paths.len());
@@ -48,7 +56,9 @@ impl WifiMonitor {
                 continue;
             };
 
-            if let Ok(ap) = AccessPoint::get_live(connection, path).await {
+            if let Ok(ap) =
+                AccessPoint::get_live(connection, path, cancellation_token.child_token()).await
+            {
                 initial_aps.push(ap);
             }
         }
@@ -61,6 +71,7 @@ impl WifiMonitor {
     async fn spawn_monitoring_task(
         connection: &Connection,
         wifi: &Wifi,
+        cancellation_token: CancellationToken,
     ) -> Result<JoinHandle<()>, NetworkError> {
         let connection = connection.clone();
 
@@ -104,9 +115,14 @@ impl WifiMonitor {
         let handle = tokio::spawn(async move {
             loop {
                 tokio::select! {
+                    _ = cancellation_token.cancelled() => {
+                        tracing::debug!("WifiMonitor cancelled");
+                        return;
+                    }
+
                     Some(added) = ap_added.next() => {
                         if let Ok(args) = added.args() {
-                            Self::handle_ap_added(&connection, args.access_point, &access_points_prop).await;
+                            Self::handle_ap_added(&connection, args.access_point, &access_points_prop, &cancellation_token).await;
                         }
                     }
 
@@ -172,8 +188,11 @@ impl WifiMonitor {
         connection: &Connection,
         ap_path: OwnedObjectPath,
         access_points: &Property<Vec<Arc<AccessPoint>>>,
+        cancellation_token: &CancellationToken,
     ) {
-        if let Ok(new_ap) = AccessPoint::get_live(connection, ap_path).await {
+        if let Ok(new_ap) =
+            AccessPoint::get_live(connection, ap_path, cancellation_token.child_token()).await
+        {
             let mut aps = access_points.get();
             aps.push(new_ap);
             access_points.set(aps);

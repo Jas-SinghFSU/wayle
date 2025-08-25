@@ -1,11 +1,13 @@
 mod monitoring;
 
+use std::{ops::Deref, sync::Arc};
+
+use monitoring::WiredMonitor;
+use tokio_util::sync::CancellationToken;
+use zbus::{Connection, zvariant::OwnedObjectPath};
+
 use super::{NetworkError, NetworkStatus, core::device::wired::DeviceWired};
 use crate::services::common::Property;
-use monitoring::WiredMonitor;
-use std::ops::Deref;
-use std::sync::Arc;
-use zbus::{Connection, zvariant::OwnedObjectPath};
 
 /// Manages wired (ethernet) network connectivity and device state.
 ///
@@ -69,14 +71,18 @@ impl Wired {
     pub async fn get_live(
         connection: &Connection,
         device_path: OwnedObjectPath,
+        cancellation_token: CancellationToken,
     ) -> Result<Arc<Self>, NetworkError> {
-        let device_arc = DeviceWired::get_live(connection, device_path).await?;
+        let device_arc =
+            DeviceWired::get_live(connection, device_path, cancellation_token.child_token())
+                .await?;
         let device = DeviceWired::clone(&device_arc);
 
         let wired = Self::from_device(device.clone()).await?;
         let wired_arc = Arc::new(wired);
 
-        let _monitoring_handle = WiredMonitor::start(connection, &wired_arc).await?;
+        let _monitoring_handle =
+            WiredMonitor::start(connection, &wired_arc, cancellation_token).await?;
 
         Ok(wired_arc)
     }

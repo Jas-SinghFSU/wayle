@@ -1,4 +1,7 @@
-use super::{DeviceType, StreamType, VolumeError};
+use super::{
+    types::{DeviceType, StreamType},
+    volume::VolumeError,
+};
 
 /// PulseAudio service errors
 #[derive(thiserror::Error, Debug)]
@@ -40,4 +43,12 @@ pub enum AudioError {
     /// Service initialization failed
     #[error("Service initialization failed: {0}")]
     InitializationFailed(String),
+
+    /// Backend communication failed
+    #[error("Backend communication failed")]
+    BackendCommunicationFailed,
+
+    /// Operation not supported
+    #[error("Operation not supported: {0}")]
+    OperationNotSupported(String),
 }

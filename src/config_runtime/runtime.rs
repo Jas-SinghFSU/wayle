@@ -14,13 +14,12 @@ pub type ConfigData = Arc<RwLock<Config>>;
 /// Thread-safe storage for runtime configuration values
 pub type RuntimeConfig = Arc<RwLock<HashMap<String, Value>>>;
 
-use crate::config::{Config, ConfigPaths};
-
 use super::{
     ConfigChange, ConfigError, Subscription,
     broadcast::BroadcastService,
     path_ops::{navigate_path, set_value_at_path},
 };
+use crate::config::{Config, ConfigPaths};
 
 /// Thread-safe configuration store with reactive change notifications.
 ///
@@ -33,9 +32,15 @@ pub struct ConfigRuntime {
     runtime_config: RuntimeConfig,
 }
 
+impl Default for ConfigRuntime {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ConfigRuntime {
     /// Creates a new ConfigRuntime with default configuration values.
-    pub fn with_defaults() -> Self {
+    pub fn new() -> Self {
         let config = Config::default();
         let broadcast_service = BroadcastService::new();
 

@@ -1,6 +1,5 @@
-use crate::{config::ClockConfig, docs::ModuleInfoProvider};
-
 use super::ModuleInfo;
+use crate::{config::ClockConfig, docs::ModuleInfoProvider};
 
 /// Central registry for all available modules in the Wayle system.
 ///

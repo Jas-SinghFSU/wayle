@@ -1,6 +1,7 @@
-use std::sync::{Arc, Weak};
+use std::sync::Arc;
 
 use futures::StreamExt;
+use tokio_util::sync::CancellationToken;
 use tracing::debug;
 use zbus::{Connection, zvariant::OwnedObjectPath};
 
@@ -18,15 +19,14 @@ impl DeviceMonitor {
         device: Arc<Device>,
         connection: &Connection,
         path: OwnedObjectPath,
+        cancellation_token: CancellationToken,
     ) -> Result<(), NetworkError> {
-        let weak = Arc::downgrade(&device);
-
         let proxy = DeviceProxy::new(connection, path)
             .await
             .map_err(NetworkError::DbusError)?;
 
         tokio::spawn(async move {
-            Self::monitor(weak, proxy).await;
+            Self::monitor(device, proxy, cancellation_token).await;
         });
 
         Ok(())
@@ -34,7 +34,11 @@ impl DeviceMonitor {
 
     #[allow(clippy::cognitive_complexity)]
     #[allow(clippy::too_many_lines)]
-    async fn monitor(weak: Weak<Device>, proxy: DeviceProxy<'static>) {
+    async fn monitor(
+        device: Arc<Device>,
+        proxy: DeviceProxy<'static>,
+        cancellation_token: CancellationToken,
+    ) {
         let mut udi_changed = proxy.receive_udi_changed().await;
         let mut udev_path_changed = proxy.receive_path_changed().await;
         let mut interface_changed = proxy.receive_interface_changed().await;
@@ -67,12 +71,11 @@ impl DeviceMonitor {
         let mut ports_changed = proxy.receive_ports_changed().await;
 
         loop {
-            let Some(device) = weak.upgrade() else {
-                debug!("Device dropped, stopping monitor");
-                return;
-            };
-
             tokio::select! {
+                _ = cancellation_token.cancelled() => {
+                    debug!("DeviceMonitor cancelled");
+                    return;
+                }
                 Some(change) = udi_changed.next() => {
                     if let Ok(value) = change.get().await {
                         device.udi.set(value);
@@ -232,8 +235,6 @@ impl DeviceMonitor {
                     break;
                 }
             }
-
-            drop(device);
         }
 
         debug!("Property monitoring ended for device");

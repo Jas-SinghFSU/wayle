@@ -1,14 +1,12 @@
-use super::{ConfigChange, ConfigError, ConfigRuntime, diff};
-use crate::config::{Config, ConfigPaths};
+use std::{
+    error::Error,
+    time::{Duration, Instant},
+};
 
 use notify::{
     EventKind, RecursiveMode, Watcher,
     event::{AccessKind, AccessMode},
     recommended_watcher,
-};
-use std::{
-    error::Error,
-    time::{Duration, Instant},
 };
 use tokio::{
     sync::mpsc::{self, Receiver},
@@ -16,6 +14,9 @@ use tokio::{
     time::timeout,
 };
 use tracing::{debug, error, info, instrument, warn};
+
+use super::{ConfigChange, ConfigError, ConfigRuntime, diff};
+use crate::config::{Config, ConfigPaths};
 
 /// File watcher that monitors configuration changes.
 ///

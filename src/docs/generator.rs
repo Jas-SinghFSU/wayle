@@ -3,10 +3,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::docs::generate_module_page;
+use thiserror::Error;
 
 use super::{ModuleInfo, ModuleRegistry};
-use thiserror::Error;
+use crate::docs::generate_module_page;
 
 /// Generates markdown documentation for Wayle modules.
 ///

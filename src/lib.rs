@@ -36,11 +36,8 @@ pub mod cli;
 /// Reactive services for system integration.
 pub mod services;
 
-/// Runtime state shared between CLI and UI.
-pub mod runtime_state;
-
-/// Tracing and logging configuration.
-pub mod tracing_config;
+/// Core runtime infrastructure.
+pub mod core;
 
 /// Re-exported error types for convenience.
 pub use config::{Result, WayleError};

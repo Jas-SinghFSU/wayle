@@ -1,14 +1,13 @@
-use std::collections::HashMap;
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
 use futures::Stream;
 use tokio::sync::RwLock;
+use tokio_util::sync::CancellationToken;
 use tracing::{info, instrument};
 use zbus::Connection;
 
-use crate::services::common::Property;
-
 use super::{MediaError, PlayerId, core::Player, monitoring::MprisMonitoring};
+use crate::services::common::Property;
 
 /// Configuration for the MPRIS service
 #[derive(Default)]
@@ -27,6 +26,7 @@ pub struct MediaService {
     player_list: Property<Vec<Arc<Player>>>,
     active_player: Property<Option<Arc<Player>>>,
     ignored_patterns: Vec<String>,
+    cancellation_token: CancellationToken,
 }
 
 impl MediaService {
@@ -54,12 +54,15 @@ impl MediaService {
             MediaError::InitializationFailed(format!("D-Bus connection failed: {e}"))
         })?;
 
+        let cancellation_token = CancellationToken::new();
+
         let service = Self {
             connection,
             players: Arc::new(RwLock::new(HashMap::new())),
             player_list: Property::new(Vec::new()),
             active_player: Property::new(None),
             ignored_patterns: config.ignored_players,
+            cancellation_token: cancellation_token.clone(),
         };
 
         MprisMonitoring::start(
@@ -68,6 +71,7 @@ impl MediaService {
             service.player_list.clone(),
             service.active_player.clone(),
             service.ignored_patterns.clone(),
+            cancellation_token.child_token(),
         )
         .await?;
 
@@ -99,7 +103,12 @@ impl MediaService {
     /// Returns `MediaError::PlayerNotFound` if the player doesn't exist.
     /// Returns `MediaError::DbusError` if D-Bus operations fail.
     pub async fn player_monitored(&self, player_id: &PlayerId) -> Result<Arc<Player>, MediaError> {
-        Player::get_live(&self.connection, player_id.clone()).await
+        Player::get_live(
+            &self.connection,
+            player_id.clone(),
+            self.cancellation_token.child_token(),
+        )
+        .await
     }
 
     /// Get the current list of available media players.
@@ -158,5 +167,11 @@ impl MediaService {
         self.active_player.set(player);
 
         Ok(())
+    }
+}
+
+impl Drop for MediaService {
+    fn drop(&mut self) {
+        self.cancellation_token.cancel();
     }
 }

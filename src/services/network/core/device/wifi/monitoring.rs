@@ -1,14 +1,14 @@
-use std::sync::{Arc, Weak};
+use std::sync::Arc;
 
 use futures::StreamExt;
+use tokio_util::sync::CancellationToken;
 use tracing::debug;
 use zbus::{Connection, zvariant::OwnedObjectPath};
 
+use super::DeviceWifi;
 use crate::services::network::{
     NetworkError, proxy::devices::wireless::DeviceWirelessProxy, types::NM80211Mode,
 };
-
-use super::DeviceWifi;
 
 /// Monitors D-Bus properties and updates the reactive DeviceWifi model.
 pub(crate) struct DeviceWifiMonitor;
@@ -18,22 +18,25 @@ impl DeviceWifiMonitor {
         device: Arc<DeviceWifi>,
         connection: &Connection,
         path: OwnedObjectPath,
+        cancellation_token: CancellationToken,
     ) -> Result<(), NetworkError> {
-        let weak = Arc::downgrade(&device);
-
         let proxy = DeviceWirelessProxy::new(connection, path)
             .await
             .map_err(NetworkError::DbusError)?;
 
         tokio::spawn(async move {
-            Self::monitor(weak, proxy).await;
+            Self::monitor(device, proxy, cancellation_token).await;
         });
 
         Ok(())
     }
 
     #[allow(clippy::cognitive_complexity)]
-    async fn monitor(weak: Weak<DeviceWifi>, proxy: DeviceWirelessProxy<'static>) {
+    async fn monitor(
+        device: Arc<DeviceWifi>,
+        proxy: DeviceWirelessProxy<'static>,
+        cancellation_token: CancellationToken,
+    ) {
         let mut perm_hw_address_changed = proxy.receive_perm_hw_address_changed().await;
         let mut mode_changed = proxy.receive_mode_changed().await;
         let mut bitrate_changed = proxy.receive_bitrate_changed().await;
@@ -43,12 +46,11 @@ impl DeviceWifiMonitor {
         let mut last_scan_changed = proxy.receive_last_scan_changed().await;
 
         loop {
-            let Some(device) = weak.upgrade() else {
-                debug!("DeviceWifi dropped, stopping monitor");
-                return;
-            };
-
             tokio::select! {
+                _ = cancellation_token.cancelled() => {
+                    debug!("DeviceWifiMonitor cancelled");
+                    return;
+                }
                 Some(change) = perm_hw_address_changed.next() => {
                     if let Ok(value) = change.get().await {
                         device.perm_hw_address.set(value);
@@ -89,8 +91,6 @@ impl DeviceWifiMonitor {
                     break;
                 }
             }
-
-            drop(device);
         }
 
         debug!("Property monitoring ended for DeviceWifi");

@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+
 use zbus::{Result, proxy, zvariant::ObjectPath};
 
 /// MPRIS MediaPlayer2 interface proxy

@@ -1,6 +1,7 @@
 //! NetworkManager Settings interface.
 
 use std::collections::HashMap;
+
 use zbus::{
     proxy,
     zvariant::{OwnedObjectPath, OwnedValue},
@@ -92,7 +93,8 @@ pub trait Settings {
     /// Save the hostname to persistent configuration.
     ///
     /// # Arguments
-    /// * `hostname` - The hostname to save to persistent configuration. If blank, the persistent hostname is cleared.
+    /// * `hostname` - The hostname to save to persistent configuration.
+    ///                If blank, the persistent hostname is cleared.
     fn save_hostname(&self, hostname: &str) -> zbus::Result<()>;
 
     /// List of object paths of available network connection profiles.
@@ -107,7 +109,8 @@ pub trait Settings {
     #[zbus(property)]
     fn can_modify(&self) -> zbus::Result<bool>;
 
-    // The version of the settings. This is incremented whenever the profile changes and can be used to detect concurrent modifications.
+    /// The version of the settings. This is incremented whenever the profile changes
+    /// and can be used to detect concurrent modifications.
     #[zbus(property)]
     fn version_id(&self) -> zbus::Result<u64>;
 
