@@ -89,6 +89,20 @@ pub enum InternalCommand {
     RefreshStreams,
     /// Refresh server info for default device updates
     RefreshServerInfo,
+    /// Refresh a specific device
+    RefreshDevice {
+        /// Device key to refresh
+        device_key: DeviceKey,
+        /// Facility type (Sink or Source)
+        facility: Facility,
+    },
+    /// Refresh a specific stream
+    RefreshStream {
+        /// Stream key to refresh
+        stream_key: StreamKey,
+        /// Facility type (SinkInput or SourceOutput)
+        facility: Facility,
+    },
 }
 
 /// External commands from service requests

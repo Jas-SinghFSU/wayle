@@ -1,6 +1,11 @@
 use std::sync::Arc;
 
-use libpulse_binding::{callbacks::ListResult, context::Context, volume::ChannelVolumes};
+use libpulse_binding::{
+    callbacks::ListResult,
+    context::{Context, subscribe::Facility},
+    volume::ChannelVolumes,
+};
+use tracing::warn;
 
 use super::{
     conversion::{
@@ -12,7 +17,7 @@ use super::{
     },
 };
 use crate::services::{
-    AudioEvent,
+    AudioEvent, StreamInfo,
     audio::types::{Device, DeviceKey, DeviceType, StreamKey, StreamType},
 };
 
@@ -35,7 +40,19 @@ pub fn handle_internal_command(
             trigger_stream_discovery(context, streams, events_tx);
         }
         InternalCommand::RefreshServerInfo => {
-            trigger_server_info_query(context, events_tx, default_input, default_output);
+            trigger_server_info_query(context, devices, events_tx, default_input, default_output);
+        }
+        InternalCommand::RefreshDevice {
+            device_key,
+            facility,
+        } => {
+            trigger_device_refresh(context, devices, events_tx, device_key, facility);
+        }
+        InternalCommand::RefreshStream {
+            stream_key,
+            facility,
+        } => {
+            trigger_stream_refresh(context, streams, events_tx, stream_key, facility);
         }
     }
 }
@@ -49,22 +66,8 @@ fn trigger_device_discovery(context: &Context, devices: &DeviceStore, events_tx:
         if let ListResult::Item(sink) = sink_list {
             let sink_info = create_device_info_from_sink(sink);
             let device_key = sink_info.key();
-            let device = Device::Sink(sink_info);
-
-            let is_new = if let Ok(mut devices_guard) = devices_clone.write() {
-                let existing = devices_guard.get(&device_key).cloned();
-                devices_guard.insert(device_key, device.clone());
-                existing.is_none()
-            } else {
-                false
-            };
-
-            let event = if is_new {
-                AudioEvent::DeviceAdded(device)
-            } else {
-                AudioEvent::DeviceChanged(device)
-            };
-            let _ = events_tx_clone.send(event);
+            let device_data = Device::Sink(sink_info);
+            process_device_update(device_key, device_data, &devices_clone, &events_tx_clone);
         }
     });
 
@@ -74,22 +77,8 @@ fn trigger_device_discovery(context: &Context, devices: &DeviceStore, events_tx:
         if let ListResult::Item(source) = source_list {
             let source_info = create_device_info_from_source(source);
             let device_key = source_info.key();
-            let device = Device::Source(source_info);
-
-            let is_new = if let Ok(mut devices_guard) = devices_clone.write() {
-                let existing = devices_guard.get(&device_key).cloned();
-                devices_guard.insert(device_key, device.clone());
-                existing.is_none()
-            } else {
-                false
-            };
-
-            let event = if is_new {
-                AudioEvent::DeviceAdded(device)
-            } else {
-                AudioEvent::DeviceChanged(device)
-            };
-            let _ = events_tx_clone.send(event);
+            let device_data = Device::Source(source_info);
+            process_device_update(device_key, device_data, &devices_clone, &events_tx_clone);
         }
     });
 }
@@ -103,21 +92,7 @@ fn trigger_stream_discovery(context: &Context, streams: &StreamStore, events_tx:
         if let ListResult::Item(sink_input) = sink_input_list {
             let stream_info = create_stream_info_from_sink_input(sink_input);
             let stream_key = stream_info.key();
-
-            let is_new = if let Ok(mut streams_guard) = streams_clone.write() {
-                let existing = streams_guard.get(&stream_key).cloned();
-                streams_guard.insert(stream_key, stream_info.clone());
-                existing.is_none()
-            } else {
-                false
-            };
-
-            let event = if is_new {
-                AudioEvent::StreamAdded(stream_info)
-            } else {
-                AudioEvent::StreamChanged(stream_info)
-            };
-            let _ = events_tx_clone.send(event);
+            process_stream_update(stream_key, stream_info, &streams_clone, &events_tx_clone);
         }
     });
 
@@ -127,46 +102,210 @@ fn trigger_stream_discovery(context: &Context, streams: &StreamStore, events_tx:
         if let ListResult::Item(source_output) = source_output_list {
             let stream_info = create_stream_info_from_source_output(source_output);
             let stream_key = stream_info.key();
-
-            let is_new = if let Ok(mut streams_guard) = streams_clone.write() {
-                let existing = streams_guard.get(&stream_key).cloned();
-                streams_guard.insert(stream_key, stream_info.clone());
-                existing.is_none()
-            } else {
-                false
-            };
-
-            let event = if is_new {
-                AudioEvent::StreamAdded(stream_info)
-            } else {
-                AudioEvent::StreamChanged(stream_info)
-            };
-            let _ = events_tx_clone.send(event);
+            process_stream_update(stream_key, stream_info, &streams_clone, &events_tx_clone);
         }
     });
 }
 
+fn trigger_device_refresh(
+    context: &Context,
+    devices: &DeviceStore,
+    events_tx: &EventSender,
+    device_key: DeviceKey,
+    facility: Facility,
+) {
+    let introspect = context.introspect();
+    let devices_clone = Arc::clone(devices);
+    let events_tx_clone = events_tx.clone();
+
+    match facility {
+        Facility::Sink => {
+            introspect.get_sink_info_by_index(device_key.index, move |sink_list| {
+                if let ListResult::Item(sink) = sink_list {
+                    let sink_info = create_device_info_from_sink(sink);
+                    let device_data = Device::Sink(sink_info);
+                    process_device_update(
+                        device_key,
+                        device_data,
+                        &devices_clone,
+                        &events_tx_clone,
+                    );
+                }
+            });
+        }
+        Facility::Source => {
+            introspect.get_source_info_by_index(device_key.index, move |source_list| {
+                if let ListResult::Item(source) = source_list {
+                    let source_info = create_device_info_from_source(source);
+                    let device_data = Device::Source(source_info);
+                    process_device_update(
+                        device_key,
+                        device_data,
+                        &devices_clone,
+                        &events_tx_clone,
+                    );
+                }
+            });
+        }
+        _ => {}
+    }
+}
+
+fn trigger_stream_refresh(
+    context: &Context,
+    streams: &StreamStore,
+    events_tx: &EventSender,
+    stream_key: StreamKey,
+    facility: Facility,
+) {
+    let introspect = context.introspect();
+    let streams_clone = Arc::clone(streams);
+    let events_tx_clone = events_tx.clone();
+
+    match facility {
+        Facility::SinkInput => {
+            introspect.get_sink_input_info(stream_key.index, move |input_list| {
+                if let ListResult::Item(input) = input_list {
+                    let stream_info = create_stream_info_from_sink_input(input);
+                    process_stream_update(
+                        stream_key,
+                        stream_info,
+                        &streams_clone,
+                        &events_tx_clone,
+                    );
+                }
+            });
+        }
+        Facility::SourceOutput => {
+            introspect.get_source_output_info(stream_key.index, move |output_list| {
+                if let ListResult::Item(output) = output_list {
+                    let stream_info = create_stream_info_from_source_output(output);
+                    process_stream_update(
+                        stream_key,
+                        stream_info,
+                        &streams_clone,
+                        &events_tx_clone,
+                    );
+                }
+            });
+        }
+        _ => {}
+    }
+}
+
+fn process_stream_update(
+    stream_key: StreamKey,
+    stream_data: StreamInfo,
+    streams: &StreamStore,
+    events_tx: &EventSender,
+) {
+    let Ok(mut streams_guard) = streams.write() else {
+        return;
+    };
+
+    let is_new = !streams_guard.contains_key(&stream_key);
+    streams_guard.insert(stream_key, stream_data.clone());
+
+    let event = if is_new {
+        AudioEvent::StreamAdded(stream_data)
+    } else {
+        AudioEvent::StreamChanged(stream_data)
+    };
+
+    let _ = events_tx.send(event);
+}
+
+fn process_device_update(
+    device_key: DeviceKey,
+    device_data: Device,
+    devices: &DeviceStore,
+    events_tx: &EventSender,
+) {
+    let Ok(mut devices_guard) = devices.write() else {
+        return;
+    };
+
+    let is_new = !devices_guard.contains_key(&device_key);
+    devices_guard.insert(device_key, device_data.clone());
+
+    let event = if is_new {
+        AudioEvent::DeviceAdded(device_data)
+    } else {
+        AudioEvent::DeviceChanged(device_data)
+    };
+
+    let _ = events_tx.send(event);
+}
+
 fn trigger_server_info_query(
     context: &Context,
+    devices: &DeviceStore,
     events_tx: &EventSender,
     default_input: &DefaultDevice,
     default_output: &DefaultDevice,
 ) {
-    let _ = context;
+    let introspect = context.introspect();
 
-    let default_output_info = if let Ok(guard) = default_output.read() {
-        guard.clone()
-    } else {
-        None
-    };
-    let _ = events_tx.send(AudioEvent::DefaultOutputChanged(default_output_info));
+    let default_input_clone = Arc::clone(default_input);
+    let default_output_clone = Arc::clone(default_output);
+    let events_tx_clone = events_tx.clone();
+    let devices_clone = Arc::clone(devices);
 
-    let default_input_info = if let Ok(guard) = default_input.read() {
-        guard.clone()
-    } else {
-        None
-    };
-    let _ = events_tx.send(AudioEvent::DefaultInputChanged(default_input_info));
+    introspect.get_server_info(move |server_info| {
+        if let Some(sink_name) = server_info.default_sink_name.as_ref() {
+            let sink_name = sink_name.to_string();
+
+            if let Ok(devices_guard) = devices_clone.read() {
+                let default_device = devices_guard
+                    .values()
+                    .find(|device| {
+                        if let Device::Sink(sink) = device {
+                            sink.name == sink_name
+                        } else {
+                            false
+                        }
+                    })
+                    .cloned();
+
+                if let Some(device) = default_device {
+                    if let Ok(mut guard) = default_output_clone.write() {
+                        *guard = Some(device.clone());
+                    }
+                    let _ = events_tx_clone.send(AudioEvent::DefaultOutputChanged(Some(device)));
+                } else {
+                    warn!("Default output device '{sink_name}' not found in store. Available devices: {:?}", 
+                        devices_guard.keys().collect::<Vec<_>>());
+                }
+            }
+        }
+
+        if let Some(source_name) = server_info.default_source_name.as_ref() {
+            let source_name = source_name.to_string();
+
+            if let Ok(devices_guard) = devices_clone.read() {
+                let default_device = devices_guard
+                    .values()
+                    .find(|device| {
+                        if let Device::Source(source) = device {
+                            source.name == source_name
+                        } else {
+                            false
+                        }
+                    })
+                    .cloned();
+
+                if let Some(device) = default_device {
+                    if let Ok(mut guard) = default_input_clone.write() {
+                        *guard = Some(device.clone());
+                    }
+                    let _ = events_tx_clone.send(AudioEvent::DefaultInputChanged(Some(device)));
+                } else {
+                    warn!("Default input device '{source_name}' not found in store. Available devices: {:?}",
+                        devices_guard.keys().collect::<Vec<_>>());
+                }
+            }
+        }
+    });
 }
 
 /// Handle external PulseAudio commands (user-initiated)

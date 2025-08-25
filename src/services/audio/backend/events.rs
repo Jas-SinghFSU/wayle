@@ -157,10 +157,6 @@ async fn handle_device_change(
     };
     let device_key = DeviceKey::new(index, device_type);
 
-    // OPTIMIZE: Each individual device sends a RefreshDevices which could be further optimized
-    // by adding more granularity to the changes. This approach is currently fine for now since
-    // the amount of device changes is often low. But if this becomes a problem, we can tackle it
-    // later.
     match operation {
         Operation::Removed => {
             let removed_device = if let Ok(mut devices_guard) = devices.write() {
@@ -173,11 +169,11 @@ async fn handle_device_change(
                 let _ = events_tx.send(AudioEvent::DeviceRemoved(device_key));
             }
         }
-        Operation::New => {
-            let _ = command_tx.send(InternalCommand::RefreshDevices);
-        }
-        Operation::Changed => {
-            let _ = command_tx.send(InternalCommand::RefreshDevices);
+        Operation::New | Operation::Changed => {
+            let _ = command_tx.send(InternalCommand::RefreshDevice {
+                device_key,
+                facility,
+            });
         }
     }
 }
@@ -201,9 +197,6 @@ async fn handle_stream_change(
         index: stream_index,
     };
 
-    // OPTIMIZE: Streams can be further optimized to refresh individual items instead of the whole
-    // list of streams. If this becomes a bottleneck (unlikely) we can make these events more
-    // granular.
     match operation {
         Operation::Removed => {
             let removed_stream = if let Ok(mut streams_guard) = streams.write() {
@@ -216,11 +209,11 @@ async fn handle_stream_change(
                 let _ = events_tx.send(AudioEvent::StreamRemoved(stream_key));
             }
         }
-        Operation::New => {
-            let _ = command_tx.send(InternalCommand::RefreshStreams);
-        }
-        Operation::Changed => {
-            let _ = command_tx.send(InternalCommand::RefreshStreams);
+        Operation::New | Operation::Changed => {
+            let _ = command_tx.send(InternalCommand::RefreshStream {
+                stream_key,
+                facility,
+            });
         }
     }
 }

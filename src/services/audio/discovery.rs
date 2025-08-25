@@ -27,6 +27,7 @@ impl AudioDiscovery {
     /// # Errors
     /// Returns error if task spawn fails.
     #[allow(clippy::too_many_arguments)]
+    #[allow(clippy::too_many_lines)]
     pub async fn start(
         command_tx: CommandSender,
         mut event_rx: EventReceiver,
@@ -51,7 +52,7 @@ impl AudioDiscovery {
                     }
                     Ok(event) = event_rx.recv() => {
                         match event {
-                            AudioEvent::DeviceAdded(device) | AudioEvent::DeviceChanged(device) => {
+                            AudioEvent::DeviceAdded(device) => {
                                 match device {
                                     Device::Sink(sink) => {
                                         let key = sink.key();
@@ -68,6 +69,31 @@ impl AudioDiscovery {
                                 }
                             }
 
+                            AudioEvent::DeviceChanged(device) => {
+                                match device {
+                                    Device::Sink(sink) => {
+                                        let key = sink.key();
+                                        if let Some(existing) = output_devs.get(&key) {
+                                            existing.update_from_sink(&sink);
+                                        } else {
+                                            let output = Arc::new(OutputDevice::from_sink(&sink, command_tx.clone()));
+                                            output_devs.insert(key, output);
+                                            output_devices.set(output_devs.values().cloned().collect());
+                                        }
+                                    }
+                                    Device::Source(source) => {
+                                        let key = source.key();
+                                        if let Some(existing) = input_devs.get(&key) {
+                                            existing.update_from_source(&source);
+                                        } else {
+                                            let input = Arc::new(InputDevice::from_source(&source, command_tx.clone()));
+                                            input_devs.insert(key, input);
+                                            input_devices.set(input_devs.values().cloned().collect());
+                                        }
+                                    }
+                                }
+                            }
+
                             AudioEvent::DeviceRemoved(key) => {
                                 if output_devs.remove(&key).is_some() {
                                     output_devices.set(output_devs.values().cloned().collect());
@@ -77,10 +103,21 @@ impl AudioDiscovery {
                                 }
                             }
 
-                            AudioEvent::StreamAdded(info) | AudioEvent::StreamChanged(info) => {
+                            AudioEvent::StreamAdded(info) => {
                                 let stream = Arc::new(AudioStream::from_info(info.clone(), command_tx.clone()));
                                 streams.insert(info.key(), stream);
                                 update_stream_properties(&streams, &playback_streams, &recording_streams);
+                            }
+
+                            AudioEvent::StreamChanged(info) => {
+                                let key = info.key();
+                                if let Some(existing) = streams.get(&key) {
+                                    existing.update_from_info(&info);
+                                } else {
+                                    let stream = Arc::new(AudioStream::from_info(info.clone(), command_tx.clone()));
+                                    streams.insert(key, stream);
+                                    update_stream_properties(&streams, &playback_streams, &recording_streams);
+                                }
                             }
 
                             AudioEvent::StreamRemoved(key) => {
