@@ -1,7 +1,9 @@
+mod controls;
 mod monitoring;
 
 use std::{collections::HashMap, sync::Arc};
 
+use controls::OutputDeviceController;
 use libpulse_binding::time::MicroSeconds;
 use monitoring::OutputDeviceMonitor;
 use tokio::sync::oneshot;
@@ -10,7 +12,10 @@ use tokio_util::sync::CancellationToken;
 use crate::services::{
     audio::{
         Volume,
-        backend::{Command, CommandSender, EventReceiver},
+        backend::{
+            commands::Command,
+            types::{CommandSender, EventReceiver},
+        },
         error::AudioError,
         types::{
             AudioFormat, ChannelMap, Device, DeviceKey, DevicePort, DeviceState, DeviceType,
@@ -21,8 +26,11 @@ use crate::services::{
 };
 
 /// Output device (sink) representation with reactive properties.
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct OutputDevice {
+    /// Command sender for backend operations
+    command_tx: CommandSender,
+
     /// Device key for identification
     pub key: DeviceKey,
 
@@ -118,7 +126,7 @@ impl OutputDevice {
             .map_err(|_| AudioError::BackendCommunicationFailed)??;
 
         match device {
-            Device::Sink(sink) => Ok(Arc::new(Self::from_sink(&sink))),
+            Device::Sink(sink) => Ok(Arc::new(Self::from_sink(&sink, command_tx.clone()))),
             Device::Source(_) => Err(AudioError::DeviceNotFound(
                 device_key.index,
                 DeviceType::Output,
@@ -148,8 +156,9 @@ impl OutputDevice {
     }
 
     /// Create from SinkInfo
-    pub(crate) fn from_sink(sink: &SinkInfo) -> Self {
+    pub(crate) fn from_sink(sink: &SinkInfo, command_tx: CommandSender) -> Self {
         Self {
+            command_tx,
             key: sink.key(),
             name: Property::new(sink.name.clone()),
             description: Property::new(sink.description.clone()),
@@ -199,5 +208,37 @@ impl OutputDevice {
         self.latency.set(sink.latency);
         self.configured_latency.set(sink.configured_latency);
         self.flags.set(sink.flags);
+    }
+
+    /// Set the volume for this output device.
+    ///
+    /// # Errors
+    /// Returns error if backend communication fails or device operation fails.
+    pub async fn set_volume(&self, volume: Volume) -> Result<(), AudioError> {
+        OutputDeviceController::set_volume(&self.command_tx, self.key, volume).await
+    }
+
+    /// Set the mute state for this output device.
+    ///
+    /// # Errors
+    /// Returns error if backend communication fails or device operation fails.
+    pub async fn set_mute(&self, muted: bool) -> Result<(), AudioError> {
+        OutputDeviceController::set_mute(&self.command_tx, self.key, muted).await
+    }
+
+    /// Set the active port for this output device.
+    ///
+    /// # Errors
+    /// Returns error if backend communication fails or device operation fails.
+    pub async fn set_port(&self, port: String) -> Result<(), AudioError> {
+        OutputDeviceController::set_port(&self.command_tx, self.key, port).await
+    }
+
+    /// Set this device as the default output.
+    ///
+    /// # Errors
+    /// Returns error if backend communication fails or device operation fails.
+    pub async fn set_as_default(&self) -> Result<(), AudioError> {
+        OutputDeviceController::set_as_default(&self.command_tx, self.key).await
     }
 }

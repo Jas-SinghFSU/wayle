@@ -5,7 +5,7 @@ use tokio_util::sync::CancellationToken;
 
 use crate::services::{
     audio::{
-        backend::EventReceiver,
+        backend::types::{CommandSender, EventReceiver},
         core::{AudioStream, InputDevice, OutputDevice},
         events::AudioEvent,
         types::{Device, DeviceKey, StreamKey, StreamType},
@@ -28,6 +28,7 @@ impl AudioDiscovery {
     /// Returns error if task spawn fails.
     #[allow(clippy::too_many_arguments)]
     pub async fn start(
+        command_tx: CommandSender,
         mut event_rx: EventReceiver,
         output_devices: Property<Vec<Arc<OutputDevice>>>,
         input_devices: Property<Vec<Arc<InputDevice>>>,
@@ -54,13 +55,13 @@ impl AudioDiscovery {
                                 match device {
                                     Device::Sink(sink) => {
                                         let key = sink.key();
-                                        let output = Arc::new(OutputDevice::from_sink(&sink));
+                                        let output = Arc::new(OutputDevice::from_sink(&sink, command_tx.clone()));
                                         output_devs.insert(key, output);
                                         output_devices.set(output_devs.values().cloned().collect());
                                     }
                                     Device::Source(source) => {
                                         let key = source.key();
-                                        let input = Arc::new(InputDevice::from_source(&source));
+                                        let input = Arc::new(InputDevice::from_source(&source, command_tx.clone()));
                                         input_devs.insert(key, input);
                                         input_devices.set(input_devs.values().cloned().collect());
                                     }
@@ -77,7 +78,7 @@ impl AudioDiscovery {
                             }
 
                             AudioEvent::StreamAdded(info) | AudioEvent::StreamChanged(info) => {
-                                let stream = Arc::new(AudioStream::from_info(info.clone()));
+                                let stream = Arc::new(AudioStream::from_info(info.clone(), command_tx.clone()));
                                 streams.insert(info.key(), stream);
                                 update_stream_properties(&streams, &playback_streams, &recording_streams);
                             }

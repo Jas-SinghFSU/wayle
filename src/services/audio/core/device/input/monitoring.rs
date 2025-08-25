@@ -4,7 +4,7 @@ use tokio::task::JoinHandle;
 use tokio_util::sync::CancellationToken;
 
 use crate::services::audio::{
-    backend::EventReceiver,
+    backend::types::EventReceiver,
     core::device::InputDevice,
     error::AudioError,
     events::AudioEvent,

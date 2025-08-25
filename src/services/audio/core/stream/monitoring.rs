@@ -4,8 +4,8 @@ use tokio::task::JoinHandle;
 use tokio_util::sync::CancellationToken;
 
 use crate::services::audio::{
-    backend::EventReceiver, core::stream::AudioStream, error::AudioError, events::AudioEvent,
-    types::StreamKey,
+    backend::types::EventReceiver, core::stream::AudioStream, error::AudioError,
+    events::AudioEvent, types::StreamKey,
 };
 
 /// Monitors stream events and updates properties.

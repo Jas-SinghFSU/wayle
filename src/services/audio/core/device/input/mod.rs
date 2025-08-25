@@ -1,7 +1,9 @@
+mod controls;
 mod monitoring;
 
 use std::{collections::HashMap, sync::Arc};
 
+use controls::InputDeviceController;
 use libpulse_binding::time::MicroSeconds;
 use monitoring::InputDeviceMonitor;
 use tokio::sync::oneshot;
@@ -10,7 +12,10 @@ use tokio_util::sync::CancellationToken;
 use crate::services::{
     audio::{
         Volume,
-        backend::{Command, CommandSender, EventReceiver},
+        backend::{
+            commands::Command,
+            types::{CommandSender, EventReceiver},
+        },
         error::AudioError,
         types::{
             AudioFormat, ChannelMap, Device, DeviceKey, DevicePort, DeviceState, DeviceType,
@@ -21,8 +26,11 @@ use crate::services::{
 };
 
 /// Input device (source) representation with reactive properties.
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct InputDevice {
+    /// Command sender for backend operations
+    command_tx: CommandSender,
+
     /// Device key for identification
     pub key: DeviceKey,
 
@@ -121,7 +129,7 @@ impl InputDevice {
             .map_err(|_| AudioError::BackendCommunicationFailed)??;
 
         match device {
-            Device::Source(source) => Ok(Arc::new(Self::from_source(&source))),
+            Device::Source(source) => Ok(Arc::new(Self::from_source(&source, command_tx.clone()))),
             Device::Sink(_) => Err(AudioError::DeviceNotFound(
                 device_key.index,
                 DeviceType::Input,
@@ -150,8 +158,9 @@ impl InputDevice {
     }
 
     /// Create from SourceInfo
-    pub(crate) fn from_source(source: &SourceInfo) -> Self {
+    pub(crate) fn from_source(source: &SourceInfo, command_tx: CommandSender) -> Self {
         Self {
+            command_tx,
             key: source.key(),
             name: Property::new(source.name.clone()),
             description: Property::new(source.description.clone()),
@@ -203,5 +212,37 @@ impl InputDevice {
         self.latency.set(source.latency);
         self.configured_latency.set(source.configured_latency);
         self.flags.set(source.flags);
+    }
+
+    /// Set the volume for this input device.
+    ///
+    /// # Errors
+    /// Returns error if backend communication fails or device operation fails.
+    pub async fn set_volume(&self, volume: Volume) -> Result<(), AudioError> {
+        InputDeviceController::set_volume(&self.command_tx, self.key, volume).await
+    }
+
+    /// Set the mute state for this input device.
+    ///
+    /// # Errors
+    /// Returns error if backend communication fails or device operation fails.
+    pub async fn set_mute(&self, muted: bool) -> Result<(), AudioError> {
+        InputDeviceController::set_mute(&self.command_tx, self.key, muted).await
+    }
+
+    /// Set the active port for this input device.
+    ///
+    /// # Errors
+    /// Returns error if backend communication fails or device operation fails.
+    pub async fn set_port(&self, port: String) -> Result<(), AudioError> {
+        InputDeviceController::set_port(&self.command_tx, self.key, port).await
+    }
+
+    /// Set this device as the default input.
+    ///
+    /// # Errors
+    /// Returns error if backend communication fails or device operation fails.
+    pub async fn set_as_default(&self) -> Result<(), AudioError> {
+        InputDeviceController::set_as_default(&self.command_tx, self.key).await
     }
 }

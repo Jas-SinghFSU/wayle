@@ -5,7 +5,10 @@ use tokio_util::sync::CancellationToken;
 
 use crate::services::{
     audio::{
-        backend::{CommandSender, EventSender, PulseBackend},
+        backend::{
+            PulseBackend,
+            types::{CommandSender, EventSender},
+        },
         core::{AudioStream, InputDevice, OutputDevice},
         discovery::AudioDiscovery,
         error::AudioError,
@@ -69,6 +72,7 @@ impl AudioService {
         .await?;
 
         AudioDiscovery::start(
+            command_tx.clone(),
             event_tx.subscribe(),
             output_devices.clone(),
             input_devices.clone(),

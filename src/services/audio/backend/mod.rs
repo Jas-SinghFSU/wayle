@@ -18,24 +18,16 @@ use command_handler::{handle_external_command, handle_internal_command};
 pub use commands::Command;
 pub use conversion::{convert_volume_from_pulse, convert_volume_to_pulse};
 use libpulse_binding::context::{Context, FlagSet as ContextFlags};
-use tokio::sync::{broadcast, mpsc};
+use tokio::sync::mpsc;
 use tokio_util::sync::CancellationToken;
 use tracing::{error, info};
+use types::CommandReceiver;
 pub use types::{
     DefaultDevice, DeviceListSender, DeviceStore, EventSender, ExternalCommand, InternalCommand,
     ServerInfo, StreamListSender, StreamStore,
 };
 
-use crate::services::{AudioError, AudioEvent, audio::tokio_mainloop::TokioMain};
-
-/// Channel sender for backend commands
-pub type CommandSender = mpsc::UnboundedSender<Command>;
-
-/// Channel receiver for backend commands
-pub type CommandReceiver = mpsc::UnboundedReceiver<Command>;
-
-/// Channel receiver for backend events
-pub type EventReceiver = broadcast::Receiver<AudioEvent>;
+use crate::services::{AudioError, audio::tokio_mainloop::TokioMain};
 
 struct BackendState {
     devices: DeviceStore,

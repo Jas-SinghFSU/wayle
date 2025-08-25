@@ -6,23 +6,31 @@ use tokio_util::sync::CancellationToken;
 use crate::services::{
     audio::{
         Volume,
-        backend::{Command, CommandSender, EventReceiver},
+        backend::{
+            commands::Command,
+            types::{CommandSender, EventReceiver},
+        },
         error::AudioError,
         types::{ChannelMap, DeviceKey, MediaInfo, SampleSpec, StreamInfo, StreamKey, StreamState},
     },
     common::Property,
 };
 
+mod controls;
 mod monitoring;
 
+use controls::AudioStreamController;
 use monitoring::StreamMonitor;
 
 /// Audio stream representation with reactive properties.
 ///
 /// Provides access to stream state, volume, mute status, and media information
 /// that automatically update when the underlying PulseAudio stream changes.
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct AudioStream {
+    /// Command sender for backend operations
+    command_tx: CommandSender,
+
     /// Stream key for identification
     pub key: StreamKey,
 
@@ -122,7 +130,7 @@ impl AudioStream {
         let stream_info = rx
             .await
             .map_err(|_| AudioError::BackendCommunicationFailed)??;
-        Ok(Arc::new(Self::from_info(stream_info)))
+        Ok(Arc::new(Self::from_info(stream_info, command_tx.clone())))
     }
 
     /// Get stream with live monitoring.
@@ -146,8 +154,9 @@ impl AudioStream {
     }
 
     /// Create stream from info snapshot
-    pub(crate) fn from_info(info: StreamInfo) -> Self {
+    pub(crate) fn from_info(info: StreamInfo, command_tx: CommandSender) -> Self {
         Self {
+            command_tx,
             key: info.key(),
             name: Property::new(info.name),
             application_name: Property::new(info.application_name),
@@ -200,73 +209,27 @@ impl AudioStream {
         self.format.set(info.format.clone());
     }
 
-    /// Set stream volume.
-    ///
-    /// Sends command to backend to change stream volume.
-    /// Volume is a percentage from 0.0 to 1.0 (can go higher for amplification).
+    /// Set the volume for this audio stream.
     ///
     /// # Errors
-    /// Returns error if command send fails.
-    pub async fn set_volume(
-        &self,
-        command_tx: &CommandSender,
-        volume: f64,
-    ) -> Result<(), AudioError> {
-        let (tx, rx) = oneshot::channel();
-        command_tx
-            .send(Command::SetStreamVolume {
-                stream_key: self.key,
-                volume: Volume::from_percentage(volume, 2),
-                responder: tx,
-            })
-            .map_err(|_| AudioError::BackendCommunicationFailed)?;
-        rx.await
-            .map_err(|_| AudioError::BackendCommunicationFailed)?
+    /// Returns error if backend communication fails or stream operation fails.
+    pub async fn set_volume(&self, volume: Volume) -> Result<(), AudioError> {
+        AudioStreamController::set_volume(&self.command_tx, self.key, volume).await
     }
 
-    /// Set stream mute state.
-    ///
-    /// Sends command to backend to mute or unmute stream.
+    /// Set the mute state for this audio stream.
     ///
     /// # Errors
-    /// Returns error if command send fails.
-    pub async fn set_mute(
-        &self,
-        command_tx: &CommandSender,
-        muted: bool,
-    ) -> Result<(), AudioError> {
-        let (tx, rx) = oneshot::channel();
-        command_tx
-            .send(Command::SetStreamMute {
-                stream_key: self.key,
-                muted,
-                responder: tx,
-            })
-            .map_err(|_| AudioError::BackendCommunicationFailed)?;
-        rx.await
-            .map_err(|_| AudioError::BackendCommunicationFailed)?
+    /// Returns error if backend communication fails or stream operation fails.
+    pub async fn set_mute(&self, muted: bool) -> Result<(), AudioError> {
+        AudioStreamController::set_mute(&self.command_tx, self.key, muted).await
     }
 
-    /// Move stream to different device.
-    ///
-    /// Sends command to backend to move this stream to a different device.
+    /// Move this stream to a different device.
     ///
     /// # Errors
-    /// Returns error if command send fails or device doesn't exist.
-    pub async fn move_to_device(
-        &self,
-        command_tx: &CommandSender,
-        device_key: DeviceKey,
-    ) -> Result<(), AudioError> {
-        let (tx, rx) = oneshot::channel();
-        command_tx
-            .send(Command::MoveStream {
-                stream_key: self.key,
-                device_key,
-                responder: tx,
-            })
-            .map_err(|_| AudioError::BackendCommunicationFailed)?;
-        rx.await
-            .map_err(|_| AudioError::BackendCommunicationFailed)?
+    /// Returns error if backend communication fails or device doesn't exist.
+    pub async fn move_to_device(&self, device_key: DeviceKey) -> Result<(), AudioError> {
+        AudioStreamController::move_to_device(&self.command_tx, self.key, device_key).await
     }
 }

@@ -9,6 +9,7 @@ use libpulse_binding::{
 };
 use tokio::sync::{broadcast, mpsc};
 
+use super::commands::Command;
 use crate::services::audio::{
     events::AudioEvent,
     types::{Device, DeviceKey, StreamInfo, StreamKey},
@@ -26,14 +27,20 @@ pub type DefaultDevice = Arc<RwLock<Option<Device>>>;
 /// Channel sender for audio events
 pub type EventSender = broadcast::Sender<AudioEvent>;
 
+/// Channel receiver for audio events
+pub type EventReceiver = broadcast::Receiver<AudioEvent>;
+
 /// Channel sender for device list updates
 pub type DeviceListSender = broadcast::Sender<Vec<Device>>;
 
 /// Channel sender for stream list updates
 pub type StreamListSender = broadcast::Sender<Vec<StreamInfo>>;
 
-/// Channel sender for external backend commands
-pub type CommandSender = mpsc::UnboundedSender<ExternalCommand>;
+/// Channel sender for backend commands
+pub type CommandSender = mpsc::UnboundedSender<Command>;
+
+/// Channel receiver for backend commands
+pub type CommandReceiver = mpsc::UnboundedReceiver<Command>;
 
 /// Channel sender for internal backend commands
 pub(super) type InternalCommandSender = mpsc::UnboundedSender<InternalCommand>;
