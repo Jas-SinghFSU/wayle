@@ -46,7 +46,7 @@ impl<T: Clone + Send + Sync + 'static> Property<T> {
     ///
     /// The stream immediately yields the current value, then yields
     /// whenever the value changes.
-    pub fn watch(&self) -> impl Stream<Item = T> + Send {
+    pub fn watch(&self) -> impl Stream<Item = T> + Send + 'static {
         WatchStream::new(self.rx.clone())
     }
 }
@@ -99,7 +99,7 @@ impl<T: Clone + Send + Sync + 'static> ComputedProperty<T> {
     }
 
     /// Watch for changes to the computed value.
-    pub fn watch(&self) -> impl Stream<Item = T> + Send {
+    pub fn watch(&self) -> impl Stream<Item = T> + Send + 'static {
         self.property.watch()
     }
 }

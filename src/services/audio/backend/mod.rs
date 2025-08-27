@@ -16,7 +16,7 @@ use std::{
 
 pub use commands::Command;
 pub use conversion::{convert_volume_from_pulse, convert_volume_to_pulse};
-use dispatcher::{handle_external_command, handle_internal_command};
+use dispatcher::{VolumeRateLimiter, handle_external_command, handle_internal_command};
 use libpulse_binding::context::{Context, FlagSet as ContextFlags};
 use tokio::sync::mpsc;
 use tokio_util::sync::CancellationToken;
@@ -324,6 +324,7 @@ impl PulseBackend {
     ) -> (TokioMain, tokio::task::JoinHandle<()>) {
         let mut context = self.context;
         let state = self.state;
+        let rate_limiter = VolumeRateLimiter::new();
 
         let handle = tokio::spawn(async move {
             loop {
@@ -345,7 +346,7 @@ impl PulseBackend {
                         );
                     }
                     Some(command) = external_rx.recv() => {
-                        handle_external_command(&mut context, command, &state.devices, &state.streams);
+                        handle_external_command(&mut context, command, &state.devices, &state.streams, &rate_limiter);
                     }
                     else => {
                         info!("Internal command channel closed");
