@@ -30,24 +30,13 @@ pub struct MediaService {
 }
 
 impl MediaService {
-    /// Create a new MPRIS service (compatibility method).
-    ///
-    /// This is a compatibility method for the old API. Prefer using `start()` instead.
-    ///
-    /// # Errors
-    ///
-    /// Returns `MediaError::InitializationFailed` if D-Bus connection fails
-    pub async fn new(ignored_players: Vec<String>) -> Result<Self, MediaError> {
-        Self::start(Config { ignored_players }).await
-    }
-
     /// Start the MPRIS service with the given configuration.
     ///
     /// # Errors
     ///
     /// Returns `MediaError::InitializationFailed` if D-Bus connection fails
     #[instrument(skip(config))]
-    pub async fn start(config: Config) -> Result<Self, MediaError> {
+    pub async fn new(config: Config) -> Result<Self, MediaError> {
         info!("Starting MPRIS service with property-based architecture");
 
         let connection = Connection::session().await.map_err(|e| {

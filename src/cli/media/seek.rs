@@ -7,7 +7,7 @@ use crate::{
 };
 
 pub async fn execute(position: String, player: Option<String>) -> CliAction {
-    let service = MediaService::start(Config {
+    let service = MediaService::new(Config {
         ignored_players: vec![],
     })
     .await

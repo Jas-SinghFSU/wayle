@@ -44,20 +44,6 @@ pub struct NetworkService {
 }
 
 impl NetworkService {
-    /// Creates a new network service instance.
-    ///
-    /// Initializes D-Bus connection and discovers available network devices.
-    /// The service will automatically detect WiFi and wired interfaces if present.
-    ///
-    /// # Errors
-    /// Returns `NetworkError::ServiceInitializationFailed` if:
-    /// - D-Bus connection cannot be established
-    /// - NetworkManager service is not available
-    /// - Device discovery fails
-    pub async fn new() -> Result<Self, NetworkError> {
-        Self::start().await
-    }
-
     /// Starts the network service and initializes all components.
     ///
     /// Performs device discovery, creates WiFi and wired service instances
@@ -70,7 +56,7 @@ impl NetworkService {
     /// - Device discovery encounters errors
     /// - Device proxy creation fails
     #[instrument]
-    pub async fn start() -> Result<Self, NetworkError> {
+    pub async fn new() -> Result<Self, NetworkError> {
         let connection = Connection::system().await.map_err(|err| {
             NetworkError::ServiceInitializationFailed(format!("D-Bus connection failed: {err}"))
         })?;
