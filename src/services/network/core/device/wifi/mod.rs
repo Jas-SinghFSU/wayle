@@ -1,11 +1,13 @@
+mod controls;
 mod monitoring;
 
 use std::{collections::HashMap, ops::Deref, sync::Arc};
 
+use controls::DeviceWifiControls;
 use monitoring::DeviceWifiMonitor;
 use tokio_util::sync::CancellationToken;
 use tracing::warn;
-use zbus::{Connection, zvariant::OwnedObjectPath};
+use zbus::{Connection, zvariant::{OwnedObjectPath, OwnedValue}};
 
 use super::Device;
 use crate::{
@@ -140,17 +142,15 @@ impl DeviceWifi {
     /// Returns `NetworkError::DbusError` if D-Bus proxy creation fails or
     /// `NetworkError::OperationFailed` if the scan request fails.
     pub async fn request_scan(&self) -> Result<(), NetworkError> {
-        let proxy = DeviceWirelessProxy::new(&self.connection, self.object_path.clone()).await?;
+        DeviceWifiControls::request_scan(&self.connection, &self.object_path, HashMap::new()).await
+    }
 
-        proxy
-            .request_scan(HashMap::new())
-            .await
-            .map_err(|e| NetworkError::OperationFailed {
-                operation: "request_scan",
-                reason: e.to_string(),
-            })?;
-
-        Ok(())
+    /// Get the list of all access points visible to this device, including hidden ones.
+    ///
+    /// # Errors
+    /// Returns error if the D-Bus operation fails.
+    pub async fn get_all_access_points(&self) -> Result<Vec<OwnedObjectPath>, NetworkError> {
+        DeviceWifiControls::get_all_access_points(&self.connection, &self.object_path).await
     }
 
     async fn verify_is_wifi_device(

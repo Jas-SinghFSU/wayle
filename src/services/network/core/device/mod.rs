@@ -1,3 +1,5 @@
+/// Device control operations
+mod controls;
 /// Device monitoring implementation
 mod monitoring;
 /// WiFi device functionality and management.
@@ -5,11 +7,15 @@ pub mod wifi;
 /// Wired (ethernet) device functionality and management.
 pub mod wired;
 
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
+use controls::DeviceControls;
 use monitoring::DeviceMonitor;
 use tokio_util::sync::CancellationToken;
-use zbus::{Connection, zvariant::OwnedObjectPath};
+use zbus::{
+    Connection,
+    zvariant::{OwnedObjectPath, OwnedValue},
+};
 
 use crate::{
     services::{
@@ -421,5 +427,80 @@ impl Device {
             // In the meantime, lldp_neighbors will always return an empty vec
             lldp_neighbors: Property::new(vec![]),
         }
+    }
+
+    /// Whether or not this device is managed by NetworkManager.
+    ///
+    /// # Errors
+    /// Returns error if the D-Bus operation fails.
+    pub async fn set_managed(&self, managed: bool) -> Result<(), NetworkError> {
+        DeviceControls::set_managed(&self.connection, &self.object_path, managed).await
+    }
+
+    /// If TRUE, indicates the device is allowed to autoconnect.
+    ///
+    /// # Errors
+    /// Returns error if the D-Bus operation fails.
+    pub async fn set_autoconnect(&self, autoconnect: bool) -> Result<(), NetworkError> {
+        DeviceControls::set_autoconnect(&self.connection, &self.object_path, autoconnect).await
+    }
+
+    /// Attempts to update device with new connection settings and properties.
+    ///
+    /// # Arguments
+    /// * `connection` - Optional connection settings
+    /// * `version_id` - Settings version id (0 for current)
+    /// * `flags` - Flags (none defined)
+    ///
+    /// # Errors
+    /// Returns error if the reapply operation fails.
+    pub async fn reapply(
+        &self,
+        connection_settings: HashMap<String, HashMap<String, OwnedValue>>,
+        version_id: u64,
+        flags: u32,
+    ) -> Result<(), NetworkError> {
+        DeviceControls::reapply(
+            &self.connection,
+            &self.object_path,
+            connection_settings,
+            version_id,
+            flags,
+        )
+        .await
+    }
+
+    /// Get the currently applied connection on the device.
+    ///
+    /// # Arguments
+    /// * `flags` - Flags (none defined)
+    ///
+    /// # Returns
+    /// * Connection settings
+    /// * Version id
+    ///
+    /// # Errors
+    /// Returns error if getting the applied connection fails.
+    pub async fn get_applied_connection(
+        &self,
+        flags: u32,
+    ) -> Result<(HashMap<String, HashMap<String, OwnedValue>>, u64), NetworkError> {
+        DeviceControls::get_applied_connection(&self.connection, &self.object_path, flags).await
+    }
+
+    /// Disconnects a device and prevents the device from automatically activating further connections without user intervention.
+    ///
+    /// # Errors
+    /// Returns error if the disconnect operation fails.
+    pub async fn disconnect(&self) -> Result<(), NetworkError> {
+        DeviceControls::disconnect(&self.connection, &self.object_path).await
+    }
+
+    /// Deletes a software device from NetworkManager and removes the interface from the system.
+    ///
+    /// # Errors
+    /// Returns error if the delete operation fails.
+    pub async fn delete(&self) -> Result<(), NetworkError> {
+        DeviceControls::delete(&self.connection, &self.object_path).await
     }
 }

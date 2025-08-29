@@ -34,6 +34,16 @@ impl SettingsController {
         connection: HashMap<String, HashMap<String, OwnedValue>>,
     ) -> Result<OwnedObjectPath, NetworkError> {
         let settings_proxy = SettingsProxy::new(zbus_connection).await?;
+        let created_connection = settings_proxy.add_connection(connection).await?;
+
+        Ok(created_connection)
+    }
+
+    pub(super) async fn add_connection_unsaved(
+        zbus_connection: &Connection,
+        connection: HashMap<String, HashMap<String, OwnedValue>>,
+    ) -> Result<OwnedObjectPath, NetworkError> {
+        let settings_proxy = SettingsProxy::new(zbus_connection).await?;
         let created_connection = settings_proxy.add_connection_unsaved(connection).await?;
 
         Ok(created_connection)

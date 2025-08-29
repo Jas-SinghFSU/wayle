@@ -3,6 +3,7 @@ mod monitoring;
 
 use std::{collections::HashMap, sync::Arc};
 
+use controls::SettingsController;
 use futures::{Stream, StreamExt, future::join_all};
 use monitoring::SettingsMonitor;
 use tokio_util::sync::CancellationToken;
@@ -82,7 +83,7 @@ impl Settings {
     ///
     /// Returns `NetworkError::DbusError` if the DBus operation fails.
     pub async fn list_connections(&self) -> Result<Vec<OwnedObjectPath>, NetworkError> {
-        controls::SettingsController::list_connections(&self.zbus_connection).await
+        SettingsController::list_connections(&self.zbus_connection).await
     }
 
     /// Retrieve the object path of a connection, given that connection's UUID.
@@ -102,7 +103,7 @@ impl Settings {
         &self,
         uuid: &str,
     ) -> Result<OwnedObjectPath, NetworkError> {
-        controls::SettingsController::get_connection_by_uuid(&self.zbus_connection, uuid).await
+        SettingsController::get_connection_by_uuid(&self.zbus_connection, uuid).await
     }
 
     /// Add new connection and save it to disk.
@@ -127,11 +128,7 @@ impl Settings {
         &self,
         connection: HashMap<String, HashMap<String, OwnedValue>>,
     ) -> Result<OwnedObjectPath, NetworkError> {
-        let settings_proxy = SettingsProxy::new(&self.zbus_connection).await?;
-        settings_proxy
-            .add_connection(connection)
-            .await
-            .map_err(NetworkError::DbusError)
+        SettingsController::add_connection(&self.zbus_connection, connection).await
     }
 
     /// Add new connection but do not save it to disk immediately.
@@ -156,7 +153,7 @@ impl Settings {
         &self,
         connection: HashMap<String, HashMap<String, OwnedValue>>,
     ) -> Result<OwnedObjectPath, NetworkError> {
-        controls::SettingsController::add_connection(&self.zbus_connection, connection).await
+        SettingsController::add_connection_unsaved(&self.zbus_connection, connection).await
     }
 
     /// Add a new connection profile.
@@ -191,8 +188,7 @@ impl Settings {
         flags: NMSettingsAddConnection2Flags,
         args: HashMap<String, OwnedValue>,
     ) -> Result<(OwnedObjectPath, HashMap<String, OwnedValue>), NetworkError> {
-        controls::SettingsController::add_connection2(&self.zbus_connection, settings, flags, args)
-            .await
+        SettingsController::add_connection2(&self.zbus_connection, settings, flags, args).await
     }
 
     /// Loads or reloads the indicated connections from disk.
@@ -221,7 +217,7 @@ impl Settings {
         &self,
         filenames: Vec<String>,
     ) -> Result<(bool, Vec<String>), NetworkError> {
-        controls::SettingsController::load_connections(&self.zbus_connection, filenames).await
+        SettingsController::load_connections(&self.zbus_connection, filenames).await
     }
 
     /// Tells NetworkManager to reload all connection files from disk.
@@ -237,7 +233,7 @@ impl Settings {
     ///
     /// Returns `NetworkError::DbusError` if the DBus operation fails.
     pub async fn reload_connections(&self) -> Result<bool, NetworkError> {
-        controls::SettingsController::reload_connections(&self.zbus_connection).await
+        SettingsController::reload_connections(&self.zbus_connection).await
     }
 
     /// Save the hostname to persistent configuration.
@@ -251,7 +247,7 @@ impl Settings {
     ///
     /// Returns `NetworkError::OperationFailed` if the operations fails.
     pub async fn save_hostname(&self, hostname: &str) -> Result<(), NetworkError> {
-        controls::SettingsController::save_hostname(&self.zbus_connection, hostname).await
+        SettingsController::save_hostname(&self.zbus_connection, hostname).await
     }
 
     /// Get saved connection profiles that match the given SSID.
