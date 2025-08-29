@@ -92,7 +92,7 @@ impl Ip4Config {
     /// # Errors
     ///
     /// Returns `NetworkError::DbusError` if D-Bus operations fail.
-    pub async fn get(
+    pub(crate) async fn get(
         connection: &Connection,
         path: OwnedObjectPath,
     ) -> Result<Arc<Self>, NetworkError> {

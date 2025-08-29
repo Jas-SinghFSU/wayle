@@ -58,7 +58,7 @@ impl DeviceWired {
     ///
     /// Returns `NetworkError::WrongObjectType` if device at path is not an ethernet device,
     /// `NetworkError::DbusError` if D-Bus operations fail.
-    pub async fn get(
+    pub(crate) async fn get(
         connection: &Connection,
         device_path: OwnedObjectPath,
     ) -> Result<Arc<Self>, NetworkError> {
@@ -75,7 +75,7 @@ impl DeviceWired {
     /// Returns:
     /// - `NetworkError::WrongObjectType` if device at path is not an ethernet device
     /// - `NetworkError::DbusError` if D-Bus operations fail
-    pub async fn get_live(
+    pub(crate) async fn get_live(
         connection: &Connection,
         device_path: OwnedObjectPath,
         cancellation_token: CancellationToken,

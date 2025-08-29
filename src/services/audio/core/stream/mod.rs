@@ -115,7 +115,7 @@ impl AudioStream {
     ///
     /// # Errors
     /// Returns error if stream not found or backend query fails.
-    pub async fn get(
+    pub(crate) async fn get(
         command_tx: &CommandSender,
         stream_key: StreamKey,
     ) -> Result<Arc<Self>, AudioError> {
@@ -140,7 +140,7 @@ impl AudioStream {
     ///
     /// # Errors
     /// Returns error if stream not found, backend query fails, or monitoring setup fails.
-    pub async fn get_live(
+    pub(crate) async fn get_live(
         command_tx: &CommandSender,
         event_rx: EventReceiver,
         stream_key: StreamKey,

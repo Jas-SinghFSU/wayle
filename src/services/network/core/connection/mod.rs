@@ -92,7 +92,7 @@ impl ActiveConnection {
     ///
     /// Returns `NetworkError::ObjectNotFound` if connection doesn't exist.
     /// Returns `NetworkError::DbusError` if DBus operations fail.
-    pub async fn get(
+    pub(crate) async fn get(
         connection: &Connection,
         path: OwnedObjectPath,
     ) -> Result<Arc<Self>, NetworkError> {
@@ -105,7 +105,7 @@ impl ActiveConnection {
     ///
     /// Returns `NetworkError::ObjectNotFound` if connection doesn't exist.
     /// Returns `NetworkError::DbusError` if DBus operations fail.
-    pub async fn get_live(
+    pub(crate) async fn get_live(
         connection: &Connection,
         path: OwnedObjectPath,
         cancellation_token: CancellationToken,

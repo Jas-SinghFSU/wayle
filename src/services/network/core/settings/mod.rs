@@ -47,7 +47,7 @@ impl Settings {
     /// # Errors
     ///
     /// Returns `NetworkError::DbusError` if DBus operations fail.
-    pub async fn get(zbus_connection: &Connection) -> Result<Arc<Self>, NetworkError> {
+    pub(crate) async fn get(zbus_connection: &Connection) -> Result<Arc<Self>, NetworkError> {
         let settings = Self::from_connection(zbus_connection).await?;
         Ok(Arc::new(settings))
     }
@@ -60,7 +60,7 @@ impl Settings {
     /// # Errors
     ///
     /// Returns `NetworkError::DbusError` if DBus operations fail.
-    pub async fn get_live(
+    pub(crate) async fn get_live(
         zbus_connection: &Connection,
         cancellation_token: CancellationToken,
     ) -> Result<Arc<Self>, NetworkError> {

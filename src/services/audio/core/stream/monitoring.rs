@@ -19,7 +19,7 @@ impl StreamMonitor {
     ///
     /// # Errors
     /// Returns error if monitoring task fails to spawn.
-    pub async fn start(
+    pub(super) async fn start(
         stream: Arc<AudioStream>,
         stream_key: StreamKey,
         mut event_rx: EventReceiver,

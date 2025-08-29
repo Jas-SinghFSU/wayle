@@ -11,14 +11,14 @@ use crate::services::media::{
 };
 
 /// Monitors D-Bus properties and updates the reactive Player model.
-pub(crate) struct PlayerMonitor;
+pub(super) struct PlayerMonitor;
 
 impl PlayerMonitor {
     /// Start monitoring a player's D-Bus properties.
     ///
     /// Monitoring stops automatically when the Player is dropped.
     #[instrument(skip(player, proxy))]
-    pub fn start(
+    pub(super) fn start(
         player_id: PlayerId,
         player: Arc<Player>,
         proxy: MediaPlayer2PlayerProxy<'static>,

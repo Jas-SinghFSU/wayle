@@ -30,7 +30,7 @@ impl Dhcp6Config {
     ///
     /// Returns `NetworkError::DbusError` if D-Bus operations fail or
     /// `NetworkError::DataConversionFailed` if DHCP option conversion fails.
-    pub async fn get(
+    pub(crate) async fn get(
         connection: &Connection,
         path: OwnedObjectPath,
     ) -> Result<Arc<Self>, NetworkError> {

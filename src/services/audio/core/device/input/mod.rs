@@ -112,7 +112,7 @@ impl InputDevice {
     ///
     /// # Errors
     /// Returns error if device not found or backend communication fails.
-    pub async fn get(
+    pub(crate) async fn get(
         command_tx: &CommandSender,
         device_key: DeviceKey,
     ) -> Result<Arc<Self>, AudioError> {
@@ -144,7 +144,7 @@ impl InputDevice {
     ///
     /// # Errors
     /// Returns error if device not found, backend query fails, or monitoring setup fails.
-    pub async fn get_live(
+    pub(crate) async fn get_live(
         command_tx: &CommandSender,
         event_rx: EventReceiver,
         device_key: DeviceKey,

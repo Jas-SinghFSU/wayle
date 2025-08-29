@@ -16,7 +16,7 @@ pub struct InputDeviceMonitor;
 
 impl InputDeviceMonitor {
     /// Start monitoring for input device changes.
-    pub async fn start(
+    pub(super) async fn start(
         device: Arc<InputDevice>,
         device_key: DeviceKey,
         mut event_rx: EventReceiver,

@@ -84,7 +84,7 @@ impl AccessPoint {
     ///
     /// Returns `NetworkError::ObjectNotFound` if access point doesn't exist.
     /// Returns `NetworkError::ObjectCreationFailed` if access point creation fails.
-    pub async fn get(
+    pub(crate) async fn get(
         connection: &Connection,
         path: OwnedObjectPath,
     ) -> Result<Arc<Self>, NetworkError> {
@@ -106,7 +106,7 @@ impl AccessPoint {
     ///
     /// Returns `NetworkError::ObjectNotFound` if access point doesn't exist.
     /// Returns `NetworkError::ObjectCreationFailed` if access point creation fails.
-    pub async fn get_live(
+    pub(crate) async fn get_live(
         connection: &Connection,
         path: OwnedObjectPath,
         cancellation_token: CancellationToken,

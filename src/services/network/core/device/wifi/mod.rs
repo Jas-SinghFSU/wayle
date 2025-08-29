@@ -87,7 +87,7 @@ impl DeviceWifi {
     /// Returns `NetworkError::WrongObjectType` if device at path is not a WiFi device,
     /// `NetworkError::ObjectCreationFailed` if failed to create base device, or
     /// `NetworkError::DbusError` if D-Bus operations fail.
-    pub async fn get(
+    pub(crate) async fn get(
         connection: &Connection,
         device_path: OwnedObjectPath,
     ) -> Result<Arc<Self>, NetworkError> {
@@ -105,7 +105,7 @@ impl DeviceWifi {
     /// - `NetworkError::WrongObjectType` if device at path is not a WiFi device
     /// - `NetworkError::ObjectCreationFailed` if failed to create base device
     /// - `NetworkError::DbusError` if D-Bus operations fail
-    pub async fn get_live(
+    pub(crate) async fn get_live(
         connection: &Connection,
         device_path: OwnedObjectPath,
         cancellation_token: CancellationToken,

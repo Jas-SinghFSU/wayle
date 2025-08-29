@@ -11,7 +11,7 @@ use crate::services::network::{
 };
 
 /// Monitors D-Bus properties and updates the reactive DeviceWifi model.
-pub(crate) struct DeviceWifiMonitor;
+pub(super) struct DeviceWifiMonitor;
 
 impl DeviceWifiMonitor {
     pub(super) async fn start(

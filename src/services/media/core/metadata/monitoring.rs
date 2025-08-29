@@ -8,13 +8,13 @@ use super::TrackMetadata;
 use crate::services::media::proxy::MediaPlayer2PlayerProxy;
 
 /// Monitors D-Bus metadata properties and updates the reactive TrackMetadata model.
-pub(crate) struct TrackMetadataMonitor;
+pub(super) struct TrackMetadataMonitor;
 
 impl TrackMetadataMonitor {
     /// Start monitoring for metadata changes.
     ///
     /// Monitoring stops automatically when the TrackMetadata is dropped.
-    pub fn start(
+    pub(super) fn start(
         metadata: Arc<TrackMetadata>,
         proxy: MediaPlayer2PlayerProxy<'static>,
         cancellation_token: CancellationToken,

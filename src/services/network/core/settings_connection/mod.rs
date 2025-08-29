@@ -59,7 +59,7 @@ impl ConnectionSettings {
     /// # Errors
     ///
     /// Returns `NetworkError::DbusError` if D-Bus operations fail.
-    pub async fn get(
+    pub(crate) async fn get(
         connection: &Connection,
         path: OwnedObjectPath,
     ) -> Result<Arc<Self>, NetworkError> {
@@ -76,7 +76,7 @@ impl ConnectionSettings {
     /// # Errors
     ///
     /// Returns `NetworkError::DbusError` if D-Bus operations fail
-    pub async fn get_live(
+    pub(crate) async fn get_live(
         connection: &Connection,
         path: OwnedObjectPath,
         cancellation_token: CancellationToken,

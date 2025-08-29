@@ -44,7 +44,7 @@ impl TrackMetadata {
     /// Get metadata snapshot without monitoring.
     ///
     /// Fetches current metadata without setting up monitoring for changes.
-    pub async fn get(proxy: &MediaPlayer2PlayerProxy<'_>) -> Arc<Self> {
+    pub(crate) async fn get(proxy: &MediaPlayer2PlayerProxy<'_>) -> Arc<Self> {
         let metadata = Self::unknown();
         let metadata = Arc::new(metadata);
 
@@ -58,7 +58,7 @@ impl TrackMetadata {
     /// Get metadata with live monitoring.
     ///
     /// Fetches initial metadata and starts monitoring for changes.
-    pub async fn get_live(
+    pub(crate) async fn get_live(
         proxy: MediaPlayer2PlayerProxy<'static>,
         cancellation_token: CancellationToken,
     ) -> Arc<Self> {
