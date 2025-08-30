@@ -1,4 +1,6 @@
-use zbus::{Connection, zvariant::OwnedObjectPath};
+use std::collections::HashMap;
+
+use zbus::{Connection, zvariant::{ObjectPath, OwnedObjectPath, Value}};
 
 use crate::services::bluetooth::{BluetoothError, proxy::Adapter1Proxy, types::DiscoveryFilter};
 
@@ -129,6 +131,80 @@ impl AdapterControls {
             .await
             .map_err(|e| BluetoothError::OperationFailed {
                 operation: "set_discovery_filter",
+                reason: e.to_string(),
+            })
+    }
+
+    pub(super) async fn start_discovery(
+        connection: &Connection,
+        path: &OwnedObjectPath,
+    ) -> Result<(), BluetoothError> {
+        let proxy = Adapter1Proxy::new(connection, path.clone()).await?;
+
+        proxy
+            .start_discovery()
+            .await
+            .map_err(|e| BluetoothError::OperationFailed {
+                operation: "start_discovery",
+                reason: e.to_string(),
+            })
+    }
+
+    pub(super) async fn stop_discovery(
+        connection: &Connection,
+        path: &OwnedObjectPath,
+    ) -> Result<(), BluetoothError> {
+        let proxy = Adapter1Proxy::new(connection, path.clone()).await?;
+
+        proxy
+            .stop_discovery()
+            .await
+            .map_err(|e| BluetoothError::OperationFailed {
+                operation: "stop_discovery",
+                reason: e.to_string(),
+            })
+    }
+
+    pub(super) async fn remove_device(
+        connection: &Connection,
+        path: &OwnedObjectPath,
+        device_path: &OwnedObjectPath,
+    ) -> Result<(), BluetoothError> {
+        let proxy = Adapter1Proxy::new(connection, path.clone()).await?;
+
+        proxy
+            .remove_device(device_path)
+            .await
+            .map_err(|e| BluetoothError::OperationFailed {
+                operation: "remove_device",
+                reason: e.to_string(),
+            })
+    }
+
+    pub(super) async fn get_discovery_filters(
+        connection: &Connection,
+        path: &OwnedObjectPath,
+    ) -> Result<Vec<String>, BluetoothError> {
+        let proxy = Adapter1Proxy::new(connection, path.clone()).await?;
+
+        proxy
+            .get_discovery_filters()
+            .await
+            .map_err(BluetoothError::DbusError)
+    }
+
+    pub(super) async fn connect_device(
+        connection: &Connection,
+        path: &OwnedObjectPath,
+        properties: HashMap<String, Value<'_>>,
+    ) -> Result<OwnedObjectPath, BluetoothError> {
+        let proxy = Adapter1Proxy::new(connection, path.clone()).await?;
+
+        proxy
+            .connect_device(properties)
+            .await
+            .map_err(|e| BluetoothError::OperationFailed {
+                operation: "connect_device",
                 reason: e.to_string(),
             })
     }

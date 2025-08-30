@@ -1,14 +1,25 @@
+mod control;
 mod monitoring;
 
-use crate::services::{
-    bluetooth::types::{AddressType, PairingRequest, PairingResponder, PreferredBearer, UUID},
-    common::Property,
+use crate::{
+    services::{
+        bluetooth::{
+            BluetoothError,
+            proxy::{Battery1Proxy, Device1Proxy},
+            types::{AddressType, PreferredBearer, UUID},
+        },
+        common::Property,
+    },
+    unwrap_bool, unwrap_string,
 };
-use std::{
-    collections::HashMap,
-    sync::{Arc, Mutex},
+use control::DeviceControls;
+use monitoring::DeviceMonitor;
+use std::{collections::HashMap, sync::Arc};
+use tokio_util::sync::CancellationToken;
+use zbus::{
+    Connection,
+    zvariant::{OwnedObjectPath, OwnedValue},
 };
-use zbus::zvariant::{OwnedObjectPath, OwnedValue};
 
 /// Manufacturer-specific advertisement data keyed by company ID.
 pub type ManufacturerData = HashMap<u16, Vec<u8>>;
@@ -22,7 +33,10 @@ pub type DeviceSet = (OwnedObjectPath, HashMap<String, OwnedValue>);
 /// Represents a Bluetooth device with its properties and pairing state.
 #[derive(Debug, Clone)]
 pub struct Device {
-    pairing_responder: Arc<Mutex<Option<PairingResponder>>>,
+    pub(crate) zbus_connection: Connection,
+
+    /// D-Bus object path for this device.
+    pub object_path: OwnedObjectPath,
 
     /// The Bluetooth device address of the remote device.
     pub address: Property<String>,
@@ -68,12 +82,6 @@ pub struct Device {
 
     /// Indicate whether or not the device is currently in the process of pairing
     pub pairing: Property<bool>,
-
-    /// Active pairing or authorization request awaiting user response.
-    ///
-    /// Set when BlueZ agent receives a request requiring user interaction.
-    /// None when idle or pairing proceeds automatically without user input.
-    pub pairing_request: Property<Option<PairingRequest>>,
 
     /// Indicates if the remote device is bonded. Bonded means the information exchanged
     /// on pairing process has been stored and will be persisted.
@@ -176,13 +184,57 @@ pub struct Device {
     pub preferred_bearer: Property<Option<PreferredBearer>>,
 }
 
+pub struct DeviceProperties {
+    pub address: String,
+    pub address_type: String,
+    pub name: Option<String>,
+    pub battery_percentage: Option<u8>,
+    pub icon: Option<String>,
+    pub class: Option<u32>,
+    pub appearance: Option<u16>,
+    pub uuids: Option<Vec<String>>,
+    pub paired: bool,
+    pub bonded: bool,
+    pub connected: bool,
+    pub trused: bool,
+    pub blocked: bool,
+    pub wake_allowed: bool,
+    pub alias: String,
+    pub adapter: OwnedObjectPath,
+    pub legacy_pairing: bool,
+    pub cable_pairing: bool,
+    pub modalias: Option<String>,
+    pub rssi: Option<i16>,
+    pub tx_power: Option<i16>,
+    pub manufacturer_data: Option<ManufacturerData>,
+    pub service_data: Option<ServiceData>,
+    pub services_resolved: bool,
+    pub advertising_flags: Vec<u8>,
+    pub advertising_data: AdvertisingData,
+    pub sets: Vec<DeviceSet>,
+    pub preferred_bearer: Option<String>,
+}
+
 impl Device {
-    pub(crate) fn get() {
-        todo!()
+    pub(crate) async fn get(
+        connection: &Connection,
+        object_path: OwnedObjectPath,
+    ) -> Result<Self, BluetoothError> {
+        let device = Self::from_path(connection, object_path).await?;
+        Ok(device)
     }
 
-    pub(crate) fn get_live() {
-        todo!()
+    pub(crate) async fn get_live(
+        connection: &Connection,
+        object_path: OwnedObjectPath,
+        cancellation_token: CancellationToken,
+    ) -> Result<Arc<Self>, BluetoothError> {
+        let device = Self::from_path(connection, object_path.clone()).await?;
+        let device = Arc::new(device);
+
+        DeviceMonitor::start(device.clone(), connection, object_path, cancellation_token).await?;
+
+        Ok(device)
     }
 
     /// Provides a PIN code for legacy device pairing.
@@ -259,8 +311,8 @@ impl Device {
     /// - `InProgress` - Connection in progress
     /// - `AlreadyConnected` - Already connected
     /// - `BrEdrProfileUnavailable` - BR/EDR profile unavailable
-    pub async fn connect() {
-        todo!()
+    pub async fn connect(&self) -> Result<(), BluetoothError> {
+        DeviceControls::connect(&self.zbus_connection, self.object_path.clone()).await
     }
 
     /// Disconnects all connected profiles and then terminates low-level ACL connection.
@@ -277,8 +329,8 @@ impl Device {
     /// # Errors
     ///
     /// - `NotConnected` - Device not connected
-    pub async fn disconnect() {
-        todo!()
+    pub async fn disconnect(&self) -> Result<(), BluetoothError> {
+        DeviceControls::disconnect(&self.zbus_connection, self.object_path.clone()).await
     }
 
     /// Connects a specific profile of this device. The UUID provided is the remote
@@ -291,8 +343,8 @@ impl Device {
     /// - `InvalidArguments` - Invalid UUID
     /// - `NotAvailable` - Profile not available
     /// - `NotReady` - Adapter not ready
-    pub async fn connect_profile() {
-        todo!()
+    pub async fn connect_profile(&self, profile_uuid: UUID) -> Result<(), BluetoothError> {
+        DeviceControls::connect_profile(&self.zbus_connection, self.object_path.clone(), profile_uuid).await
     }
 
     /// Disconnects a specific profile of this device. The profile needs to be
@@ -307,8 +359,8 @@ impl Device {
     /// - `InProgress` - Disconnection in progress
     /// - `InvalidArguments` - Invalid UUID
     /// - `NotSupported` - Profile not supported
-    pub async fn disconnect_profile() {
-        todo!()
+    pub async fn disconnect_profile(&self, profile_uuid: UUID) -> Result<(), BluetoothError> {
+        DeviceControls::disconnect_profile(&self.zbus_connection, self.object_path.clone(), profile_uuid).await
     }
 
     /// Connects to the remote device and initiate pairing procedure then proceed with
@@ -333,8 +385,8 @@ impl Device {
     /// - `AuthenticationRejected` - Authentication rejected
     /// - `AuthenticationTimeout` - Authentication timeout
     /// - `ConnectionAttemptFailed` - Connection attempt failed
-    pub async fn pair() {
-        todo!()
+    pub async fn pair(&self) -> Result<(), BluetoothError> {
+        DeviceControls::pair(&self.zbus_connection, self.object_path.clone()).await
     }
 
     /// Cancels a pairing operation initiated by the Pair method.
@@ -343,8 +395,8 @@ impl Device {
     ///
     /// - `DoesNotExist` - No pairing in progress
     /// - `Failed` - Operation failed
-    pub async fn cancel_pairing() {
-        todo!()
+    pub async fn cancel_pairing(&self) -> Result<(), BluetoothError> {
+        DeviceControls::cancel_pairing(&self.zbus_connection, self.object_path.clone()).await
     }
 
     /// Returns all currently known BR/EDR service records for the device. Each
@@ -365,34 +417,34 @@ impl Device {
     /// - `NotReady` - Adapter not ready
     /// - `NotConnected` - Device not connected
     /// - `DoesNotExist` - No service records
-    pub async fn get_service_records() {
-        todo!()
+    pub async fn get_service_records(&self) -> Result<Vec<Vec<u8>>, BluetoothError> {
+        DeviceControls::get_service_records(&self.zbus_connection, self.object_path.clone()).await
     }
 
     /// Sets whether the remote device is trusted.
     ///
     /// Trusted devices can connect without user authorization.
-    pub fn set_trused() {
-        todo!()
+    pub async fn set_trused(&self, trusted: bool) -> Result<(), BluetoothError> {
+        DeviceControls::set_trusted(&self.zbus_connection, self.object_path.clone(), trusted).await
     }
 
     /// Sets whether the remote device is blocked.
     ///
     /// Blocked devices will be automatically disconnected and further connections will be denied.
-    pub fn set_blocked() {
-        todo!()
+    pub async fn set_blocked(&self, blocked: bool) -> Result<(), BluetoothError> {
+        DeviceControls::set_blocked(&self.zbus_connection, self.object_path.clone(), blocked).await
     }
 
     /// Sets whether the device is allowed to wake up the host from system suspend.
-    pub fn set_wake_allowed() {
-        todo!()
+    pub async fn set_wake_allowed(&self, wake_allowed: bool) -> Result<(), BluetoothError> {
+        DeviceControls::set_wake_allowed(&self.zbus_connection, self.object_path.clone(), wake_allowed).await
     }
 
     /// Sets a custom alias for the remote device.
     ///
     /// Setting an empty string will revert to the remote device's name.
-    pub fn set_alias() {
-        todo!()
+    pub async fn set_alias(&self, alias: &str) -> Result<(), BluetoothError> {
+        DeviceControls::set_alias(&self.zbus_connection, self.object_path.clone(), alias).await
     }
 
     /// Sets the preferred bearer for dual-mode devices.
@@ -402,7 +454,173 @@ impl Device {
     /// Note: Changes only take effect when the device is disconnected.
     ///
     /// [experimental]
-    pub fn set_preferred_bearer() {
-        todo!()
+    pub async fn set_preferred_bearer(&self, bearer: &str) -> Result<(), BluetoothError> {
+        DeviceControls::set_preferred_bearer(&self.zbus_connection, self.object_path.clone(), bearer).await
+    }
+
+    /// Removes this device from the adapter and forgets all stored information.
+    ///
+    /// This will remove the device from the adapter's device list and delete all
+    /// pairing/bonding information. The device will need to be rediscovered and
+    /// re-paired to connect again.
+    ///
+    /// # Errors
+    ///
+    /// - `InvalidArguments` - Invalid device path
+    /// - `DoesNotExist` - Device does not exist
+    /// - `Failed` - Operation failed
+    pub async fn forget(&self) -> Result<(), BluetoothError> {
+        DeviceControls::forget(&self.zbus_connection, self.adapter.get(), self.object_path.clone()).await
+    }
+
+    pub(crate) async fn from_path(
+        connection: &Connection,
+        object_path: OwnedObjectPath,
+    ) -> Result<Self, BluetoothError> {
+        let device_proxy = Device1Proxy::new(connection, object_path.clone()).await?;
+        let battery_proxy = Battery1Proxy::new(connection, object_path.clone()).await?;
+        let props = Self::fetch_properties(&device_proxy, &battery_proxy).await?;
+        Ok(Self::from_properties(props, connection, object_path))
+    }
+
+    #[allow(clippy::too_many_lines)]
+    async fn fetch_properties(
+        device_proxy: &Device1Proxy<'_>,
+        battery_proxy: &Battery1Proxy<'_>,
+    ) -> Result<DeviceProperties, BluetoothError> {
+        let (
+            address,
+            address_type,
+            name,
+            icon,
+            battery_percentage,
+            class,
+            appearance,
+            uuids,
+            paired,
+            bonded,
+            connected,
+            trused,
+            blocked,
+            wake_allowed,
+            alias,
+            adapter,
+            legacy_pairing,
+            cable_pairing,
+            modalias,
+            rssi,
+            tx_power,
+            manufacturer_data,
+            service_data,
+            services_resolved,
+            advertising_flags,
+            advertising_data,
+            sets,
+            preferred_bearer,
+        ) = tokio::join!(
+            device_proxy.address(),
+            device_proxy.address_type(),
+            device_proxy.name(),
+            device_proxy.icon(),
+            battery_proxy.percentage(),
+            device_proxy.class(),
+            device_proxy.appearance(),
+            device_proxy.uuids(),
+            device_proxy.paired(),
+            device_proxy.bonded(),
+            device_proxy.connected(),
+            device_proxy.trusted(),
+            device_proxy.blocked(),
+            device_proxy.wake_allowed(),
+            device_proxy.alias(),
+            device_proxy.adapter(),
+            device_proxy.legacy_pairing(),
+            device_proxy.cable_pairing(),
+            device_proxy.modalias(),
+            device_proxy.rssi(),
+            device_proxy.tx_power(),
+            device_proxy.manufacturer_data(),
+            device_proxy.service_data(),
+            device_proxy.services_resolved(),
+            device_proxy.advertising_flags(),
+            device_proxy.advertising_data(),
+            device_proxy.sets(),
+            device_proxy.preferred_bearer(),
+        );
+
+        Ok(DeviceProperties {
+            address: unwrap_string!(address),
+            address_type: unwrap_string!(address_type),
+            name: name.ok(),
+            icon: icon.ok(),
+            battery_percentage: battery_percentage.ok(),
+            class: class.ok(),
+            appearance: appearance.ok(),
+            uuids: uuids.ok(),
+            paired: unwrap_bool!(paired),
+            bonded: unwrap_bool!(bonded),
+            connected: unwrap_bool!(connected),
+            trused: unwrap_bool!(trused),
+            blocked: unwrap_bool!(blocked),
+            wake_allowed: unwrap_bool!(wake_allowed),
+            alias: unwrap_string!(alias),
+            adapter: adapter.unwrap_or_default(),
+            legacy_pairing: unwrap_bool!(legacy_pairing),
+            cable_pairing: unwrap_bool!(cable_pairing),
+            modalias: modalias.ok(),
+            rssi: rssi.ok(),
+            tx_power: tx_power.ok(),
+            manufacturer_data: manufacturer_data.ok(),
+            service_data: service_data.ok(),
+            services_resolved: unwrap_bool!(services_resolved),
+            advertising_flags: advertising_flags.unwrap_or_default(),
+            advertising_data: advertising_data.unwrap_or_default(),
+            sets: sets.unwrap_or_default(),
+            preferred_bearer: preferred_bearer.ok(),
+        })
+    }
+
+    fn from_properties(
+        props: DeviceProperties,
+        connection: &Connection,
+        object_path: OwnedObjectPath,
+    ) -> Self {
+        Self {
+            zbus_connection: connection.clone(),
+            object_path,
+            address: Property::new(props.address),
+            address_type: Property::new(AddressType::from(props.address_type.as_str())),
+            name: Property::new(props.name),
+            icon: Property::new(props.icon),
+            battery_percentage: Property::new(props.battery_percentage),
+            class: Property::new(props.class),
+            appearance: Property::new(props.appearance),
+            uuids: Property::new(props.uuids),
+            paired: Property::new(props.paired),
+            pairing: Property::new(false),
+            bonded: Property::new(props.bonded),
+            connected: Property::new(props.connected),
+            trused: Property::new(props.trused),
+            blocked: Property::new(props.blocked),
+            wake_allowed: Property::new(props.wake_allowed),
+            alias: Property::new(props.alias),
+            adapter: Property::new(props.adapter),
+            legacy_pairing: Property::new(props.legacy_pairing),
+            cable_pairing: Property::new(props.cable_pairing),
+            modalias: Property::new(props.modalias),
+            rssi: Property::new(props.rssi),
+            tx_power: Property::new(props.tx_power),
+            manufacturer_data: Property::new(props.manufacturer_data),
+            service_data: Property::new(props.service_data),
+            services_resolved: Property::new(props.services_resolved),
+            advertising_flags: Property::new(props.advertising_flags),
+            advertising_data: Property::new(props.advertising_data),
+            sets: Property::new(props.sets),
+            preferred_bearer: Property::new(
+                props
+                    .preferred_bearer
+                    .map(|s| PreferredBearer::from(s.as_str())),
+            ),
+        }
     }
 }

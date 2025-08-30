@@ -5,7 +5,9 @@ use std::sync::Arc;
 use controls::AdapterControls;
 use monitoring::AdapterMonitor;
 use tokio_util::sync::CancellationToken;
-use zbus::{Connection, zvariant::OwnedObjectPath};
+use std::collections::HashMap;
+
+use zbus::{Connection, zvariant::{OwnedObjectPath, Value}};
 
 use crate::services::{
     bluetooth::{
@@ -14,14 +16,13 @@ use crate::services::{
         types::{AdapterRole, AddressType, DiscoveryFilter, PowerState, UUID},
     },
     common::Property,
-    network::core::device::DbusConnection,
 };
 use crate::{unwrap_bool, unwrap_string, unwrap_u8, unwrap_u16, unwrap_u32, unwrap_vec};
 
 /// Bluetooth adapter representation with reactive properties.
 #[derive(Debug, Clone)]
 pub struct Adapter {
-    pub(crate) zbus_connection: DbusConnection,
+    pub(crate) zbus_connection: Connection,
 
     /// D-Bus object path for this device.
     pub object_path: OwnedObjectPath,
@@ -202,7 +203,7 @@ impl Adapter {
     ///
     /// Returns error if the D-Bus operation fails or the adapter is not available.
     pub async fn set_alias(&self, alias: &str) -> Result<(), BluetoothError> {
-        AdapterControls::set_alias(&self.zbus_connection.0, &self.object_path, alias).await
+        AdapterControls::set_alias(&self.zbus_connection, &self.object_path, alias).await
     }
 
     /// Sets whether the adapter is connectable.
@@ -213,7 +214,7 @@ impl Adapter {
     ///
     /// Returns error if the D-Bus operation fails or the adapter is not available.
     pub async fn set_connectable(&self, connectable: bool) -> Result<(), BluetoothError> {
-        AdapterControls::set_connectable(&self.zbus_connection.0, &self.object_path, connectable)
+        AdapterControls::set_connectable(&self.zbus_connection, &self.object_path, connectable)
             .await
     }
 
@@ -225,7 +226,7 @@ impl Adapter {
     ///
     /// Returns error if the D-Bus operation fails or the adapter is not available.
     pub async fn set_powered(&self, powered: bool) -> Result<(), BluetoothError> {
-        AdapterControls::set_powered(&self.zbus_connection.0, &self.object_path, powered).await
+        AdapterControls::set_powered(&self.zbus_connection, &self.object_path, powered).await
     }
 
     /// Sets whether the adapter is discoverable.
@@ -236,7 +237,7 @@ impl Adapter {
     ///
     /// Returns error if the D-Bus operation fails or the adapter is not available.
     pub async fn set_discoverable(&self, discoverable: bool) -> Result<(), BluetoothError> {
-        AdapterControls::set_discoverable(&self.zbus_connection.0, &self.object_path, discoverable)
+        AdapterControls::set_discoverable(&self.zbus_connection, &self.object_path, discoverable)
             .await
     }
 
@@ -248,12 +249,8 @@ impl Adapter {
     ///
     /// Returns error if the D-Bus operation fails or the adapter is not available.
     pub async fn set_discoverable_timeout(&self, timeout: u32) -> Result<(), BluetoothError> {
-        AdapterControls::set_discoverable_timeout(
-            &self.zbus_connection.0,
-            &self.object_path,
-            timeout,
-        )
-        .await
+        AdapterControls::set_discoverable_timeout(&self.zbus_connection, &self.object_path, timeout)
+            .await
     }
 
     /// Sets whether the adapter is pairable.
@@ -264,7 +261,7 @@ impl Adapter {
     ///
     /// Returns error if the D-Bus operation fails or the adapter is not available.
     pub async fn set_pairable(&self, pairable: bool) -> Result<(), BluetoothError> {
-        AdapterControls::set_pairable(&self.zbus_connection.0, &self.object_path, pairable).await
+        AdapterControls::set_pairable(&self.zbus_connection, &self.object_path, pairable).await
     }
 
     /// Sets the pairable timeout in seconds.
@@ -275,7 +272,7 @@ impl Adapter {
     ///
     /// Returns error if the D-Bus operation fails or the adapter is not available.
     pub async fn set_pairable_timeout(&self, timeout: u32) -> Result<(), BluetoothError> {
-        AdapterControls::set_pairable_timeout(&self.zbus_connection.0, &self.object_path, timeout)
+        AdapterControls::set_pairable_timeout(&self.zbus_connection, &self.object_path, timeout)
             .await
     }
 
@@ -305,8 +302,80 @@ impl Adapter {
         &self,
         filter: DiscoveryFilter<'_>,
     ) -> Result<(), BluetoothError> {
-        AdapterControls::set_discovery_filter(&self.zbus_connection.0, &self.object_path, filter)
+        AdapterControls::set_discovery_filter(&self.zbus_connection, &self.object_path, filter)
             .await
+    }
+
+    /// Starts device discovery session which may include starting an inquiry and/or
+    /// scanning procedures and remote device name resolving.
+    ///
+    /// This process will start creating Device objects as new devices are discovered.
+    /// Each client can request a single device discovery session per adapter.
+    ///
+    /// # Errors
+    ///
+    /// - `NotReady` - Adapter not ready
+    /// - `Failed` - Operation failed
+    /// - `InProgress` - Discovery already in progress
+    pub async fn start_discovery(&self) -> Result<(), BluetoothError> {
+        AdapterControls::start_discovery(&self.zbus_connection, &self.object_path).await
+    }
+
+    /// Stops device discovery session started by start_discovery.
+    ///
+    /// Note that a discovery procedure is shared between all discovery sessions thus
+    /// calling stop_discovery will only release a single session and discovery will stop
+    /// when all sessions from all clients have finished.
+    ///
+    /// # Errors
+    ///
+    /// - `NotReady` - Adapter not ready
+    /// - `Failed` - Operation failed
+    /// - `NotAuthorized` - Not authorized to stop discovery
+    pub async fn stop_discovery(&self) -> Result<(), BluetoothError> {
+        AdapterControls::stop_discovery(&self.zbus_connection, &self.object_path).await
+    }
+
+    /// Removes the remote device object at the given path including cached information
+    /// such as bonding information.
+    ///
+    /// # Errors
+    ///
+    /// - `InvalidArguments` - Invalid device path
+    /// - `Failed` - Operation failed
+    pub async fn remove_device(&self, device_path: &OwnedObjectPath) -> Result<(), BluetoothError> {
+        AdapterControls::remove_device(&self.zbus_connection, &self.object_path, device_path).await
+    }
+
+    /// Returns available filters that can be given to set_discovery_filter.
+    ///
+    /// # Errors
+    ///
+    /// Returns error if the D-Bus operation fails or the adapter is not available.
+    pub async fn get_discovery_filters(&self) -> Result<Vec<String>, BluetoothError> {
+        AdapterControls::get_discovery_filters(&self.zbus_connection, &self.object_path).await
+    }
+
+    /// Connects to device without need of performing General Discovery.
+    ///
+    /// Connection mechanism is similar to Device connect method with exception that this
+    /// method returns success when physical connection is established and you can specify
+    /// bearer to connect with parameter.
+    ///
+    /// After this method returns, services discovery will continue and any supported
+    /// profile will be connected. Returns object path to created device object or device that already exists.
+    ///
+    /// [experimental]
+    ///
+    /// # Errors
+    ///
+    /// - `InvalidArguments` - Invalid properties
+    /// - `AlreadyExists` - Device already exists
+    /// - `NotSupported` - Not supported
+    /// - `NotReady` - Adapter not ready
+    /// - `Failed` - Operation failed
+    pub async fn connect_device(&self, properties: HashMap<String, Value<'_>>) -> Result<OwnedObjectPath, BluetoothError> {
+        AdapterControls::connect_device(&self.zbus_connection, &self.object_path, properties).await
     }
 
     pub(crate) async fn from_path(
@@ -394,7 +463,7 @@ impl Adapter {
     ) -> Self {
         Self {
             object_path,
-            zbus_connection: DbusConnection(connection.clone()),
+            zbus_connection: connection.clone(),
             address: Property::new(props.address),
             address_type: Property::new(AddressType::from(props.address_type.as_str())),
             name: Property::new(props.name),

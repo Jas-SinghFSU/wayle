@@ -1,0 +1,123 @@
+use zbus::{Connection, zvariant::OwnedObjectPath};
+
+use crate::services::bluetooth::{
+    BluetoothError,
+    proxy::{Adapter1Proxy, Device1Proxy},
+    types::UUID,
+};
+
+pub(super) struct DeviceControls;
+
+impl DeviceControls {
+    pub(super) async fn connect(
+        connection: &Connection,
+        device_path: OwnedObjectPath,
+    ) -> Result<(), BluetoothError> {
+        let proxy = Device1Proxy::new(connection, device_path).await?;
+        Ok(proxy.connect().await?)
+    }
+
+    pub(super) async fn disconnect(
+        connection: &Connection,
+        device_path: OwnedObjectPath,
+    ) -> Result<(), BluetoothError> {
+        let proxy = Device1Proxy::new(connection, device_path).await?;
+        Ok(proxy.disconnect().await?)
+    }
+
+    pub(super) async fn connect_profile(
+        connection: &Connection,
+        device_path: OwnedObjectPath,
+        profile_uuid: UUID,
+    ) -> Result<(), BluetoothError> {
+        let proxy = Device1Proxy::new(connection, device_path).await?;
+        Ok(proxy.connect_profile(&profile_uuid).await?)
+    }
+
+    pub(super) async fn disconnect_profile(
+        connection: &Connection,
+        device_path: OwnedObjectPath,
+        profile_uuid: UUID,
+    ) -> Result<(), BluetoothError> {
+        let proxy = Device1Proxy::new(connection, device_path).await?;
+        Ok(proxy.disconnect_profile(&profile_uuid).await?)
+    }
+
+    pub(super) async fn pair(
+        connection: &Connection,
+        device_path: OwnedObjectPath,
+    ) -> Result<(), BluetoothError> {
+        let proxy = Device1Proxy::new(connection, device_path).await?;
+        Ok(proxy.pair().await?)
+    }
+
+    pub(super) async fn cancel_pairing(
+        connection: &Connection,
+        device_path: OwnedObjectPath,
+    ) -> Result<(), BluetoothError> {
+        let proxy = Device1Proxy::new(connection, device_path).await?;
+        Ok(proxy.cancel_pairing().await?)
+    }
+
+    pub(super) async fn forget(
+        connection: &Connection,
+        adapter_path: OwnedObjectPath,
+        device_path: OwnedObjectPath,
+    ) -> Result<(), BluetoothError> {
+        let proxy = Adapter1Proxy::new(connection, adapter_path).await?;
+        Ok(proxy.remove_device(&device_path).await?)
+    }
+
+    pub(super) async fn get_service_records(
+        connection: &Connection,
+        device_path: OwnedObjectPath,
+    ) -> Result<Vec<Vec<u8>>, BluetoothError> {
+        let proxy = Device1Proxy::new(connection, device_path).await?;
+        Ok(proxy.get_service_records().await?)
+    }
+
+    pub(super) async fn set_trusted(
+        connection: &Connection,
+        device_path: OwnedObjectPath,
+        trusted: bool,
+    ) -> Result<(), BluetoothError> {
+        let proxy = Device1Proxy::new(connection, device_path).await?;
+        Ok(proxy.set_trusted(trusted).await?)
+    }
+
+    pub(super) async fn set_blocked(
+        connection: &Connection,
+        device_path: OwnedObjectPath,
+        blocked: bool,
+    ) -> Result<(), BluetoothError> {
+        let proxy = Device1Proxy::new(connection, device_path).await?;
+        Ok(proxy.set_blocked(blocked).await?)
+    }
+
+    pub(super) async fn set_wake_allowed(
+        connection: &Connection,
+        device_path: OwnedObjectPath,
+        wake_allowed: bool,
+    ) -> Result<(), BluetoothError> {
+        let proxy = Device1Proxy::new(connection, device_path).await?;
+        Ok(proxy.set_wake_allowed(wake_allowed).await?)
+    }
+
+    pub(super) async fn set_alias(
+        connection: &Connection,
+        device_path: OwnedObjectPath,
+        alias: &str,
+    ) -> Result<(), BluetoothError> {
+        let proxy = Device1Proxy::new(connection, device_path).await?;
+        Ok(proxy.set_alias(alias).await?)
+    }
+
+    pub(super) async fn set_preferred_bearer(
+        connection: &Connection,
+        device_path: OwnedObjectPath,
+        bearer: &str,
+    ) -> Result<(), BluetoothError> {
+        let proxy = Device1Proxy::new(connection, device_path).await?;
+        Ok(proxy.set_preferred_bearer(bearer).await?)
+    }
+}
