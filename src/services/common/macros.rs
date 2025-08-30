@@ -145,6 +145,50 @@ macro_rules! unwrap_u8_or {
     };
 }
 
+/// Unwraps a DBus u16 property with 0 default.
+#[macro_export]
+macro_rules! unwrap_u16 {
+    ($result:expr) => {
+        $result.unwrap_or_else(|err| {
+            ::tracing::warn!("Failed to fetch '{}' property: {}", "property", err);
+            0u16
+        })
+    };
+    ($result:expr, $path:expr) => {
+        $result.unwrap_or_else(|err| {
+            ::tracing::warn!(
+                "Failed to fetch '{}' property for {:?}: {}",
+                "property",
+                $path,
+                err
+            );
+            0u16
+        })
+    };
+}
+
+/// Unwraps a DBus u16 property with custom default.
+#[macro_export]
+macro_rules! unwrap_u16_or {
+    ($result:expr, $default:expr) => {
+        $result.unwrap_or_else(|err| {
+            ::tracing::warn!("Failed to fetch '{}' property: {}", "property", err);
+            $default
+        })
+    };
+    ($result:expr, $path:expr, $default:expr) => {
+        $result.unwrap_or_else(|err| {
+            ::tracing::warn!(
+                "Failed to fetch '{}' property for {:?}: {}",
+                "property",
+                $path,
+                err
+            );
+            $default
+        })
+    };
+}
+
 /// Unwraps a DBus u64 property with 0 default.
 #[macro_export]
 macro_rules! unwrap_u64 {

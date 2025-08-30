@@ -1,5 +1,7 @@
 /// Audio control service
 pub mod audio;
+/// Bluetooth control service
+pub mod bluetooth;
 /// Common utilities and abstractions for services
 pub mod common;
 /// Media player control service

@@ -7,7 +7,7 @@ use controls::DeviceWifiControls;
 use monitoring::DeviceWifiMonitor;
 use tokio_util::sync::CancellationToken;
 use tracing::warn;
-use zbus::{Connection, zvariant::{OwnedObjectPath, OwnedValue}};
+use zbus::{Connection, zvariant::OwnedObjectPath};
 
 use super::Device;
 use crate::{
