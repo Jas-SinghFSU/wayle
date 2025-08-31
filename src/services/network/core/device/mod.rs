@@ -254,7 +254,7 @@ impl Device {
         connection: &Connection,
         object_path: OwnedObjectPath,
     ) -> Result<Self, NetworkError> {
-        let proxy = DeviceProxy::new(connection, object_path.clone()).await?;
+        let proxy = DeviceProxy::new(connection, &object_path).await?;
         let props = Self::fetch_properties(&proxy).await?;
         Ok(Self::from_properties(props, connection, object_path))
     }

@@ -112,7 +112,7 @@ impl Ip4Config {
         connection: &Connection,
         path: &OwnedObjectPath,
     ) -> Result<Ip4ConfigProperties, NetworkError> {
-        let proxy = IP4ConfigProxy::new(connection, path.clone())
+        let proxy = IP4ConfigProxy::new(connection, path)
             .await
             .map_err(NetworkError::DbusError)?;
 

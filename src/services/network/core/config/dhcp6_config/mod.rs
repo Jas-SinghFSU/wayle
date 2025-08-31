@@ -50,7 +50,7 @@ impl Dhcp6Config {
         connection: &Connection,
         path: &OwnedObjectPath,
     ) -> Result<HashMap<String, OwnedValue>, NetworkError> {
-        let proxy = DHCP6ConfigProxy::new(connection, path.clone())
+        let proxy = DHCP6ConfigProxy::new(connection, path)
             .await
             .map_err(NetworkError::DbusError)?;
 

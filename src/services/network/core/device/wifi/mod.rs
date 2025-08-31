@@ -157,7 +157,7 @@ impl DeviceWifi {
         connection: &Connection,
         object_path: &OwnedObjectPath,
     ) -> Result<(), NetworkError> {
-        let device_proxy = DeviceProxy::new(connection, object_path.clone())
+        let device_proxy = DeviceProxy::new(connection, object_path)
             .await
             .map_err(NetworkError::DbusError)?;
 
@@ -181,7 +181,7 @@ impl DeviceWifi {
         connection: &Connection,
         device_path: &OwnedObjectPath,
     ) -> Result<WifiProperties, NetworkError> {
-        let wifi_proxy = DeviceWirelessProxy::new(connection, device_path.clone())
+        let wifi_proxy = DeviceWirelessProxy::new(connection, device_path)
             .await
             .map_err(NetworkError::DbusError)?;
 
@@ -235,7 +235,7 @@ impl DeviceWifi {
         connection: &Connection,
         object_path: OwnedObjectPath,
     ) -> Result<Self, NetworkError> {
-        let device_proxy = DeviceProxy::new(connection, object_path.clone()).await?;
+        let device_proxy = DeviceProxy::new(connection, &object_path).await?;
 
         let device_type = device_proxy.device_type().await?;
         if device_type != NMDeviceType::Wifi as u32 {
@@ -251,7 +251,7 @@ impl DeviceWifi {
             });
         }
 
-        let wifi_proxy = DeviceWirelessProxy::new(connection, object_path.clone()).await?;
+        let wifi_proxy = DeviceWirelessProxy::new(connection, &object_path).await?;
 
         let base = match Device::from_path(connection, object_path.clone()).await {
             Ok(base) => base,

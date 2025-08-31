@@ -312,7 +312,7 @@ impl Device {
     /// - `AlreadyConnected` - Already connected
     /// - `BrEdrProfileUnavailable` - BR/EDR profile unavailable
     pub async fn connect(&self) -> Result<(), BluetoothError> {
-        DeviceControls::connect(&self.zbus_connection, self.object_path.clone()).await
+        DeviceControls::connect(&self.zbus_connection, &self.object_path).await
     }
 
     /// Disconnects all connected profiles and then terminates low-level ACL connection.
@@ -330,7 +330,7 @@ impl Device {
     ///
     /// - `NotConnected` - Device not connected
     pub async fn disconnect(&self) -> Result<(), BluetoothError> {
-        DeviceControls::disconnect(&self.zbus_connection, self.object_path.clone()).await
+        DeviceControls::disconnect(&self.zbus_connection, &self.object_path).await
     }
 
     /// Connects a specific profile of this device. The UUID provided is the remote
@@ -344,7 +344,7 @@ impl Device {
     /// - `NotAvailable` - Profile not available
     /// - `NotReady` - Adapter not ready
     pub async fn connect_profile(&self, profile_uuid: UUID) -> Result<(), BluetoothError> {
-        DeviceControls::connect_profile(&self.zbus_connection, self.object_path.clone(), profile_uuid).await
+        DeviceControls::connect_profile(&self.zbus_connection, &self.object_path, profile_uuid).await
     }
 
     /// Disconnects a specific profile of this device. The profile needs to be
@@ -360,7 +360,7 @@ impl Device {
     /// - `InvalidArguments` - Invalid UUID
     /// - `NotSupported` - Profile not supported
     pub async fn disconnect_profile(&self, profile_uuid: UUID) -> Result<(), BluetoothError> {
-        DeviceControls::disconnect_profile(&self.zbus_connection, self.object_path.clone(), profile_uuid).await
+        DeviceControls::disconnect_profile(&self.zbus_connection, &self.object_path, profile_uuid).await
     }
 
     /// Connects to the remote device and initiate pairing procedure then proceed with
@@ -386,7 +386,7 @@ impl Device {
     /// - `AuthenticationTimeout` - Authentication timeout
     /// - `ConnectionAttemptFailed` - Connection attempt failed
     pub async fn pair(&self) -> Result<(), BluetoothError> {
-        DeviceControls::pair(&self.zbus_connection, self.object_path.clone()).await
+        DeviceControls::pair(&self.zbus_connection, &self.object_path).await
     }
 
     /// Cancels a pairing operation initiated by the Pair method.
@@ -396,7 +396,7 @@ impl Device {
     /// - `DoesNotExist` - No pairing in progress
     /// - `Failed` - Operation failed
     pub async fn cancel_pairing(&self) -> Result<(), BluetoothError> {
-        DeviceControls::cancel_pairing(&self.zbus_connection, self.object_path.clone()).await
+        DeviceControls::cancel_pairing(&self.zbus_connection, &self.object_path).await
     }
 
     /// Returns all currently known BR/EDR service records for the device. Each
@@ -418,33 +418,33 @@ impl Device {
     /// - `NotConnected` - Device not connected
     /// - `DoesNotExist` - No service records
     pub async fn get_service_records(&self) -> Result<Vec<Vec<u8>>, BluetoothError> {
-        DeviceControls::get_service_records(&self.zbus_connection, self.object_path.clone()).await
+        DeviceControls::get_service_records(&self.zbus_connection, &self.object_path).await
     }
 
     /// Sets whether the remote device is trusted.
     ///
     /// Trusted devices can connect without user authorization.
     pub async fn set_trused(&self, trusted: bool) -> Result<(), BluetoothError> {
-        DeviceControls::set_trusted(&self.zbus_connection, self.object_path.clone(), trusted).await
+        DeviceControls::set_trusted(&self.zbus_connection, &self.object_path, trusted).await
     }
 
     /// Sets whether the remote device is blocked.
     ///
     /// Blocked devices will be automatically disconnected and further connections will be denied.
     pub async fn set_blocked(&self, blocked: bool) -> Result<(), BluetoothError> {
-        DeviceControls::set_blocked(&self.zbus_connection, self.object_path.clone(), blocked).await
+        DeviceControls::set_blocked(&self.zbus_connection, &self.object_path, blocked).await
     }
 
     /// Sets whether the device is allowed to wake up the host from system suspend.
     pub async fn set_wake_allowed(&self, wake_allowed: bool) -> Result<(), BluetoothError> {
-        DeviceControls::set_wake_allowed(&self.zbus_connection, self.object_path.clone(), wake_allowed).await
+        DeviceControls::set_wake_allowed(&self.zbus_connection, &self.object_path, wake_allowed).await
     }
 
     /// Sets a custom alias for the remote device.
     ///
     /// Setting an empty string will revert to the remote device's name.
     pub async fn set_alias(&self, alias: &str) -> Result<(), BluetoothError> {
-        DeviceControls::set_alias(&self.zbus_connection, self.object_path.clone(), alias).await
+        DeviceControls::set_alias(&self.zbus_connection, &self.object_path, alias).await
     }
 
     /// Sets the preferred bearer for dual-mode devices.
@@ -455,7 +455,7 @@ impl Device {
     ///
     /// [experimental]
     pub async fn set_preferred_bearer(&self, bearer: &str) -> Result<(), BluetoothError> {
-        DeviceControls::set_preferred_bearer(&self.zbus_connection, self.object_path.clone(), bearer).await
+        DeviceControls::set_preferred_bearer(&self.zbus_connection, &self.object_path, bearer).await
     }
 
     /// Removes this device from the adapter and forgets all stored information.
@@ -470,15 +470,15 @@ impl Device {
     /// - `DoesNotExist` - Device does not exist
     /// - `Failed` - Operation failed
     pub async fn forget(&self) -> Result<(), BluetoothError> {
-        DeviceControls::forget(&self.zbus_connection, self.adapter.get(), self.object_path.clone()).await
+        DeviceControls::forget(&self.zbus_connection, &self.adapter.get(), &self.object_path).await
     }
 
     pub(crate) async fn from_path(
         connection: &Connection,
         object_path: OwnedObjectPath,
     ) -> Result<Self, BluetoothError> {
-        let device_proxy = Device1Proxy::new(connection, object_path.clone()).await?;
-        let battery_proxy = Battery1Proxy::new(connection, object_path.clone()).await?;
+        let device_proxy = Device1Proxy::new(connection, &object_path).await?;
+        let battery_proxy = Battery1Proxy::new(connection, &object_path).await?;
         let props = Self::fetch_properties(&device_proxy, &battery_proxy).await?;
         Ok(Self::from_properties(props, connection, object_path))
     }

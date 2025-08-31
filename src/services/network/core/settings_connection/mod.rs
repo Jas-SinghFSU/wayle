@@ -269,7 +269,7 @@ impl ConnectionSettings {
         connection: &Connection,
         path: &OwnedObjectPath,
     ) -> Result<SettingsConnectionProperties, NetworkError> {
-        let proxy = SettingsConnectionProxy::new(connection, path.clone())
+        let proxy = SettingsConnectionProxy::new(connection, path)
             .await
             .map_err(NetworkError::DbusError)?;
 

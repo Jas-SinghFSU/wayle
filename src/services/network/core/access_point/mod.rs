@@ -132,7 +132,7 @@ impl AccessPoint {
         connection: &Connection,
         path: OwnedObjectPath,
     ) -> Result<Arc<Self>, NetworkError> {
-        let ap_proxy = AccessPointProxy::new(connection, path.clone())
+        let ap_proxy = AccessPointProxy::new(connection, &path)
             .await
             .map_err(NetworkError::DbusError)?;
 

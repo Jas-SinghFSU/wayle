@@ -102,7 +102,7 @@ impl DeviceWired {
         connection: &Connection,
         device_path: &OwnedObjectPath,
     ) -> Result<(), NetworkError> {
-        let device_proxy = DeviceProxy::new(connection, device_path.clone())
+        let device_proxy = DeviceProxy::new(connection, device_path)
             .await
             .map_err(NetworkError::DbusError)?;
 
@@ -126,7 +126,7 @@ impl DeviceWired {
         connection: &Connection,
         device_path: &OwnedObjectPath,
     ) -> Result<WiredProperties, NetworkError> {
-        let wired_proxy = DeviceWiredProxy::new(connection, device_path.clone())
+        let wired_proxy = DeviceWiredProxy::new(connection, device_path)
             .await
             .map_err(NetworkError::DbusError)?;
 

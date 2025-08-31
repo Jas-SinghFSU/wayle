@@ -15,7 +15,7 @@ impl DeviceControls {
         path: &OwnedObjectPath,
         managed: bool,
     ) -> Result<(), NetworkError> {
-        let proxy = DeviceProxy::new(connection, path.clone())
+        let proxy = DeviceProxy::new(connection, path)
             .await
             .map_err(NetworkError::DbusError)?;
 
@@ -35,7 +35,7 @@ impl DeviceControls {
         path: &OwnedObjectPath,
         autoconnect: bool,
     ) -> Result<(), NetworkError> {
-        let proxy = DeviceProxy::new(connection, path.clone())
+        let proxy = DeviceProxy::new(connection, path)
             .await
             .map_err(NetworkError::DbusError)?;
 
@@ -57,7 +57,7 @@ impl DeviceControls {
         version_id: u64,
         flags: u32,
     ) -> Result<(), NetworkError> {
-        let proxy = DeviceProxy::new(connection, path.clone())
+        let proxy = DeviceProxy::new(connection, path)
             .await
             .map_err(NetworkError::DbusError)?;
 
@@ -77,7 +77,7 @@ impl DeviceControls {
         path: &OwnedObjectPath,
         flags: u32,
     ) -> Result<(HashMap<String, HashMap<String, OwnedValue>>, u64), NetworkError> {
-        let proxy = DeviceProxy::new(connection, path.clone())
+        let proxy = DeviceProxy::new(connection, path)
             .await
             .map_err(NetworkError::DbusError)?;
 
@@ -94,7 +94,7 @@ impl DeviceControls {
         connection: &Connection,
         path: &OwnedObjectPath,
     ) -> Result<(), NetworkError> {
-        let proxy = DeviceProxy::new(connection, path.clone())
+        let proxy = DeviceProxy::new(connection, path)
             .await
             .map_err(NetworkError::DbusError)?;
 
@@ -113,7 +113,7 @@ impl DeviceControls {
         connection: &Connection,
         path: &OwnedObjectPath,
     ) -> Result<(), NetworkError> {
-        let proxy = DeviceProxy::new(connection, path.clone())
+        let proxy = DeviceProxy::new(connection, path)
             .await
             .map_err(NetworkError::DbusError)?;
 

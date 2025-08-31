@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use zbus::{Connection, zvariant::{ObjectPath, OwnedObjectPath, Value}};
+use zbus::{Connection, zvariant::{OwnedObjectPath, Value}};
 
 use crate::services::bluetooth::{BluetoothError, proxy::Adapter1Proxy, types::DiscoveryFilter};
 
@@ -12,7 +12,7 @@ impl AdapterControls {
         path: &OwnedObjectPath,
         alias: &str,
     ) -> Result<(), BluetoothError> {
-        let proxy = Adapter1Proxy::new(connection, path.clone()).await?;
+        let proxy = Adapter1Proxy::new(connection, path).await?;
 
         proxy
             .set_alias(alias)
@@ -28,7 +28,7 @@ impl AdapterControls {
         path: &OwnedObjectPath,
         connectable: bool,
     ) -> Result<(), BluetoothError> {
-        let proxy = Adapter1Proxy::new(connection, path.clone()).await?;
+        let proxy = Adapter1Proxy::new(connection, path).await?;
 
         proxy
             .set_connectable(connectable)
@@ -44,7 +44,7 @@ impl AdapterControls {
         path: &OwnedObjectPath,
         powered: bool,
     ) -> Result<(), BluetoothError> {
-        let proxy = Adapter1Proxy::new(connection, path.clone()).await?;
+        let proxy = Adapter1Proxy::new(connection, path).await?;
 
         proxy
             .set_powered(powered)
@@ -60,7 +60,7 @@ impl AdapterControls {
         path: &OwnedObjectPath,
         discoverable: bool,
     ) -> Result<(), BluetoothError> {
-        let proxy = Adapter1Proxy::new(connection, path.clone()).await?;
+        let proxy = Adapter1Proxy::new(connection, path).await?;
 
         proxy
             .set_discoverable(discoverable)
@@ -76,7 +76,7 @@ impl AdapterControls {
         path: &OwnedObjectPath,
         discoverable_timeout: u32,
     ) -> Result<(), BluetoothError> {
-        let proxy = Adapter1Proxy::new(connection, path.clone()).await?;
+        let proxy = Adapter1Proxy::new(connection, path).await?;
 
         proxy
             .set_discoverable_timeout(discoverable_timeout)
@@ -92,7 +92,7 @@ impl AdapterControls {
         path: &OwnedObjectPath,
         pairable: bool,
     ) -> Result<(), BluetoothError> {
-        let proxy = Adapter1Proxy::new(connection, path.clone()).await?;
+        let proxy = Adapter1Proxy::new(connection, path).await?;
 
         proxy
             .set_pairable(pairable)
@@ -108,7 +108,7 @@ impl AdapterControls {
         path: &OwnedObjectPath,
         pairable_timeout: u32,
     ) -> Result<(), BluetoothError> {
-        let proxy = Adapter1Proxy::new(connection, path.clone()).await?;
+        let proxy = Adapter1Proxy::new(connection, path).await?;
 
         proxy
             .set_pairable_timeout(pairable_timeout)
@@ -124,7 +124,7 @@ impl AdapterControls {
         path: &OwnedObjectPath,
         discovery_filter: DiscoveryFilter<'_>,
     ) -> Result<(), BluetoothError> {
-        let proxy = Adapter1Proxy::new(connection, path.clone()).await?;
+        let proxy = Adapter1Proxy::new(connection, path).await?;
 
         proxy
             .set_discovery_filter(discovery_filter)
@@ -139,7 +139,7 @@ impl AdapterControls {
         connection: &Connection,
         path: &OwnedObjectPath,
     ) -> Result<(), BluetoothError> {
-        let proxy = Adapter1Proxy::new(connection, path.clone()).await?;
+        let proxy = Adapter1Proxy::new(connection, path).await?;
 
         proxy
             .start_discovery()
@@ -154,7 +154,7 @@ impl AdapterControls {
         connection: &Connection,
         path: &OwnedObjectPath,
     ) -> Result<(), BluetoothError> {
-        let proxy = Adapter1Proxy::new(connection, path.clone()).await?;
+        let proxy = Adapter1Proxy::new(connection, path).await?;
 
         proxy
             .stop_discovery()
@@ -170,7 +170,7 @@ impl AdapterControls {
         path: &OwnedObjectPath,
         device_path: &OwnedObjectPath,
     ) -> Result<(), BluetoothError> {
-        let proxy = Adapter1Proxy::new(connection, path.clone()).await?;
+        let proxy = Adapter1Proxy::new(connection, path).await?;
 
         proxy
             .remove_device(device_path)
@@ -185,7 +185,7 @@ impl AdapterControls {
         connection: &Connection,
         path: &OwnedObjectPath,
     ) -> Result<Vec<String>, BluetoothError> {
-        let proxy = Adapter1Proxy::new(connection, path.clone()).await?;
+        let proxy = Adapter1Proxy::new(connection, path).await?;
 
         proxy
             .get_discovery_filters()
@@ -198,7 +198,7 @@ impl AdapterControls {
         path: &OwnedObjectPath,
         properties: HashMap<String, Value<'_>>,
     ) -> Result<OwnedObjectPath, BluetoothError> {
-        let proxy = Adapter1Proxy::new(connection, path.clone()).await?;
+        let proxy = Adapter1Proxy::new(connection, path).await?;
 
         proxy
             .connect_device(properties)

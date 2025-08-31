@@ -14,7 +14,7 @@ impl DeviceWifiControls {
         connection: &Connection,
         path: &OwnedObjectPath,
     ) -> Result<Vec<OwnedObjectPath>, NetworkError> {
-        let proxy = DeviceWirelessProxy::new(connection, path.clone())
+        let proxy = DeviceWirelessProxy::new(connection, path)
             .await
             .map_err(NetworkError::DbusError)?;
 
@@ -32,7 +32,7 @@ impl DeviceWifiControls {
         path: &OwnedObjectPath,
         options: HashMap<String, OwnedValue>,
     ) -> Result<(), NetworkError> {
-        let proxy = DeviceWirelessProxy::new(connection, path.clone())
+        let proxy = DeviceWirelessProxy::new(connection, path)
             .await
             .map_err(NetworkError::DbusError)?;
 

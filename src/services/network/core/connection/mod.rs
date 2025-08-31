@@ -127,7 +127,7 @@ impl ActiveConnection {
         connection: &Connection,
         path: OwnedObjectPath,
     ) -> Result<Arc<Self>, NetworkError> {
-        let connection_proxy = ConnectionActiveProxy::new(connection, path.clone()).await?;
+        let connection_proxy = ConnectionActiveProxy::new(connection, &path).await?;
 
         if connection_proxy.connection().await.is_err() {
             warn!(

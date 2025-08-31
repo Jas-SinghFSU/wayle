@@ -382,7 +382,7 @@ impl Adapter {
         connection: &Connection,
         object_path: OwnedObjectPath,
     ) -> Result<Self, BluetoothError> {
-        let proxy = Adapter1Proxy::new(connection, object_path.clone()).await?;
+        let proxy = Adapter1Proxy::new(connection, &object_path).await?;
         let props = Self::fetch_properties(&proxy).await?;
         Ok(Self::from_properties(props, connection, object_path))
     }

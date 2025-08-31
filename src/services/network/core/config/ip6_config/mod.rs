@@ -108,7 +108,7 @@ impl Ip6Config {
         connection: &Connection,
         path: &OwnedObjectPath,
     ) -> Result<Ip6ConfigProperties, NetworkError> {
-        let proxy = IP6ConfigProxy::new(connection, path.clone())
+        let proxy = IP6ConfigProxy::new(connection, path)
             .await
             .map_err(NetworkError::DbusError)?;
 
