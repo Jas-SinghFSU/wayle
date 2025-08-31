@@ -17,3 +17,8 @@ pub const BLUEZ_SERVICE: &str = "org.bluez";
 
 #[allow(clippy::upper_case_acronyms)]
 pub type UUID = String;
+
+#[derive(Debug, Clone)]
+pub enum ServiceNotification {
+    DeviceConnectionChanged,
+}

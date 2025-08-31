@@ -1,5 +1,6 @@
 use std::{collections::HashMap, sync::Arc};
 
+use tokio::sync::mpsc;
 use tokio_util::sync::CancellationToken;
 use tracing::warn;
 use zbus::{
@@ -12,7 +13,7 @@ use zbus::{
 use super::{
     core::{Adapter, Device},
     error::BluetoothError,
-    types::{ADAPTER_INTERFACE, BLUEZ_SERVICE, DEVICE_INTERFACE},
+    types::{ADAPTER_INTERFACE, BLUEZ_SERVICE, DEVICE_INTERFACE, ServiceNotification},
 };
 use crate::services::common::ROOT_PATH;
 pub(crate) struct BluetoothDiscovery {
@@ -21,13 +22,14 @@ pub(crate) struct BluetoothDiscovery {
     pub devices: Vec<Arc<Device>>,
     pub available: bool,
     pub enabled: bool,
-    pub connected: bool,
+    pub connected: Vec<String>,
 }
 
 impl BluetoothDiscovery {
     pub(crate) async fn new(
         connection: &Connection,
         cancellation_token: CancellationToken,
+        notifier_tx: &mpsc::UnboundedSender<ServiceNotification>,
     ) -> Result<Self, BluetoothError> {
         let object_manager = ObjectManagerProxy::new(connection, BLUEZ_SERVICE, ROOT_PATH).await?;
         let managed_objects = object_manager.get_managed_objects().await.map_err(|e| {
@@ -47,6 +49,7 @@ impl BluetoothDiscovery {
                 cancellation_token.child_token(),
                 object_path.clone(),
                 interfaces.clone(),
+                notifier_tx,
             )
             .await;
             Self::extract_device(
@@ -55,6 +58,7 @@ impl BluetoothDiscovery {
                 cancellation_token.child_token(),
                 object_path,
                 interfaces,
+                notifier_tx,
             )
             .await;
         }
@@ -68,7 +72,16 @@ impl BluetoothDiscovery {
         let enabled = primary_adapter
             .as_ref()
             .is_some_and(|adapter| adapter.powered.get());
-        let connected = devices.iter().any(|device| device.connected.get());
+        let connected = devices
+            .iter()
+            .filter_map(|device| {
+                if device.connected.get() {
+                    Some(device.address.get())
+                } else {
+                    None
+                }
+            })
+            .collect();
 
         Ok(Self {
             adapters,
@@ -86,12 +99,20 @@ impl BluetoothDiscovery {
         cancellation_token: CancellationToken,
         object_path: OwnedObjectPath,
         interfaces: HashMap<OwnedInterfaceName, HashMap<String, OwnedValue>>,
+        notifier_tx: &mpsc::UnboundedSender<ServiceNotification>,
     ) -> () {
         if !interfaces.contains_key(ADAPTER_INTERFACE) {
             return;
         }
 
-        match Adapter::get_live(connection, object_path.clone(), cancellation_token).await {
+        match Adapter::get_live(
+            connection,
+            object_path.clone(),
+            cancellation_token,
+            notifier_tx,
+        )
+        .await
+        {
             Ok(adapter) => adapters.push(adapter),
             Err(e) => {
                 warn!(
@@ -109,12 +130,20 @@ impl BluetoothDiscovery {
         cancellation_token: CancellationToken,
         object_path: OwnedObjectPath,
         interfaces: HashMap<OwnedInterfaceName, HashMap<String, OwnedValue>>,
+        notifier_tx: &mpsc::UnboundedSender<ServiceNotification>,
     ) -> () {
         if !interfaces.contains_key(DEVICE_INTERFACE) {
             return;
         }
 
-        match Device::get_live(connection, object_path.clone(), cancellation_token).await {
+        match Device::get_live(
+            connection,
+            object_path.clone(),
+            cancellation_token,
+            notifier_tx,
+        )
+        .await
+        {
             Ok(device) => devices.push(device),
             Err(e) => {
                 warn!(

@@ -4,6 +4,7 @@ use std::{collections::HashMap, sync::Arc};
 
 use controls::AdapterControls;
 use monitoring::AdapterMonitor;
+use tokio::sync::mpsc;
 use tokio_util::sync::CancellationToken;
 use zbus::{
     Connection,
@@ -15,7 +16,9 @@ use crate::{
         bluetooth::{
             BluetoothError,
             proxy::Adapter1Proxy,
-            types::{AdapterRole, AddressType, DiscoveryFilter, PowerState, UUID},
+            types::{
+                AdapterRole, AddressType, DiscoveryFilter, PowerState, ServiceNotification, UUID,
+            },
         },
         common::Property,
     },
@@ -26,6 +29,7 @@ use crate::{
 #[derive(Debug, Clone)]
 pub struct Adapter {
     pub(crate) zbus_connection: Connection,
+    pub(crate) notifier_tx: mpsc::UnboundedSender<ServiceNotification>,
 
     /// D-Bus object path for this device.
     pub object_path: OwnedObjectPath,
@@ -185,8 +189,9 @@ impl Adapter {
     pub(crate) async fn get(
         connection: &Connection,
         object_path: OwnedObjectPath,
+        notifier_tx: &mpsc::UnboundedSender<ServiceNotification>,
     ) -> Result<Arc<Self>, BluetoothError> {
-        let adapter = Self::from_path(connection, object_path).await?;
+        let adapter = Self::from_path(connection, object_path, notifier_tx).await?;
 
         Ok(Arc::new(adapter))
     }
@@ -195,8 +200,9 @@ impl Adapter {
         connection: &Connection,
         object_path: OwnedObjectPath,
         cancellation_token: CancellationToken,
+        notifier_tx: &mpsc::UnboundedSender<ServiceNotification>,
     ) -> Result<Arc<Self>, BluetoothError> {
-        let adapter = Self::from_path(connection, object_path.clone()).await?;
+        let adapter = Self::from_path(connection, object_path.clone(), notifier_tx).await?;
         let adapter = Arc::new(adapter);
 
         AdapterMonitor::start(adapter.clone(), connection, object_path, cancellation_token).await?;
@@ -393,10 +399,16 @@ impl Adapter {
     pub(crate) async fn from_path(
         connection: &Connection,
         object_path: OwnedObjectPath,
+        notifier_tx: &mpsc::UnboundedSender<ServiceNotification>,
     ) -> Result<Self, BluetoothError> {
         let proxy = Adapter1Proxy::new(connection, &object_path).await?;
         let props = Self::fetch_properties(&proxy).await?;
-        Ok(Self::from_properties(props, connection, object_path))
+        Ok(Self::from_properties(
+            props,
+            connection,
+            object_path,
+            notifier_tx,
+        ))
     }
 
     #[allow(clippy::too_many_lines)]
@@ -472,9 +484,11 @@ impl Adapter {
         props: AdapterProperties,
         connection: &Connection,
         object_path: OwnedObjectPath,
+        notifier_tx: &mpsc::UnboundedSender<ServiceNotification>,
     ) -> Self {
         Self {
             object_path,
+            notifier_tx: notifier_tx.clone(),
             zbus_connection: connection.clone(),
             address: Property::new(props.address),
             address_type: Property::new(AddressType::from(props.address_type.as_str())),

@@ -10,7 +10,7 @@ use zbus::{Connection, zvariant::OwnedObjectPath};
 use super::{
     core::{Adapter, Device},
     monitoring::BluetoothMonitoring,
-    types::{PairingRequest, PairingResponder},
+    types::{PairingRequest, PairingResponder, ServiceNotification},
 };
 use crate::services::{
     bluetooth::{
@@ -32,6 +32,7 @@ pub struct BluetoothService {
     zbus_connection: Connection,
     cancellation_token: CancellationToken,
     agent_tx: UnboundedSender<AgentEvent>,
+    notifier_tx: UnboundedSender<ServiceNotification>,
     pairing_responder: Arc<Mutex<Option<PairingResponder>>>,
 
     /// All available Bluetooth adapters on the system.
@@ -45,7 +46,8 @@ pub struct BluetoothService {
     /// Whether Bluetooth is enabled (at least one adapter powered).
     pub enabled: Property<bool>,
     /// Whether any device is currently connected.
-    pub connected: Property<bool>,
+    pub connected: Property<Vec<String>>,
+
     pub pairing_request: Property<Option<PairingRequest>>,
 }
 
@@ -61,7 +63,9 @@ impl BluetoothService {
 
         let cancellation_token = CancellationToken::new();
 
-        let (agent_tx, _) = mpsc::unbounded_channel::<AgentEvent>();
+        let (notifier_tx, _notifier_rx) = mpsc::unbounded_channel::<ServiceNotification>();
+        let (agent_tx, _agent_rx) = mpsc::unbounded_channel::<AgentEvent>();
+
         let agent = BluetoothAgent {
             service_tx: agent_tx.clone(),
         };
@@ -85,10 +89,12 @@ impl BluetoothService {
             available,
             enabled,
             connected,
-        } = BluetoothDiscovery::new(&connection, cancellation_token.child_token()).await?;
+        } = BluetoothDiscovery::new(&connection, cancellation_token.child_token(), &notifier_tx)
+            .await?;
 
         let service = Self {
             agent_tx: agent_tx.clone(),
+            notifier_tx: notifier_tx.clone(),
             pairing_responder: Arc::new(Mutex::new(None)),
             zbus_connection: connection.clone(),
             cancellation_token: cancellation_token.clone(),
