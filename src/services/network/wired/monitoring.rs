@@ -3,6 +3,7 @@ use std::sync::Arc;
 use tokio::task::JoinHandle;
 use tokio_stream::StreamExt;
 use tokio_util::sync::CancellationToken;
+use tracing::debug;
 use zbus::Connection;
 
 use super::Wired;
@@ -37,7 +38,7 @@ impl WiredMonitor {
             loop {
                 tokio::select! {
                     _ = cancellation_token.cancelled() => {
-                        tracing::debug!("WiredMonitor cancelled");
+                        debug!("WiredMonitor cancelled");
                         return;
                     }
                     Some(change) = connectivity_changed.next() => {

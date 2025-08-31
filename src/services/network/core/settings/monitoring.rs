@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use futures::StreamExt;
 use tokio_util::sync::CancellationToken;
-use tracing::warn;
+use tracing::{debug, warn};
 use zbus::{Connection, zvariant::OwnedObjectPath};
 
 use super::Settings;
@@ -44,7 +44,7 @@ impl SettingsMonitor {
         loop {
             tokio::select! {
                 _ = cancellation_token.cancelled() => {
-                    tracing::debug!("SettingsMonitor cancelled");
+                    debug!("SettingsMonitor cancelled");
                     return Ok(());
                 }
                 Some(event) = async { connection_added.as_mut().ok()?.next().await }, if

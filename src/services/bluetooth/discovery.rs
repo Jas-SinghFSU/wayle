@@ -1,18 +1,20 @@
 use std::{collections::HashMap, sync::Arc};
 
 use tokio_util::sync::CancellationToken;
+use tracing::warn;
 use zbus::{
     Connection,
+    fdo::ObjectManagerProxy,
+    names::OwnedInterfaceName,
     zvariant::{OwnedObjectPath, OwnedValue},
 };
 
 use super::{
     core::{Adapter, Device},
     error::BluetoothError,
-    types::{ADAPTER_INTERFACE, DEVICE_INTERFACE},
+    types::{ADAPTER_INTERFACE, BLUEZ_SERVICE, DEVICE_INTERFACE},
 };
-use crate::services::{common::ObjectManagerProxy, network::connection};
-
+use crate::services::common::ROOT_PATH;
 pub(crate) struct BluetoothDiscovery {
     pub adapters: Vec<Arc<Adapter>>,
     pub primary_adapter: Option<Arc<Adapter>>,
@@ -27,31 +29,34 @@ impl BluetoothDiscovery {
         connection: &Connection,
         cancellation_token: CancellationToken,
     ) -> Result<Self, BluetoothError> {
-        let object_manager = ObjectManagerProxy::builder(connection)
-            .destination("org.bluez")?
-            .path("/")?
-            .build()
-            .await?;
-        let managed_objects = object_manager.get_managed_objects().await?;
+        let object_manager = ObjectManagerProxy::new(connection, BLUEZ_SERVICE, ROOT_PATH).await?;
+        let managed_objects = object_manager.get_managed_objects().await.map_err(|e| {
+            BluetoothError::OperationFailed {
+                operation: "object_manager.get_managed_objects",
+                reason: e.to_string(),
+            }
+        })?;
 
         let mut adapters = Vec::new();
         let mut devices = Vec::new();
 
         for (object_path, interfaces) in managed_objects {
             Self::extract_adapter(
-                adapters,
+                &mut adapters,
                 connection,
-                cancellation_token,
-                object_path,
-                interfaces,
-            );
+                cancellation_token.child_token(),
+                object_path.clone(),
+                interfaces.clone(),
+            )
+            .await;
             Self::extract_device(
-                devices,
+                &mut devices,
                 connection,
-                cancellation_token,
+                cancellation_token.child_token(),
                 object_path,
                 interfaces,
-            );
+            )
+            .await;
         }
 
         let primary_adapter = adapters
@@ -59,34 +64,37 @@ impl BluetoothDiscovery {
             .find(|adapter| adapter.powered.get())
             .or_else(|| adapters.first())
             .cloned();
-
+        let available = primary_adapter.as_ref().is_some();
         let enabled = primary_adapter
             .as_ref()
-            .map_or(false, |adapter| adapter.powered.get());
+            .is_some_and(|adapter| adapter.powered.get());
+        let connected = devices.iter().any(|device| device.connected.get());
 
         Ok(Self {
             adapters,
+            devices,
             primary_adapter,
-            available: primary_adapter.is_some(),
+            available,
             enabled,
+            connected,
         })
     }
 
-    pub async fn extract_adapter(
-        mut adapters: Vec<Arc<Adapter>>,
+    async fn extract_adapter(
+        adapters: &mut Vec<Arc<Adapter>>,
         connection: &Connection,
         cancellation_token: CancellationToken,
         object_path: OwnedObjectPath,
-        interfaces: HashMap<String, HashMap<String, OwnedValue>>,
+        interfaces: HashMap<OwnedInterfaceName, HashMap<String, OwnedValue>>,
     ) -> () {
         if !interfaces.contains_key(ADAPTER_INTERFACE) {
             return;
         }
 
-        match Adapter::get_live(connection, object_path.clone(), cancellation_token.clone()).await {
+        match Adapter::get_live(connection, object_path.clone(), cancellation_token).await {
             Ok(adapter) => adapters.push(adapter),
             Err(e) => {
-                tracing::warn!(
+                warn!(
                     "Failed to create adapter for path {}: {}",
                     object_path.to_string(),
                     e
@@ -95,21 +103,21 @@ impl BluetoothDiscovery {
         }
     }
 
-    pub async fn extract_device(
-        mut devices: Vec<Arc<Device>>,
+    async fn extract_device(
+        devices: &mut Vec<Arc<Device>>,
         connection: &Connection,
         cancellation_token: CancellationToken,
         object_path: OwnedObjectPath,
-        interfaces: HashMap<String, HashMap<String, OwnedValue>>,
+        interfaces: HashMap<OwnedInterfaceName, HashMap<String, OwnedValue>>,
     ) -> () {
         if !interfaces.contains_key(DEVICE_INTERFACE) {
             return;
         }
 
-        match Device::get_live(connection, object_path.clone(), cancellation_token.clone()).await {
+        match Device::get_live(connection, object_path.clone(), cancellation_token).await {
             Ok(device) => devices.push(device),
             Err(e) => {
-                tracing::warn!(
+                warn!(
                     "Failed to create device for path {}: {}",
                     object_path.to_string(),
                     e

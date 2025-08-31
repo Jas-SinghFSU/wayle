@@ -65,7 +65,7 @@ impl DeviceControls {
         device_path: &OwnedObjectPath,
     ) -> Result<(), BluetoothError> {
         let proxy = Adapter1Proxy::new(connection, adapter_path).await?;
-        Ok(proxy.remove_device(&device_path).await?)
+        Ok(proxy.remove_device(device_path).await?)
     }
 
     pub(super) async fn get_service_records(

@@ -1,8 +1,9 @@
-use serde::{Deserialize, Serialize};
 use std::{
     self,
     fmt::{Display, Formatter, Result},
 };
+
+use serde::{Deserialize, Serialize};
 
 /// Preferred bearer for dual-mode Bluetooth devices.
 ///

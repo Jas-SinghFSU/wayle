@@ -1,23 +1,26 @@
 mod controls;
 mod monitoring;
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
 use controls::AdapterControls;
 use monitoring::AdapterMonitor;
 use tokio_util::sync::CancellationToken;
-use std::collections::HashMap;
-
-use zbus::{Connection, zvariant::{OwnedObjectPath, Value}};
-
-use crate::services::{
-    bluetooth::{
-        BluetoothError,
-        proxy::Adapter1Proxy,
-        types::{AdapterRole, AddressType, DiscoveryFilter, PowerState, UUID},
-    },
-    common::Property,
+use zbus::{
+    Connection,
+    zvariant::{OwnedObjectPath, Value},
 };
-use crate::{unwrap_bool, unwrap_string, unwrap_u8, unwrap_u16, unwrap_u32, unwrap_vec};
+
+use crate::{
+    services::{
+        bluetooth::{
+            BluetoothError,
+            proxy::Adapter1Proxy,
+            types::{AdapterRole, AddressType, DiscoveryFilter, PowerState, UUID},
+        },
+        common::Property,
+    },
+    unwrap_bool, unwrap_string, unwrap_u8, unwrap_u16, unwrap_u32, unwrap_vec,
+};
 
 /// Bluetooth adapter representation with reactive properties.
 #[derive(Debug, Clone)]
@@ -147,6 +150,12 @@ pub struct Adapter {
     /// The Bluetooth version supported by the device, as a core version code defined by
     /// the Core Bluetooth Specification.
     pub version: Property<u8>,
+}
+
+impl PartialEq for Adapter {
+    fn eq(&self, other: &Self) -> bool {
+        self.object_path == other.object_path
+    }
 }
 
 /// Fetched device properties from D-Bus
@@ -374,7 +383,10 @@ impl Adapter {
     /// - `NotSupported` - Not supported
     /// - `NotReady` - Adapter not ready
     /// - `Failed` - Operation failed
-    pub async fn connect_device(&self, properties: HashMap<String, Value<'_>>) -> Result<OwnedObjectPath, BluetoothError> {
+    pub async fn connect_device(
+        &self,
+        properties: HashMap<String, Value<'_>>,
+    ) -> Result<OwnedObjectPath, BluetoothError> {
         AdapterControls::connect_device(&self.zbus_connection, &self.object_path, properties).await
     }
 

@@ -2,6 +2,7 @@ use std::{collections::HashMap, sync::Arc};
 
 use tokio::task::JoinHandle;
 use tokio_util::sync::CancellationToken;
+use tracing::info;
 
 use crate::services::{
     audio::{
@@ -47,7 +48,7 @@ impl AudioDiscovery {
             loop {
                 tokio::select! {
                     _ = cancellation_token.cancelled() => {
-                        tracing::info!("AudioDiscovery cancelled, stopping");
+                        info!("AudioDiscovery cancelled, stopping");
                         return;
                     }
                     Ok(event) = event_rx.recv() => {

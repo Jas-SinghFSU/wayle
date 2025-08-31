@@ -1,6 +1,7 @@
 use zbus::{Connection, zvariant::OwnedObjectPath};
 
 use super::{DeviceProxy, NMDeviceType, NetworkError, NetworkManagerProxy};
+use crate::services::common::NULL_PATH;
 
 pub(crate) struct NetworkServiceDiscovery;
 
@@ -49,7 +50,7 @@ impl NetworkServiceDiscovery {
                     .await
                     .map_err(NetworkError::DbusError)?;
 
-                let has_active_connection = active.as_str() != "/";
+                let has_active_connection = active.as_str() != NULL_PATH;
 
                 if has_active_connection {
                     return Ok(Some(path));

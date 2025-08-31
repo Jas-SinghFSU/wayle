@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use tokio::task::JoinHandle;
 use tokio_util::sync::CancellationToken;
+use tracing::debug;
 
 use crate::services::audio::{
     backend::types::EventReceiver,
@@ -28,7 +29,7 @@ impl OutputDeviceMonitor {
             loop {
                 tokio::select! {
                     _ = cancellation_token.cancelled() => {
-                        tracing::debug!("OutputDevice monitor cancelled for {:?}", device_key);
+                        debug!("OutputDevice monitor cancelled for {:?}", device_key);
                         return;
                     }
                     Ok(event) = event_rx.recv() => {

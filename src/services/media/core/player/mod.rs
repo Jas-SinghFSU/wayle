@@ -14,7 +14,7 @@ use zbus::{
 
 use crate::{
     services::{
-        common::Property,
+        common::{NULL_PATH, Property},
         media::{
             MediaError,
             core::metadata::TrackMetadata,
@@ -285,7 +285,7 @@ impl Player {
     /// Returns `MediaError::ControlFailed` if the D-Bus operation fails
     pub async fn set_position(&self, position: Duration) -> Result<(), MediaError> {
         let track_id = self.metadata.track_id.get();
-        let track_path = track_id.as_deref().unwrap_or("/");
+        let track_path = track_id.as_deref().unwrap_or(NULL_PATH);
         let track_object_path = ObjectPath::try_from(track_path)
             .map_err(|e| MediaError::ControlFailed(format!("Invalid track ID: {e}")))?;
 

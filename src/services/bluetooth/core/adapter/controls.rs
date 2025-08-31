@@ -1,6 +1,9 @@
 use std::collections::HashMap;
 
-use zbus::{Connection, zvariant::{OwnedObjectPath, Value}};
+use zbus::{
+    Connection,
+    zvariant::{OwnedObjectPath, Value},
+};
 
 use crate::services::bluetooth::{BluetoothError, proxy::Adapter1Proxy, types::DiscoveryFilter};
 

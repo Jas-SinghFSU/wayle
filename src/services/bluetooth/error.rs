@@ -76,4 +76,3 @@ pub enum BluetoothError {
         reason: String,
     },
 }
-

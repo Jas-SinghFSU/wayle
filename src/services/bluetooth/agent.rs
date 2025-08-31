@@ -1,4 +1,4 @@
-use tokio::sync::{mpsc::Sender, oneshot};
+use tokio::sync::{mpsc::UnboundedSender, oneshot};
 use zbus::{fdo, interface, zvariant::OwnedObjectPath};
 
 use super::types::AgentEvent;
@@ -13,7 +13,7 @@ use super::types::AgentEvent;
 ///
 /// Agent methods return D-Bus errors when pairing operations fail or are rejected.
 pub(crate) struct BluetoothAgent {
-    pub service_tx: Sender<AgentEvent>,
+    pub service_tx: UnboundedSender<AgentEvent>,
 }
 
 #[interface(name = "org.bluez.Agent1")]
@@ -36,7 +36,6 @@ impl BluetoothAgent {
                 device_path: device,
                 responder: response_tx,
             })
-            .await
             .map_err(|_| fdo::Error::Failed("Service unavailable".into()))?;
 
         response_rx
@@ -70,7 +69,6 @@ impl BluetoothAgent {
                 device_path: device,
                 pincode,
             })
-            .await
             .map_err(|_| fdo::Error::Failed("Service unavailable".into()))
     }
 
@@ -91,7 +89,6 @@ impl BluetoothAgent {
                 device_path: device,
                 responder: response_tx,
             })
-            .await
             .map_err(|_| fdo::Error::Failed("Service unavailable".into()))?;
 
         response_rx
@@ -125,7 +122,6 @@ impl BluetoothAgent {
                 passkey,
                 entered,
             })
-            .await
             .map_err(|_| fdo::Error::Failed("Service unavailable".into()))
     }
 
@@ -151,7 +147,6 @@ impl BluetoothAgent {
                 passkey,
                 responder: response_tx,
             })
-            .await
             .map_err(|_| fdo::Error::Failed("Service unavailable".into()))?;
 
         match response_rx.await {
@@ -177,7 +172,6 @@ impl BluetoothAgent {
                 device_path: device,
                 responder: response_tx,
             })
-            .await
             .map_err(|_| fdo::Error::Failed("Service unavailable".into()))?;
 
         match response_rx.await {
@@ -202,7 +196,6 @@ impl BluetoothAgent {
                 uuid,
                 responder: response_tx,
             })
-            .await
             .map_err(|_| fdo::Error::Failed("Service unavailable".into()))?;
 
         match response_rx.await {

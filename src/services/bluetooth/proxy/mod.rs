@@ -10,7 +10,6 @@ pub mod battery;
 pub mod device;
 
 pub use adapter::Adapter1Proxy;
-pub use agent::Agent1Proxy;
 pub use agent_manager::AgentManager1Proxy;
 pub use battery::Battery1Proxy;
 pub use device::Device1Proxy;

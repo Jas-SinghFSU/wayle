@@ -12,5 +12,8 @@ pub const ADAPTER_INTERFACE: &str = "org.bluez.Adapter1";
 /// BlueZ D-Bus interface for Bluetooth devices.
 pub const DEVICE_INTERFACE: &str = "org.bluez.Device1";
 
+/// BlueZ D-Bus service path
+pub const BLUEZ_SERVICE: &str = "org.bluez";
+
 #[allow(clippy::upper_case_acronyms)]
 pub type UUID = String;

@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use tokio::task::JoinHandle;
 use tokio_util::sync::CancellationToken;
+use tracing::debug;
 
 use crate::services::audio::{
     backend::types::EventReceiver, core::stream::AudioStream, error::AudioError,
@@ -31,7 +32,7 @@ impl StreamMonitor {
             loop {
                 tokio::select! {
                     _ = cancellation_token.cancelled() => {
-                        tracing::debug!("Stream monitor cancelled for {:?}", stream_key);
+                        debug!("Stream monitor cancelled for {:?}", stream_key);
                         return;
                     }
                     Ok(event) = event_rx.recv() => {

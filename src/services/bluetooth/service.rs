@@ -1,20 +1,27 @@
-use std::{fmt::Display, sync::Arc};
+use std::sync::Arc;
 
-use tokio::sync::mpsc;
+use tokio::sync::{
+    Mutex,
+    mpsc::{self, UnboundedSender},
+};
 use tokio_util::sync::CancellationToken;
 use zbus::{Connection, zvariant::OwnedObjectPath};
 
+use super::{
+    core::{Adapter, Device},
+    monitoring::BluetoothMonitoring,
+    types::{PairingRequest, PairingResponder},
+};
 use crate::services::{
     bluetooth::{
         BluetoothError,
         agent::BluetoothAgent,
+        discovery::BluetoothDiscovery,
         proxy::AgentManager1Proxy,
         types::{AgentCapability, AgentEvent},
     },
     common::Property,
 };
-
-use super::core::{Adapter, Device};
 
 /// Manages Bluetooth connectivity through the BlueZ D-Bus interface.
 ///
@@ -24,6 +31,8 @@ use super::core::{Adapter, Device};
 pub struct BluetoothService {
     zbus_connection: Connection,
     cancellation_token: CancellationToken,
+    agent_tx: UnboundedSender<AgentEvent>,
+    pairing_responder: Arc<Mutex<Option<PairingResponder>>>,
 
     /// All available Bluetooth adapters on the system.
     pub adapters: Property<Vec<Arc<Adapter>>>,
@@ -37,6 +46,7 @@ pub struct BluetoothService {
     pub enabled: Property<bool>,
     /// Whether any device is currently connected.
     pub connected: Property<bool>,
+    pub pairing_request: Property<Option<PairingRequest>>,
 }
 
 impl BluetoothService {
@@ -51,9 +61,9 @@ impl BluetoothService {
 
         let cancellation_token = CancellationToken::new();
 
-        let (agent_tx, _) = mpsc::channel::<AgentEvent>(32);
+        let (agent_tx, _) = mpsc::unbounded_channel::<AgentEvent>();
         let agent = BluetoothAgent {
-            service_tx: agent_tx,
+            service_tx: agent_tx.clone(),
         };
         let agent_path = OwnedObjectPath::try_from("/org/wayle/BluetoothAgent").map_err(|err| {
             BluetoothError::AgentRegistrationFailed(format!(
@@ -68,16 +78,41 @@ impl BluetoothService {
             .register_agent(&agent_path, &AgentCapability::DisplayYesNo.to_string())
             .await?;
 
-        // Start initial discovery
+        let BluetoothDiscovery {
+            adapters,
+            primary_adapter,
+            devices,
+            available,
+            enabled,
+            connected,
+        } = BluetoothDiscovery::new(&connection, cancellation_token.child_token()).await?;
 
-        // Initialize property containers
+        let service = Self {
+            agent_tx: agent_tx.clone(),
+            pairing_responder: Arc::new(Mutex::new(None)),
+            zbus_connection: connection.clone(),
+            cancellation_token: cancellation_token.clone(),
+            adapters: Property::new(adapters),
+            primary_adapter: Property::new(primary_adapter),
+            devices: Property::new(devices),
+            available: Property::new(available),
+            enabled: Property::new(enabled),
+            connected: Property::new(connected),
+            pairing_request: Property::new(None),
+        };
 
-        // Initialize monitoring
+        BluetoothMonitoring::start(
+            &connection,
+            cancellation_token,
+            &service.adapters,
+            &service.primary_adapter,
+            &service.devices,
+            &service.enabled,
+            &service.available,
+        )
+        .await?;
 
-        // Instantialize service
-
-        // Return service
-        todo!()
+        Ok(service)
     }
 
     /// Starts device discovery on the primary adapter.
@@ -106,6 +141,54 @@ impl BluetoothService {
     ///
     /// All active connections will be terminated.
     pub async fn disable() {
+        todo!()
+    }
+
+    /// Provides a PIN code for legacy device pairing.
+    ///
+    /// Called in response to `PairingRequest::RequestPinCode`.
+    /// PIN must be 1-16 alphanumeric characters.
+    ///
+    /// # Errors
+    ///
+    /// Returns error if no PIN request is pending or responder channel is closed.
+    pub async fn provide_pin() {
+        todo!()
+    }
+
+    /// Provides a numeric passkey for device pairing.
+    ///
+    /// Called in response to `PairingRequest::RequestPasskey`.
+    /// Passkey must be between 0-999999.
+    ///
+    /// # Errors
+    ///
+    /// Returns error if no passkey request is pending or responder channel is closed.
+    pub async fn provide_passkey() {
+        todo!()
+    }
+
+    /// Provides confirmation for passkey matching.
+    ///
+    /// Called in response to `PairingRequest::RequestConfirmation`.
+    /// Confirms whether displayed passkey matches remote device.
+    ///
+    /// # Errors
+    ///
+    /// Returns error if no confirmation request is pending or responder channel is closed.
+    pub async fn provide_confirmation() {
+        todo!()
+    }
+
+    /// Provides authorization for pairing or service connection.
+    ///
+    /// Called in response to `PairingRequest::RequestAuthorization` or
+    /// `PairingRequest::AuthorizeService`.
+    ///
+    /// # Errors
+    ///
+    /// Returns error if no authorization request is pending or responder channel is closed.
+    pub async fn provide_authorization() {
         todo!()
     }
 }

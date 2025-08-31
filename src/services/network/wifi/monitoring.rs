@@ -3,6 +3,7 @@ use std::sync::Arc;
 use tokio::task::JoinHandle;
 use tokio_stream::StreamExt;
 use tokio_util::sync::CancellationToken;
+use tracing::debug;
 use zbus::{Connection, proxy::PropertyStream, zvariant::OwnedObjectPath};
 
 use super::Wifi;
@@ -116,7 +117,7 @@ impl WifiMonitor {
             loop {
                 tokio::select! {
                     _ = cancellation_token.cancelled() => {
-                        tracing::debug!("WifiMonitor cancelled");
+                        debug!("WifiMonitor cancelled");
                         return;
                     }
 

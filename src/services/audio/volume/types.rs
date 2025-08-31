@@ -1,3 +1,5 @@
+use tracing::warn;
+
 use super::VolumeError;
 
 /// Multi-channel volume with safety warnings
@@ -28,11 +30,11 @@ impl Volume {
         let volumes = volumes.into_iter().map(|v| {
             let clamped = v.clamp(0.0, 4.0);
             if v > 2.0 && v <= 4.0 {
-                tracing::warn!("Volume {v} exceeds safe limit (2.0). Audio damage possible at high amplification.");
+                warn!("Volume {v} exceeds safe limit (2.0). Audio damage possible at high amplification.");
             } else if v > 4.0 {
-                tracing::warn!("Volume {v} clamped to maximum (4.0). Use values ≤2.0 for safe operation.");
+                warn!("Volume {v} clamped to maximum (4.0). Use values ≤2.0 for safe operation.");
             } else if v < 0.0 {
-                tracing::warn!("Negative volume {v} clamped to 0.0.");
+                warn!("Negative volume {v} clamped to 0.0.");
             }
             clamped
         }).collect();
@@ -87,15 +89,15 @@ impl Volume {
         if let Some(vol) = self.volumes.get_mut(channel) {
             let clamped = volume.clamp(0.0, 4.0);
             if volume > 2.0 && volume <= 4.0 {
-                tracing::warn!(
+                warn!(
                     "Volume {volume} exceeds safe limit (2.0). Audio damage possible at high amplification."
                 );
             } else if volume > 4.0 {
-                tracing::warn!(
+                warn!(
                     "Volume {volume} clamped to maximum (4.0). Use values ≤2.0 for safe operation."
                 );
             } else if volume < 0.0 {
-                tracing::warn!("Negative volume {volume} clamped to 0.0.");
+                warn!("Negative volume {volume} clamped to 0.0.");
             }
             *vol = clamped;
             Ok(())

@@ -1,6 +1,16 @@
 mod control;
 mod monitoring;
 
+use std::{collections::HashMap, sync::Arc};
+
+use control::DeviceControls;
+use monitoring::DeviceMonitor;
+use tokio_util::sync::CancellationToken;
+use zbus::{
+    Connection,
+    zvariant::{OwnedObjectPath, OwnedValue},
+};
+
 use crate::{
     services::{
         bluetooth::{
@@ -11,14 +21,6 @@ use crate::{
         common::Property,
     },
     unwrap_bool, unwrap_string,
-};
-use control::DeviceControls;
-use monitoring::DeviceMonitor;
-use std::{collections::HashMap, sync::Arc};
-use tokio_util::sync::CancellationToken;
-use zbus::{
-    Connection,
-    zvariant::{OwnedObjectPath, OwnedValue},
 };
 
 /// Manufacturer-specific advertisement data keyed by company ID.
@@ -184,6 +186,12 @@ pub struct Device {
     pub preferred_bearer: Property<Option<PreferredBearer>>,
 }
 
+impl PartialEq for Device {
+    fn eq(&self, other: &Self) -> bool {
+        self.object_path == other.object_path
+    }
+}
+
 pub struct DeviceProperties {
     pub address: String,
     pub address_type: String,
@@ -235,54 +243,6 @@ impl Device {
         DeviceMonitor::start(device.clone(), connection, object_path, cancellation_token).await?;
 
         Ok(device)
-    }
-
-    /// Provides a PIN code for legacy device pairing.
-    ///
-    /// Called in response to `PairingRequest::RequestPinCode`.
-    /// PIN must be 1-16 alphanumeric characters.
-    ///
-    /// # Errors
-    ///
-    /// Returns error if no PIN request is pending or responder channel is closed.
-    pub async fn provide_pin() {
-        todo!()
-    }
-
-    /// Provides a numeric passkey for device pairing.
-    ///
-    /// Called in response to `PairingRequest::RequestPasskey`.
-    /// Passkey must be between 0-999999.
-    ///
-    /// # Errors
-    ///
-    /// Returns error if no passkey request is pending or responder channel is closed.
-    pub async fn provide_passkey() {
-        todo!()
-    }
-
-    /// Provides confirmation for passkey matching.
-    ///
-    /// Called in response to `PairingRequest::RequestConfirmation`.
-    /// Confirms whether displayed passkey matches remote device.
-    ///
-    /// # Errors
-    ///
-    /// Returns error if no confirmation request is pending or responder channel is closed.
-    pub async fn provide_confirmation() {
-        todo!()
-    }
-
-    /// Provides authorization for pairing or service connection.
-    ///
-    /// Called in response to `PairingRequest::RequestAuthorization` or
-    /// `PairingRequest::AuthorizeService`.
-    ///
-    /// # Errors
-    ///
-    /// Returns error if no authorization request is pending or responder channel is closed.
-    pub async fn provide_authorization() {
-        todo!()
     }
 
     /// Connects all profiles the remote device supports that can be connected to and
@@ -344,7 +304,8 @@ impl Device {
     /// - `NotAvailable` - Profile not available
     /// - `NotReady` - Adapter not ready
     pub async fn connect_profile(&self, profile_uuid: UUID) -> Result<(), BluetoothError> {
-        DeviceControls::connect_profile(&self.zbus_connection, &self.object_path, profile_uuid).await
+        DeviceControls::connect_profile(&self.zbus_connection, &self.object_path, profile_uuid)
+            .await
     }
 
     /// Disconnects a specific profile of this device. The profile needs to be
@@ -360,7 +321,8 @@ impl Device {
     /// - `InvalidArguments` - Invalid UUID
     /// - `NotSupported` - Profile not supported
     pub async fn disconnect_profile(&self, profile_uuid: UUID) -> Result<(), BluetoothError> {
-        DeviceControls::disconnect_profile(&self.zbus_connection, &self.object_path, profile_uuid).await
+        DeviceControls::disconnect_profile(&self.zbus_connection, &self.object_path, profile_uuid)
+            .await
     }
 
     /// Connects to the remote device and initiate pairing procedure then proceed with
@@ -437,7 +399,8 @@ impl Device {
 
     /// Sets whether the device is allowed to wake up the host from system suspend.
     pub async fn set_wake_allowed(&self, wake_allowed: bool) -> Result<(), BluetoothError> {
-        DeviceControls::set_wake_allowed(&self.zbus_connection, &self.object_path, wake_allowed).await
+        DeviceControls::set_wake_allowed(&self.zbus_connection, &self.object_path, wake_allowed)
+            .await
     }
 
     /// Sets a custom alias for the remote device.
@@ -470,7 +433,12 @@ impl Device {
     /// - `DoesNotExist` - Device does not exist
     /// - `Failed` - Operation failed
     pub async fn forget(&self) -> Result<(), BluetoothError> {
-        DeviceControls::forget(&self.zbus_connection, &self.adapter.get(), &self.object_path).await
+        DeviceControls::forget(
+            &self.zbus_connection,
+            &self.adapter.get(),
+            &self.object_path,
+        )
+        .await
     }
 
     pub(crate) async fn from_path(

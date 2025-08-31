@@ -5,13 +5,12 @@ use tokio_util::sync::CancellationToken;
 use tracing::debug;
 use zbus::{Connection, zvariant::OwnedObjectPath};
 
+use super::Adapter;
 use crate::services::bluetooth::{
     BluetoothError,
     proxy::Adapter1Proxy,
     types::{AdapterRole, AddressType, PowerState, UUID},
 };
-
-use super::Adapter;
 
 pub(super) struct AdapterMonitor;
 
