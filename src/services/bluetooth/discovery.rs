@@ -1,6 +1,6 @@
 use std::{collections::HashMap, sync::Arc};
 
-use tokio::sync::mpsc;
+use tokio::sync::broadcast;
 use tokio_util::sync::CancellationToken;
 use tracing::warn;
 use zbus::{
@@ -29,7 +29,7 @@ impl BluetoothDiscovery {
     pub(crate) async fn new(
         connection: &Connection,
         cancellation_token: CancellationToken,
-        notifier_tx: &mpsc::UnboundedSender<ServiceNotification>,
+        notifier_tx: &broadcast::Sender<ServiceNotification>,
     ) -> Result<Self, BluetoothError> {
         let object_manager = ObjectManagerProxy::new(connection, BLUEZ_SERVICE, ROOT_PATH).await?;
         let managed_objects = object_manager.get_managed_objects().await.map_err(|e| {
@@ -49,7 +49,6 @@ impl BluetoothDiscovery {
                 cancellation_token.child_token(),
                 object_path.clone(),
                 interfaces.clone(),
-                notifier_tx,
             )
             .await;
             Self::extract_device(
@@ -99,7 +98,6 @@ impl BluetoothDiscovery {
         cancellation_token: CancellationToken,
         object_path: OwnedObjectPath,
         interfaces: HashMap<OwnedInterfaceName, HashMap<String, OwnedValue>>,
-        notifier_tx: &mpsc::UnboundedSender<ServiceNotification>,
     ) -> () {
         if !interfaces.contains_key(ADAPTER_INTERFACE) {
             return;
@@ -109,7 +107,6 @@ impl BluetoothDiscovery {
             connection,
             path: object_path.clone(),
             cancellation_token,
-            notifier_tx,
         })
         .await
         {
@@ -130,7 +127,7 @@ impl BluetoothDiscovery {
         cancellation_token: CancellationToken,
         object_path: OwnedObjectPath,
         interfaces: HashMap<OwnedInterfaceName, HashMap<String, OwnedValue>>,
-        notifier_tx: &mpsc::UnboundedSender<ServiceNotification>,
+        notifier_tx: &broadcast::Sender<ServiceNotification>,
     ) -> () {
         if !interfaces.contains_key(DEVICE_INTERFACE) {
             return;

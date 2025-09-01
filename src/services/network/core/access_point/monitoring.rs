@@ -27,10 +27,10 @@ impl ModelMonitoring for AccessPoint {
             });
         };
 
-        let ct_clone = cancellation_token.clone();
+        let cancel_token = cancellation_token.clone();
 
         tokio::spawn(async move {
-            monitor(self, proxy, ct_clone).await;
+            monitor(self, proxy, cancel_token).await;
         });
 
         Ok(())

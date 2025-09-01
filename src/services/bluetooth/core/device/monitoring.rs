@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use futures::StreamExt;
+use tokio::sync::broadcast;
 use tokio_util::sync::CancellationToken;
 use tracing::debug;
 
@@ -9,7 +10,7 @@ use crate::services::{
     bluetooth::{
         BluetoothError,
         proxy::Device1Proxy,
-        types::{AddressType, PreferredBearer},
+        types::{AddressType, PreferredBearer, ServiceNotification},
     },
     traits::ModelMonitoring,
 };
@@ -29,10 +30,11 @@ impl ModelMonitoring for Device {
             });
         };
 
-        let ct_clone = cancellation_token.clone();
+        let cancel_token = cancellation_token.clone();
+        let notifier_tx = self.notifier_tx.clone();
 
         tokio::spawn(async move {
-            monitor(self, proxy, ct_clone).await;
+            monitor(self, proxy, cancel_token, notifier_tx).await;
         });
 
         Ok(())
@@ -45,6 +47,7 @@ async fn monitor(
     device: Arc<Device>,
     proxy: Device1Proxy<'static>,
     cancellation_token: CancellationToken,
+    notifier_tx: broadcast::Sender<ServiceNotification>,
 ) {
     let mut address_changed = proxy.receive_address_changed().await;
     let mut address_type_changed = proxy.receive_address_type_changed().await;
@@ -121,6 +124,7 @@ async fn monitor(
             Some(change) = connected_changed.next() => {
                 if let Ok(value) = change.get().await {
                     device.connected.set(value);
+                    let _ = notifier_tx.send(ServiceNotification::DeviceConnectionChanged);
                 }
             }
             Some(change) = trusted_changed.next() => {

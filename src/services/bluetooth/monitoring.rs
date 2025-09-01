@@ -1,14 +1,14 @@
 use std::sync::Arc;
 
 use futures::StreamExt;
-use tokio::sync::mpsc::UnboundedSender;
+use tokio::sync::broadcast;
 use tokio_util::sync::CancellationToken;
 use tracing::debug;
 use zbus::{Connection, fdo::ObjectManagerProxy, zvariant::OwnedObjectPath};
 
 use super::{
     BluetoothError,
-    core::{Adapter, Device, LiveDeviceParams},
+    core::{Adapter, Device, LiveAdapterParams, LiveDeviceParams},
     service::BluetoothService,
     types::{ADAPTER_INTERFACE, DEVICE_INTERFACE, ServiceNotification},
 };
@@ -43,6 +43,7 @@ impl ServiceMonitoring for BluetoothService {
         monitor_primary_adapter(&self.primary_adapter, &self.adapters).await?;
         monitor_available(&self.available, &self.primary_adapter).await?;
         monitor_enabled(&self.enabled, &self.primary_adapter).await?;
+        monitor_connected(&self.connected, &self.devices, self.notifier_tx.subscribe()).await?;
 
         Ok(())
     }
@@ -52,7 +53,7 @@ async fn monitor_devices(
     object_manager: &ObjectManagerProxy<'_>,
     cancellation_token: CancellationToken,
     devices: &Property<Vec<Arc<Device>>>,
-    notifier_tx: &UnboundedSender<ServiceNotification>,
+    notifier_tx: &broadcast::Sender<ServiceNotification>,
 ) -> Result<(), BluetoothError> {
     let mut device_interface_added = object_manager
         .receive_interfaces_added_with_args(&[(1, DEVICE_INTERFACE)])
@@ -263,12 +264,34 @@ async fn monitor_available(
     Ok(())
 }
 
+async fn monitor_connected(
+    connected: &Property<Vec<String>>,
+    devices: &Property<Vec<Arc<Device>>>,
+    mut notifier_rx: broadcast::Receiver<ServiceNotification>,
+) -> Result<(), BluetoothError> {
+    let devices_prop = devices.clone();
+    let connected_prop = connected.clone();
+
+    tokio::spawn(async move {
+        while let Ok(notif) = notifier_rx.recv().await {
+            match notif {
+                ServiceNotification::DeviceConnectionChanged => {
+                    handle_device_connection_changed(devices_prop.clone(), connected_prop.clone())
+                        .await;
+                }
+            }
+        }
+    });
+
+    Ok(())
+}
+
 async fn handle_device_added(
     connection: &Connection,
     cancellation_token: CancellationToken,
     devices: &Property<Vec<Arc<Device>>>,
     object_path: OwnedObjectPath,
-    notifier_tx: &UnboundedSender<ServiceNotification>,
+    notifier_tx: &broadcast::Sender<ServiceNotification>,
 ) {
     let mut device_list = devices.get();
     if !device_list
@@ -288,25 +311,42 @@ async fn handle_device_added(
 }
 
 async fn handle_adapter_added(
-    _connection: &Connection,
-    _cancellation_token: CancellationToken,
-    _adapters: &Property<Vec<Arc<Adapter>>>,
-    _object_path: OwnedObjectPath,
+    connection: &Connection,
+    cancellation_token: CancellationToken,
+    adapters: &Property<Vec<Arc<Adapter>>>,
+    object_path: OwnedObjectPath,
 ) {
-    todo!()
-    // let mut adapters_list = adapters.get();
-    // if !adapters_list
-    //     .iter()
-    //     .any(|adapter| adapter.object_path == object_path)
-    //     && let Ok(created_adapter) = Adapter::get_live(LiveAdapterParams {
-    //         connection,
-    //         path: object_path,
-    //         cancellation_token: cancellation_token.child_token(),
-    //         notifier_tx,
-    //     })
-    //     .await
-    // {
-    //     adapters_list.push(created_adapter);
-    //     adapters.set(adapters_list);
-    // }
+    let mut adapters_list = adapters.get();
+    if !adapters_list
+        .iter()
+        .any(|adapter| adapter.object_path == object_path)
+        && let Ok(created_adapter) = Adapter::get_live(LiveAdapterParams {
+            connection,
+            path: object_path,
+            cancellation_token: cancellation_token.child_token(),
+        })
+        .await
+    {
+        adapters_list.push(created_adapter);
+        adapters.set(adapters_list);
+    }
+}
+
+async fn handle_device_connection_changed(
+    devices: Property<Vec<Arc<Device>>>,
+    connected: Property<Vec<String>>,
+) {
+    let connected_devices = devices
+        .get()
+        .iter()
+        .filter_map(|device| {
+            if device.connected.get() {
+                Some(device.address.get())
+            } else {
+                None
+            }
+        })
+        .collect();
+
+    connected.set(connected_devices);
 }

@@ -5,7 +5,6 @@ pub mod types;
 use std::{collections::HashMap, sync::Arc};
 
 use controls::AdapterControls;
-use tokio::sync::mpsc;
 use tokio_util::sync::CancellationToken;
 use types::AdapterProperties;
 pub(crate) use types::{AdapterParams, LiveAdapterParams};
@@ -19,9 +18,7 @@ use crate::{
         bluetooth::{
             BluetoothError,
             proxy::Adapter1Proxy,
-            types::{
-                AdapterRole, AddressType, DiscoveryFilter, PowerState, ServiceNotification, UUID,
-            },
+            types::{AdapterRole, AddressType, DiscoveryFilter, PowerState, UUID},
         },
         common::Property,
         traits::{ModelMonitoring, Reactive},
@@ -34,7 +31,6 @@ use crate::{
 pub struct Adapter {
     pub(crate) zbus_connection: Connection,
     pub(crate) cancellation_token: Option<CancellationToken>,
-    pub(crate) notifier_tx: mpsc::UnboundedSender<ServiceNotification>,
 
     /// D-Bus object path for this device.
     pub object_path: OwnedObjectPath,
@@ -179,7 +175,6 @@ impl Reactive for Adapter {
             props,
             context.connection,
             context.path,
-            context.notifier_tx,
             None,
         ))
     }
@@ -191,7 +186,6 @@ impl Reactive for Adapter {
             props,
             context.connection,
             context.path.clone(),
-            context.notifier_tx,
             Some(context.cancellation_token),
         );
         let adapter_arc = Arc::new(adapter);
@@ -462,12 +456,10 @@ impl Adapter {
         props: AdapterProperties,
         connection: &Connection,
         object_path: OwnedObjectPath,
-        notifier_tx: &mpsc::UnboundedSender<ServiceNotification>,
         cancellation_token: Option<CancellationToken>,
     ) -> Self {
         Self {
             object_path,
-            notifier_tx: notifier_tx.clone(),
             zbus_connection: connection.clone(),
             cancellation_token,
             address: Property::new(props.address),

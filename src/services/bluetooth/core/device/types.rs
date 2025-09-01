@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use tokio::sync::mpsc;
+use tokio::sync::broadcast;
 use tokio_util::sync::CancellationToken;
 use zbus::{
     Connection,
@@ -25,7 +25,7 @@ pub(crate) struct DeviceParams<'a> {
     /// Device object path
     pub path: OwnedObjectPath,
     /// Channel for sending service notifications
-    pub notifier_tx: &'a mpsc::UnboundedSender<ServiceNotification>,
+    pub notifier_tx: &'a broadcast::Sender<ServiceNotification>,
 }
 
 /// Context for live device operations with monitoring
@@ -37,7 +37,7 @@ pub(crate) struct LiveDeviceParams<'a> {
     /// Token for cancelling monitoring operations
     pub cancellation_token: CancellationToken,
     /// Channel for sending service notifications
-    pub notifier_tx: &'a mpsc::UnboundedSender<ServiceNotification>,
+    pub notifier_tx: &'a broadcast::Sender<ServiceNotification>,
 }
 
 pub struct DeviceProperties {

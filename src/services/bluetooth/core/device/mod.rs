@@ -5,7 +5,7 @@ pub mod types;
 use std::sync::Arc;
 
 use control::DeviceControls;
-use tokio::sync::mpsc;
+use tokio::sync::broadcast;
 use tokio_util::sync::CancellationToken;
 use types::DeviceProperties;
 pub use types::{AdvertisingData, DeviceSet, ManufacturerData, ServiceData};
@@ -30,7 +30,7 @@ use crate::{
 pub struct Device {
     pub(crate) zbus_connection: Connection,
     pub(crate) cancellation_token: Option<CancellationToken>,
-    pub(crate) notifier_tx: mpsc::UnboundedSender<ServiceNotification>,
+    pub(crate) notifier_tx: broadcast::Sender<ServiceNotification>,
 
     /// D-Bus object path for this device.
     pub object_path: OwnedObjectPath,
@@ -200,7 +200,7 @@ impl Reactive for Device {
             props,
             context.connection,
             context.path,
-            context.notifier_tx,
+            context.notifier_tx.clone(),
             None,
         ))
     }
@@ -213,7 +213,7 @@ impl Reactive for Device {
             props,
             context.connection,
             context.path.clone(),
-            context.notifier_tx,
+            context.notifier_tx.clone(),
             Some(context.cancellation_token),
         );
         let device_arc = Arc::new(device);
@@ -522,13 +522,13 @@ impl Device {
         props: DeviceProperties,
         connection: &Connection,
         object_path: OwnedObjectPath,
-        notifier_tx: &mpsc::UnboundedSender<ServiceNotification>,
+        notifier_tx: broadcast::Sender<ServiceNotification>,
         cancellation_token: Option<CancellationToken>,
     ) -> Self {
         Self {
             zbus_connection: connection.clone(),
             cancellation_token,
-            notifier_tx: notifier_tx.clone(),
+            notifier_tx,
             object_path,
             address: Property::new(props.address),
             address_type: Property::new(AddressType::from(props.address_type.as_str())),

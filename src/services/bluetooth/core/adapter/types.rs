@@ -1,8 +1,5 @@
-use tokio::sync::mpsc;
 use tokio_util::sync::CancellationToken;
 use zbus::{Connection, zvariant::OwnedObjectPath};
-
-use crate::services::bluetooth::types::ServiceNotification;
 
 /// Context for static adapter operations
 pub(crate) struct AdapterParams<'a> {
@@ -10,8 +7,6 @@ pub(crate) struct AdapterParams<'a> {
     pub connection: &'a Connection,
     /// Adapter object path
     pub path: OwnedObjectPath,
-    /// Channel for sending service notifications
-    pub notifier_tx: &'a mpsc::UnboundedSender<ServiceNotification>,
 }
 
 /// Context for live adapter operations with monitoring
@@ -22,8 +17,6 @@ pub(crate) struct LiveAdapterParams<'a> {
     pub path: OwnedObjectPath,
     /// Token for cancelling monitoring operations
     pub cancellation_token: CancellationToken,
-    /// Channel for sending service notifications
-    pub notifier_tx: &'a mpsc::UnboundedSender<ServiceNotification>,
 }
 
 pub struct AdapterProperties {

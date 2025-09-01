@@ -24,10 +24,10 @@ impl ModelMonitoring for Wired {
             });
         };
 
-        let ct_clone = cancellation_token.clone();
+        let cancel_token = cancellation_token.clone();
 
         tokio::spawn(async move {
-            let _ = monitor_wired_connectivity(self, ct_clone).await;
+            let _ = monitor_wired_connectivity(self, cancel_token).await;
         });
 
         Ok(())

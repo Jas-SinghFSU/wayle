@@ -24,14 +24,14 @@ impl ModelMonitoring for Player {
             ));
         };
 
-        let ct_clone = cancellation_token.clone();
+        let cancel_token = cancellation_token.clone();
         let proxy = self.proxy.clone();
         let player_id = self.id.clone();
 
         debug!("Starting property monitoring for player: {}", player_id);
 
         tokio::spawn(async move {
-            monitor_properties(player_id, self, proxy, ct_clone).await;
+            monitor_properties(player_id, self, proxy, cancel_token).await;
         });
 
         Ok(())

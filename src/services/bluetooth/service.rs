@@ -1,9 +1,6 @@
 use std::sync::Arc;
 
-use tokio::sync::{
-    Mutex,
-    mpsc::{self, UnboundedSender},
-};
+use tokio::sync::{Mutex, broadcast, mpsc};
 use tokio_util::sync::CancellationToken;
 use zbus::{Connection, zvariant::OwnedObjectPath};
 
@@ -31,8 +28,9 @@ use crate::services::{
 pub struct BluetoothService {
     pub(crate) zbus_connection: Connection,
     pub(crate) cancellation_token: CancellationToken,
-    pub(crate) agent_tx: UnboundedSender<AgentEvent>,
-    pub(crate) notifier_tx: UnboundedSender<ServiceNotification>,
+    pub(crate) agent_tx: mpsc::UnboundedSender<AgentEvent>,
+    pub(crate) agent_rx: mpsc::UnboundedReceiver<AgentEvent>,
+    pub(crate) notifier_tx: broadcast::Sender<ServiceNotification>,
     pub(crate) pairing_responder: Arc<Mutex<Option<PairingResponder>>>,
 
     /// All available Bluetooth adapters on the system.
@@ -67,8 +65,8 @@ impl BluetoothService {
 
         let cancellation_token = CancellationToken::new();
 
-        let (notifier_tx, _notifier_rx) = mpsc::unbounded_channel::<ServiceNotification>();
-        let (agent_tx, _agent_rx) = mpsc::unbounded_channel::<AgentEvent>();
+        let (notifier_tx, _) = broadcast::channel::<ServiceNotification>(100);
+        let (agent_tx, agent_rx) = mpsc::unbounded_channel::<AgentEvent>();
 
         let agent = BluetoothAgent {
             service_tx: agent_tx.clone(),
@@ -98,7 +96,8 @@ impl BluetoothService {
 
         let service = Self {
             agent_tx: agent_tx.clone(),
-            notifier_tx: notifier_tx.clone(),
+            agent_rx,
+            notifier_tx,
             pairing_responder: Arc::new(Mutex::new(None)),
             zbus_connection: connection.clone(),
             cancellation_token: cancellation_token.clone(),
