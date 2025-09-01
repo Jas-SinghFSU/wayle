@@ -65,7 +65,7 @@ pub async fn get_player_or_active(
             .map_err(|e| format!("Failed to set active player: {e}"))?;
 
         service
-            .player(&player_id)
+            .player_monitored(&player_id)
             .await
             .map_err(|e| format!("Failed to get player '{player_id}': {e}"))
     } else {

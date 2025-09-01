@@ -1,16 +1,16 @@
 mod control;
 mod monitoring;
+pub mod types;
 
-use std::{collections::HashMap, sync::Arc};
+use std::sync::Arc;
 
 use control::DeviceControls;
-use monitoring::DeviceMonitor;
 use tokio::sync::mpsc;
 use tokio_util::sync::CancellationToken;
-use zbus::{
-    Connection,
-    zvariant::{OwnedObjectPath, OwnedValue},
-};
+use types::DeviceProperties;
+pub use types::{AdvertisingData, DeviceSet, ManufacturerData, ServiceData};
+pub(crate) use types::{DeviceParams, LiveDeviceParams};
+use zbus::{Connection, zvariant::OwnedObjectPath};
 
 use crate::{
     services::{
@@ -20,23 +20,16 @@ use crate::{
             types::{AddressType, PreferredBearer, ServiceNotification, UUID},
         },
         common::Property,
+        traits::{ModelMonitoring, Reactive},
     },
     unwrap_bool, unwrap_string,
 };
-
-/// Manufacturer-specific advertisement data keyed by company ID.
-pub type ManufacturerData = HashMap<u16, Vec<u8>>;
-/// Advertisement data keyed by AD type.
-pub type AdvertisingData = HashMap<u8, Vec<u8>>;
-/// Service-specific advertisement data keyed by UUID.
-pub type ServiceData = HashMap<String, Vec<u8>>;
-/// Device set membership with object path and properties.
-pub type DeviceSet = (OwnedObjectPath, HashMap<String, OwnedValue>);
 
 /// Represents a Bluetooth device with its properties and pairing state.
 #[derive(Debug, Clone)]
 pub struct Device {
     pub(crate) zbus_connection: Connection,
+    pub(crate) cancellation_token: Option<CancellationToken>,
     pub(crate) notifier_tx: mpsc::UnboundedSender<ServiceNotification>,
 
     /// D-Bus object path for this device.
@@ -99,7 +92,7 @@ pub struct Device {
     /// Indicates if the remote is seen as trusted.
     ///
     /// This setting can be changed by the application.
-    pub trused: Property<bool>,
+    pub trusted: Property<bool>,
 
     /// If set to true any incoming connections from the device will be immediately
     /// rejected.
@@ -194,61 +187,44 @@ impl PartialEq for Device {
     }
 }
 
-pub struct DeviceProperties {
-    pub address: String,
-    pub address_type: String,
-    pub name: Option<String>,
-    pub battery_percentage: Option<u8>,
-    pub icon: Option<String>,
-    pub class: Option<u32>,
-    pub appearance: Option<u16>,
-    pub uuids: Option<Vec<String>>,
-    pub paired: bool,
-    pub bonded: bool,
-    pub connected: bool,
-    pub trused: bool,
-    pub blocked: bool,
-    pub wake_allowed: bool,
-    pub alias: String,
-    pub adapter: OwnedObjectPath,
-    pub legacy_pairing: bool,
-    pub cable_pairing: bool,
-    pub modalias: Option<String>,
-    pub rssi: Option<i16>,
-    pub tx_power: Option<i16>,
-    pub manufacturer_data: Option<ManufacturerData>,
-    pub service_data: Option<ServiceData>,
-    pub services_resolved: bool,
-    pub advertising_flags: Vec<u8>,
-    pub advertising_data: AdvertisingData,
-    pub sets: Vec<DeviceSet>,
-    pub preferred_bearer: Option<String>,
+impl Reactive for Device {
+    type Error = BluetoothError;
+    type Context<'a> = DeviceParams<'a>;
+    type LiveContext<'a> = LiveDeviceParams<'a>;
+
+    async fn get(context: Self::Context<'_>) -> Result<Self, Self::Error> {
+        let device_proxy = Device1Proxy::new(context.connection, &context.path).await?;
+        let battery_proxy = Battery1Proxy::new(context.connection, &context.path).await?;
+        let props = Self::fetch_properties(&device_proxy, &battery_proxy).await?;
+        Ok(Self::from_properties(
+            props,
+            context.connection,
+            context.path,
+            context.notifier_tx,
+            None,
+        ))
+    }
+
+    async fn get_live(context: Self::LiveContext<'_>) -> Result<Arc<Self>, Self::Error> {
+        let device_proxy = Device1Proxy::new(context.connection, &context.path).await?;
+        let battery_proxy = Battery1Proxy::new(context.connection, &context.path).await?;
+        let props = Self::fetch_properties(&device_proxy, &battery_proxy).await?;
+        let device = Self::from_properties(
+            props,
+            context.connection,
+            context.path.clone(),
+            context.notifier_tx,
+            Some(context.cancellation_token),
+        );
+        let device_arc = Arc::new(device);
+
+        device_arc.clone().start_monitoring().await?;
+
+        Ok(device_arc)
+    }
 }
 
 impl Device {
-    pub(crate) async fn get(
-        connection: &Connection,
-        object_path: OwnedObjectPath,
-        notifier_tx: &mpsc::UnboundedSender<ServiceNotification>,
-    ) -> Result<Self, BluetoothError> {
-        let device = Self::from_path(connection, object_path, notifier_tx).await?;
-        Ok(device)
-    }
-
-    pub(crate) async fn get_live(
-        connection: &Connection,
-        object_path: OwnedObjectPath,
-        cancellation_token: CancellationToken,
-        notifier_tx: &mpsc::UnboundedSender<ServiceNotification>,
-    ) -> Result<Arc<Self>, BluetoothError> {
-        let device = Self::from_path(connection, object_path.clone(), notifier_tx).await?;
-        let device = Arc::new(device);
-
-        DeviceMonitor::start(device.clone(), connection, object_path, cancellation_token).await?;
-
-        Ok(device)
-    }
-
     /// Connects all profiles the remote device supports that can be connected to and
     /// have been flagged as auto-connectable. If only subset of profiles is already
     /// connected it will try to connect currently disconnected ones.
@@ -445,22 +421,6 @@ impl Device {
         .await
     }
 
-    pub(crate) async fn from_path(
-        connection: &Connection,
-        object_path: OwnedObjectPath,
-        notifier_tx: &mpsc::UnboundedSender<ServiceNotification>,
-    ) -> Result<Self, BluetoothError> {
-        let device_proxy = Device1Proxy::new(connection, &object_path).await?;
-        let battery_proxy = Battery1Proxy::new(connection, &object_path).await?;
-        let props = Self::fetch_properties(&device_proxy, &battery_proxy).await?;
-        Ok(Self::from_properties(
-            props,
-            connection,
-            object_path,
-            notifier_tx,
-        ))
-    }
-
     #[allow(clippy::too_many_lines)]
     async fn fetch_properties(
         device_proxy: &Device1Proxy<'_>,
@@ -563,9 +523,11 @@ impl Device {
         connection: &Connection,
         object_path: OwnedObjectPath,
         notifier_tx: &mpsc::UnboundedSender<ServiceNotification>,
+        cancellation_token: Option<CancellationToken>,
     ) -> Self {
         Self {
             zbus_connection: connection.clone(),
+            cancellation_token,
             notifier_tx: notifier_tx.clone(),
             object_path,
             address: Property::new(props.address),
@@ -580,7 +542,7 @@ impl Device {
             pairing: Property::new(false),
             bonded: Property::new(props.bonded),
             connected: Property::new(props.connected),
-            trused: Property::new(props.trused),
+            trusted: Property::new(props.trused),
             blocked: Property::new(props.blocked),
             wake_allowed: Property::new(props.wake_allowed),
             alias: Property::new(props.alias),

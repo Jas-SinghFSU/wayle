@@ -11,11 +11,11 @@ use zbus::{
 };
 
 use super::{
-    core::{Adapter, Device},
+    core::{Adapter, Device, LiveAdapterParams, LiveDeviceParams},
     error::BluetoothError,
     types::{ADAPTER_INTERFACE, BLUEZ_SERVICE, DEVICE_INTERFACE, ServiceNotification},
 };
-use crate::services::common::ROOT_PATH;
+use crate::services::{common::ROOT_PATH, traits::Reactive};
 pub(crate) struct BluetoothDiscovery {
     pub adapters: Vec<Arc<Adapter>>,
     pub primary_adapter: Option<Arc<Adapter>>,
@@ -105,12 +105,12 @@ impl BluetoothDiscovery {
             return;
         }
 
-        match Adapter::get_live(
+        match Adapter::get_live(LiveAdapterParams {
             connection,
-            object_path.clone(),
+            path: object_path.clone(),
             cancellation_token,
             notifier_tx,
-        )
+        })
         .await
         {
             Ok(adapter) => adapters.push(adapter),
@@ -136,12 +136,12 @@ impl BluetoothDiscovery {
             return;
         }
 
-        match Device::get_live(
+        match Device::get_live(LiveDeviceParams {
             connection,
-            object_path.clone(),
+            path: object_path.clone(),
             cancellation_token,
             notifier_tx,
-        )
+        })
         .await
         {
             Ok(device) => devices.push(device),

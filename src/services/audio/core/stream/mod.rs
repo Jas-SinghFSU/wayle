@@ -1,26 +1,27 @@
+mod controls;
+mod monitoring;
+mod types;
+
 use std::{collections::HashMap, sync::Arc};
 
+use controls::AudioStreamController;
 use tokio::sync::oneshot;
 use tokio_util::sync::CancellationToken;
+pub(crate) use types::{AudioStreamParams, LiveAudioStreamParams};
 
 use crate::services::{
     audio::{
         Volume,
         backend::{
             commands::Command,
-            types::{CommandSender, EventReceiver},
+            types::{CommandSender, EventSender},
         },
         error::AudioError,
         types::{ChannelMap, DeviceKey, MediaInfo, SampleSpec, StreamInfo, StreamKey, StreamState},
     },
     common::Property,
+    traits::{ModelMonitoring, Reactive},
 };
-
-mod controls;
-mod monitoring;
-
-use controls::AudioStreamController;
-use monitoring::StreamMonitor;
 
 /// Audio stream representation with reactive properties.
 ///
@@ -30,6 +31,12 @@ use monitoring::StreamMonitor;
 pub struct AudioStream {
     /// Command sender for backend operations
     command_tx: CommandSender,
+
+    /// Event sender for monitoring (only for live instances)
+    event_tx: Option<EventSender>,
+
+    /// Cancellation token for monitoring (only for live instances)
+    cancellation_token: Option<CancellationToken>,
 
     /// Stream key for identification
     pub key: StreamKey,
@@ -107,22 +114,17 @@ impl PartialEq for AudioStream {
     }
 }
 
-impl AudioStream {
-    /// Get current stream state from backend (no monitoring).
-    ///
-    /// Queries the backend for the current stream state and returns
-    /// a snapshot without setting up event monitoring.
-    ///
-    /// # Errors
-    /// Returns error if stream not found or backend query fails.
-    pub(crate) async fn get(
-        command_tx: &CommandSender,
-        stream_key: StreamKey,
-    ) -> Result<Arc<Self>, AudioError> {
+impl Reactive for AudioStream {
+    type Context<'a> = AudioStreamParams<'a>;
+    type LiveContext<'a> = LiveAudioStreamParams<'a>;
+    type Error = AudioError;
+
+    async fn get(params: Self::Context<'_>) -> Result<Self, Self::Error> {
         let (tx, rx) = oneshot::channel();
-        command_tx
+        params
+            .command_tx
             .send(Command::GetStream {
-                stream_key,
+                stream_key: params.stream_key,
                 responder: tx,
             })
             .map_err(|_| AudioError::BackendCommunicationFailed)?;
@@ -130,33 +132,52 @@ impl AudioStream {
         let stream_info = rx
             .await
             .map_err(|_| AudioError::BackendCommunicationFailed)??;
-        Ok(Arc::new(Self::from_info(stream_info, command_tx.clone())))
+        Ok(Self::from_info(
+            stream_info,
+            params.command_tx.clone(),
+            None,
+            None,
+        ))
     }
 
-    /// Get stream with live monitoring.
-    ///
-    /// Queries the backend for current state and sets up monitoring
-    /// to automatically update properties when the stream changes.
-    ///
-    /// # Errors
-    /// Returns error if stream not found, backend query fails, or monitoring setup fails.
-    pub(crate) async fn get_live(
-        command_tx: &CommandSender,
-        event_rx: EventReceiver,
-        stream_key: StreamKey,
-        cancellation_token: CancellationToken,
-    ) -> Result<Arc<Self>, AudioError> {
-        let stream = Self::get(command_tx, stream_key).await?;
+    async fn get_live(params: Self::LiveContext<'_>) -> Result<Arc<Self>, Self::Error> {
+        let (tx, rx) = oneshot::channel();
+        params
+            .command_tx
+            .send(Command::GetStream {
+                stream_key: params.stream_key,
+                responder: tx,
+            })
+            .map_err(|_| AudioError::BackendCommunicationFailed)?;
 
-        StreamMonitor::start(stream.clone(), stream_key, event_rx, cancellation_token).await?;
+        let stream_info = rx
+            .await
+            .map_err(|_| AudioError::BackendCommunicationFailed)??;
+        let stream = Arc::new(Self::from_info(
+            stream_info,
+            params.command_tx.clone(),
+            Some(params.event_tx.clone()),
+            Some(params.cancellation_token.clone()),
+        ));
+
+        stream.clone().start_monitoring().await?;
 
         Ok(stream)
     }
+}
 
+impl AudioStream {
     /// Create stream from info snapshot
-    pub(crate) fn from_info(info: StreamInfo, command_tx: CommandSender) -> Self {
+    pub(crate) fn from_info(
+        info: StreamInfo,
+        command_tx: CommandSender,
+        event_tx: Option<EventSender>,
+        cancellation_token: Option<CancellationToken>,
+    ) -> Self {
         Self {
             command_tx,
+            event_tx,
+            cancellation_token,
             key: info.key(),
             name: Property::new(info.name),
             application_name: Property::new(info.application_name),

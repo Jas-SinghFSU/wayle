@@ -1,13 +1,18 @@
 mod monitoring;
+mod types;
 
 use std::{ops::Deref, sync::Arc};
 
-use monitoring::WiredMonitor;
-use tokio_util::sync::CancellationToken;
-use zbus::{Connection, zvariant::OwnedObjectPath};
+pub(crate) use types::{LiveWiredParams, WiredParams};
 
-use super::{NetworkError, NetworkStatus, core::device::wired::DeviceWired};
-use crate::services::common::Property;
+use super::{
+    NetworkError, NetworkStatus,
+    core::device::wired::{DeviceWired, DeviceWiredParams, LiveDeviceWiredParams},
+};
+use crate::services::{
+    common::Property,
+    traits::{ModelMonitoring, Reactive},
+};
 
 /// Manages wired (ethernet) network connectivity and device state.
 ///
@@ -37,56 +42,45 @@ impl PartialEq for Wired {
     }
 }
 
-impl Wired {
-    /// Get a snapshot of the current wired state (no monitoring).
-    ///
-    /// # Errors
-    ///
-    /// Returns `NetworkError::ObjectCreationFailed` if the wired device cannot be created
-    pub async fn get(
-        connection: &Connection,
-        device_path: OwnedObjectPath,
-    ) -> Result<Arc<Self>, NetworkError> {
-        let device_arc = DeviceWired::get(connection, device_path.clone())
-            .await
-            .map_err(|e| NetworkError::ObjectCreationFailed {
-                object_type: "Wired".to_string(),
-                object_path: device_path.clone(),
-                reason: e.to_string(),
-            })?;
-        let device = DeviceWired::clone(&device_arc);
+impl Reactive for Wired {
+    type Context<'a> = WiredParams<'a>;
+    type LiveContext<'a> = LiveWiredParams<'a>;
+    type Error = NetworkError;
 
-        let wired = Self::from_device(device).await?;
-        Ok(Arc::new(wired))
+    async fn get(params: Self::Context<'_>) -> Result<Self, Self::Error> {
+        let device = DeviceWired::get(DeviceWiredParams {
+            connection: params.connection,
+            device_path: params.device_path.clone(),
+        })
+        .await
+        .map_err(|e| NetworkError::ObjectCreationFailed {
+            object_type: "Wired".to_string(),
+            object_path: params.device_path.clone(),
+            reason: e.to_string(),
+        })?;
+
+        Self::from_device(device).await
     }
 
-    /// Get a live-updating wired instance (with monitoring).
-    ///
-    /// Fetches the device, current state and starts monitoring for updates.
-    ///
-    /// # Errors
-    ///
-    /// Returns `NetworkError::ObjectCreationFailed` if the wired device cannot be created
-    /// or if monitoring fails to start
-    pub async fn get_live(
-        connection: &Connection,
-        device_path: OwnedObjectPath,
-        cancellation_token: CancellationToken,
-    ) -> Result<Arc<Self>, NetworkError> {
-        let device_arc =
-            DeviceWired::get_live(connection, device_path, cancellation_token.child_token())
-                .await?;
+    async fn get_live(params: Self::LiveContext<'_>) -> Result<Arc<Self>, Self::Error> {
+        let device_arc = DeviceWired::get_live(LiveDeviceWiredParams {
+            connection: params.connection,
+            device_path: params.device_path,
+            cancellation_token: params.cancellation_token.child_token(),
+        })
+        .await?;
         let device = DeviceWired::clone(&device_arc);
 
         let wired = Self::from_device(device.clone()).await?;
-        let wired_arc = Arc::new(wired);
+        let wired = Arc::new(wired);
 
-        let _monitoring_handle =
-            WiredMonitor::start(connection, &wired_arc, cancellation_token).await?;
+        wired.clone().start_monitoring().await?;
 
-        Ok(wired_arc)
+        Ok(wired)
     }
+}
 
+impl Wired {
     async fn from_device(device: DeviceWired) -> Result<Self, NetworkError> {
         let device_state = &device.state.get();
         let connectivity = NetworkStatus::from_device_state(*device_state);

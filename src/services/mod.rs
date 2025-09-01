@@ -8,6 +8,8 @@ pub mod common;
 pub mod media;
 /// Network control service
 pub mod network;
+/// Service traits for uniform interfaces
+pub mod traits;
 
 pub use audio::{
     AudioError, AudioEvent, AudioService, DeviceInfo, DeviceKey, DeviceType, StreamInfo, StreamKey,

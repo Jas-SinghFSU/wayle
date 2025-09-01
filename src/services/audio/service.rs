@@ -3,6 +3,13 @@ use std::sync::Arc;
 use tokio::sync::{broadcast, mpsc};
 use tokio_util::sync::CancellationToken;
 
+use super::core::{
+    device::{
+        input::{InputDeviceParams, LiveInputDeviceParams},
+        output::{LiveOutputDeviceParams, OutputDeviceParams},
+    },
+    stream::{AudioStreamParams, LiveAudioStreamParams},
+};
 use crate::services::{
     audio::{
         backend::{
@@ -10,11 +17,11 @@ use crate::services::{
             types::{CommandSender, EventSender},
         },
         core::{AudioStream, InputDevice, OutputDevice},
-        discovery::AudioDiscovery,
         error::AudioError,
         types::{DeviceKey, StreamKey},
     },
     common::Property,
+    traits::{Reactive, ServiceMonitoring},
 };
 
 /// Audio service with reactive properties.
@@ -22,9 +29,9 @@ use crate::services::{
 /// Provides access to audio devices and streams through reactive Property fields
 /// that automatically update when the underlying PulseAudio state changes.
 pub struct AudioService {
-    command_tx: CommandSender,
-    event_tx: EventSender,
-    cancellation_token: CancellationToken,
+    pub(crate) command_tx: CommandSender,
+    pub(crate) event_tx: EventSender,
+    pub(crate) cancellation_token: CancellationToken,
 
     /// Output devices (speakers, headphones)
     pub output_devices: Property<Vec<Arc<OutputDevice>>>,
@@ -71,20 +78,7 @@ impl AudioService {
         )
         .await?;
 
-        AudioDiscovery::start(
-            command_tx.clone(),
-            event_tx.subscribe(),
-            output_devices.clone(),
-            input_devices.clone(),
-            playback_streams.clone(),
-            recording_streams.clone(),
-            default_input.clone(),
-            default_output.clone(),
-            cancellation_token.child_token(),
-        )
-        .await?;
-
-        Ok(Self {
+        let service = Self {
             command_tx,
             event_tx,
             cancellation_token,
@@ -94,15 +88,23 @@ impl AudioService {
             default_input,
             playback_streams,
             recording_streams,
-        })
+        };
+
+        service.start_monitoring().await?;
+
+        Ok(service)
     }
 
     /// Get a specific output device.
     ///
     /// # Errors
     /// Returns error if device not found or backend query fails.
-    pub async fn output_device(&self, key: DeviceKey) -> Result<Arc<OutputDevice>, AudioError> {
-        OutputDevice::get(&self.command_tx, key).await
+    pub async fn output_device(&self, key: DeviceKey) -> Result<OutputDevice, AudioError> {
+        OutputDevice::get(OutputDeviceParams {
+            command_tx: &self.command_tx,
+            device_key: key,
+        })
+        .await
     }
 
     /// Get a specific output device with monitoring.
@@ -113,12 +115,12 @@ impl AudioService {
         &self,
         key: DeviceKey,
     ) -> Result<Arc<OutputDevice>, AudioError> {
-        OutputDevice::get_live(
-            &self.command_tx,
-            self.event_tx.subscribe(),
-            key,
-            self.cancellation_token.child_token(),
-        )
+        OutputDevice::get_live(LiveOutputDeviceParams {
+            command_tx: &self.command_tx,
+            event_tx: &self.event_tx,
+            device_key: key,
+            cancellation_token: self.cancellation_token.child_token(),
+        })
         .await
     }
 
@@ -126,8 +128,12 @@ impl AudioService {
     ///
     /// # Errors
     /// Returns error if device not found or backend query fails.
-    pub async fn input_device(&self, key: DeviceKey) -> Result<Arc<InputDevice>, AudioError> {
-        InputDevice::get(&self.command_tx, key).await
+    pub async fn input_device(&self, key: DeviceKey) -> Result<InputDevice, AudioError> {
+        InputDevice::get(InputDeviceParams {
+            command_tx: &self.command_tx,
+            device_key: key,
+        })
+        .await
     }
 
     /// Get a specific input device with monitoring.
@@ -138,12 +144,12 @@ impl AudioService {
         &self,
         key: DeviceKey,
     ) -> Result<Arc<InputDevice>, AudioError> {
-        InputDevice::get_live(
-            &self.command_tx,
-            self.event_tx.subscribe(),
-            key,
-            self.cancellation_token.child_token(),
-        )
+        InputDevice::get_live(LiveInputDeviceParams {
+            command_tx: &self.command_tx,
+            event_tx: &self.event_tx,
+            device_key: key,
+            cancellation_token: self.cancellation_token.child_token(),
+        })
         .await
     }
 
@@ -151,8 +157,12 @@ impl AudioService {
     ///
     /// # Errors
     /// Returns error if stream not found or backend query fails.
-    pub async fn audio_stream(&self, key: StreamKey) -> Result<Arc<AudioStream>, AudioError> {
-        AudioStream::get(&self.command_tx, key).await
+    pub async fn audio_stream(&self, key: StreamKey) -> Result<AudioStream, AudioError> {
+        AudioStream::get(AudioStreamParams {
+            command_tx: &self.command_tx,
+            stream_key: key,
+        })
+        .await
     }
 
     /// Get a specific audio stream with monitoring.
@@ -163,12 +173,12 @@ impl AudioService {
         &self,
         key: StreamKey,
     ) -> Result<Arc<AudioStream>, AudioError> {
-        AudioStream::get_live(
-            &self.command_tx,
-            self.event_tx.subscribe(),
-            key,
-            self.cancellation_token.child_token(),
-        )
+        AudioStream::get_live(LiveAudioStreamParams {
+            command_tx: &self.command_tx,
+            event_tx: &self.event_tx,
+            stream_key: key,
+            cancellation_token: self.cancellation_token.child_token(),
+        })
         .await
     }
 }

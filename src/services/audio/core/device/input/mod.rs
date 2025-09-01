@@ -1,20 +1,21 @@
 mod controls;
 mod monitoring;
+mod types;
 
 use std::{collections::HashMap, sync::Arc};
 
 use controls::InputDeviceController;
 use libpulse_binding::time::MicroSeconds;
-use monitoring::InputDeviceMonitor;
 use tokio::sync::oneshot;
 use tokio_util::sync::CancellationToken;
+pub(crate) use types::{InputDeviceParams, LiveInputDeviceParams};
 
 use crate::services::{
     audio::{
         Volume,
         backend::{
             commands::Command,
-            types::{CommandSender, EventReceiver},
+            types::{CommandSender, EventSender},
         },
         error::AudioError,
         types::{
@@ -23,6 +24,7 @@ use crate::services::{
         },
     },
     common::Property,
+    traits::{ModelMonitoring, Reactive},
 };
 
 /// Input device (source) representation with reactive properties.
@@ -30,6 +32,12 @@ use crate::services::{
 pub struct InputDevice {
     /// Command sender for backend operations
     command_tx: CommandSender,
+
+    /// Event sender for monitoring (only for live instances)
+    event_tx: Option<EventSender>,
+
+    /// Cancellation token for monitoring (only for live instances)
+    cancellation_token: Option<CancellationToken>,
 
     /// Device key for identification
     pub key: DeviceKey,
@@ -107,19 +115,17 @@ impl PartialEq for InputDevice {
     }
 }
 
-impl InputDevice {
-    /// Get input device from backend
-    ///
-    /// # Errors
-    /// Returns error if device not found or backend communication fails.
-    pub(crate) async fn get(
-        command_tx: &CommandSender,
-        device_key: DeviceKey,
-    ) -> Result<Arc<Self>, AudioError> {
+impl Reactive for InputDevice {
+    type Context<'a> = InputDeviceParams<'a>;
+    type LiveContext<'a> = LiveInputDeviceParams<'a>;
+    type Error = AudioError;
+
+    async fn get(params: Self::Context<'_>) -> Result<Self, Self::Error> {
         let (tx, rx) = oneshot::channel();
-        command_tx
+        params
+            .command_tx
             .send(Command::GetDevice {
-                device_key,
+                device_key: params.device_key,
                 responder: tx,
             })
             .map_err(|_| AudioError::BackendCommunicationFailed)?;
@@ -129,38 +135,65 @@ impl InputDevice {
             .map_err(|_| AudioError::BackendCommunicationFailed)??;
 
         match device {
-            Device::Source(source) => Ok(Arc::new(Self::from_source(&source, command_tx.clone()))),
+            Device::Source(source) => Ok(Self::from_source(
+                &source,
+                params.command_tx.clone(),
+                None,
+                None,
+            )),
             Device::Sink(_) => Err(AudioError::DeviceNotFound(
-                device_key.index,
+                params.device_key.index,
                 DeviceType::Input,
             )),
         }
     }
 
-    /// Get input device with live monitoring.
-    ///
-    /// Queries the backend for current state and sets up monitoring
-    /// to automatically update properties when the device changes.
-    ///
-    /// # Errors
-    /// Returns error if device not found, backend query fails, or monitoring setup fails.
-    pub(crate) async fn get_live(
-        command_tx: &CommandSender,
-        event_rx: EventReceiver,
-        device_key: DeviceKey,
-        cancellation_token: CancellationToken,
-    ) -> Result<Arc<Self>, AudioError> {
-        let device = Self::get(command_tx, device_key).await?;
+    async fn get_live(params: Self::LiveContext<'_>) -> Result<Arc<Self>, Self::Error> {
+        let (tx, rx) = oneshot::channel();
+        params
+            .command_tx
+            .send(Command::GetDevice {
+                device_key: params.device_key,
+                responder: tx,
+            })
+            .map_err(|_| AudioError::BackendCommunicationFailed)?;
 
-        InputDeviceMonitor::start(device.clone(), device_key, event_rx, cancellation_token).await?;
+        let device = rx
+            .await
+            .map_err(|_| AudioError::BackendCommunicationFailed)??;
+
+        let device = match device {
+            Device::Source(source) => Arc::new(Self::from_source(
+                &source,
+                params.command_tx.clone(),
+                Some(params.event_tx.clone()),
+                Some(params.cancellation_token.clone()),
+            )),
+            Device::Sink(_) => {
+                return Err(AudioError::DeviceNotFound(
+                    params.device_key.index,
+                    DeviceType::Input,
+                ));
+            }
+        };
+
+        device.clone().start_monitoring().await?;
 
         Ok(device)
     }
+}
 
-    /// Create from SourceInfo
-    pub(crate) fn from_source(source: &SourceInfo, command_tx: CommandSender) -> Self {
+impl InputDevice {
+    pub(crate) fn from_source(
+        source: &SourceInfo,
+        command_tx: CommandSender,
+        event_tx: Option<EventSender>,
+        cancellation_token: Option<CancellationToken>,
+    ) -> Self {
         Self {
             command_tx,
+            event_tx,
+            cancellation_token,
             key: source.key(),
             name: Property::new(source.name.clone()),
             description: Property::new(source.description.clone()),
@@ -187,7 +220,6 @@ impl InputDevice {
         }
     }
 
-    /// Update from new SourceInfo
     pub(crate) fn update_from_source(&self, source: &SourceInfo) {
         self.name.set(source.name.clone());
         self.description.set(source.description.clone());

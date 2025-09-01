@@ -1,6 +1,9 @@
-use std::{collections::HashMap, net::Ipv6Addr, sync::Arc};
+mod types;
+
+use std::{collections::HashMap, net::Ipv6Addr};
 
 use tracing::debug;
+pub(crate) use types::Ip6ConfigParams;
 use zbus::{
     Connection,
     zvariant::{OwnedObjectPath, OwnedValue},
@@ -10,6 +13,7 @@ use crate::{
     services::{
         common::Property,
         network::{NetworkError, proxy::ip6_config::IP6ConfigProxy},
+        traits::Static,
     },
     unwrap_i32, unwrap_string, unwrap_vec,
 };
@@ -82,20 +86,16 @@ struct Ip6ConfigProperties {
     route_data: Vec<Ipv6Route>,
 }
 
-impl Ip6Config {
-    /// Get a snapshot of the current IPv6 configuration state (no monitoring).
-    ///
-    /// # Errors
-    ///
-    /// Returns `NetworkError::DbusError` if D-Bus operations fail.
-    pub(crate) async fn get(
-        connection: &Connection,
-        path: OwnedObjectPath,
-    ) -> Result<Arc<Self>, NetworkError> {
-        let config = Self::from_path(connection, path).await?;
-        Ok(Arc::new(config))
-    }
+impl Static for Ip6Config {
+    type Error = NetworkError;
+    type Context<'a> = Ip6ConfigParams<'a>;
 
+    async fn get(params: Self::Context<'_>) -> Result<Self, Self::Error> {
+        Self::from_path(params.connection, params.path).await
+    }
+}
+
+impl Ip6Config {
     async fn from_path(
         connection: &Connection,
         path: OwnedObjectPath,

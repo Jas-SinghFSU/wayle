@@ -1,31 +1,39 @@
 use std::sync::Arc;
 
-use tokio::task::JoinHandle;
-use tokio_util::sync::CancellationToken;
 use tracing::debug;
 
-use crate::services::audio::{
-    backend::types::EventReceiver,
-    core::device::OutputDevice,
-    error::AudioError,
-    events::AudioEvent,
-    types::{Device, DeviceKey, DeviceState},
+use crate::services::{
+    audio::{
+        core::device::OutputDevice,
+        error::AudioError,
+        events::AudioEvent,
+        types::{Device, DeviceState},
+    },
+    traits::ModelMonitoring,
 };
 
-/// Monitors output device events and updates properties.
-pub struct OutputDeviceMonitor;
+impl ModelMonitoring for OutputDevice {
+    type Error = AudioError;
 
-impl OutputDeviceMonitor {
-    /// Start monitoring for output device changes.
-    pub(super) async fn start(
-        device: Arc<OutputDevice>,
-        device_key: DeviceKey,
-        mut event_rx: EventReceiver,
-        cancellation_token: CancellationToken,
-    ) -> Result<JoinHandle<()>, AudioError> {
-        let weak_device = Arc::downgrade(&device);
+    async fn start_monitoring(self: Arc<Self>) -> Result<(), Self::Error> {
+        let Some(ref cancellation_token) = self.cancellation_token else {
+            return Err(AudioError::OperationFailed(
+                "Cancellation token not available for monitoring".to_string(),
+            ));
+        };
 
-        let handle = tokio::spawn(async move {
+        let Some(ref event_tx) = self.event_tx else {
+            return Err(AudioError::OperationFailed(
+                "Event sender not available for monitoring".to_string(),
+            ));
+        };
+
+        let weak_device = Arc::downgrade(&self);
+        let device_key = self.key;
+        let cancellation_token = cancellation_token.clone();
+        let mut event_rx = event_tx.subscribe();
+
+        tokio::spawn(async move {
             loop {
                 tokio::select! {
                     _ = cancellation_token.cancelled() => {
@@ -76,6 +84,6 @@ impl OutputDeviceMonitor {
             }
         });
 
-        Ok(handle)
+        Ok(())
     }
 }

@@ -1,9 +1,11 @@
 mod monitoring;
+mod types;
+
 use std::sync::Arc;
 
-use monitoring::ActiveConnectionMonitor;
 use tokio_util::sync::CancellationToken;
 use tracing::warn;
+pub(crate) use types::{ActiveConnectionParams, LiveActiveConnectionParams};
 use zbus::{Connection, zvariant::OwnedObjectPath};
 
 use crate::{
@@ -12,6 +14,7 @@ use crate::{
         network::{
             ConnectionActiveProxy, NMActivationStateFlags, NMActiveConnectionState, NetworkError,
         },
+        traits::{ModelMonitoring, Reactive},
     },
     unwrap_bool, unwrap_path, unwrap_string, unwrap_u32, unwrap_vec,
 };
@@ -23,6 +26,14 @@ use crate::{
 /// Properties update reactively as connection state changes.
 #[derive(Debug, Clone)]
 pub struct ActiveConnection {
+    pub(crate) zbus_connection: Connection,
+
+    /// Token for cancelling monitoring
+    pub(crate) cancellation_token: Option<CancellationToken>,
+
+    /// Object path for this connection
+    pub object_path: OwnedObjectPath,
+
     /// The path of the connection object that this ActiveConnection is using.
     pub connection_path: Property<OwnedObjectPath>,
 
@@ -85,48 +96,36 @@ pub struct ActiveConnection {
     pub controller: Property<OwnedObjectPath>,
 }
 
-impl ActiveConnection {
-    /// Get a snapshot of the current connection state (no monitoring).
-    ///
-    /// # Errors
-    ///
-    /// Returns `NetworkError::ObjectNotFound` if connection doesn't exist.
-    /// Returns `NetworkError::DbusError` if DBus operations fail.
-    pub(crate) async fn get(
-        connection: &Connection,
-        path: OwnedObjectPath,
-    ) -> Result<Arc<Self>, NetworkError> {
-        Self::from_path(connection, path).await
+impl Reactive for ActiveConnection {
+    type Context<'a> = ActiveConnectionParams<'a>;
+    type LiveContext<'a> = LiveActiveConnectionParams<'a>;
+    type Error = NetworkError;
+
+    async fn get(params: Self::Context<'_>) -> Result<Self, Self::Error> {
+        Self::from_path(params.connection, params.path, None).await
     }
 
-    /// Get a live-updating connection instance (with monitoring).
-    ///
-    /// # Errors
-    ///
-    /// Returns `NetworkError::ObjectNotFound` if connection doesn't exist.
-    /// Returns `NetworkError::DbusError` if DBus operations fail.
-    pub(crate) async fn get_live(
-        connection: &Connection,
-        path: OwnedObjectPath,
-        cancellation_token: CancellationToken,
-    ) -> Result<Arc<Self>, NetworkError> {
-        let active_connection = Self::from_path(connection, path.clone()).await?;
-
-        ActiveConnectionMonitor::start(
-            active_connection.clone(),
-            connection,
-            path,
-            cancellation_token,
+    async fn get_live(params: Self::LiveContext<'_>) -> Result<Arc<Self>, Self::Error> {
+        let active_connection = Self::from_path(
+            params.connection,
+            params.path.clone(),
+            Some(params.cancellation_token.clone()),
         )
-        .await;
+        .await?;
+        let active_connection = Arc::new(active_connection);
+
+        active_connection.clone().start_monitoring().await?;
 
         Ok(active_connection)
     }
+}
 
+impl ActiveConnection {
     async fn from_path(
         connection: &Connection,
         path: OwnedObjectPath,
-    ) -> Result<Arc<Self>, NetworkError> {
+        cancellation_token: Option<CancellationToken>,
+    ) -> Result<Self, NetworkError> {
         let connection_proxy = ConnectionActiveProxy::new(connection, &path).await?;
 
         if connection_proxy.connection().await.is_err() {
@@ -191,7 +190,7 @@ impl ActiveConnection {
         let vpn = unwrap_bool!(vpn, path);
         let controller = unwrap_path!(controller, path);
 
-        Ok(Arc::new(Self {
+        Ok(Self {
             connection_path: Property::new(connection_path),
             specific_object: Property::new(specific_object),
             id: Property::new(id),
@@ -208,6 +207,9 @@ impl ActiveConnection {
             dhcp6_config: Property::new(dhcp6_config),
             vpn: Property::new(vpn),
             controller: Property::new(controller),
-        }))
+            zbus_connection: connection.clone(),
+            object_path: path,
+            cancellation_token,
+        })
     }
 }

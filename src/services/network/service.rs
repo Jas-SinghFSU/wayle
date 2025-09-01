@@ -9,19 +9,29 @@ use crate::services::{
     common::Property,
     network::{
         core::{
-            access_point::AccessPoint,
+            access_point::{AccessPoint, AccessPointParams, LiveAccessPointParams},
             config::{
-                dhcp4_config::Dhcp4Config, dhcp6_config::Dhcp6Config, ip4_config::Ip4Config,
-                ip6_config::Ip6Config,
+                dhcp4_config::{Dhcp4Config, Dhcp4ConfigParams},
+                dhcp6_config::{Dhcp6Config, Dhcp6ConfigParams},
+                ip4_config::{Ip4Config, Ip4ConfigParams},
+                ip6_config::{Ip6Config, Ip6ConfigParams},
             },
-            connection::ActiveConnection,
-            device::{Device, wifi::DeviceWifi, wired::DeviceWired},
-            settings::Settings,
-            settings_connection::ConnectionSettings,
+            connection::{ActiveConnection, ActiveConnectionParams, LiveActiveConnectionParams},
+            device::{
+                Device, DeviceParams, LiveDeviceParams,
+                wifi::{DeviceWifi, DeviceWifiParams, LiveDeviceWifiParams},
+                wired::{DeviceWired, DeviceWiredParams, LiveDeviceWiredParams},
+            },
+            settings::{LiveSettingsParams, Settings},
+            settings_connection::{
+                ConnectionSettings, ConnectionSettingsParams, LiveConnectionSettingsParams,
+            },
         },
         discovery::NetworkServiceDiscovery,
-        monitoring::NetworkMonitoring,
+        wifi::LiveWifiParams,
+        wired::LiveWiredParams,
     },
+    traits::{Reactive, ServiceMonitoring, Static},
 };
 
 /// Manages network connectivity through NetworkManager D-Bus interface.
@@ -31,8 +41,8 @@ use crate::services::{
 /// the primary connection type and exposes reactive properties for
 /// network status changes.
 pub struct NetworkService {
-    zbus_connection: Connection,
-    cancellation_token: CancellationToken,
+    pub(crate) zbus_connection: Connection,
+    pub(crate) cancellation_token: CancellationToken,
     /// NetworkManager Settings interface for managing connection profiles.
     pub settings: Arc<Settings>,
     /// Current WiFi device state, if available.
@@ -63,19 +73,27 @@ impl NetworkService {
 
         let cancellation_token = CancellationToken::new();
 
-        let settings = Settings::get_live(&connection, cancellation_token.child_token())
-            .await
-            .map_err(|err| {
-                NetworkError::ServiceInitializationFailed(format!(
-                    "Failed to initialize Settings: {err}"
-                ))
-            })?;
+        let settings = Settings::get_live(LiveSettingsParams {
+            zbus_connection: &connection,
+            cancellation_token: cancellation_token.child_token(),
+        })
+        .await
+        .map_err(|err| {
+            NetworkError::ServiceInitializationFailed(format!(
+                "Failed to initialize Settings: {err}"
+            ))
+        })?;
 
         let wifi_device_path = NetworkServiceDiscovery::wifi_device_path(&connection).await?;
         let wired_device_path = NetworkServiceDiscovery::wired_device_path(&connection).await?;
 
         let wifi = if let Some(path) = wifi_device_path {
-            match Wifi::get_live(&connection, path.clone(), cancellation_token.child_token()).await
+            match Wifi::get_live(LiveWifiParams {
+                connection: &connection,
+                device_path: path.clone(),
+                cancellation_token: cancellation_token.child_token(),
+            })
+            .await
             {
                 Ok(wifi) => Some(wifi),
                 Err(e) => {
@@ -88,7 +106,12 @@ impl NetworkService {
         };
 
         let wired = if let Some(path) = wired_device_path {
-            match Wired::get_live(&connection, path.clone(), cancellation_token.child_token()).await
+            match Wired::get_live(LiveWiredParams {
+                connection: &connection,
+                device_path: path.clone(),
+                cancellation_token: cancellation_token.child_token(),
+            })
+            .await
             {
                 Ok(wired) => Some(wired),
                 Err(e) => {
@@ -102,15 +125,6 @@ impl NetworkService {
 
         let primary = Property::new(ConnectionType::Unknown);
 
-        NetworkMonitoring::start(
-            &connection,
-            wifi.clone(),
-            wired.clone(),
-            primary.clone(),
-            cancellation_token.child_token(),
-        )
-        .await?;
-
         let service = Self {
             zbus_connection: connection.clone(),
             cancellation_token,
@@ -119,6 +133,8 @@ impl NetworkService {
             wired,
             primary,
         };
+
+        service.start_monitoring().await?;
 
         Ok(service)
     }
@@ -132,8 +148,12 @@ impl NetworkService {
     pub async fn connection(
         &self,
         path: OwnedObjectPath,
-    ) -> Result<Arc<ActiveConnection>, NetworkError> {
-        ActiveConnection::get(&self.zbus_connection, path).await
+    ) -> Result<ActiveConnection, NetworkError> {
+        ActiveConnection::get(ActiveConnectionParams {
+            connection: &self.zbus_connection,
+            path,
+        })
+        .await
     }
 
     /// Objects that implement the Connection.Active interface represent an attempt to
@@ -147,11 +167,11 @@ impl NetworkService {
         &self,
         path: OwnedObjectPath,
     ) -> Result<Arc<ActiveConnection>, NetworkError> {
-        ActiveConnection::get_live(
-            &self.zbus_connection,
+        ActiveConnection::get_live(LiveActiveConnectionParams {
+            connection: &self.zbus_connection,
             path,
-            self.cancellation_token.child_token(),
-        )
+            cancellation_token: self.cancellation_token.child_token(),
+        })
         .await
     }
 
@@ -160,11 +180,12 @@ impl NetworkService {
     /// # Errors
     /// Returns `NetworkError::ObjectNotFound` if the access point doesn't exist.
     /// Returns `NetworkError::ObjectCreationFailed` if access point creation fails.
-    pub async fn access_point(
-        &self,
-        path: OwnedObjectPath,
-    ) -> Result<Arc<AccessPoint>, NetworkError> {
-        AccessPoint::get(&self.zbus_connection, path).await
+    pub async fn access_point(&self, path: OwnedObjectPath) -> Result<AccessPoint, NetworkError> {
+        AccessPoint::get(AccessPointParams {
+            connection: &self.zbus_connection,
+            path,
+        })
+        .await
     }
 
     /// Wi-Fi Access Point.
@@ -177,11 +198,11 @@ impl NetworkService {
         &self,
         path: OwnedObjectPath,
     ) -> Result<Arc<AccessPoint>, NetworkError> {
-        AccessPoint::get_live(
-            &self.zbus_connection,
+        AccessPoint::get_live(LiveAccessPointParams {
+            connection: &self.zbus_connection,
             path,
-            self.cancellation_token.child_token(),
-        )
+            cancellation_token: self.cancellation_token.child_token(),
+        })
         .await
     }
 
@@ -193,8 +214,12 @@ impl NetworkService {
     pub async fn connection_settings(
         &self,
         path: OwnedObjectPath,
-    ) -> Result<Arc<ConnectionSettings>, NetworkError> {
-        ConnectionSettings::get(&self.zbus_connection, path).await
+    ) -> Result<ConnectionSettings, NetworkError> {
+        ConnectionSettings::get(ConnectionSettingsParams {
+            connection: &self.zbus_connection,
+            path,
+        })
+        .await
     }
 
     /// Represents a single network connection configuration.
@@ -207,11 +232,11 @@ impl NetworkService {
         &self,
         path: OwnedObjectPath,
     ) -> Result<Arc<ConnectionSettings>, NetworkError> {
-        ConnectionSettings::get_live(
-            &self.zbus_connection,
+        ConnectionSettings::get_live(LiveConnectionSettingsParams {
+            connection: &self.zbus_connection,
             path,
-            self.cancellation_token.child_token(),
-        )
+            cancellation_token: self.cancellation_token.child_token(),
+        })
         .await
     }
 
@@ -220,8 +245,12 @@ impl NetworkService {
     /// # Errors
     /// Returns `NetworkError::ObjectNotFound` if the device doesn't exist.
     /// Returns `NetworkError::DbusError` if DBus operations fail.
-    pub async fn device(&self, path: OwnedObjectPath) -> Result<Arc<Device>, NetworkError> {
-        Device::get(&self.zbus_connection, path).await
+    pub async fn device(&self, path: OwnedObjectPath) -> Result<Device, NetworkError> {
+        Device::get(DeviceParams {
+            connection: &self.zbus_connection,
+            object_path: path,
+        })
+        .await
     }
 
     /// Represents a network device.
@@ -234,11 +263,11 @@ impl NetworkService {
         &self,
         path: OwnedObjectPath,
     ) -> Result<Arc<Device>, NetworkError> {
-        Device::get_live(
-            &self.zbus_connection,
-            path,
-            self.cancellation_token.child_token(),
-        )
+        Device::get_live(LiveDeviceParams {
+            connection: &self.zbus_connection,
+            object_path: path,
+            cancellation_token: self.cancellation_token.child_token(),
+        })
         .await
     }
 
@@ -247,11 +276,12 @@ impl NetworkService {
     /// # Errors
     /// Returns `NetworkError::ObjectNotFound` if the device doesn't exist.
     /// Returns `NetworkError::WrongObjectType` if the device is not a WiFi device.
-    pub async fn device_wifi(
-        &self,
-        path: OwnedObjectPath,
-    ) -> Result<Arc<DeviceWifi>, NetworkError> {
-        DeviceWifi::get(&self.zbus_connection, path).await
+    pub async fn device_wifi(&self, path: OwnedObjectPath) -> Result<DeviceWifi, NetworkError> {
+        DeviceWifi::get(DeviceWifiParams {
+            connection: &self.zbus_connection,
+            device_path: path,
+        })
+        .await
     }
 
     /// Represents a Wi-Fi device.
@@ -264,11 +294,11 @@ impl NetworkService {
         &self,
         path: OwnedObjectPath,
     ) -> Result<Arc<DeviceWifi>, NetworkError> {
-        DeviceWifi::get_live(
-            &self.zbus_connection,
-            path,
-            self.cancellation_token.child_token(),
-        )
+        DeviceWifi::get_live(LiveDeviceWifiParams {
+            connection: &self.zbus_connection,
+            device_path: path,
+            cancellation_token: self.cancellation_token.child_token(),
+        })
         .await
     }
 
@@ -277,11 +307,12 @@ impl NetworkService {
     /// # Errors
     /// Returns `NetworkError::ObjectNotFound` if the device doesn't exist.
     /// Returns `NetworkError::WrongObjectType` if the device is not an ethernet device.
-    pub async fn device_wired(
-        &self,
-        path: OwnedObjectPath,
-    ) -> Result<Arc<DeviceWired>, NetworkError> {
-        DeviceWired::get(&self.zbus_connection, path).await
+    pub async fn device_wired(&self, path: OwnedObjectPath) -> Result<DeviceWired, NetworkError> {
+        DeviceWired::get(DeviceWiredParams {
+            connection: &self.zbus_connection,
+            device_path: path,
+        })
+        .await
     }
 
     /// Represents a wired Ethernet device.
@@ -294,11 +325,11 @@ impl NetworkService {
         &self,
         path: OwnedObjectPath,
     ) -> Result<Arc<DeviceWired>, NetworkError> {
-        DeviceWired::get_live(
-            &self.zbus_connection,
-            path,
-            self.cancellation_token.child_token(),
-        )
+        DeviceWired::get_live(LiveDeviceWiredParams {
+            connection: &self.zbus_connection,
+            device_path: path,
+            cancellation_token: self.cancellation_token.child_token(),
+        })
         .await
     }
 
@@ -307,8 +338,12 @@ impl NetworkService {
     /// # Errors
     /// Returns `NetworkError::ObjectNotFound` if the configuration doesn't exist.
     /// Returns `NetworkError::DbusError` if DBus operations fail.
-    pub async fn ip4_config(&self, path: OwnedObjectPath) -> Result<Arc<Ip4Config>, NetworkError> {
-        Ip4Config::get(&self.zbus_connection, path).await
+    pub async fn ip4_config(&self, path: OwnedObjectPath) -> Result<Ip4Config, NetworkError> {
+        Ip4Config::get(Ip4ConfigParams {
+            connection: &self.zbus_connection,
+            path,
+        })
+        .await
     }
 
     /// IPv6 Configuration Set.
@@ -316,8 +351,12 @@ impl NetworkService {
     /// # Errors
     /// Returns `NetworkError::ObjectNotFound` if the configuration doesn't exist.
     /// Returns `NetworkError::DbusError` if DBus operations fail.
-    pub async fn ip6_config(&self, path: OwnedObjectPath) -> Result<Arc<Ip6Config>, NetworkError> {
-        Ip6Config::get(&self.zbus_connection, path).await
+    pub async fn ip6_config(&self, path: OwnedObjectPath) -> Result<Ip6Config, NetworkError> {
+        Ip6Config::get(Ip6ConfigParams {
+            connection: &self.zbus_connection,
+            path,
+        })
+        .await
     }
 
     /// DHCP4 Configuration.
@@ -325,11 +364,12 @@ impl NetworkService {
     /// # Errors
     /// Returns `NetworkError::ObjectNotFound` if the configuration doesn't exist.
     /// Returns `NetworkError::DbusError` if DBus operations fail.
-    pub async fn dhcp4_config(
-        &self,
-        path: OwnedObjectPath,
-    ) -> Result<Arc<Dhcp4Config>, NetworkError> {
-        Dhcp4Config::get(&self.zbus_connection, path).await
+    pub async fn dhcp4_config(&self, path: OwnedObjectPath) -> Result<Dhcp4Config, NetworkError> {
+        Dhcp4Config::get(Dhcp4ConfigParams {
+            connection: &self.zbus_connection,
+            path,
+        })
+        .await
     }
 
     /// DHCP6 Configuration.
@@ -337,11 +377,12 @@ impl NetworkService {
     /// # Errors
     /// Returns `NetworkError::ObjectNotFound` if the configuration doesn't exist.
     /// Returns `NetworkError::DbusError` if DBus operations fail.
-    pub async fn dhcp6_config(
-        &self,
-        path: OwnedObjectPath,
-    ) -> Result<Arc<Dhcp6Config>, NetworkError> {
-        Dhcp6Config::get(&self.zbus_connection, path).await
+    pub async fn dhcp6_config(&self, path: OwnedObjectPath) -> Result<Dhcp6Config, NetworkError> {
+        Dhcp6Config::get(Dhcp6ConfigParams {
+            connection: &self.zbus_connection,
+            path,
+        })
+        .await
     }
 }
 

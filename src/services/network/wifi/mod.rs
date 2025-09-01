@@ -1,20 +1,28 @@
+mod controls;
+mod monitoring;
+mod types;
+
 use std::{ops::Deref, sync::Arc};
 
+use controls::WifiControls;
 use futures::stream::Stream;
-use monitoring::WifiMonitor;
-use tokio_util::sync::CancellationToken;
+pub(crate) use types::{LiveWifiParams, WifiParams};
 use zbus::{Connection, zvariant::OwnedObjectPath};
 
 use super::{
     AccessPointProxy, NetworkError, NetworkManagerProxy, NetworkStatus, SSID,
-    core::{access_point::AccessPoint, device::wifi::DeviceWifi},
+    core::{
+        access_point::AccessPoint,
+        device::wifi::{DeviceWifi, DeviceWifiParams, LiveDeviceWifiParams},
+    },
 };
-use crate::{services::common::Property, unwrap_bool, watch_all};
-
-mod controls;
-mod monitoring;
-
-use controls::WifiControls;
+use crate::{
+    services::{
+        common::Property,
+        traits::{ModelMonitoring, Reactive},
+    },
+    unwrap_bool, watch_all,
+};
 
 /// Manages WiFi network connectivity and device state.
 ///
@@ -24,7 +32,6 @@ use controls::WifiControls;
 /// state monitoring.
 #[derive(Clone, Debug)]
 pub struct Wifi {
-    pub(crate) connection: Connection,
     /// The underlying WiFi device.
     pub device: DeviceWifi,
 
@@ -54,53 +61,44 @@ impl PartialEq for Wifi {
     }
 }
 
+impl Reactive for Wifi {
+    type Context<'a> = WifiParams<'a>;
+    type LiveContext<'a> = LiveWifiParams<'a>;
+    type Error = NetworkError;
+
+    async fn get(params: Self::Context<'_>) -> Result<Self, Self::Error> {
+        let device = DeviceWifi::get(DeviceWifiParams {
+            connection: params.connection,
+            device_path: params.device_path.clone(),
+        })
+        .await
+        .map_err(|e| NetworkError::ObjectCreationFailed {
+            object_type: "WiFi".to_string(),
+            object_path: params.device_path.clone(),
+            reason: e.to_string(),
+        })?;
+        Self::from_device(params.connection, device).await
+    }
+
+    async fn get_live(params: Self::LiveContext<'_>) -> Result<Arc<Self>, Self::Error> {
+        let device_arc = DeviceWifi::get_live(LiveDeviceWifiParams {
+            connection: params.connection,
+            device_path: params.device_path,
+            cancellation_token: params.cancellation_token.child_token(),
+        })
+        .await?;
+        let device = DeviceWifi::clone(&device_arc);
+
+        let wifi = Self::from_device(params.connection, device.clone()).await?;
+        let wifi = Arc::new(wifi);
+
+        wifi.clone().start_monitoring().await?;
+
+        Ok(wifi)
+    }
+}
+
 impl Wifi {
-    /// Get a snapshot of the current WiFi state (no monitoring).
-    ///
-    /// # Errors
-    ///
-    /// Returns `NetworkError::ObjectCreationFailed` if the WiFi device cannot be created
-    pub async fn get(
-        connection: &Connection,
-        device_path: OwnedObjectPath,
-    ) -> Result<Arc<Self>, NetworkError> {
-        let device_arc = DeviceWifi::get(connection, device_path.clone())
-            .await
-            .map_err(|e| NetworkError::ObjectCreationFailed {
-                object_type: "WiFi".to_string(),
-                object_path: device_path.clone(),
-                reason: e.to_string(),
-            })?;
-        let device = DeviceWifi::clone(&device_arc);
-
-        let wifi = Self::from_device(connection, device).await?;
-        Ok(Arc::new(wifi))
-    }
-
-    /// Get a live-updating WiFi instance (with monitoring).
-    ///
-    /// Fetches the device, current state and starts monitoring for updates.
-    ///
-    /// # Errors
-    ///
-    /// Returns `NetworkError::ObjectCreationFailed` if the WiFi device cannot be created
-    /// or if monitoring fails to start
-    pub async fn get_live(
-        connection: &Connection,
-        device_path: OwnedObjectPath,
-        cancellation_token: CancellationToken,
-    ) -> Result<Arc<Self>, NetworkError> {
-        let device_arc =
-            DeviceWifi::get_live(connection, device_path, cancellation_token.child_token()).await?;
-        let device = DeviceWifi::clone(&device_arc);
-
-        let wifi = Self::from_device(connection, device.clone()).await?;
-
-        WifiMonitor::start(connection, &wifi, cancellation_token).await?;
-
-        Ok(Arc::new(wifi))
-    }
-
     /// Watch for any WiFi property changes.
     ///
     /// Emits whenever any WiFi property changes (enabled, connectivity, ssid, strength, or access points).
@@ -186,7 +184,6 @@ impl Wifi {
             };
 
         Ok(Self {
-            connection: connection.clone(),
             device,
             enabled: Property::new(enabled_state),
             connectivity: Property::new(NetworkStatus::from_device_state(*device_state)),

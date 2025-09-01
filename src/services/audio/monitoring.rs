@@ -1,54 +1,46 @@
 use std::{collections::HashMap, sync::Arc};
 
-use tokio::task::JoinHandle;
-use tokio_util::sync::CancellationToken;
 use tracing::info;
 
 use crate::services::{
     audio::{
-        backend::types::{CommandSender, EventReceiver},
-        core::{AudioStream, InputDevice, OutputDevice},
+        core::{
+            device::{input::InputDevice, output::OutputDevice},
+            stream::AudioStream,
+        },
+        error::AudioError,
         events::AudioEvent,
+        service::AudioService,
         types::{Device, DeviceKey, StreamKey, StreamType},
     },
     common::Property,
+    traits::{ModelMonitoring, ServiceMonitoring},
 };
 
-/// Audio discovery service that maintains reactive collections.
-///
-/// Listens to backend events and updates Property collections
-/// for devices and streams.
-pub struct AudioDiscovery;
+impl ServiceMonitoring for AudioService {
+    type Error = AudioError;
 
-impl AudioDiscovery {
-    /// Start discovery service.
-    ///
-    /// Monitors backend events and maintains collections of devices and streams.
-    ///
-    /// # Errors
-    /// Returns error if task spawn fails.
-    #[allow(clippy::too_many_arguments)]
-    #[allow(clippy::too_many_lines)]
-    pub async fn start(
-        command_tx: CommandSender,
-        mut event_rx: EventReceiver,
-        output_devices: Property<Vec<Arc<OutputDevice>>>,
-        input_devices: Property<Vec<Arc<InputDevice>>>,
-        playback_streams: Property<Vec<Arc<AudioStream>>>,
-        recording_streams: Property<Vec<Arc<AudioStream>>>,
-        default_input: Property<Option<Arc<InputDevice>>>,
-        default_output: Property<Option<Arc<OutputDevice>>>,
-        cancellation_token: CancellationToken,
-    ) -> Result<JoinHandle<()>, crate::services::audio::AudioError> {
-        let handle = tokio::spawn(async move {
-            let mut output_devs: HashMap<DeviceKey, Arc<OutputDevice>> = HashMap::new();
-            let mut input_devs: HashMap<DeviceKey, Arc<InputDevice>> = HashMap::new();
-            let mut streams: HashMap<StreamKey, Arc<AudioStream>> = HashMap::new();
+    async fn start_monitoring(&self) -> Result<(), Self::Error> {
+        let mut event_rx = self.event_tx.subscribe();
+        let mut output_devs: HashMap<DeviceKey, Arc<OutputDevice>> = HashMap::new();
+        let mut input_devs: HashMap<DeviceKey, Arc<InputDevice>> = HashMap::new();
+        let mut streams: HashMap<StreamKey, Arc<AudioStream>> = HashMap::new();
 
+        let command_tx = self.command_tx.clone();
+        let event_tx = self.event_tx.clone();
+        let output_devices = self.output_devices.clone();
+        let input_devices = self.input_devices.clone();
+        let playback_streams = self.playback_streams.clone();
+        let recording_streams = self.recording_streams.clone();
+        let default_input = self.default_input.clone();
+        let default_output = self.default_output.clone();
+        let cancellation_token = self.cancellation_token.clone();
+
+        tokio::spawn(async move {
             loop {
                 tokio::select! {
                     _ = cancellation_token.cancelled() => {
-                        info!("AudioDiscovery cancelled, stopping");
+                        info!("AudioMonitoring cancelled, stopping");
                         return;
                     }
                     Ok(event) = event_rx.recv() => {
@@ -57,13 +49,25 @@ impl AudioDiscovery {
                                 match device {
                                     Device::Sink(sink) => {
                                         let key = sink.key();
-                                        let output = Arc::new(OutputDevice::from_sink(&sink, command_tx.clone()));
+                                        let output = Arc::new(OutputDevice::from_sink(
+                                            &sink,
+                                            command_tx.clone(),
+                                            Some(event_tx.clone()),
+                                            Some(cancellation_token.child_token()),
+                                        ));
+                                        output.clone().start_monitoring().await.ok();
                                         output_devs.insert(key, output);
                                         output_devices.set(output_devs.values().cloned().collect());
                                     }
                                     Device::Source(source) => {
                                         let key = source.key();
-                                        let input = Arc::new(InputDevice::from_source(&source, command_tx.clone()));
+                                        let input = Arc::new(InputDevice::from_source(
+                                            &source,
+                                            command_tx.clone(),
+                                            Some(event_tx.clone()),
+                                            Some(cancellation_token.child_token()),
+                                        ));
+                                        input.clone().start_monitoring().await.ok();
                                         input_devs.insert(key, input);
                                         input_devices.set(input_devs.values().cloned().collect());
                                     }
@@ -77,7 +81,13 @@ impl AudioDiscovery {
                                         if let Some(existing) = output_devs.get(&key) {
                                             existing.update_from_sink(&sink);
                                         } else {
-                                            let output = Arc::new(OutputDevice::from_sink(&sink, command_tx.clone()));
+                                            let output = Arc::new(OutputDevice::from_sink(
+                                                &sink,
+                                                command_tx.clone(),
+                                                Some(event_tx.clone()),
+                                                Some(cancellation_token.child_token()),
+                                            ));
+                                            output.clone().start_monitoring().await.ok();
                                             output_devs.insert(key, output);
                                             output_devices.set(output_devs.values().cloned().collect());
                                         }
@@ -87,7 +97,13 @@ impl AudioDiscovery {
                                         if let Some(existing) = input_devs.get(&key) {
                                             existing.update_from_source(&source);
                                         } else {
-                                            let input = Arc::new(InputDevice::from_source(&source, command_tx.clone()));
+                                            let input = Arc::new(InputDevice::from_source(
+                                                &source,
+                                                command_tx.clone(),
+                                                Some(event_tx.clone()),
+                                                Some(cancellation_token.child_token()),
+                                            ));
+                                            input.clone().start_monitoring().await.ok();
                                             input_devs.insert(key, input);
                                             input_devices.set(input_devs.values().cloned().collect());
                                         }
@@ -105,7 +121,13 @@ impl AudioDiscovery {
                             }
 
                             AudioEvent::StreamAdded(info) => {
-                                let stream = Arc::new(AudioStream::from_info(info.clone(), command_tx.clone()));
+                                let stream = Arc::new(AudioStream::from_info(
+                                    info.clone(),
+                                    command_tx.clone(),
+                                    Some(event_tx.clone()),
+                                    Some(cancellation_token.child_token()),
+                                ));
+                                stream.clone().start_monitoring().await.ok();
                                 streams.insert(info.key(), stream);
                                 update_stream_properties(&streams, &playback_streams, &recording_streams);
                             }
@@ -115,7 +137,13 @@ impl AudioDiscovery {
                                 if let Some(existing) = streams.get(&key) {
                                     existing.update_from_info(&info);
                                 } else {
-                                    let stream = Arc::new(AudioStream::from_info(info.clone(), command_tx.clone()));
+                                    let stream = Arc::new(AudioStream::from_info(
+                                        info.clone(),
+                                        command_tx.clone(),
+                                        Some(event_tx.clone()),
+                                        Some(cancellation_token.child_token()),
+                                    ));
+                                    stream.clone().start_monitoring().await.ok();
                                     streams.insert(key, stream);
                                     update_stream_properties(&streams, &playback_streams, &recording_streams);
                                 }
@@ -159,7 +187,7 @@ impl AudioDiscovery {
             }
         });
 
-        Ok(handle)
+        Ok(())
     }
 }
 

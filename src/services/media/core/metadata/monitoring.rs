@@ -5,47 +5,59 @@ use tokio_util::sync::CancellationToken;
 use tracing::debug;
 
 use super::TrackMetadata;
-use crate::services::media::proxy::MediaPlayer2PlayerProxy;
+use crate::services::{
+    media::{MediaError, proxy::MediaPlayer2PlayerProxy},
+    traits::ModelMonitoring,
+};
 
-/// Monitors D-Bus metadata properties and updates the reactive TrackMetadata model.
-pub(super) struct TrackMetadataMonitor;
+impl ModelMonitoring for TrackMetadata {
+    type Error = MediaError;
 
-impl TrackMetadataMonitor {
-    /// Start monitoring for metadata changes.
-    ///
-    /// Monitoring stops automatically when the TrackMetadata is dropped.
-    pub(super) fn start(
-        metadata: Arc<TrackMetadata>,
-        proxy: MediaPlayer2PlayerProxy<'static>,
-        cancellation_token: CancellationToken,
-    ) {
+    async fn start_monitoring(self: Arc<Self>) -> Result<(), Self::Error> {
+        let Some(ref proxy) = self.proxy else {
+            return Err(MediaError::InitializationFailed(
+                "A proxy was not found.".to_string(),
+            ));
+        };
+
+        let Some(ref cancellation_token) = self.cancellation_token else {
+            return Err(MediaError::InitializationFailed(
+                "A cancellation_token was not found.".to_string(),
+            ));
+        };
+
+        let ct_clone = cancellation_token.clone();
+        let proxy_clone = proxy.clone();
+
         tokio::spawn(async move {
-            Self::monitor(metadata, proxy, cancellation_token).await;
+            monitor(self, proxy_clone, ct_clone).await;
         });
+
+        Ok(())
     }
+}
 
-    async fn monitor(
-        metadata: Arc<TrackMetadata>,
-        proxy: MediaPlayer2PlayerProxy<'static>,
-        cancellation_token: CancellationToken,
-    ) {
-        let mut metadata_changed = proxy.receive_metadata_changed().await;
+async fn monitor(
+    metadata: Arc<TrackMetadata>,
+    proxy: MediaPlayer2PlayerProxy<'static>,
+    cancellation_token: CancellationToken,
+) {
+    let mut metadata_changed = proxy.receive_metadata_changed().await;
 
-        loop {
-            tokio::select! {
-                _ = cancellation_token.cancelled() => {
-                    debug!("TrackMetadataMonitor cancelled");
-                    return;
-                }
-                Some(change) = metadata_changed.next() => {
-                    if let Ok(new_metadata) = change.get().await {
-                        TrackMetadata::update_from_dbus(&metadata, new_metadata);
-                    }
-                }
-                else => break
+    loop {
+        tokio::select! {
+            _ = cancellation_token.cancelled() => {
+                debug!("TrackMetadataMonitor cancelled");
+                return;
             }
+            Some(change) = metadata_changed.next() => {
+                if let Ok(new_metadata) = change.get().await {
+                    TrackMetadata::update_from_dbus(&metadata, new_metadata);
+                }
+            }
+            else => break
         }
-
-        debug!("Metadata monitoring ended");
     }
+
+    debug!("Metadata monitoring ended");
 }

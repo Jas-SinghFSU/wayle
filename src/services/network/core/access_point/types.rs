@@ -1,6 +1,20 @@
 use std::fmt::{self, Display};
 
+use tokio_util::sync::CancellationToken;
+use zbus::{Connection, zvariant::OwnedObjectPath};
+
 use crate::services::network::{NM80211ApFlags, NM80211ApSecurityFlags};
+
+pub(crate) struct AccessPointParams<'a> {
+    pub connection: &'a Connection,
+    pub path: OwnedObjectPath,
+}
+
+pub(crate) struct LiveAccessPointParams<'a> {
+    pub connection: &'a Connection,
+    pub path: OwnedObjectPath,
+    pub cancellation_token: CancellationToken,
+}
 
 /// Network identifier for SSIDs and BSSIDs.
 ///

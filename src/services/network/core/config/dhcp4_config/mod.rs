@@ -1,5 +1,8 @@
-use std::{collections::HashMap, sync::Arc};
+mod types;
 
+use std::collections::HashMap;
+
+pub(crate) use types::Dhcp4ConfigParams;
 use zbus::{
     Connection,
     zvariant::{OwnedObjectPath, OwnedValue},
@@ -8,6 +11,7 @@ use zbus::{
 use crate::services::{
     common::Property,
     network::{NetworkError, proxy::dhcp4_config::DHCP4ConfigProxy},
+    traits::Static,
 };
 
 /// IPv4 DHCP Client State.
@@ -23,21 +27,16 @@ pub struct Dhcp4Config {
     pub options: Property<HashMap<String, OwnedValue>>,
 }
 
-impl Dhcp4Config {
-    /// Get a snapshot of the current DHCP4 configuration state (no monitoring).
-    ///
-    /// # Errors
-    ///
-    /// Returns `NetworkError::DbusError` if D-Bus operations fail or
-    /// `NetworkError::DataConversionFailed` if DHCP option conversion fails.
-    pub(crate) async fn get(
-        connection: &Connection,
-        path: OwnedObjectPath,
-    ) -> Result<Arc<Self>, NetworkError> {
-        let config = Self::from_path(connection, path).await?;
-        Ok(Arc::new(config))
-    }
+impl Static for Dhcp4Config {
+    type Error = NetworkError;
+    type Context<'a> = Dhcp4ConfigParams<'a>;
 
+    async fn get(params: Self::Context<'_>) -> Result<Self, Self::Error> {
+        Self::from_path(params.connection, params.path).await
+    }
+}
+
+impl Dhcp4Config {
     async fn from_path(
         connection: &Connection,
         path: OwnedObjectPath,

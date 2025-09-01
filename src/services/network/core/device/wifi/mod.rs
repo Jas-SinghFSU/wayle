@@ -1,15 +1,17 @@
 mod controls;
 mod monitoring;
+mod types;
 
 use std::{collections::HashMap, ops::Deref, sync::Arc};
 
 use controls::DeviceWifiControls;
-use monitoring::DeviceWifiMonitor;
-use tokio_util::sync::CancellationToken;
 use tracing::warn;
+use types::WifiProperties;
+pub use types::{BitrateKbps, BootTimeMs, WirelessCapabilities};
+pub(crate) use types::{DeviceWifiParams, LiveDeviceWifiParams};
 use zbus::{Connection, zvariant::OwnedObjectPath};
 
-use super::Device;
+use super::{Device, LiveDeviceParams};
 use crate::{
     services::{
         common::Property,
@@ -18,29 +20,10 @@ use crate::{
             proxy::devices::{DeviceProxy, wireless::DeviceWirelessProxy},
             types::NM80211Mode,
         },
+        traits::{ModelMonitoring, Reactive},
     },
     unwrap_i64_or, unwrap_path_or, unwrap_string, unwrap_u32, unwrap_vec,
 };
-
-/// Bitrate in kilobits per second (Kb/s).
-pub type BitrateKbps = u32;
-
-/// Timestamp in CLOCK_BOOTTIME milliseconds.
-pub type BootTimeMs = i64;
-
-/// Wireless device capabilities.
-pub type WirelessCapabilities = u32;
-
-/// WiFi-specific properties fetched from D-Bus
-struct WifiProperties {
-    perm_hw_address: String,
-    mode: u32,
-    bitrate: u32,
-    access_points: Vec<OwnedObjectPath>,
-    active_access_point: OwnedObjectPath,
-    wireless_capabilities: u32,
-    last_scan: i64,
-}
 
 /// Wireless (Wi-Fi) network device.
 ///
@@ -73,6 +56,36 @@ pub struct DeviceWifi {
     pub last_scan: Property<BootTimeMs>,
 }
 
+impl Reactive for DeviceWifi {
+    type Context<'a> = DeviceWifiParams<'a>;
+    type LiveContext<'a> = LiveDeviceWifiParams<'a>;
+    type Error = NetworkError;
+
+    async fn get(params: Self::Context<'_>) -> Result<Self, Self::Error> {
+        Self::from_path(params.connection, params.device_path).await
+    }
+
+    async fn get_live(params: Self::LiveContext<'_>) -> Result<Arc<Self>, Self::Error> {
+        Self::verify_is_wifi_device(params.connection, &params.device_path).await?;
+
+        let base_arc = Device::get_live(LiveDeviceParams {
+            connection: params.connection,
+            object_path: params.device_path.clone(),
+            cancellation_token: params.cancellation_token.clone(),
+        })
+        .await?;
+        let base = Device::clone(&base_arc);
+
+        let wifi_props =
+            Self::fetch_wifi_properties(params.connection, &params.device_path).await?;
+        let device = Arc::new(Self::from_props(base, wifi_props));
+
+        device.clone().start_monitoring().await?;
+
+        Ok(device)
+    }
+}
+
 impl Deref for DeviceWifi {
     type Target = Device;
 
@@ -82,55 +95,6 @@ impl Deref for DeviceWifi {
 }
 
 impl DeviceWifi {
-    /// Get a snapshot of the current WiFi device state (no monitoring).
-    ///
-    /// # Errors
-    ///
-    /// Returns `NetworkError::WrongObjectType` if device at path is not a WiFi device,
-    /// `NetworkError::ObjectCreationFailed` if failed to create base device, or
-    /// `NetworkError::DbusError` if D-Bus operations fail.
-    pub(crate) async fn get(
-        connection: &Connection,
-        device_path: OwnedObjectPath,
-    ) -> Result<Arc<Self>, NetworkError> {
-        let device = Self::from_path(connection, device_path).await?;
-        Ok(Arc::new(device))
-    }
-
-    /// Get a live-updating WiFi device instance (with monitoring).
-    ///
-    /// Fetches current state and starts monitoring for updates.
-    ///
-    /// # Errors
-    ///
-    /// Returns:
-    /// - `NetworkError::WrongObjectType` if device at path is not a WiFi device
-    /// - `NetworkError::ObjectCreationFailed` if failed to create base device
-    /// - `NetworkError::DbusError` if D-Bus operations fail
-    pub(crate) async fn get_live(
-        connection: &Connection,
-        device_path: OwnedObjectPath,
-        cancellation_token: CancellationToken,
-    ) -> Result<Arc<Self>, NetworkError> {
-        Self::verify_is_wifi_device(connection, &device_path).await?;
-
-        let base_arc = Device::get_live(
-            connection,
-            device_path.clone(),
-            cancellation_token.child_token(),
-        )
-        .await?;
-        let base = Device::clone(&base_arc);
-
-        let wifi_props = Self::fetch_wifi_properties(connection, &device_path).await?;
-        let device = Arc::new(Self::from_props(base, wifi_props));
-
-        DeviceWifiMonitor::start(device.clone(), connection, device_path, cancellation_token)
-            .await?;
-
-        Ok(device)
-    }
-
     /// Request a scan for available access points.
     ///
     /// Triggers NetworkManager to scan for nearby WiFi networks. The scan runs
@@ -253,7 +217,7 @@ impl DeviceWifi {
 
         let wifi_proxy = DeviceWirelessProxy::new(connection, &object_path).await?;
 
-        let base = match Device::from_path(connection, object_path.clone()).await {
+        let base = match Device::from_path(connection, object_path.clone(), None).await {
             Ok(base) => base,
             Err(e) => {
                 warn!("Failed to create base Device for {}", object_path);

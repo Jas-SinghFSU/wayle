@@ -1,38 +1,38 @@
 use std::sync::Arc;
 
-use tokio::task::JoinHandle;
-use tokio_util::sync::CancellationToken;
 use tracing::debug;
 
-use crate::services::audio::{
-    backend::types::EventReceiver, core::stream::AudioStream, error::AudioError,
-    events::AudioEvent, types::StreamKey,
+use crate::services::{
+    audio::{core::stream::AudioStream, error::AudioError, events::AudioEvent, types::StreamState},
+    traits::ModelMonitoring,
 };
 
-/// Monitors stream events and updates properties.
-pub struct StreamMonitor;
+impl ModelMonitoring for AudioStream {
+    type Error = AudioError;
 
-impl StreamMonitor {
-    /// Start monitoring for stream changes.
-    ///
-    /// Spawns a background task that listens for events related to this stream
-    /// and updates the stream's properties when changes occur.
-    ///
-    /// # Errors
-    /// Returns error if monitoring task fails to spawn.
-    pub(super) async fn start(
-        stream: Arc<AudioStream>,
-        stream_key: StreamKey,
-        mut event_rx: EventReceiver,
-        cancellation_token: CancellationToken,
-    ) -> Result<JoinHandle<()>, AudioError> {
-        let weak_stream = Arc::downgrade(&stream);
+    async fn start_monitoring(self: Arc<Self>) -> Result<(), Self::Error> {
+        let Some(ref cancellation_token) = self.cancellation_token else {
+            return Err(AudioError::OperationFailed(
+                "Cancellation token not available for monitoring".to_string(),
+            ));
+        };
 
-        let handle = tokio::spawn(async move {
+        let Some(ref event_tx) = self.event_tx else {
+            return Err(AudioError::OperationFailed(
+                "Event sender not available for monitoring".to_string(),
+            ));
+        };
+
+        let weak_stream = Arc::downgrade(&self);
+        let stream_key = self.key;
+        let cancellation_token = cancellation_token.clone();
+        let mut event_rx = event_tx.subscribe();
+
+        tokio::spawn(async move {
             loop {
                 tokio::select! {
                     _ = cancellation_token.cancelled() => {
-                        debug!("Stream monitor cancelled for {:?}", stream_key);
+                        debug!("AudioStream monitor cancelled for {:?}", stream_key);
                         return;
                     }
                     Ok(event) = event_rx.recv() => {
@@ -75,9 +75,7 @@ impl StreamMonitor {
                                 stream.device_index.set(device_index);
                             }
                             AudioEvent::StreamRemoved(key) if key == stream_key => {
-                                stream
-                                    .state
-                                    .set(crate::services::audio::types::StreamState::Terminated);
+                                stream.state.set(StreamState::Terminated);
                                 break;
                             }
                             _ => {}
@@ -87,6 +85,6 @@ impl StreamMonitor {
             }
         });
 
-        Ok(handle)
+        Ok(())
     }
 }

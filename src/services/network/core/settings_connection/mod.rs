@@ -1,11 +1,12 @@
 mod controls;
 mod monitoring;
+mod types;
 
 use std::{collections::HashMap, sync::Arc};
 
 use controls::ConnectionSettingsControls;
-use monitoring::ConnectionSettingsMonitor;
 use tokio_util::sync::CancellationToken;
+pub(crate) use types::{ConnectionSettingsParams, LiveConnectionSettingsParams};
 use zbus::{
     Connection,
     zvariant::{self, OwnedObjectPath, OwnedValue},
@@ -18,6 +19,7 @@ use crate::{
             NMConnectionSettingsFlags, NetworkError, core::access_point::SSID,
             proxy::settings::connection::SettingsConnectionProxy,
         },
+        traits::{ModelMonitoring, Reactive},
     },
     unwrap_bool, unwrap_string, unwrap_u32,
 };
@@ -28,6 +30,7 @@ use crate::{
 #[derive(Debug, Clone)]
 pub struct ConnectionSettings {
     pub(crate) connection: Connection,
+    pub(crate) cancellation_token: Option<CancellationToken>,
     /// D-Bus object path for this settings connection
     pub object_path: Property<OwnedObjectPath>,
 
@@ -44,6 +47,30 @@ pub struct ConnectionSettings {
     pub filename: Property<String>,
 }
 
+impl Reactive for ConnectionSettings {
+    type Context<'a> = ConnectionSettingsParams<'a>;
+    type LiveContext<'a> = LiveConnectionSettingsParams<'a>;
+    type Error = NetworkError;
+
+    async fn get(params: Self::Context<'_>) -> Result<Self, Self::Error> {
+        Self::from_path(params.connection, params.path, None).await
+    }
+
+    async fn get_live(params: Self::LiveContext<'_>) -> Result<Arc<Self>, Self::Error> {
+        let properties = Self::fetch_properties(params.connection, &params.path).await?;
+        let settings = Arc::new(Self::from_props(
+            params.path.clone(),
+            properties,
+            params.connection,
+            Some(params.cancellation_token),
+        ));
+
+        settings.clone().start_monitoring().await?;
+
+        Ok(settings)
+    }
+}
+
 impl PartialEq for ConnectionSettings {
     fn eq(&self, other: &Self) -> bool {
         self.object_path.get() == other.object_path.get()
@@ -53,43 +80,6 @@ impl PartialEq for ConnectionSettings {
 impl ConnectionSettings {
     /// Get a snapshot of the current settings connection state.
     ///
-    /// Note: SettingsConnection properties can change, so consider using get_live()
-    /// for monitoring changes.
-    ///
-    /// # Errors
-    ///
-    /// Returns `NetworkError::DbusError` if D-Bus operations fail.
-    pub(crate) async fn get(
-        connection: &Connection,
-        path: OwnedObjectPath,
-    ) -> Result<Arc<Self>, NetworkError> {
-        let settings = Self::from_path(connection, path).await?;
-        Ok(Arc::new(settings))
-    }
-
-    /// Get a live-updating settings connection instance.
-    ///
-    /// Fetches current state and monitors for property changes.
-    /// The properties will update automatically when the connection
-    /// is modified, saved, or when flags change.
-    ///
-    /// # Errors
-    ///
-    /// Returns `NetworkError::DbusError` if D-Bus operations fail
-    pub(crate) async fn get_live(
-        connection: &Connection,
-        path: OwnedObjectPath,
-        cancellation_token: CancellationToken,
-    ) -> Result<Arc<Self>, NetworkError> {
-        let properties = Self::fetch_properties(connection, &path).await?;
-        let settings = Arc::new(Self::from_props(path.clone(), properties, connection));
-
-        ConnectionSettingsMonitor::start(settings.clone(), connection, path, cancellation_token)
-            .await?;
-
-        Ok(settings)
-    }
-
     /// Update the connection with new settings and properties.
     ///
     /// Update the connection with new settings and properties (replacing all
@@ -260,9 +250,15 @@ impl ConnectionSettings {
     async fn from_path(
         connection: &Connection,
         path: OwnedObjectPath,
+        cancellation_token: Option<CancellationToken>,
     ) -> Result<Self, NetworkError> {
         let properties = Self::fetch_properties(connection, &path).await?;
-        Ok(Self::from_props(path, properties, connection))
+        Ok(Self::from_props(
+            path,
+            properties,
+            connection,
+            cancellation_token,
+        ))
     }
 
     async fn fetch_properties(
@@ -287,9 +283,11 @@ impl ConnectionSettings {
         path: OwnedObjectPath,
         props: SettingsConnectionProperties,
         connection: &Connection,
+        cancellation_token: Option<CancellationToken>,
     ) -> Self {
         Self {
             connection: connection.clone(),
+            cancellation_token,
             object_path: Property::new(path),
             unsaved: Property::new(props.unsaved),
             flags: Property::new(NMConnectionSettingsFlags::from_bits_truncate(props.flags)),

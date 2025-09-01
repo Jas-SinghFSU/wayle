@@ -1,11 +1,13 @@
 mod controls;
 mod monitoring;
+pub mod types;
+
 use std::{collections::HashMap, sync::Arc};
 
 use controls::AdapterControls;
-use monitoring::AdapterMonitor;
 use tokio::sync::mpsc;
 use tokio_util::sync::CancellationToken;
+pub(crate) use types::{AdapterParams, LiveAdapterParams};
 use zbus::{
     Connection,
     zvariant::{OwnedObjectPath, Value},
@@ -21,6 +23,7 @@ use crate::{
             },
         },
         common::Property,
+        traits::{ModelMonitoring, Reactive},
     },
     unwrap_bool, unwrap_string, unwrap_u8, unwrap_u16, unwrap_u32, unwrap_vec,
 };
@@ -29,6 +32,7 @@ use crate::{
 #[derive(Debug, Clone)]
 pub struct Adapter {
     pub(crate) zbus_connection: Connection,
+    pub(crate) cancellation_token: Option<CancellationToken>,
     pub(crate) notifier_tx: mpsc::UnboundedSender<ServiceNotification>,
 
     /// D-Bus object path for this device.
@@ -185,31 +189,42 @@ struct AdapterProperties {
     pub version: u8,
 }
 
+impl Reactive for Adapter {
+    type Error = BluetoothError;
+    type Context<'a> = AdapterParams<'a>;
+    type LiveContext<'a> = LiveAdapterParams<'a>;
+
+    async fn get(context: Self::Context<'_>) -> Result<Self, Self::Error> {
+        let adapter_proxy = Adapter1Proxy::new(context.connection, &context.path).await?;
+        let props = Self::fetch_properties(&adapter_proxy).await?;
+        Ok(Self::from_properties(
+            props,
+            context.connection,
+            context.path,
+            context.notifier_tx,
+            None,
+        ))
+    }
+
+    async fn get_live(context: Self::LiveContext<'_>) -> Result<Arc<Self>, Self::Error> {
+        let adapter_proxy = Adapter1Proxy::new(context.connection, &context.path).await?;
+        let props = Self::fetch_properties(&adapter_proxy).await?;
+        let adapter = Self::from_properties(
+            props,
+            context.connection,
+            context.path.clone(),
+            context.notifier_tx,
+            Some(context.cancellation_token),
+        );
+        let adapter_arc = Arc::new(adapter);
+
+        adapter_arc.clone().start_monitoring().await?;
+
+        Ok(adapter_arc)
+    }
+}
+
 impl Adapter {
-    pub(crate) async fn get(
-        connection: &Connection,
-        object_path: OwnedObjectPath,
-        notifier_tx: &mpsc::UnboundedSender<ServiceNotification>,
-    ) -> Result<Arc<Self>, BluetoothError> {
-        let adapter = Self::from_path(connection, object_path, notifier_tx).await?;
-
-        Ok(Arc::new(adapter))
-    }
-
-    pub(crate) async fn get_live(
-        connection: &Connection,
-        object_path: OwnedObjectPath,
-        cancellation_token: CancellationToken,
-        notifier_tx: &mpsc::UnboundedSender<ServiceNotification>,
-    ) -> Result<Arc<Self>, BluetoothError> {
-        let adapter = Self::from_path(connection, object_path.clone(), notifier_tx).await?;
-        let adapter = Arc::new(adapter);
-
-        AdapterMonitor::start(adapter.clone(), connection, object_path, cancellation_token).await?;
-
-        Ok(adapter)
-    }
-
     /// Sets the Bluetooth friendly name (alias) of the adapter.
     ///
     /// Setting an empty string will revert to the system-provided name.
@@ -396,21 +411,6 @@ impl Adapter {
         AdapterControls::connect_device(&self.zbus_connection, &self.object_path, properties).await
     }
 
-    pub(crate) async fn from_path(
-        connection: &Connection,
-        object_path: OwnedObjectPath,
-        notifier_tx: &mpsc::UnboundedSender<ServiceNotification>,
-    ) -> Result<Self, BluetoothError> {
-        let proxy = Adapter1Proxy::new(connection, &object_path).await?;
-        let props = Self::fetch_properties(&proxy).await?;
-        Ok(Self::from_properties(
-            props,
-            connection,
-            object_path,
-            notifier_tx,
-        ))
-    }
-
     #[allow(clippy::too_many_lines)]
     async fn fetch_properties(
         proxy: &Adapter1Proxy<'_>,
@@ -485,11 +485,13 @@ impl Adapter {
         connection: &Connection,
         object_path: OwnedObjectPath,
         notifier_tx: &mpsc::UnboundedSender<ServiceNotification>,
+        cancellation_token: Option<CancellationToken>,
     ) -> Self {
         Self {
             object_path,
             notifier_tx: notifier_tx.clone(),
             zbus_connection: connection.clone(),
+            cancellation_token,
             address: Property::new(props.address),
             address_type: Property::new(AddressType::from(props.address_type.as_str())),
             name: Property::new(props.name),

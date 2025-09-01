@@ -9,6 +9,7 @@ use crate::{
         network::{
             AccessPointProxy, NM80211ApFlags, NM80211ApSecurityFlags, NM80211Mode, NetworkError,
         },
+        traits::{ModelMonitoring, Reactive},
     },
     unwrap_i32_or, unwrap_string, unwrap_u8, unwrap_u32, unwrap_vec,
 };
@@ -16,7 +17,7 @@ use crate::{
 mod monitoring;
 mod types;
 
-use monitoring::AccessPointMonitor;
+pub(crate) use types::{AccessPointParams, LiveAccessPointParams};
 pub use types::{BSSID, NetworkIdentifier, SSID, SecurityType};
 
 /// WiFi access point representation.
@@ -26,7 +27,9 @@ pub use types::{BSSID, NetworkIdentifier, SSID, SecurityType};
 /// Access points are discovered and monitored through the WiFi device interface.
 #[derive(Debug, Clone)]
 pub struct AccessPoint {
-    pub(crate) path: OwnedObjectPath,
+    pub(crate) connection: Connection,
+    pub(crate) object_path: OwnedObjectPath,
+    pub(crate) cancellation_token: Option<CancellationToken>,
     /// Flags describing the capabilities of the access point. See NM80211ApFlags.
     pub flags: Property<NM80211ApFlags>,
 
@@ -71,6 +74,48 @@ pub struct AccessPoint {
     pub is_hidden: Property<bool>,
 }
 
+impl Reactive for AccessPoint {
+    type Context<'a> = AccessPointParams<'a>;
+    type LiveContext<'a> = LiveAccessPointParams<'a>;
+    type Error = NetworkError;
+
+    async fn get(params: Self::Context<'_>) -> Result<Self, Self::Error> {
+        let ap = Self::from_path(params.connection, params.path.clone(), None)
+            .await
+            .map_err(|e| match e {
+                NetworkError::ObjectNotFound(_) => e,
+                _ => NetworkError::ObjectCreationFailed {
+                    object_type: "AccessPoint".to_string(),
+                    object_path: params.path.clone(),
+                    reason: e.to_string(),
+                },
+            })?;
+
+        Ok(ap)
+    }
+
+    async fn get_live(params: Self::LiveContext<'_>) -> Result<Arc<Self>, Self::Error> {
+        let access_point = Self::from_path(
+            params.connection,
+            params.path.clone(),
+            Some(params.cancellation_token),
+        )
+        .await
+        .map_err(|e| match e {
+            NetworkError::ObjectNotFound(_) => e,
+            _ => NetworkError::ObjectCreationFailed {
+                object_type: "AccessPoint".to_string(),
+                object_path: params.path.clone(),
+                reason: e.to_string(),
+            },
+        })?;
+        let access_point = Arc::new(access_point);
+        access_point.clone().start_monitoring().await?;
+
+        Ok(access_point)
+    }
+}
+
 impl PartialEq for AccessPoint {
     fn eq(&self, other: &Self) -> bool {
         self.bssid.get() == other.bssid.get()
@@ -78,60 +123,11 @@ impl PartialEq for AccessPoint {
 }
 
 impl AccessPoint {
-    /// Get a snapshot of the current access point state (no monitoring).
-    ///
-    /// # Errors
-    ///
-    /// Returns `NetworkError::ObjectNotFound` if access point doesn't exist.
-    /// Returns `NetworkError::ObjectCreationFailed` if access point creation fails.
-    pub(crate) async fn get(
-        connection: &Connection,
-        path: OwnedObjectPath,
-    ) -> Result<Arc<Self>, NetworkError> {
-        Self::from_path(connection, path.clone())
-            .await
-            .map_err(|e| match e {
-                NetworkError::ObjectNotFound(_) => e,
-                _ => NetworkError::ObjectCreationFailed {
-                    object_type: "AccessPoint".to_string(),
-                    object_path: path.clone(),
-                    reason: e.to_string(),
-                },
-            })
-    }
-
-    /// Get a live-updating access point instance (with monitoring).
-    ///
-    /// # Errors
-    ///
-    /// Returns `NetworkError::ObjectNotFound` if access point doesn't exist.
-    /// Returns `NetworkError::ObjectCreationFailed` if access point creation fails.
-    pub(crate) async fn get_live(
-        connection: &Connection,
-        path: OwnedObjectPath,
-        cancellation_token: CancellationToken,
-    ) -> Result<Arc<Self>, NetworkError> {
-        let access_point =
-            Self::from_path(connection, path.clone())
-                .await
-                .map_err(|e| match e {
-                    NetworkError::ObjectNotFound(_) => e,
-                    _ => NetworkError::ObjectCreationFailed {
-                        object_type: "AccessPoint".to_string(),
-                        object_path: path.clone(),
-                        reason: e.to_string(),
-                    },
-                })?;
-
-        AccessPointMonitor::start(access_point.clone(), connection, path, cancellation_token).await;
-
-        Ok(access_point)
-    }
-
     async fn from_path(
         connection: &Connection,
         path: OwnedObjectPath,
-    ) -> Result<Arc<Self>, NetworkError> {
+        cancellation_token: Option<CancellationToken>,
+    ) -> Result<Self, NetworkError> {
         let ap_proxy = AccessPointProxy::new(connection, &path)
             .await
             .map_err(NetworkError::DbusError)?;
@@ -178,8 +174,10 @@ impl AccessPoint {
         let security = SecurityType::from_flags(flags, wpa_flags, rsn_flags);
         let is_hidden = ssid.is_empty();
 
-        Ok(Arc::new(Self {
-            path,
+        Ok(Self {
+            connection: connection.clone(),
+            object_path: path.clone(),
+            cancellation_token,
             flags: Property::new(flags),
             wpa_flags: Property::new(wpa_flags),
             rsn_flags: Property::new(rsn_flags),
@@ -192,6 +190,6 @@ impl AccessPoint {
             last_seen: Property::new(last_seen),
             security: Property::new(security),
             is_hidden: Property::new(is_hidden),
-        }))
+        })
     }
 }

@@ -6,8 +6,17 @@ use tokio_util::sync::CancellationToken;
 use tracing::{info, instrument};
 use zbus::Connection;
 
-use super::{MediaError, PlayerId, core::Player, monitoring::MprisMonitoring};
-use crate::services::common::Property;
+use super::{
+    MediaError, PlayerId,
+    core::{
+        Player,
+        player::{LivePlayerParams, PlayerParams},
+    },
+};
+use crate::services::{
+    common::Property,
+    traits::{Reactive, ServiceMonitoring},
+};
 
 /// Configuration for the MPRIS service
 #[derive(Default)]
@@ -21,12 +30,12 @@ pub struct Config {
 /// Provides fine-grained reactive updates for efficient UI rendering.
 #[derive(Clone)]
 pub struct MediaService {
-    connection: Connection,
-    players: Arc<RwLock<HashMap<PlayerId, Arc<Player>>>>,
-    player_list: Property<Vec<Arc<Player>>>,
-    active_player: Property<Option<Arc<Player>>>,
-    ignored_patterns: Vec<String>,
-    cancellation_token: CancellationToken,
+    pub(crate) connection: Connection,
+    pub(crate) players: Arc<RwLock<HashMap<PlayerId, Arc<Player>>>>,
+    pub player_list: Property<Vec<Arc<Player>>>,
+    pub active_player: Property<Option<Arc<Player>>>,
+    pub ignored_patterns: Vec<String>,
+    pub cancellation_token: CancellationToken,
 }
 
 impl MediaService {
@@ -54,15 +63,7 @@ impl MediaService {
             cancellation_token: cancellation_token.clone(),
         };
 
-        MprisMonitoring::start(
-            &service.connection,
-            Arc::clone(&service.players),
-            service.player_list.clone(),
-            service.active_player.clone(),
-            service.ignored_patterns.clone(),
-            cancellation_token.child_token(),
-        )
-        .await?;
+        service.start_monitoring().await?;
 
         Ok(service)
     }
@@ -77,8 +78,12 @@ impl MediaService {
     ///
     /// Returns `MediaError::PlayerNotFound` if the player doesn't exist.
     /// Returns `MediaError::DbusError` if D-Bus operations fail.
-    pub async fn player(&self, player_id: &PlayerId) -> Result<Arc<Player>, MediaError> {
-        Player::get(&self.connection, player_id.clone()).await
+    pub async fn player(&self, player_id: &PlayerId) -> Result<Player, MediaError> {
+        Player::get(PlayerParams {
+            connection: &self.connection,
+            player_id: player_id.clone(),
+        })
+        .await
     }
 
     /// Get a live-updating instance of a specific media player.
@@ -92,11 +97,11 @@ impl MediaService {
     /// Returns `MediaError::PlayerNotFound` if the player doesn't exist.
     /// Returns `MediaError::DbusError` if D-Bus operations fail.
     pub async fn player_monitored(&self, player_id: &PlayerId) -> Result<Arc<Player>, MediaError> {
-        Player::get_live(
-            &self.connection,
-            player_id.clone(),
-            self.cancellation_token.child_token(),
-        )
+        Player::get_live(LivePlayerParams {
+            connection: &self.connection,
+            player_id: player_id.clone(),
+            cancellation_token: self.cancellation_token.child_token(),
+        })
         .await
     }
 
@@ -141,19 +146,18 @@ impl MediaService {
     ///
     /// Returns `MediaError::PlayerNotFound` if the specified player doesn't exist.
     pub async fn set_active_player(&self, player_id: Option<PlayerId>) -> Result<(), MediaError> {
-        if let Some(ref id) = player_id {
-            let players = self.players.read().await;
-            if !players.contains_key(id) {
-                return Err(MediaError::PlayerNotFound(id.clone()));
-            }
-        }
-
-        let player = match player_id {
-            Some(ref id) => self.player(id).await.ok(),
-            None => None,
+        let Some(ref id) = player_id else {
+            self.active_player.set(None);
+            return Ok(());
         };
 
-        self.active_player.set(player);
+        let players = self.players.read().await;
+
+        let Some(found_player) = players.get(id) else {
+            return Err(MediaError::PlayerNotFound(id.clone()));
+        };
+
+        self.active_player.set(Some(found_player.clone()));
 
         Ok(())
     }

@@ -172,7 +172,7 @@ impl BluetoothAgent {
                 device_path: device,
                 responder: response_tx,
             })
-            .map_err(|_| fdo::Error::Failed("Service unavailable".into()))?;
+            .map_err(|e| fdo::Error::Failed(format!("Service unavailable: {e}")))?;
 
         match response_rx.await {
             Ok(true) => Ok(()),

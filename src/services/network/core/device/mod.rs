@@ -2,6 +2,7 @@
 mod controls;
 /// Device monitoring implementation
 mod monitoring;
+mod types;
 /// WiFi device functionality and management.
 pub mod wifi;
 /// Wired (ethernet) device functionality and management.
@@ -10,8 +11,9 @@ pub mod wired;
 use std::{collections::HashMap, sync::Arc};
 
 use controls::DeviceControls;
-use monitoring::DeviceMonitor;
 use tokio_util::sync::CancellationToken;
+use types::DeviceProperties;
+pub(crate) use types::{DeviceParams, LiveDeviceParams};
 use zbus::{
     Connection,
     zvariant::{OwnedObjectPath, OwnedValue},
@@ -25,6 +27,7 @@ use crate::{
             NMDeviceState, NMDeviceStateReason, NMDeviceType, NMMetered, NetworkError,
             proxy::devices::DeviceProxy,
         },
+        traits::{ModelMonitoring, Reactive},
     },
     unwrap_bool, unwrap_bool_or, unwrap_path, unwrap_string, unwrap_u32, unwrap_u32_or, unwrap_vec,
 };
@@ -53,7 +56,8 @@ impl std::ops::Deref for DbusConnection {
 /// Contains hardware information, state, configuration, and statistics.
 #[derive(Debug, Clone)]
 pub struct Device {
-    pub(crate) connection: DbusConnection,
+    pub(crate) connection: Connection,
+    pub(crate) cancellation_token: Option<CancellationToken>,
 
     /// D-Bus object path for this device.
     pub object_path: OwnedObjectPath,
@@ -188,75 +192,49 @@ pub struct Device {
     pub ports: Property<Vec<OwnedObjectPath>>,
 }
 
-/// Fetched device properties from D-Bus
-struct DeviceProperties {
-    udi: String,
-    udev_path: String,
-    interface: String,
-    ip_interface: String,
-    driver: String,
-    driver_version: String,
-    firmware_version: String,
-    capabilities: u32,
-    state: u32,
-    state_reason: (u32, u32),
-    active_connection: OwnedObjectPath,
-    ip4_config: OwnedObjectPath,
-    dhcp4_config: OwnedObjectPath,
-    ip6_config: OwnedObjectPath,
-    dhcp6_config: OwnedObjectPath,
-    managed: bool,
-    autoconnect: bool,
-    firmware_missing: bool,
-    nm_plugin_missing: bool,
-    device_type: u32,
-    available_connections: Vec<OwnedObjectPath>,
-    physical_port_id: String,
-    mtu: u32,
-    metered: u32,
-    real: bool,
-    ip4_connectivity: u32,
-    ip6_connectivity: u32,
-    interface_flags: u32,
-    hw_address: String,
-    ports: Vec<OwnedObjectPath>,
-}
+impl Reactive for Device {
+    type Context<'a> = DeviceParams<'a>;
+    type LiveContext<'a> = LiveDeviceParams<'a>;
+    type Error = NetworkError;
 
-impl Device {
-    pub(crate) async fn get(
-        connection: &Connection,
-        object_path: OwnedObjectPath,
-    ) -> Result<Arc<Self>, NetworkError> {
-        let device = Self::from_path(connection, object_path).await?;
-        Ok(Arc::new(device))
+    async fn get(params: Self::Context<'_>) -> Result<Self, Self::Error> {
+        Self::from_path(params.connection, params.object_path, None).await
     }
 
-    pub(crate) async fn get_live(
-        connection: &Connection,
-        object_path: OwnedObjectPath,
-        cancellation_token: CancellationToken,
-    ) -> Result<Arc<Self>, NetworkError> {
-        let device = Self::from_path(connection, object_path.clone())
-            .await
-            .map_err(|e| NetworkError::ObjectCreationFailed {
-                object_type: "Device".to_string(),
-                object_path: object_path.clone(),
-                reason: e.to_string(),
-            })?;
+    async fn get_live(params: Self::LiveContext<'_>) -> Result<Arc<Self>, Self::Error> {
+        let device = Self::from_path(
+            params.connection,
+            params.object_path.clone(),
+            Some(params.cancellation_token),
+        )
+        .await
+        .map_err(|e| NetworkError::ObjectCreationFailed {
+            object_type: "Device".to_string(),
+            object_path: params.object_path.clone(),
+            reason: e.to_string(),
+        })?;
 
         let device = Arc::new(device);
-        DeviceMonitor::start(device.clone(), connection, object_path, cancellation_token).await?;
+        device.clone().start_monitoring().await?;
 
         Ok(device)
     }
+}
 
+impl Device {
     pub(crate) async fn from_path(
         connection: &Connection,
         object_path: OwnedObjectPath,
+        cancellation_token: Option<CancellationToken>,
     ) -> Result<Self, NetworkError> {
         let proxy = DeviceProxy::new(connection, &object_path).await?;
         let props = Self::fetch_properties(&proxy).await?;
-        Ok(Self::from_properties(props, connection, object_path))
+        Ok(Self::from_properties(
+            props,
+            connection,
+            object_path,
+            cancellation_token,
+        ))
     }
 
     #[allow(clippy::too_many_lines)]
@@ -382,9 +360,11 @@ impl Device {
         props: DeviceProperties,
         connection: &Connection,
         object_path: OwnedObjectPath,
+        cancellation_token: Option<CancellationToken>,
     ) -> Self {
         Self {
-            connection: DbusConnection(connection.clone()),
+            cancellation_token,
+            connection: connection.clone(),
             object_path,
             udi: Property::new(props.udi),
             udev_path: Property::new(props.udev_path),

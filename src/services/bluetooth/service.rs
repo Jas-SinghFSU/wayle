@@ -9,7 +9,6 @@ use zbus::{Connection, zvariant::OwnedObjectPath};
 
 use super::{
     core::{Adapter, Device},
-    monitoring::BluetoothMonitoring,
     types::{PairingRequest, PairingResponder, ServiceNotification},
 };
 use crate::services::{
@@ -21,6 +20,7 @@ use crate::services::{
         types::{AgentCapability, AgentEvent},
     },
     common::Property,
+    traits::ServiceMonitoring,
 };
 
 /// Manages Bluetooth connectivity through the BlueZ D-Bus interface.
@@ -29,11 +29,11 @@ use crate::services::{
 /// pairing, and connection management. Automatically tracks adapter state and
 /// maintains reactive properties for UI consumption.
 pub struct BluetoothService {
-    zbus_connection: Connection,
-    cancellation_token: CancellationToken,
-    agent_tx: UnboundedSender<AgentEvent>,
-    notifier_tx: UnboundedSender<ServiceNotification>,
-    pairing_responder: Arc<Mutex<Option<PairingResponder>>>,
+    pub(crate) zbus_connection: Connection,
+    pub(crate) cancellation_token: CancellationToken,
+    pub(crate) agent_tx: UnboundedSender<AgentEvent>,
+    pub(crate) notifier_tx: UnboundedSender<ServiceNotification>,
+    pub(crate) pairing_responder: Arc<Mutex<Option<PairingResponder>>>,
 
     /// All available Bluetooth adapters on the system.
     pub adapters: Property<Vec<Arc<Adapter>>>,
@@ -107,16 +107,7 @@ impl BluetoothService {
             pairing_request: Property::new(None),
         };
 
-        BluetoothMonitoring::start(
-            &connection,
-            cancellation_token,
-            &service.adapters,
-            &service.primary_adapter,
-            &service.devices,
-            &service.enabled,
-            &service.available,
-        )
-        .await?;
+        service.start_monitoring().await?;
 
         Ok(service)
     }

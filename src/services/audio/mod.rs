@@ -2,12 +2,12 @@
 pub mod backend;
 /// Core domain models
 pub mod core;
-/// Discovery functionality
-pub mod discovery;
 /// Error types
 pub mod error;
 /// Event types and handling
 pub mod events;
+/// Monitoring functionality
+pub mod monitoring;
 /// Audio service implementation
 mod service;
 /// Tokio mainloop for PulseAudio

@@ -1,22 +1,27 @@
 mod controls;
 mod monitoring;
+mod types;
 
 use std::{collections::HashMap, sync::Arc};
 
 use controls::SettingsController;
 use futures::{Stream, StreamExt, future::join_all};
-use monitoring::SettingsMonitor;
 use tokio_util::sync::CancellationToken;
+pub(crate) use types::{LiveSettingsParams, SettingsParams};
 use zbus::{
     Connection,
     zvariant::{OwnedObjectPath, OwnedValue},
 };
 
-use super::{access_point::SSID, settings_connection::ConnectionSettings};
+use super::{
+    access_point::SSID,
+    settings_connection::{ConnectionSettings, ConnectionSettingsParams},
+};
 use crate::{
     services::{
         common::Property,
         network::{NMSettingsAddConnection2Flags, NetworkError, SettingsProxy},
+        traits::{ModelMonitoring, Reactive},
     },
     unwrap_bool, unwrap_string, unwrap_u64, unwrap_vec,
 };
@@ -27,8 +32,8 @@ use crate::{
 /// the connections stored and used by NetworkManager.
 #[derive(Debug, Clone)]
 pub struct Settings {
-    /// The DBus connection used for NetworkManager communication.
-    pub zbus_connection: Connection,
+    pub(crate) zbus_connection: Connection,
+    pub(crate) cancellation_token: Option<CancellationToken>,
     /// List of object paths of available network connection profiles.
     pub connections: Property<Vec<ConnectionSettings>>,
     /// The machine hostname stored in persistent configuration.
@@ -40,39 +45,27 @@ pub struct Settings {
     pub version_id: Property<u64>,
 }
 
-impl Settings {
-    /// Get a snapshot of current NetworkManager settings.
-    ///
-    /// Retrieves the Settings interface to view and administrate connections.
-    ///
-    /// # Errors
-    ///
-    /// Returns `NetworkError::DbusError` if DBus operations fail.
-    pub(crate) async fn get(zbus_connection: &Connection) -> Result<Arc<Self>, NetworkError> {
-        let settings = Self::from_connection(zbus_connection).await?;
-        Ok(Arc::new(settings))
+impl Reactive for Settings {
+    type Context<'a> = SettingsParams<'a>;
+    type LiveContext<'a> = LiveSettingsParams<'a>;
+    type Error = NetworkError;
+
+    async fn get(params: Self::Context<'_>) -> Result<Self, Self::Error> {
+        Self::from_connection(params.zbus_connection, None).await
     }
 
-    /// Get live-updating NetworkManager settings.
-    ///
-    /// Retrieves the Settings interface with monitoring for changes to
-    /// connections, hostname, and other settings properties.
-    ///
-    /// # Errors
-    ///
-    /// Returns `NetworkError::DbusError` if DBus operations fail.
-    pub(crate) async fn get_live(
-        zbus_connection: &Connection,
-        cancellation_token: CancellationToken,
-    ) -> Result<Arc<Self>, NetworkError> {
-        let properties = Self::from_connection(zbus_connection).await?;
-        let settings = Arc::new(properties);
+    async fn get_live(params: Self::LiveContext<'_>) -> Result<Arc<Self>, Self::Error> {
+        let settings =
+            Self::from_connection(params.zbus_connection, Some(params.cancellation_token)).await?;
+        let settings = Arc::new(settings);
 
-        SettingsMonitor::start(zbus_connection, settings.clone(), cancellation_token).await;
+        settings.clone().start_monitoring().await?;
 
         Ok(settings)
     }
+}
 
+impl Settings {
     /// List the saved network connections known to NetworkManager.
     ///
     /// # Returns
@@ -291,7 +284,10 @@ impl Settings {
         })
     }
 
-    async fn from_connection(zbus_connection: &Connection) -> Result<Self, NetworkError> {
+    async fn from_connection(
+        zbus_connection: &Connection,
+        cancellation_token: Option<CancellationToken>,
+    ) -> Result<Self, NetworkError> {
         let settings_proxy = SettingsProxy::new(zbus_connection).await?;
 
         let (connections, hostname, can_modify, version_id) = tokio::join!(
@@ -303,19 +299,22 @@ impl Settings {
 
         let connection_paths = unwrap_vec!(connections);
 
-        let connection_futures = connection_paths
-            .into_iter()
-            .map(|path| ConnectionSettings::get(zbus_connection, path));
+        let connection_futures = connection_paths.into_iter().map(|path| {
+            ConnectionSettings::get(ConnectionSettingsParams {
+                connection: zbus_connection,
+                path,
+            })
+        });
 
         let connection_list: Vec<ConnectionSettings> = join_all(connection_futures)
             .await
             .into_iter()
             .flatten()
-            .map(|arc| (*arc).clone())
             .collect();
 
         Ok(Self {
             zbus_connection: zbus_connection.clone(),
+            cancellation_token,
             connections: Property::new(connection_list),
             hostname: Property::new(unwrap_string!(hostname)),
             can_modify: Property::new(unwrap_bool!(can_modify)),

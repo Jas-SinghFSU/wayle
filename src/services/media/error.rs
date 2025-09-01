@@ -46,4 +46,8 @@ pub enum MediaError {
     /// Failed to control the player
     #[error("Failed to control player: {0}")]
     ControlFailed(String),
+
+    /// An invalid input was provided
+    #[error("An invalid input was provided: {0:?}")]
+    InvalidInput(String),
 }

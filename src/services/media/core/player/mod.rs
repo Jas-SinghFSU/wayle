@@ -1,10 +1,11 @@
 pub(crate) mod monitoring;
+mod types;
 
 use std::{sync::Arc, time::Duration};
 
 use futures::Stream;
-use monitoring::PlayerMonitor;
 use tokio_util::sync::CancellationToken;
+pub(crate) use types::{LivePlayerParams, PlayerParams};
 use zbus::{
     Connection,
     fdo::PropertiesProxy,
@@ -17,10 +18,11 @@ use crate::{
         common::{NULL_PATH, Property},
         media::{
             MediaError,
-            core::metadata::TrackMetadata,
+            core::metadata::{LiveTrackMetadataParams, TrackMetadata, TrackMetadataParams},
             proxy::{MediaPlayer2PlayerProxy, MediaPlayer2Proxy},
             types::{LoopMode, PlaybackState, PlayerId, ShuffleMode, Volume},
         },
+        traits::{ModelMonitoring, Reactive},
     },
     unwrap_bool, unwrap_string_or, watch_all,
 };
@@ -33,6 +35,7 @@ use crate::{
 pub struct Player {
     /// D-Bus proxy for controlling this player
     proxy: MediaPlayer2PlayerProxy<'static>,
+    pub(crate) cancellation_token: Option<CancellationToken>,
 
     /// Unique identifier for this player instance
     pub id: PlayerId,
@@ -69,6 +72,102 @@ pub struct Player {
     pub can_shuffle: Property<bool>,
 }
 
+impl Reactive for Player {
+    type Context<'a> = PlayerParams<'a>;
+    type LiveContext<'a> = LivePlayerParams<'a>;
+    type Error = MediaError;
+
+    async fn get(params: Self::Context<'_>) -> Result<Self, Self::Error> {
+        let bus_name = OwnedBusName::try_from(params.player_id.bus_name())
+            .map_err(|e| MediaError::InitializationFailed(format!("Invalid bus name: {e}")))?;
+
+        let base_proxy = MediaPlayer2Proxy::builder(params.connection)
+            .destination(bus_name.clone())
+            .map_err(MediaError::DbusError)?
+            .build()
+            .await
+            .map_err(MediaError::DbusError)?;
+
+        let player_proxy = MediaPlayer2PlayerProxy::builder(params.connection)
+            .destination(bus_name)
+            .map_err(MediaError::DbusError)?
+            .build()
+            .await
+            .map_err(MediaError::DbusError)?;
+
+        let identity = unwrap_string_or!(
+            base_proxy.identity().await,
+            params.player_id.bus_name().to_string()
+        );
+        let desktop_entry = base_proxy.desktop_entry().await.ok();
+
+        let metadata = TrackMetadata::get(TrackMetadataParams {
+            proxy: &player_proxy,
+        })
+        .await
+        .unwrap_or_else(|_| TrackMetadata::unknown());
+        let player = Self::new(
+            params.player_id,
+            identity,
+            player_proxy.clone(),
+            Arc::new(metadata),
+            None,
+        );
+        player.desktop_entry.set(desktop_entry);
+
+        Self::refresh_properties(&player, &player_proxy).await;
+
+        Ok(player)
+    }
+
+    async fn get_live(params: Self::LiveContext<'_>) -> Result<Arc<Self>, Self::Error> {
+        let bus_name = OwnedBusName::try_from(params.player_id.bus_name())
+            .map_err(|e| MediaError::InitializationFailed(format!("Invalid bus name: {e}")))?;
+
+        let base_proxy = MediaPlayer2Proxy::builder(params.connection)
+            .destination(bus_name.clone())
+            .map_err(MediaError::DbusError)?
+            .build()
+            .await
+            .map_err(MediaError::DbusError)?;
+
+        let player_proxy = MediaPlayer2PlayerProxy::builder(params.connection)
+            .destination(bus_name)
+            .map_err(MediaError::DbusError)?
+            .build()
+            .await
+            .map_err(MediaError::DbusError)?;
+
+        let identity = unwrap_string_or!(
+            base_proxy.identity().await,
+            params.player_id.bus_name().to_string()
+        );
+        let desktop_entry = base_proxy.desktop_entry().await.ok();
+
+        let metadata = TrackMetadata::get_live(LiveTrackMetadataParams {
+            proxy: player_proxy.clone(),
+            cancellation_token: params.cancellation_token.child_token(),
+        })
+        .await;
+        let metadata = metadata.unwrap_or_else(|_| Arc::new(TrackMetadata::unknown()));
+        let player = Self::new(
+            params.player_id.clone(),
+            identity,
+            player_proxy.clone(),
+            metadata,
+            Some(params.cancellation_token),
+        );
+        player.desktop_entry.set(desktop_entry);
+
+        Self::refresh_properties(&player, &player_proxy).await;
+
+        let player = Arc::new(player);
+        player.clone().start_monitoring().await?;
+
+        Ok(player)
+    }
+}
+
 impl PartialEq for Player {
     fn eq(&self, other: &Self) -> bool {
         self.id == other.id
@@ -81,9 +180,11 @@ impl Player {
         identity: String,
         proxy: MediaPlayer2PlayerProxy<'static>,
         metadata: Arc<TrackMetadata>,
+        cancellation_token: Option<CancellationToken>,
     ) -> Self {
         Self {
             proxy,
+            cancellation_token,
             id,
             identity: Property::new(identity),
             desktop_entry: Property::new(None),
@@ -103,88 +204,6 @@ impl Player {
             can_loop: Property::new(false),
             can_shuffle: Property::new(false),
         }
-    }
-
-    pub(crate) async fn get(
-        connection: &Connection,
-        player_id: PlayerId,
-    ) -> Result<Arc<Self>, MediaError> {
-        let bus_name = OwnedBusName::try_from(player_id.bus_name())
-            .map_err(|e| MediaError::InitializationFailed(format!("Invalid bus name: {e}")))?;
-
-        let base_proxy = MediaPlayer2Proxy::builder(connection)
-            .destination(bus_name.clone())
-            .map_err(MediaError::DbusError)?
-            .build()
-            .await
-            .map_err(MediaError::DbusError)?;
-
-        let player_proxy = MediaPlayer2PlayerProxy::builder(connection)
-            .destination(bus_name)
-            .map_err(MediaError::DbusError)?
-            .build()
-            .await
-            .map_err(MediaError::DbusError)?;
-
-        let identity = unwrap_string_or!(
-            base_proxy.identity().await,
-            player_id.bus_name().to_string()
-        );
-        let desktop_entry = base_proxy.desktop_entry().await.ok();
-
-        let metadata = TrackMetadata::get(&player_proxy).await;
-        let player = Self::new(player_id, identity, player_proxy.clone(), metadata);
-        player.desktop_entry.set(desktop_entry);
-
-        Self::refresh_properties(&player, &player_proxy).await;
-
-        Ok(Arc::new(player))
-    }
-
-    pub(crate) async fn get_live(
-        connection: &Connection,
-        player_id: PlayerId,
-        cancellation_token: CancellationToken,
-    ) -> Result<Arc<Self>, MediaError> {
-        let bus_name = OwnedBusName::try_from(player_id.bus_name())
-            .map_err(|e| MediaError::InitializationFailed(format!("Invalid bus name: {e}")))?;
-
-        let base_proxy = MediaPlayer2Proxy::builder(connection)
-            .destination(bus_name.clone())
-            .map_err(MediaError::DbusError)?
-            .build()
-            .await
-            .map_err(MediaError::DbusError)?;
-
-        let player_proxy = MediaPlayer2PlayerProxy::builder(connection)
-            .destination(bus_name)
-            .map_err(MediaError::DbusError)?
-            .build()
-            .await
-            .map_err(MediaError::DbusError)?;
-
-        let identity = unwrap_string_or!(
-            base_proxy.identity().await,
-            player_id.bus_name().to_string()
-        );
-        let desktop_entry = base_proxy.desktop_entry().await.ok();
-
-        let metadata =
-            TrackMetadata::get_live(player_proxy.clone(), cancellation_token.child_token()).await;
-        let player = Self::new(player_id.clone(), identity, player_proxy.clone(), metadata);
-        player.desktop_entry.set(desktop_entry);
-
-        Self::refresh_properties(&player, &player_proxy).await;
-
-        let player = Arc::new(player);
-        PlayerMonitor::start(
-            player_id,
-            Arc::clone(&player),
-            player_proxy,
-            cancellation_token,
-        );
-
-        Ok(player)
     }
 
     async fn refresh_properties(player: &Player, proxy: &MediaPlayer2PlayerProxy<'_>) {

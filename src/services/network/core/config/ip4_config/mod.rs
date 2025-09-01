@@ -1,6 +1,9 @@
-use std::{collections::HashMap, net::Ipv4Addr, sync::Arc};
+mod types;
+
+use std::{collections::HashMap, net::Ipv4Addr};
 
 use tracing::debug;
+pub(crate) use types::Ip4ConfigParams;
 use zbus::{
     Connection,
     zvariant::{OwnedObjectPath, OwnedValue},
@@ -10,6 +13,7 @@ use crate::{
     services::{
         common::Property,
         network::{NetworkError, proxy::ip4_config::IP4ConfigProxy},
+        traits::Static,
     },
     unwrap_i32, unwrap_string, unwrap_vec,
 };
@@ -86,20 +90,16 @@ struct Ip4ConfigProperties {
     wins_server_data: Vec<Ipv4Addr>,
 }
 
-impl Ip4Config {
-    /// Get a snapshot of the current IPv4 configuration state (no monitoring).
-    ///
-    /// # Errors
-    ///
-    /// Returns `NetworkError::DbusError` if D-Bus operations fail.
-    pub(crate) async fn get(
-        connection: &Connection,
-        path: OwnedObjectPath,
-    ) -> Result<Arc<Self>, NetworkError> {
-        let config = Self::from_path(connection, path).await?;
-        Ok(Arc::new(config))
-    }
+impl Static for Ip4Config {
+    type Error = NetworkError;
+    type Context<'a> = Ip4ConfigParams<'a>;
 
+    async fn get(params: Self::Context<'_>) -> Result<Self, Self::Error> {
+        Self::from_path(params.connection, params.path).await
+    }
+}
+
+impl Ip4Config {
     async fn from_path(
         connection: &Connection,
         path: OwnedObjectPath,
