@@ -128,8 +128,15 @@ impl BluetoothService {
     ///
     /// Begins scanning for nearby Bluetooth devices. Discovery will continue
     /// until explicitly stopped with `stop_discovery()`.
-    pub async fn start_discovery() {
-        todo!()
+    pub async fn start_discovery(&self) -> Result<(), BluetoothError> {
+        let Some(active_adapter) = self.primary_adapter.get() else {
+            return Err(BluetoothError::OperationFailed {
+                operation: "start_discovery",
+                reason: String::from("No primary adapter found to perform the operation."),
+            });
+        };
+
+        Ok(())
     }
 
     /// Stops device discovery on all adapters.

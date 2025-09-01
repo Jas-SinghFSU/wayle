@@ -154,14 +154,14 @@ impl WifiControls {
 
         let mut connection = HashMap::new();
         connection.insert(
-            "type".to_string(),
+            String::from("type"),
             to_owned(Value::from("802-11-wireless"))?,
         );
-        connection.insert("id".to_string(), to_owned(Value::from(ssid_string))?);
-        settings.insert("connection".to_string(), connection);
+        connection.insert(String::from("id"), to_owned(Value::from(ssid_string))?);
+        settings.insert(String::from("connection"), connection);
 
         let mut wireless = HashMap::new();
-        wireless.insert("ssid".to_string(), to_owned(Value::from(ssid_bytes))?);
+        wireless.insert(String::from("ssid"), to_owned(Value::from(ssid_bytes))?);
 
         if let Some(bssid_str) = bssid {
             let mac_bytes: Result<Vec<u8>, _> = bssid_str
@@ -170,17 +170,17 @@ impl WifiControls {
                 .collect();
 
             if let Ok(bytes) = mac_bytes {
-                wireless.insert("bssid".to_string(), to_owned(Value::from(bytes))?);
+                wireless.insert(String::from("bssid"), to_owned(Value::from(bytes))?);
             }
         }
 
-        settings.insert("802-11-wireless".to_string(), wireless);
+        settings.insert(String::from("802-11-wireless"), wireless);
 
         if let Some(pwd) = password {
             let mut security = HashMap::new();
-            security.insert("key-mgmt".to_string(), to_owned(Value::from("wpa-psk"))?);
-            security.insert("psk".to_string(), to_owned(Value::from(pwd))?);
-            settings.insert("802-11-wireless-security".to_string(), security);
+            security.insert(String::from("key-mgmt"), to_owned(Value::from("wpa-psk"))?);
+            security.insert(String::from("psk"), to_owned(Value::from(pwd))?);
+            settings.insert(String::from("802-11-wireless-security"), security);
         }
 
         Ok(settings)

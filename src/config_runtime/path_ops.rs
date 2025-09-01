@@ -78,7 +78,7 @@ pub(super) fn set_value_at_path(
     let parts: Vec<&str> = path.split('.').collect();
 
     if parts.is_empty() {
-        return Err(ConfigError::InvalidPath("Empty path".to_string()));
+        return Err(ConfigError::InvalidPath(String::from("Empty path")));
     }
 
     let (parent, last_key) = navigate_to_parent_mut(value, &parts)?;
@@ -107,7 +107,7 @@ pub(super) fn navigate_step_mut<'a>(
     match current {
         Value::Table(table) => {
             if !table.contains_key(key) {
-                table.insert(key.to_string(), Value::Table(toml::map::Map::new()));
+                table.insert(String::from(key), Value::Table(toml::map::Map::new()));
             }
 
             table.get_mut(key).ok_or_else(|| {
@@ -150,7 +150,7 @@ pub(super) fn insert_value(
 ) -> Result<(), ConfigError> {
     match container {
         Value::Table(table) => {
-            table.insert(key.to_string(), new_value);
+            table.insert(String::from(key), new_value);
             Ok(())
         }
         Value::Array(arr) => {

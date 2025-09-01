@@ -29,7 +29,7 @@ pub struct ClockButtonStyling {
 impl Default for ClockButtonStyling {
     fn default() -> Self {
         Self {
-            icon: "red".to_string(),
+            icon: String::from("red"),
         }
     }
 }
@@ -48,7 +48,7 @@ pub struct ClockDropdownStyling {
 impl Default for ClockDropdownStyling {
     fn default() -> Self {
         Self {
-            clock: "red".to_string(),
+            clock: String::from("red"),
         }
     }
 }

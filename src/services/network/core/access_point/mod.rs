@@ -85,7 +85,7 @@ impl Reactive for AccessPoint {
             .map_err(|e| match e {
                 NetworkError::ObjectNotFound(_) => e,
                 _ => NetworkError::ObjectCreationFailed {
-                    object_type: "AccessPoint".to_string(),
+                    object_type: String::from("AccessPoint"),
                     object_path: params.path.clone(),
                     reason: e.to_string(),
                 },
@@ -104,7 +104,7 @@ impl Reactive for AccessPoint {
         .map_err(|e| match e {
             NetworkError::ObjectNotFound(_) => e,
             _ => NetworkError::ObjectCreationFailed {
-                object_type: "AccessPoint".to_string(),
+                object_type: String::from("AccessPoint"),
                 object_path: params.path.clone(),
                 reason: e.to_string(),
             },

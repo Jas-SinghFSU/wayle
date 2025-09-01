@@ -97,7 +97,7 @@ impl Reactive for Player {
 
         let identity = unwrap_string_or!(
             base_proxy.identity().await,
-            params.player_id.bus_name().to_string()
+            String::from(params.player_id.bus_name())
         );
         let desktop_entry = base_proxy.desktop_entry().await.ok();
 
@@ -140,7 +140,7 @@ impl Reactive for Player {
 
         let identity = unwrap_string_or!(
             base_proxy.identity().await,
-            params.player_id.bus_name().to_string()
+            String::from(params.player_id.bus_name())
         );
         let desktop_entry = base_proxy.desktop_entry().await.ok();
 
@@ -401,9 +401,9 @@ impl Player {
             LoopMode::Track => "Track",
             LoopMode::Playlist => "Playlist",
             LoopMode::Unsupported => {
-                return Err(MediaError::ControlFailed(
-                    "Loop mode not supported".to_string(),
-                ));
+                return Err(MediaError::ControlFailed(String::from(
+                    "Loop mode not supported",
+                )));
             }
         };
 
@@ -425,9 +425,9 @@ impl Player {
             ShuffleMode::On => true,
             ShuffleMode::Off => false,
             ShuffleMode::Unsupported => {
-                return Err(MediaError::ControlFailed(
-                    "Shuffle not supported".to_string(),
-                ));
+                return Err(MediaError::ControlFailed(String::from(
+                    "Shuffle not supported",
+                )));
             }
         };
 
@@ -465,9 +465,9 @@ impl Player {
             LoopMode::Track => LoopMode::Playlist,
             LoopMode::Playlist => LoopMode::None,
             LoopMode::Unsupported => {
-                return Err(MediaError::OperationNotSupported(
-                    "Loop mode not supported".to_string(),
-                ));
+                return Err(MediaError::OperationNotSupported(String::from(
+                    "Loop mode not supported",
+                )));
             }
         };
 
@@ -485,9 +485,9 @@ impl Player {
             ShuffleMode::Off => ShuffleMode::On,
             ShuffleMode::On => ShuffleMode::Off,
             ShuffleMode::Unsupported => {
-                return Err(MediaError::OperationNotSupported(
-                    "Shuffle not supported".to_string(),
-                ));
+                return Err(MediaError::OperationNotSupported(String::from(
+                    "Shuffle not supported",
+                )));
             }
         };
 

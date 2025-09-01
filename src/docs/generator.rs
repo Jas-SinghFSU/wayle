@@ -19,7 +19,7 @@ pub struct DocsGenerator {
 impl Default for DocsGenerator {
     fn default() -> Self {
         Self {
-            output_dir: "docs/config/modules".to_string(),
+            output_dir: String::from("docs/config/modules"),
         }
     }
 }

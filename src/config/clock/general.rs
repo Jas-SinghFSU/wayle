@@ -12,7 +12,7 @@ pub struct ClockGeneralConfig {
 impl Default for ClockGeneralConfig {
     fn default() -> Self {
         Self {
-            format: "%H:%M".to_string(),
+            format: String::from("%H:%M"),
         }
     }
 }

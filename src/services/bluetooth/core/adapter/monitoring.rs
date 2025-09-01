@@ -25,7 +25,7 @@ impl ModelMonitoring for Adapter {
         let Some(ref cancellation_token) = self.cancellation_token else {
             return Err(BluetoothError::OperationFailed {
                 operation: "start_monitoring",
-                reason: "A cancellation_token was not found.".to_string(),
+                reason: String::from("A cancellation_token was not found."),
             });
         };
 

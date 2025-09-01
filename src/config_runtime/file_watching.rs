@@ -85,14 +85,14 @@ impl ConfigRuntime {
         let old_config = self.get_current();
         let new_config = Config::load_with_imports(&ConfigPaths::main_config()).map_err(|e| {
             ConfigError::ProcessingError {
-                operation: "reload config".to_string(),
+                operation: String::from("reload config"),
                 details: e.to_string(),
             }
         })?;
 
         let changes = self.diff_configs(&old_config, &new_config).map_err(|e| {
             ConfigError::ProcessingError {
-                operation: "diff configs".to_string(),
+                operation: String::from("diff configs"),
                 details: e.to_string(),
             }
         })?;

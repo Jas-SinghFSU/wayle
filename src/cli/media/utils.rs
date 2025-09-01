@@ -10,7 +10,7 @@ pub fn find_player_by_identifier(
     let players = service.players();
 
     if players.is_empty() {
-        return Err("No media players found".to_string());
+        return Err(String::from("No media players found"));
     }
 
     if let Ok(index) = identifier.parse::<usize>() {
@@ -70,8 +70,9 @@ pub async fn get_player_or_active(
             .map_err(|e| format!("Failed to get player '{player_id}': {e}"))
     } else {
         service.active_player().ok_or_else(|| {
-            "No active player. Specify a player or set one with 'wayle media active <player>'."
-                .to_string()
+            String::from(
+                "No active player. Specify a player or set one with 'wayle media active <player>'.",
+            )
         })
     }
 }

@@ -17,15 +17,15 @@ impl ModelMonitoring for InputDevice {
 
     async fn start_monitoring(self: Arc<Self>) -> Result<(), Self::Error> {
         let Some(ref cancellation_token) = self.cancellation_token else {
-            return Err(AudioError::OperationFailed(
-                "Cancellation token not available for monitoring".to_string(),
-            ));
+            return Err(AudioError::OperationFailed(String::from(
+                "Cancellation token not available for monitoring",
+            )));
         };
 
         let Some(ref event_tx) = self.event_tx else {
-            return Err(AudioError::OperationFailed(
-                "Event sender not available for monitoring".to_string(),
-            ));
+            return Err(AudioError::OperationFailed(String::from(
+                "Event sender not available for monitoring",
+            )));
         };
 
         let weak_device = Arc::downgrade(&self);

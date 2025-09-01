@@ -13,7 +13,7 @@ use tracing_subscriber::{EnvFilter, Layer, fmt, layer::SubscriberExt, util::Subs
 pub fn init() -> Result<(), Box<dyn Error>> {
     let env_filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info"));
 
-    let format = env::var("WAYLE_LOG_FORMAT").unwrap_or_else(|_| "pretty".to_string());
+    let format = env::var("WAYLE_LOG_FORMAT").unwrap_or_else(|_| String::from("pretty"));
 
     let registry = tracing_subscriber::registry().with(env_filter);
 
@@ -82,7 +82,7 @@ fn init_with_file_and_console_option(enable_console: bool) -> Result<(), Box<dyn
         .build(&log_dir)?;
     let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
 
-    let format = env::var("WAYLE_LOG_FORMAT").unwrap_or_else(|_| "pretty".to_string());
+    let format = env::var("WAYLE_LOG_FORMAT").unwrap_or_else(|_| String::from("pretty"));
 
     let registry = tracing_subscriber::registry();
 

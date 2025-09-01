@@ -120,7 +120,7 @@ impl StreamInfo {
 
     /// Determine stream type based on properties
     pub fn stream_type(&self) -> StreamType {
-        if self.properties.get("media.role") == Some(&"source-output".to_string()) {
+        if self.properties.get("media.role") == Some(&String::from("source-output")) {
             StreamType::Record
         } else {
             StreamType::Playback

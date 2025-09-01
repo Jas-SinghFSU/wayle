@@ -191,7 +191,7 @@ impl Reactive for Device {
         )
         .await
         .map_err(|e| NetworkError::ObjectCreationFailed {
-            object_type: "Device".to_string(),
+            object_type: String::from("Device"),
             object_path: params.object_path.clone(),
             reason: e.to_string(),
         })?;

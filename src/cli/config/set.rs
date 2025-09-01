@@ -21,7 +21,7 @@ fn parse_toml_value(value: &str) -> Result<toml::Value, String> {
     match toml::from_str::<toml::Table>(&toml_container) {
         Ok(mut table) => table
             .remove("value")
-            .ok_or_else(|| "Failed to parse value".to_string()),
+            .ok_or_else(|| String::from("Failed to parse value")),
         Err(_) => Ok(toml::Value::String(value.to_string())),
     }
 }

@@ -19,9 +19,9 @@ impl ModelMonitoring for Player {
 
     async fn start_monitoring(self: Arc<Self>) -> Result<(), Self::Error> {
         let Some(ref cancellation_token) = self.cancellation_token else {
-            return Err(MediaError::InitializationFailed(
-                "A cancellation_token was not found.".to_string(),
-            ));
+            return Err(MediaError::InitializationFailed(String::from(
+                "A cancellation_token was not found.",
+            )));
         };
 
         let cancel_token = cancellation_token.clone();

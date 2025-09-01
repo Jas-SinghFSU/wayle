@@ -38,20 +38,24 @@ pub struct ClockConfig {
 impl ModuleInfoProvider for ClockConfig {
     fn module_info() -> ModuleInfo {
         let behavior_configs: BehaviorConfigs = vec![
-            ("general".to_string(), || schema_for!(ClockGeneralConfig)),
-            ("button".to_string(), || schema_for!(ClockButtonConfig)),
-            ("dropdown".to_string(), || schema_for!(ClockDropdownConfig)),
+            (String::from("general"), || schema_for!(ClockGeneralConfig)),
+            (String::from("button"), || schema_for!(ClockButtonConfig)),
+            (String::from("dropdown"), || {
+                schema_for!(ClockDropdownConfig)
+            }),
         ];
 
         let styling_configs: StylingConfigs = vec![
-            ("button".to_string(), || schema_for!(ClockButtonStyling)),
-            ("dropdown".to_string(), || schema_for!(ClockDropdownStyling)),
+            (String::from("button"), || schema_for!(ClockButtonStyling)),
+            (String::from("dropdown"), || {
+                schema_for!(ClockDropdownStyling)
+            }),
         ];
 
         ModuleInfo {
-            name: "clock".to_string(),
-            icon: "󰥔".to_string(),
-            description: "Controls the clock display and calendar settings".to_string(),
+            name: String::from("clock"),
+            icon: String::from("󰥔"),
+            description: String::from("Controls the clock display and calendar settings"),
             behavior_configs,
             styling_configs,
         }

@@ -89,13 +89,13 @@ impl BroadcastService {
         self.command_tx
             .send(BroadcastCommand::Subscribe {
                 id,
-                pattern: pattern.to_string(),
+                pattern: String::from(pattern),
                 sender: tx,
             })
             .await
             .map_err(|_| ConfigError::ServiceUnavailable {
-                service: "broadcast".to_string(),
-                details: "Broadcast service is not running".to_string(),
+                service: String::from("broadcast"),
+                details: String::from("Broadcast service is not running"),
             })?;
 
         Ok(Subscription {
@@ -120,8 +120,8 @@ impl BroadcastService {
             .send(BroadcastCommand::Broadcast(change))
             .await
             .map_err(|_| ConfigError::ServiceUnavailable {
-                service: "broadcast".to_string(),
-                details: "Broadcast service is not running".to_string(),
+                service: String::from("broadcast"),
+                details: String::from("Broadcast service is not running"),
             })
     }
 

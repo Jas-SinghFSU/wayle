@@ -89,7 +89,7 @@ impl DeviceWired {
         if device_type != NMDeviceType::Ethernet as u32 {
             return Err(NetworkError::WrongObjectType {
                 object_path: device_path.clone(),
-                expected: "Ethernet device".to_string(),
+                expected: String::from("Ethernet device"),
                 actual: format!("device type {device_type}"),
             });
         }

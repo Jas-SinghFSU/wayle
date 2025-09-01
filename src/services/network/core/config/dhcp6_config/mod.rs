@@ -64,7 +64,7 @@ impl Dhcp6Config {
                 Err(_) => {
                     return Err(NetworkError::DataConversionFailed {
                         data_type: format!("DHCP6 option '{key}'"),
-                        reason: "Failed to convert to OwnedValue".to_string(),
+                        reason: String::from("Failed to convert to OwnedValue"),
                     });
                 }
             }

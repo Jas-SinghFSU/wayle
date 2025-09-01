@@ -100,5 +100,5 @@ fn get_default_value(property: &Value) -> String {
             Value::Number(n) => n.to_string(),
             _ => def_val.to_string(),
         })
-        .unwrap_or("-".to_string())
+        .unwrap_or(String::from("-"))
 }

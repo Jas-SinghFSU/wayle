@@ -92,8 +92,9 @@ impl PulseBackend {
     async fn new() -> Result<Self, AudioError> {
         let mut mainloop = TokioMain::new();
         info!("Creating PulseAudio context");
-        let mut context = Context::new(&mainloop, "wayle-pulse")
-            .ok_or_else(|| AudioError::ConnectionFailed("Failed to create context".to_string()))?;
+        let mut context = Context::new(&mainloop, "wayle-pulse").ok_or_else(|| {
+            AudioError::ConnectionFailed(String::from("Failed to create context"))
+        })?;
 
         info!("Connecting to PulseAudio server");
         context

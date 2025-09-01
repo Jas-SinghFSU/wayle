@@ -83,7 +83,7 @@ impl WayleError {
                 let clean_path = p.canonicalize().unwrap_or_else(|_| p.to_path_buf());
                 clean_path.to_string_lossy().to_string()
             }
-            None => "string".to_string(),
+            None => String::from("string"),
         };
 
         WayleError::TomlParseError {

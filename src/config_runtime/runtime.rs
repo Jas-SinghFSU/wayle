@@ -63,7 +63,7 @@ impl ConfigRuntime {
 
         let config =
             Config::load_with_imports(&main_config).map_err(|e| ConfigError::ProcessingError {
-                operation: "load config".to_string(),
+                operation: String::from("load config"),
                 details: e.to_string(),
             })?;
         let broadcast_service = BroadcastService::new();
@@ -99,15 +99,15 @@ impl ConfigRuntime {
         self.runtime_config
             .write()
             .map_err(|e| ConfigError::LockError {
-                lock_type: "write".to_string(),
+                lock_type: String::from("write"),
                 details: format!("Failed to acquire write lock for runtime_config: {e}"),
             })?
             .insert(path.to_string(), value.clone());
 
         {
             let mut config = self.config.write().map_err(|_| ConfigError::LockError {
-                lock_type: "write".to_string(),
-                details: "Failed to acquire write lock".to_string(),
+                lock_type: String::from("write"),
+                details: String::from("Failed to acquire write lock"),
             })?;
 
             self.set_config_field(&mut config, path, &value)?;
@@ -116,7 +116,7 @@ impl ConfigRuntime {
         debug!("Persisting configuration changes");
         self.save_config()?;
 
-        let change = ConfigChange::new(path.to_string(), old_value, value);
+        let change = ConfigChange::new(String::from(path), old_value, value);
 
         self.broadcast_change(change);
         Ok(())
@@ -134,8 +134,8 @@ impl ConfigRuntime {
     /// * `ConfigError::ConversionError` - If the config cannot be converted to TOML Value
     pub fn get_by_path(&self, path: &str) -> Result<Value, ConfigError> {
         let config = self.config.read().map_err(|_| ConfigError::LockError {
-            lock_type: "read".to_string(),
-            details: "Failed to acquire read lock".to_string(),
+            lock_type: String::from("read"),
+            details: String::from("Failed to acquire read lock"),
         })?;
 
         Self::get_config_field(&config, path)
@@ -175,8 +175,8 @@ impl ConfigRuntime {
             self.runtime_config
                 .read()
                 .map_err(|_| ConfigError::LockError {
-                    lock_type: "read".to_string(),
-                    details: "Failed to acquire read lock".to_string(),
+                    lock_type: String::from("read"),
+                    details: String::from("Failed to acquire read lock"),
                 })?
                 .clone()
         };
@@ -192,7 +192,7 @@ impl ConfigRuntime {
 
         let toml_str = toml::to_string_pretty(&runtime_value).map_err(|e| {
             ConfigError::SerializationError {
-                content_type: "config".to_string(),
+                content_type: String::from("config"),
                 details: e.to_string(),
             }
         })?;
@@ -213,7 +213,7 @@ impl ConfigRuntime {
         let mut main_config_toml =
             fs::read_to_string(&main_path).map_err(|_| ConfigError::IoError {
                 path: main_path.clone(),
-                details: "Main config file not found during persist operation".to_string(),
+                details: String::from("Main config file not found during persist operation"),
             })?;
 
         if !main_config_toml.contains("\"@runtime\"") {
@@ -238,7 +238,7 @@ impl ConfigRuntime {
 
     pub(super) fn update_config(&self, new_config: Config) -> Result<(), ConfigError> {
         let mut config_guard = self.config.write().map_err(|e| ConfigError::LockError {
-            lock_type: "write".to_string(),
+            lock_type: String::from("write"),
             details: format!("Failed to acquire write lock: {e}"),
         })?;
         *config_guard = new_config;
@@ -253,7 +253,7 @@ impl ConfigRuntime {
     ) -> Result<(), ConfigError> {
         let mut config_value =
             Value::try_from(config.clone()).map_err(|e| ConfigError::SerializationError {
-                content_type: "config".to_string(),
+                content_type: String::from("config"),
                 details: e.to_string(),
             })?;
 
@@ -262,8 +262,8 @@ impl ConfigRuntime {
         *config = config_value
             .try_into()
             .map_err(|e| ConfigError::ConversionError {
-                from: "toml::Value".to_string(),
-                to: "Config".to_string(),
+                from: String::from("toml::Value"),
+                to: String::from("Config"),
                 details: e.to_string(),
             })?;
 
@@ -273,7 +273,7 @@ impl ConfigRuntime {
     fn get_config_field(config: &Config, path: &str) -> Result<Value, ConfigError> {
         let config_value =
             Value::try_from(config.clone()).map_err(|e| ConfigError::SerializationError {
-                content_type: "config".to_string(),
+                content_type: String::from("config"),
                 details: e.to_string(),
             })?;
 
@@ -283,7 +283,7 @@ impl ConfigRuntime {
     fn ensure_runtime_import(config: &str) -> String {
         let mut doc: Value = toml::from_str(config).unwrap_or_else(|_| {
             let mut table = toml::map::Map::new();
-            table.insert("imports".to_string(), Value::Array(vec![]));
+            table.insert(String::from("imports"), Value::Array(vec![]));
 
             Value::Table(table)
         });
@@ -294,7 +294,7 @@ impl ConfigRuntime {
                 .or_insert_with(|| Value::Array(vec![]));
 
             if let Value::Array(arr) = imports {
-                let runtime_import = Value::String("@runtime".to_string());
+                let runtime_import = Value::String(String::from("@runtime"));
 
                 if !arr.iter().any(|v| v.as_str() == Some("@runtime")) {
                     arr.push(runtime_import);
@@ -302,7 +302,7 @@ impl ConfigRuntime {
             }
         }
 
-        toml::to_string(&doc).unwrap_or_else(|_| config.to_string())
+        toml::to_string(&doc).unwrap_or_else(|_| String::from(config))
     }
 
     fn load_runtime_config() -> Result<HashMap<String, Value>, ConfigError> {
@@ -342,7 +342,7 @@ impl ConfigRuntime {
                 }
             }
             _ => {
-                map.insert(prefix.to_string(), value.clone());
+                map.insert(String::from(prefix), value.clone());
             }
         }
     }

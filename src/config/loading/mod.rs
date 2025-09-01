@@ -105,7 +105,7 @@ impl Config {
         merged_config
             .try_into()
             .map_err(|e| WayleError::ConfigValidation {
-                component: "config parsing".to_string(),
+                component: String::from("config parsing"),
                 details: format!("Configuration validation failed: {e}"),
             })
     }
@@ -175,7 +175,7 @@ impl Config {
     fn resolve_import_path(base_path: &Path, import_path: &str) -> Result<PathBuf> {
         let parent_dir = base_path.parent().ok_or_else(|| WayleError::ImportError {
             path: base_path.to_path_buf(),
-            details: "Invalid base path - no parent directory".to_string(),
+            details: String::from("Invalid base path - no parent directory"),
         })?;
 
         let mut import_path_buf = PathBuf::from(import_path);

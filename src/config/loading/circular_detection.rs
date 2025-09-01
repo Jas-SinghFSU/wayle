@@ -36,7 +36,7 @@ impl CircularDetector {
                 .to_string_lossy();
 
             return Err(WayleError::ConfigValidation {
-                component: "import system".to_string(),
+                component: String::from("import system"),
                 details: format!(
                     "Circular import detected: {} -> {}",
                     chain_display.join(" -> "),

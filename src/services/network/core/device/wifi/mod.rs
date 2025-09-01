@@ -133,7 +133,7 @@ impl DeviceWifi {
         if device_type != NMDeviceType::Wifi as u32 {
             return Err(NetworkError::WrongObjectType {
                 object_path: object_path.clone(),
-                expected: "WiFi device".to_string(),
+                expected: String::from("WiFi device"),
                 actual: format!("device type {device_type}"),
             });
         }
@@ -210,7 +210,7 @@ impl DeviceWifi {
             );
             return Err(NetworkError::WrongObjectType {
                 object_path: object_path.clone(),
-                expected: "WiFi device".to_string(),
+                expected: String::from("WiFi device"),
                 actual: format!("{:?}", NMDeviceType::from_u32(device_type)),
             });
         }
@@ -222,7 +222,7 @@ impl DeviceWifi {
             Err(e) => {
                 warn!("Failed to create base Device for {}", object_path);
                 return Err(NetworkError::ObjectCreationFailed {
-                    object_type: "Device".to_string(),
+                    object_type: String::from("Device"),
                     object_path: object_path.clone(),
                     reason: e.to_string(),
                 });

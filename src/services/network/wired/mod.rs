@@ -54,7 +54,7 @@ impl Reactive for Wired {
         })
         .await
         .map_err(|e| NetworkError::ObjectCreationFailed {
-            object_type: "Wired".to_string(),
+            object_type: String::from("Wired"),
             object_path: params.device_path.clone(),
             reason: e.to_string(),
         })?;
