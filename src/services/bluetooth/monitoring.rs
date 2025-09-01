@@ -40,10 +40,31 @@ impl ServiceMonitoring for BluetoothService {
             &self.adapters,
         )
         .await?;
-        monitor_primary_adapter(&self.primary_adapter, &self.adapters).await?;
-        monitor_available(&self.available, &self.primary_adapter).await?;
-        monitor_enabled(&self.enabled, &self.primary_adapter).await?;
-        monitor_connected(&self.connected, &self.devices, self.notifier_tx.subscribe()).await?;
+        monitor_primary_adapter(
+            &self.primary_adapter,
+            &self.adapters,
+            self.cancellation_token.clone(),
+        )
+        .await?;
+        monitor_available(
+            &self.available,
+            &self.primary_adapter,
+            self.cancellation_token.clone(),
+        )
+        .await?;
+        monitor_enabled(
+            &self.enabled,
+            &self.primary_adapter,
+            self.cancellation_token.clone(),
+        )
+        .await?;
+        monitor_connected(
+            &self.connected,
+            &self.devices,
+            self.notifier_tx.subscribe(),
+            self.cancellation_token.clone(),
+        )
+        .await?;
 
         Ok(())
     }
@@ -69,7 +90,7 @@ async fn monitor_devices(
         loop {
             tokio::select! {
                 _ = cancellation_token.cancelled() => {
-                    debug!("Bluetooth Device monitoring cancelled");
+                    debug!("Bluetooth 'devices' monitoring cancelled");
                     return;
                 }
                 Some(added) = device_interface_added.next() => {
@@ -122,7 +143,7 @@ async fn monitor_adapters(
         loop {
             tokio::select! {
                 _ = cancellation_token.cancelled() => {
-                    debug!("Bluetooth Adapter monitoring cancelled");
+                    debug!("Bluetooth 'adapter' monitoring cancelled");
                     return;
                 }
                 Some(added) = adapter_interface_added.next() => {
@@ -157,18 +178,26 @@ async fn monitor_adapters(
 async fn monitor_primary_adapter(
     primary_adapter: &Property<Option<Arc<Adapter>>>,
     adapters: &Property<Vec<Arc<Adapter>>>,
+    cancellation_token: CancellationToken,
 ) -> Result<(), BluetoothError> {
     let primary_adapter_prop = primary_adapter.clone();
     let adapters_prop = adapters.clone();
 
     tokio::spawn(async move {
         let mut adapters_stream = adapters_prop.watch();
-        while (adapters_stream.next().await).is_some() {
-            let current_primary = primary_adapter_prop.get();
-            let adapters_list = adapters_prop.get();
+        loop {
+            tokio::select! {
+                _ = cancellation_token.cancelled() => {
+                    debug!("Bluetooth 'primary_adapter' monitoring cancelled");
+                    return;
+                }
+                Some(adapters) = adapters_stream.next() => {
+                    let current_primary = primary_adapter_prop.get();
 
-            let new_primary = select_primary_adapter(current_primary, &adapters_list);
-            primary_adapter_prop.set(new_primary);
+                    let new_primary = select_primary_adapter(current_primary, &adapters);
+                    primary_adapter_prop.set(new_primary);
+                }
+            }
         }
     });
 
@@ -216,6 +245,7 @@ fn find_best_adapter(adapters: &[Arc<Adapter>]) -> Option<Arc<Adapter>> {
 async fn monitor_enabled(
     enabled: &Property<bool>,
     primary_adapter: &Property<Option<Arc<Adapter>>>,
+    cancellation_token: CancellationToken,
 ) -> Result<(), BluetoothError> {
     let enabled_prop = enabled.clone();
     let primary_adapter_prop = primary_adapter.clone();
@@ -226,6 +256,10 @@ async fn monitor_enabled(
 
         loop {
             tokio::select! {
+                _ = cancellation_token.cancelled() => {
+                    debug!("Bluetooth 'enabled' monitor cancelled");
+                    return;
+                }
                 Some(primary) = primary_stream.next() => {
                     current_powered_stream = primary
                         .as_ref()
@@ -250,14 +284,24 @@ async fn monitor_enabled(
 async fn monitor_available(
     available: &Property<bool>,
     primary_adapter: &Property<Option<Arc<Adapter>>>,
+    cancellation_token: CancellationToken,
 ) -> Result<(), BluetoothError> {
     let available_prop = available.clone();
     let primary_adapter_prop = primary_adapter.clone();
 
     tokio::spawn(async move {
         let mut primary_stream = primary_adapter_prop.watch();
-        while let Some(primary) = primary_stream.next().await {
-            available_prop.set(primary.is_some());
+
+        loop {
+            tokio::select! {
+                _ = cancellation_token.cancelled() => {
+                    debug!("Bluetooth 'available' monitor cancelled");
+                    return;
+                }
+                Some(primary) = primary_stream.next() => {
+                    available_prop.set(primary.is_some());
+                }
+            }
         }
     });
 
@@ -268,16 +312,25 @@ async fn monitor_connected(
     connected: &Property<Vec<String>>,
     devices: &Property<Vec<Arc<Device>>>,
     mut notifier_rx: broadcast::Receiver<ServiceNotification>,
+    cancellation_token: CancellationToken,
 ) -> Result<(), BluetoothError> {
     let devices_prop = devices.clone();
     let connected_prop = connected.clone();
 
     tokio::spawn(async move {
-        while let Ok(notif) = notifier_rx.recv().await {
-            match notif {
-                ServiceNotification::DeviceConnectionChanged => {
-                    handle_device_connection_changed(devices_prop.clone(), connected_prop.clone())
-                        .await;
+        loop {
+            tokio::select! {
+                _ = cancellation_token.cancelled() => {
+                    debug!("Bluetooth 'connected' monitor cancelled");
+                    return;
+                }
+                Ok(notif) = notifier_rx.recv() => {
+                    match notif {
+                        ServiceNotification::DeviceConnectionChanged => {
+                            handle_device_connection_changed(devices_prop.clone(), connected_prop.clone())
+                            .await;
+                        }
+                    }
                 }
             }
         }

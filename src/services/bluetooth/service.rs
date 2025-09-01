@@ -2,16 +2,17 @@ use std::sync::Arc;
 
 use tokio::sync::{Mutex, broadcast, mpsc};
 use tokio_util::sync::CancellationToken;
+use tracing::error;
 use zbus::{Connection, zvariant::OwnedObjectPath};
 
 use super::{
+    BluetoothAgent, agent,
     core::{Adapter, Device},
     types::{PairingRequest, PairingResponder, ServiceNotification},
 };
 use crate::services::{
     bluetooth::{
         BluetoothError,
-        agent::BluetoothAgent,
         discovery::BluetoothDiscovery,
         proxy::AgentManager1Proxy,
         types::{AgentCapability, AgentEvent},
@@ -28,8 +29,6 @@ use crate::services::{
 pub struct BluetoothService {
     pub(crate) zbus_connection: Connection,
     pub(crate) cancellation_token: CancellationToken,
-    pub(crate) agent_tx: mpsc::UnboundedSender<AgentEvent>,
-    pub(crate) agent_rx: mpsc::UnboundedReceiver<AgentEvent>,
     pub(crate) notifier_tx: broadcast::Sender<ServiceNotification>,
     pub(crate) pairing_responder: Arc<Mutex<Option<PairingResponder>>>,
 
@@ -95,8 +94,6 @@ impl BluetoothService {
             .await?;
 
         let service = Self {
-            agent_tx: agent_tx.clone(),
-            agent_rx,
             notifier_tx,
             pairing_responder: Arc::new(Mutex::new(None)),
             zbus_connection: connection.clone(),
@@ -109,6 +106,18 @@ impl BluetoothService {
             connected: Property::new(connected),
             pairing_request: Property::new(None),
         };
+
+        agent::event_processor::start(
+            agent_rx,
+            &service.pairing_responder,
+            &service.pairing_request,
+            cancellation_token.child_token(),
+        )
+        .await
+        .unwrap_or_else(|e| {
+            error!("Failed to start agent event processor: {e}");
+            error!("Bluetooth pairing may be degraded");
+        });
 
         service.start_monitoring().await?;
 

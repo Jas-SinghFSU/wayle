@@ -57,19 +57,29 @@ impl Display for AgentCapability {
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum PairingRequest {
     /// Requests a PIN code from the user for legacy pairing.
-    RequestPinCode,
+    RequestPinCode {
+        /// D-Bus object path of the device requesting PIN.
+        device_path: OwnedObjectPath,
+    },
 
     /// Displays a PIN code that the user must enter on the remote device.
     DisplayPinCode {
+        /// D-Bus object path of the device.
+        device_path: OwnedObjectPath,
         /// 6-digit PIN to display (always zero-padded).
         pincode: String,
     },
 
     /// Requests a numeric passkey from the user.
-    RequestPasskey,
+    RequestPasskey {
+        /// D-Bus object path of the device.
+        device_path: OwnedObjectPath,
+    },
 
     /// Displays a passkey that the user must enter on the remote device.
     DisplayPasskey {
+        /// D-Bus object path of the device.
+        device_path: OwnedObjectPath,
         /// 6-digit passkey to display.
         passkey: u32,
         /// Number of digits already typed on remote side.
@@ -78,15 +88,22 @@ pub enum PairingRequest {
 
     /// Requests confirmation that a passkey matches what's shown on the remote device.
     RequestConfirmation {
+        /// D-Bus object path of the device.
+        device_path: OwnedObjectPath,
         /// 6-digit passkey to confirm.
         passkey: u32,
     },
 
     /// Requests authorization for pairing that would normally use just-works model.
-    RequestAuthorization,
+    RequestAuthorization {
+        /// D-Bus object path of the device.
+        device_path: OwnedObjectPath,
+    },
 
     /// Requests authorization for a specific service/profile connection.
-    AuthorizeService {
+    RequestServiceAuthorization {
+        /// D-Bus object path of the device.
+        device_path: OwnedObjectPath,
         /// Service UUID requesting authorization.
         uuid: String,
     },
@@ -98,6 +115,7 @@ pub(crate) enum PairingResponder {
     Passkey(Sender<u32>),
     Confirmation(Sender<bool>),
     Authorization(Sender<bool>),
+    ServiceAuthorization(Sender<bool>),
 }
 
 /// Agent events for Bluetooth pairing operations.

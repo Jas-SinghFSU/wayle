@@ -14,4 +14,5 @@ pub mod service;
 /// Type definitions for Bluetooth enums, flags, and states.
 pub mod types;
 
+pub(crate) use agent::BluetoothAgent;
 pub use error::BluetoothError;

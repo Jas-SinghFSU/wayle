@@ -1,3 +1,4 @@
+pub(crate) mod event_processor;
 use tokio::sync::{mpsc::UnboundedSender, oneshot};
 use zbus::{fdo, interface, zvariant::OwnedObjectPath};
 
