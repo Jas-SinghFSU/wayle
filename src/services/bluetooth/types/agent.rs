@@ -100,46 +100,73 @@ pub(crate) enum PairingResponder {
     Authorization(Sender<bool>),
 }
 
-// Event broadcast from Agent to ALL devices
+/// Agent events for Bluetooth pairing operations.
 #[derive(Debug)]
 pub enum AgentEvent {
+    /// PIN code requested from user.
     PinRequested {
+        /// D-Bus object path of the device requesting PIN.
         device_path: OwnedObjectPath,
+        /// Channel to send PIN response.
         responder: Sender<String>,
     },
+    /// Display PIN code to user.
     DisplayPinCode {
+        /// D-Bus object path of the device.
         device_path: OwnedObjectPath,
+        /// PIN code to display.
         pincode: String,
     },
+    /// Passkey requested from user.
     PasskeyRequested {
+        /// D-Bus object path of the device requesting passkey.
         device_path: OwnedObjectPath,
+        /// Channel to send passkey response.
         responder: Sender<u32>,
     },
+    /// Display passkey to user.
     DisplayPasskey {
+        /// D-Bus object path of the device.
         device_path: OwnedObjectPath,
+        /// Passkey to display.
         passkey: u32,
+        /// Number of characters entered.
         entered: u16,
     },
+    /// Confirmation requested from user.
     ConfirmationRequested {
+        /// D-Bus object path of the device.
         device_path: OwnedObjectPath,
+        /// Passkey to confirm.
         passkey: u32,
+        /// Channel to send confirmation response.
         responder: Sender<bool>,
     },
+    /// Authorization requested from user.
     AuthorizationRequested {
+        /// D-Bus object path of the device.
         device_path: OwnedObjectPath,
+        /// Channel to send authorization response.
         responder: Sender<bool>,
     },
+    /// Service authorization requested from user.
     ServiceAuthorizationRequested {
+        /// D-Bus object path of the device.
         device_path: OwnedObjectPath,
+        /// Service UUID requiring authorization.
         uuid: String,
+        /// Channel to send authorization response.
         responder: Sender<bool>,
     },
+    /// Pairing request was cancelled.
     Cancelled {
+        /// D-Bus object path of the device.
         device_path: OwnedObjectPath,
     },
 }
 
 impl AgentEvent {
+    /// Returns the device path for this agent event.
     pub fn device_path(&self) -> &OwnedObjectPath {
         match self {
             Self::PinRequested { device_path, .. } => device_path,

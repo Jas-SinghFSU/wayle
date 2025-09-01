@@ -20,6 +20,7 @@ use crate::services::{
 impl ServiceMonitoring for AudioService {
     type Error = AudioError;
 
+    #[allow(clippy::too_many_lines)]
     async fn start_monitoring(&self) -> Result<(), Self::Error> {
         let mut event_rx = self.event_tx.subscribe();
         let mut output_devs: HashMap<DeviceKey, Arc<OutputDevice>> = HashMap::new();

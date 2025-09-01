@@ -12,6 +12,7 @@ pub(crate) struct LiveDeviceWiredParams<'a> {
     pub cancellation_token: CancellationToken,
 }
 
+/// Network speed in megabits per second.
 pub type SpeedMbps = u32;
 
 pub(crate) struct WiredProperties {

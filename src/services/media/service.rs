@@ -32,10 +32,13 @@ pub struct Config {
 pub struct MediaService {
     pub(crate) connection: Connection,
     pub(crate) players: Arc<RwLock<HashMap<PlayerId, Arc<Player>>>>,
+    pub(crate) cancellation_token: CancellationToken,
+    /// All discovered media players.
     pub player_list: Property<Vec<Arc<Player>>>,
+    /// Currently active media player.
     pub active_player: Property<Option<Arc<Player>>>,
+    /// Patterns for media players to ignore.
     pub ignored_patterns: Vec<String>,
-    pub cancellation_token: CancellationToken,
 }
 
 impl MediaService {

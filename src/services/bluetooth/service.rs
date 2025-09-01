@@ -48,6 +48,7 @@ pub struct BluetoothService {
     /// Whether any device is currently connected.
     pub connected: Property<Vec<String>>,
 
+    /// Current pairing request awaiting user response.
     pub pairing_request: Property<Option<PairingRequest>>,
 }
 
@@ -56,6 +57,9 @@ impl BluetoothService {
     ///
     /// Establishes D-Bus connection, discovers available adapters,
     /// and initializes monitoring for device and adapter changes.
+    ///
+    /// # Errors
+    /// Returns error if D-Bus connection fails or service initialization fails.
     pub async fn new() -> Result<Self, BluetoothError> {
         let connection = Connection::system().await.map_err(|err| {
             BluetoothError::ServiceInitializationFailed(format!("D-Bus connection failed: {err}"))

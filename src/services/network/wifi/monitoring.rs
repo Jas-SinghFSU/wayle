@@ -48,7 +48,7 @@ impl ModelMonitoring for Wifi {
         let ct_clone = cancellation_token.clone();
 
         tokio::spawn(async move {
-            monitor_wifi(self, ct_clone).await;
+            let _ = monitor_wifi(self, ct_clone).await;
         });
 
         Ok(())

@@ -143,4 +143,5 @@ impl Display for DiscoveryTransport {
     }
 }
 
+/// Discovery filter parameters for Bluetooth device discovery.
 pub type DiscoveryFilter<'a> = HashMap<String, Value<'a>>;

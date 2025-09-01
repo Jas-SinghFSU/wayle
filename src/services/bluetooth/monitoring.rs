@@ -288,10 +288,10 @@ async fn handle_device_added(
 }
 
 async fn handle_adapter_added(
-    connection: &Connection,
-    cancellation_token: CancellationToken,
-    adapters: &Property<Vec<Arc<Adapter>>>,
-    object_path: OwnedObjectPath,
+    _connection: &Connection,
+    _cancellation_token: CancellationToken,
+    _adapters: &Property<Vec<Arc<Adapter>>>,
+    _object_path: OwnedObjectPath,
 ) {
     todo!()
     // let mut adapters_list = adapters.get();

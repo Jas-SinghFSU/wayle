@@ -32,24 +32,6 @@ use crate::{
     unwrap_bool, unwrap_bool_or, unwrap_path, unwrap_string, unwrap_u32, unwrap_u32_or, unwrap_vec,
 };
 
-/// Wrapper around zbus::Connection that implements Debug.
-#[derive(Clone)]
-pub(crate) struct DbusConnection(pub Connection);
-
-impl std::fmt::Debug for DbusConnection {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("Connection").finish()
-    }
-}
-
-impl std::ops::Deref for DbusConnection {
-    type Target = Connection;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
 /// Network device managed by NetworkManager.
 ///
 /// Common functionality for all network interfaces (WiFi, ethernet, etc).

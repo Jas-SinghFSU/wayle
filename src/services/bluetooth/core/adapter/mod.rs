@@ -7,6 +7,7 @@ use std::{collections::HashMap, sync::Arc};
 use controls::AdapterControls;
 use tokio::sync::mpsc;
 use tokio_util::sync::CancellationToken;
+use types::AdapterProperties;
 pub(crate) use types::{AdapterParams, LiveAdapterParams};
 use zbus::{
     Connection,
@@ -164,29 +165,6 @@ impl PartialEq for Adapter {
     fn eq(&self, other: &Self) -> bool {
         self.object_path == other.object_path
     }
-}
-
-/// Fetched device properties from D-Bus
-struct AdapterProperties {
-    pub address: String,
-    pub address_type: String,
-    pub name: String,
-    pub alias: String,
-    pub class: u32,
-    pub connectable: bool,
-    pub powered: bool,
-    pub power_state: String,
-    pub discoverable: bool,
-    pub discoverable_timeout: u32,
-    pub discovering: bool,
-    pub pairable: bool,
-    pub pairable_timeout: u32,
-    pub uuids: Vec<String>,
-    pub modalias: Option<String>,
-    pub roles: Vec<String>,
-    pub experimental_features: Vec<String>,
-    pub manufacturer: u16,
-    pub version: u8,
 }
 
 impl Reactive for Adapter {

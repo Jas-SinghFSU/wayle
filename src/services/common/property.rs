@@ -4,6 +4,7 @@ use futures::stream::{Stream, StreamExt};
 use tokio::sync::watch;
 use tokio_stream::wrappers::WatchStream;
 
+/// Stream of property value changes.
 pub type PropertyStream<T> = Box<dyn Stream<Item = T> + Send + Unpin>;
 
 /// A reactive property that can be watched for changes.
