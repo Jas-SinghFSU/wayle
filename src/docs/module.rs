@@ -2,7 +2,7 @@ use schemars::Schema;
 
 use crate::config::ClockConfig;
 
-pub type SchemeFn = fn() -> Schema;
+pub(crate) type SchemeFn = fn() -> Schema;
 
 /// Collection of styling configuration schemas for a module.
 ///

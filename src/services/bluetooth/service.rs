@@ -1,13 +1,16 @@
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 
-use tokio::sync::{Mutex, broadcast, mpsc};
+use tokio::{
+    sync::{Mutex, broadcast, mpsc},
+    time::sleep,
+};
 use tokio_util::sync::CancellationToken;
 use tracing::error;
 use zbus::{Connection, zvariant::OwnedObjectPath};
 
 use super::{
     BluetoothAgent, agent,
-    core::{Adapter, Device},
+    core::{Adapter, AdapterParams, Device, DeviceParams, LiveAdapterParams, LiveDeviceParams},
     types::{PairingRequest, PairingResponder, ServiceNotification},
 };
 use crate::services::{
@@ -18,7 +21,7 @@ use crate::services::{
         types::{AgentCapability, AgentEvent},
     },
     common::Property,
-    traits::ServiceMonitoring,
+    traits::{Reactive, ServiceMonitoring},
 };
 
 /// Manages Bluetooth connectivity through the BlueZ D-Bus interface.
@@ -124,6 +127,64 @@ impl BluetoothService {
         Ok(service)
     }
 
+    /// Creates a point-in-time Device instance for the specified device path.
+    ///
+    /// # Errors
+    /// Returns error if the device path is invalid or D-Bus communication fails.
+    pub async fn device(&self, device_path: OwnedObjectPath) -> Result<Device, BluetoothError> {
+        Device::get(DeviceParams {
+            connection: &self.zbus_connection,
+            notifier_tx: &self.notifier_tx,
+            path: device_path,
+        })
+        .await
+    }
+
+    /// Creates a monitored Device instance that tracks property changes.
+    ///
+    /// # Errors
+    /// Returns error if the device path is invalid or D-Bus communication fails.
+    pub async fn device_monitored(
+        &self,
+        device_path: OwnedObjectPath,
+    ) -> Result<Arc<Device>, BluetoothError> {
+        Device::get_live(LiveDeviceParams {
+            connection: &self.zbus_connection,
+            notifier_tx: &self.notifier_tx,
+            path: device_path,
+            cancellation_token: self.cancellation_token.child_token(),
+        })
+        .await
+    }
+
+    /// Creates a point-in-time Adapter instance for the specified adapter path.
+    ///
+    /// # Errors
+    /// Returns error if the adapter path is invalid or D-Bus communication fails.
+    pub async fn adapter(&self, adapter_path: OwnedObjectPath) -> Result<Adapter, BluetoothError> {
+        Adapter::get(AdapterParams {
+            connection: &self.zbus_connection,
+            path: adapter_path,
+        })
+        .await
+    }
+
+    /// Creates a monitored Adapter instance that tracks property changes.
+    ///
+    /// # Errors
+    /// Returns error if the adapter path is invalid or D-Bus communication fails.
+    pub async fn adapter_monitored(
+        &self,
+        adapter_path: OwnedObjectPath,
+    ) -> Result<Arc<Adapter>, BluetoothError> {
+        Adapter::get_live(LiveAdapterParams {
+            connection: &self.zbus_connection,
+            path: adapter_path,
+            cancellation_token: self.cancellation_token.child_token(),
+        })
+        .await
+    }
+
     /// Starts device discovery on the primary adapter.
     ///
     /// Begins scanning for nearby Bluetooth devices. Discovery will continue
@@ -141,6 +202,34 @@ impl BluetoothService {
         };
 
         active_adapter.start_discovery().await
+    }
+
+    /// Starts device discovery on the primary adapter for a limited time.
+    ///
+    /// Begins scanning for nearby Bluetooth devices. Discovery will continue
+    /// for the provided duration.
+    ///
+    /// # Errors
+    ///
+    /// Returns error if no primary adapter is available or discovery operation fails.
+    pub async fn start_timed_discovery(&self, duration: Duration) -> Result<(), BluetoothError> {
+        let Some(active_adapter) = self.primary_adapter.get() else {
+            return Err(BluetoothError::OperationFailed {
+                operation: "start_discovery",
+                reason: String::from("No primary adapter found to perform the operation."),
+            });
+        };
+
+        active_adapter.start_discovery().await?;
+
+        tokio::spawn(async move {
+            let _ = sleep(duration).await;
+            if let Err(err) = active_adapter.stop_discovery().await {
+                error!("Failed to stop timed discovery: {err}");
+            };
+        });
+
+        Ok(())
     }
 
     /// Stops device discovery on all adapters.
