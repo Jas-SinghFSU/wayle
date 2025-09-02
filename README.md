@@ -17,9 +17,9 @@ A fast, configurable desktop environment framework for Wayland compositors. Buil
 - [x] **MPRIS**
 - [x] **PulseAudio**
 - [x] **Network**
-- [ ] **Bluetooth** (WIP)
+- [x] **Bluetooth**
 - [ ] **Hyprland**
-- [ ] **Battery**
+- [ ] **Battery** (WIP)
 - [ ] **Cava**
 - [ ] **Notification Daemon**
 - [ ] **Power Profiles**

@@ -128,6 +128,10 @@ impl BluetoothService {
     ///
     /// Begins scanning for nearby Bluetooth devices. Discovery will continue
     /// until explicitly stopped with `stop_discovery()`.
+    ///
+    /// # Errors
+    ///
+    /// Returns error if no primary adapter is available or discovery operation fails.
     pub async fn start_discovery(&self) -> Result<(), BluetoothError> {
         let Some(active_adapter) = self.primary_adapter.get() else {
             return Err(BluetoothError::OperationFailed {
@@ -136,28 +140,61 @@ impl BluetoothService {
             });
         };
 
-        Ok(())
+        active_adapter.start_discovery().await
     }
 
     /// Stops device discovery on all adapters.
     ///
     /// Halts the scanning process started by `start_discovery()`.
-    pub async fn stop_discovery() {
-        todo!()
+    ///
+    /// # Errors
+    ///
+    /// Returns error if no primary adapter is available or stop operation fails.
+    pub async fn stop_discovery(&self) -> Result<(), BluetoothError> {
+        let Some(active_adapter) = self.primary_adapter.get() else {
+            return Err(BluetoothError::OperationFailed {
+                operation: "stop_discovery",
+                reason: String::from("No primary adapter found to perform the operation."),
+            });
+        };
+
+        active_adapter.stop_discovery().await
     }
 
     /// Enables Bluetooth by powering on the primary adapter.
     ///
     /// If no primary adapter is set, powers on the first available adapter.
-    pub async fn enable() {
-        todo!()
+    ///
+    /// # Errors
+    ///
+    /// Returns error if no primary adapter is available or power operation fails.
+    pub async fn enable(&self) -> Result<(), BluetoothError> {
+        let Some(active_adapter) = self.primary_adapter.get() else {
+            return Err(BluetoothError::OperationFailed {
+                operation: "enable",
+                reason: String::from("No primary adapter found to perform the operation."),
+            });
+        };
+
+        active_adapter.set_powered(true).await
     }
 
     /// Disables Bluetooth by powering off all adapters.
     ///
     /// All active connections will be terminated.
-    pub async fn disable() {
-        todo!()
+    ///
+    /// # Errors
+    ///
+    /// Returns error if no primary adapter is available or power operation fails.
+    pub async fn disable(&self) -> Result<(), BluetoothError> {
+        let Some(active_adapter) = self.primary_adapter.get() else {
+            return Err(BluetoothError::OperationFailed {
+                operation: "disable",
+                reason: String::from("No primary adapter found to perform the operation."),
+            });
+        };
+
+        active_adapter.set_powered(false).await
     }
 
     /// Provides a PIN code for legacy device pairing.
@@ -168,8 +205,8 @@ impl BluetoothService {
     /// # Errors
     ///
     /// Returns error if no PIN request is pending or responder channel is closed.
-    pub async fn provide_pin() {
-        todo!()
+    pub async fn provide_pin(&self, pin: String) -> Result<(), BluetoothError> {
+        agent::providers::pin(self, pin).await
     }
 
     /// Provides a numeric passkey for device pairing.
@@ -180,8 +217,8 @@ impl BluetoothService {
     /// # Errors
     ///
     /// Returns error if no passkey request is pending or responder channel is closed.
-    pub async fn provide_passkey() {
-        todo!()
+    pub async fn provide_passkey(&self, passkey: u32) -> Result<(), BluetoothError> {
+        agent::providers::passkey(self, passkey).await
     }
 
     /// Provides confirmation for passkey matching.
@@ -192,20 +229,41 @@ impl BluetoothService {
     /// # Errors
     ///
     /// Returns error if no confirmation request is pending or responder channel is closed.
-    pub async fn provide_confirmation() {
-        todo!()
+    pub async fn provide_confirmation(&self, confirmation: bool) -> Result<(), BluetoothError> {
+        agent::providers::confirmation(self, confirmation).await
     }
 
-    /// Provides authorization for pairing or service connection.
+    /// Provides authorization for device pairing or connection.
     ///
-    /// Called in response to `PairingRequest::RequestAuthorization` or
-    /// `PairingRequest::AuthorizeService`.
+    /// Called in response to `PairingRequest::RequestAuthorization`.
+    /// Grants or denies permission for the device to pair/connect.
+    ///
+    /// # Arguments
+    /// * `authorized` - Whether to authorize the device connection
     ///
     /// # Errors
     ///
     /// Returns error if no authorization request is pending or responder channel is closed.
-    pub async fn provide_authorization() {
-        todo!()
+    pub async fn provide_authorization(&self, authorization: bool) -> Result<(), BluetoothError> {
+        agent::providers::authorization(self, authorization).await
+    }
+
+    /// Provides authorization for specific Bluetooth service access.
+    ///
+    /// Called in response to `PairingRequest::RequestServiceAuthorization`.
+    /// Grants or denies permission for the device to use a specific service/profile.
+    ///
+    /// # Arguments
+    /// * `authorized` - Whether to authorize access to the requested service
+    ///
+    /// # Errors
+    ///
+    /// Returns error if no service authorization request is pending or responder channel is closed.
+    pub async fn provide_service_authorization(
+        &self,
+        authorization: bool,
+    ) -> Result<(), BluetoothError> {
+        agent::providers::service_authorization(self, authorization).await
     }
 }
 
