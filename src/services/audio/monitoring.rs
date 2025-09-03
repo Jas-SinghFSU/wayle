@@ -113,7 +113,11 @@ impl ServiceMonitoring for AudioService {
                             }
 
                             AudioEvent::DeviceRemoved(key) => {
-                                if output_devs.remove(&key).is_some() {
+                                if let Some(device) =  output_devs.remove(&key) {
+                                    if let Some(ref cancel_token) = device.cancellation_token {
+                                        cancel_token.cancel();
+                                    };
+
                                     output_devices.set(output_devs.values().cloned().collect());
                                 }
                                 if input_devs.remove(&key).is_some() {
@@ -151,7 +155,12 @@ impl ServiceMonitoring for AudioService {
                             }
 
                             AudioEvent::StreamRemoved(key) => {
-                                streams.remove(&key);
+                                if let Some(cancel_token) = streams
+                                    .remove(&key)
+                                    .and_then(|stream| stream.cancellation_token.clone())
+                                {
+                                        cancel_token.cancel();
+                                }
                                 update_stream_properties(&streams, &playback_streams, &recording_streams);
                             }
 

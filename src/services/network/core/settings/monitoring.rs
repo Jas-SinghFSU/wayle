@@ -6,12 +6,15 @@ use tracing::{debug, warn};
 use zbus::zvariant::OwnedObjectPath;
 
 use super::Settings;
-use crate::services::{
-    network::{
-        NetworkError, SettingsProxy,
-        core::settings_connection::{ConnectionSettings, ConnectionSettingsParams},
+use crate::{
+    remove_and_cancel,
+    services::{
+        network::{
+            NetworkError, SettingsProxy,
+            core::settings_connection::{ConnectionSettings, ConnectionSettingsParams},
+        },
+        traits::{ModelMonitoring, Reactive},
     },
-    traits::{ModelMonitoring, Reactive},
 };
 
 impl ModelMonitoring for Settings {
@@ -108,7 +111,7 @@ async fn add_connection(
 
     let found_connection = current_connections
         .iter()
-        .find(|connection| connection.object_path.get() == connection_path);
+        .find(|connection| connection.object_path == connection_path);
 
     if found_connection.is_none() {
         current_connections.push(new_connection);
@@ -122,17 +125,6 @@ async fn remove_connection(
     connection_path: OwnedObjectPath,
     settings: &Arc<Settings>,
 ) -> Result<(), NetworkError> {
-    let mut current_connections = settings.connections.get();
-    let found_connection = current_connections
-        .iter()
-        .find(|connection| connection.object_path.get() == connection_path);
-
-    if found_connection.is_none() {
-        return Ok(());
-    }
-
-    current_connections.retain(|connection| connection.object_path.get() != connection_path);
-    settings.connections.set(current_connections);
-
+    remove_and_cancel!(settings.connections.clone(), connection_path);
     Ok(())
 }

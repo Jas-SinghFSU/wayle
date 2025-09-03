@@ -6,15 +6,18 @@ use tracing::debug;
 use zbus::{Connection, proxy::PropertyStream, zvariant::OwnedObjectPath};
 
 use super::Wifi;
-use crate::services::{
-    common::Property,
-    network::{
-        AccessPoint, AccessPointProxy, DeviceProxy, NMDeviceState, NetworkError,
-        NetworkManagerProxy, NetworkStatus, SSID,
-        core::{access_point::LiveAccessPointParams, device::wifi::DeviceWifi},
-        wireless::DeviceWirelessProxy,
+use crate::{
+    remove_and_cancel,
+    services::{
+        common::Property,
+        network::{
+            AccessPoint, AccessPointProxy, DeviceProxy, NMDeviceState, NetworkError,
+            NetworkManagerProxy, NetworkStatus, SSID,
+            core::{access_point::LiveAccessPointParams, device::wifi::DeviceWifi},
+            wireless::DeviceWirelessProxy,
+        },
+        traits::{ModelMonitoring, Reactive},
     },
-    traits::{ModelMonitoring, Reactive},
 };
 
 type SsidStream = PropertyStream<'static, Vec<u8>>;
@@ -219,9 +222,7 @@ async fn handle_ap_added(
 }
 
 fn handle_ap_removed(ap_path: &OwnedObjectPath, access_points: &Property<Vec<Arc<AccessPoint>>>) {
-    let mut aps = access_points.get();
-    aps.retain(|ap| &ap.object_path != ap_path);
-    access_points.set(aps);
+    remove_and_cancel!(access_points, ap_path.clone());
 }
 
 async fn handle_access_point_changed(

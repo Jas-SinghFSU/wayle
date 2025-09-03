@@ -452,3 +452,41 @@ macro_rules! unwrap_path_or {
         })
     };
 }
+
+/// Removes items from a Property<Vec<T>> by object path and cancels their tokens.
+///
+/// This macro handles the common pattern of removing items from a reactive property
+/// while also cancelling their associated cancellation tokens for cleanup.
+///
+/// # Arguments
+/// * `$property` - The Property<Vec<T>> to modify
+/// * `$target_path` - The OwnedObjectPath to match against item.object_path
+///
+/// # Requirements
+/// Items in the vector must have:
+/// - `object_path: OwnedObjectPath` field
+/// - `cancellation_token: Option<CancellationToken>` field
+///
+/// # Example
+/// ```rust
+/// remove_and_cancel!(devices_prop, object_path);
+/// remove_and_cancel!(adapters_prop, removed_path);
+/// ```
+#[macro_export]
+macro_rules! remove_and_cancel {
+    ($property:expr, $target_path:expr) => {{
+        let mut items = $property.get();
+        items.retain(|item| {
+            if item.object_path != $target_path {
+                return true;
+            }
+
+            if let Some(token) = item.cancellation_token.as_ref() {
+                token.cancel();
+            }
+
+            false
+        });
+        $property.set(items);
+    }};
+}

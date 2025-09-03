@@ -34,7 +34,7 @@ use crate::{
 #[derive(Clone, Debug)]
 pub struct Player {
     /// D-Bus proxy for controlling this player
-    proxy: MediaPlayer2PlayerProxy<'static>,
+    pub(crate) proxy: MediaPlayer2PlayerProxy<'static>,
     pub(crate) cancellation_token: Option<CancellationToken>,
 
     /// Unique identifier for this player instance

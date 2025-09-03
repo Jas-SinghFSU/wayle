@@ -37,7 +37,7 @@ pub struct OutputDevice {
     event_tx: Option<EventSender>,
 
     /// Cancellation token for monitoring (only for live instances)
-    cancellation_token: Option<CancellationToken>,
+    pub(crate) cancellation_token: Option<CancellationToken>,
 
     /// Device key for identification
     pub key: DeviceKey,

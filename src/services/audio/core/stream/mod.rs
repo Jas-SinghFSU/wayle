@@ -36,7 +36,7 @@ pub struct AudioStream {
     event_tx: Option<EventSender>,
 
     /// Cancellation token for monitoring (only for live instances)
-    cancellation_token: Option<CancellationToken>,
+    pub(crate) cancellation_token: Option<CancellationToken>,
 
     /// Stream key for identification
     pub key: StreamKey,

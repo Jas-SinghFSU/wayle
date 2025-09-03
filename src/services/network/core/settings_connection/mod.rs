@@ -32,7 +32,7 @@ pub struct ConnectionSettings {
     pub(crate) connection: Connection,
     pub(crate) cancellation_token: Option<CancellationToken>,
     /// D-Bus object path for this settings connection
-    pub object_path: Property<OwnedObjectPath>,
+    pub object_path: OwnedObjectPath,
 
     /// If set, indicates that the in-memory state of the connection does not
     /// match the on-disk state. This flag will be set when UpdateUnsaved() is
@@ -73,7 +73,7 @@ impl Reactive for ConnectionSettings {
 
 impl PartialEq for ConnectionSettings {
     fn eq(&self, other: &Self) -> bool {
-        self.object_path.get() == other.object_path.get()
+        self.object_path == other.object_path
     }
 }
 
@@ -95,8 +95,7 @@ impl ConnectionSettings {
         &self,
         properties: HashMap<String, HashMap<String, OwnedValue>>,
     ) -> Result<(), NetworkError> {
-        ConnectionSettingsControls::update(&self.connection, &self.object_path.get(), properties)
-            .await
+        ConnectionSettingsControls::update(&self.connection, &self.object_path, properties).await
     }
 
     /// Update the connection without immediately saving to disk.
@@ -117,12 +116,8 @@ impl ConnectionSettings {
         &self,
         properties: HashMap<String, HashMap<String, OwnedValue>>,
     ) -> Result<(), NetworkError> {
-        ConnectionSettingsControls::update_unsaved(
-            &self.connection,
-            &self.object_path.get(),
-            properties,
-        )
-        .await
+        ConnectionSettingsControls::update_unsaved(&self.connection, &self.object_path, properties)
+            .await
     }
 
     /// Delete the connection.
@@ -131,7 +126,7 @@ impl ConnectionSettings {
     ///
     /// Returns `NetworkError::OperationFailed` if the delete operation fails.
     pub async fn delete(&self) -> Result<(), NetworkError> {
-        ConnectionSettingsControls::delete(&self.connection, &self.object_path.get()).await
+        ConnectionSettingsControls::delete(&self.connection, &self.object_path).await
     }
 
     /// Get the settings maps describing this network configuration.
@@ -146,7 +141,7 @@ impl ConnectionSettings {
     pub async fn get_settings(
         &self,
     ) -> Result<HashMap<String, HashMap<String, OwnedValue>>, NetworkError> {
-        ConnectionSettingsControls::get_settings(&self.connection, &self.object_path.get()).await
+        ConnectionSettingsControls::get_settings(&self.connection, &self.object_path).await
     }
 
     /// Get the secrets belonging to this network configuration.
@@ -167,12 +162,8 @@ impl ConnectionSettings {
         &self,
         setting_name: &str,
     ) -> Result<HashMap<String, HashMap<String, OwnedValue>>, NetworkError> {
-        ConnectionSettingsControls::get_secrets(
-            &self.connection,
-            &self.object_path.get(),
-            setting_name,
-        )
-        .await
+        ConnectionSettingsControls::get_secrets(&self.connection, &self.object_path, setting_name)
+            .await
     }
 
     /// Clear the secrets belonging to this network connection profile.
@@ -181,7 +172,7 @@ impl ConnectionSettings {
     ///
     /// Returns `NetworkError::OperationFailed` if clearing secrets fails.
     pub async fn clear_secrets(&self) -> Result<(), NetworkError> {
-        ConnectionSettingsControls::clear_secrets(&self.connection, &self.object_path.get()).await
+        ConnectionSettingsControls::clear_secrets(&self.connection, &self.object_path).await
     }
 
     /// Saves a "dirty" connection to persistent storage.
@@ -193,7 +184,7 @@ impl ConnectionSettings {
     ///
     /// Returns `NetworkError::OperationFailed` if saving fails.
     pub async fn save(&self) -> Result<(), NetworkError> {
-        ConnectionSettingsControls::save(&self.connection, &self.object_path.get()).await
+        ConnectionSettingsControls::save(&self.connection, &self.object_path).await
     }
 
     /// Update the connection with new settings and properties.
@@ -226,7 +217,7 @@ impl ConnectionSettings {
     ) -> Result<HashMap<String, OwnedValue>, NetworkError> {
         ConnectionSettingsControls::update2(
             &self.connection,
-            &self.object_path.get(),
+            &self.object_path,
             settings,
             flags,
             args,
@@ -288,7 +279,7 @@ impl ConnectionSettings {
         Self {
             connection: connection.clone(),
             cancellation_token,
-            object_path: Property::new(path),
+            object_path: path,
             unsaved: Property::new(props.unsaved),
             flags: Property::new(NMConnectionSettingsFlags::from_bits_truncate(props.flags)),
             filename: Property::new(props.filename),

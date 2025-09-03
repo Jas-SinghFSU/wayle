@@ -17,7 +17,7 @@ impl ModelMonitoring for ConnectionSettings {
     type Error = NetworkError;
 
     async fn start_monitoring(self: Arc<Self>) -> Result<(), Self::Error> {
-        let proxy = SettingsConnectionProxy::new(&self.connection, self.object_path.get())
+        let proxy = SettingsConnectionProxy::new(&self.connection, self.object_path.clone())
             .await
             .map_err(NetworkError::DbusError)?;
 

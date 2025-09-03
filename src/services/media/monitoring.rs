@@ -213,12 +213,20 @@ async fn handle_player_removed(
         active_player.set(new_active);
     }
 
-    let current_list = player_list.get();
-    let updated_list: Vec<Arc<Player>> = current_list
-        .into_iter()
-        .filter(|player| player.id != player_id)
-        .collect();
-    player_list.set(updated_list);
+    let mut current_players = player_list.get();
+    current_players.retain(|player| {
+        if player.id != player_id {
+            return true;
+        }
+
+        if let Some(ref cancel_token) = player.cancellation_token {
+            cancel_token.cancel();
+        }
+
+        false
+    });
+
+    player_list.set(current_players);
 
     debug!("Player {} removed", player_id);
 }

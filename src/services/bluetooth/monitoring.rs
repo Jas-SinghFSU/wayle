@@ -12,10 +12,13 @@ use super::{
     service::BluetoothService,
     types::{ADAPTER_INTERFACE, DEVICE_INTERFACE, ServiceNotification},
 };
-use crate::services::{
-    bluetooth::types::BLUEZ_SERVICE,
-    common::{Property, ROOT_PATH, property::PropertyStream},
-    traits::{Reactive, ServiceMonitoring},
+use crate::{
+    remove_and_cancel,
+    services::{
+        bluetooth::types::BLUEZ_SERVICE,
+        common::{Property, ROOT_PATH, property::PropertyStream},
+        traits::{Reactive, ServiceMonitoring},
+    },
 };
 
 impl ServiceMonitoring for BluetoothService {
@@ -110,10 +113,7 @@ async fn monitor_devices(
                 Some(removed) = device_interface_removed.next() => {
                     if let Ok(args) = removed.args() {
                         let object_path: OwnedObjectPath = args.object_path.into();
-                        let mut device_list = devices_prop.get();
-
-                        device_list.retain(|device| device.object_path != object_path);
-                        devices_prop.set(device_list);
+                        remove_and_cancel!(devices_prop, object_path);
                     }
                 }
             }
@@ -162,10 +162,7 @@ async fn monitor_adapters(
                 Some(removed) = adapter_interface_removed.next() => {
                     if let Ok(args) = removed.args() {
                         let object_path: OwnedObjectPath = args.object_path.into();
-                        let mut adapters_list = adapters_prop.get();
-
-                        adapters_list.retain(|adapter| adapter.object_path != object_path);
-                        adapters_prop.set(adapters_list);
+                        remove_and_cancel!(adapters_prop, object_path);
                     }
                 }
             }
