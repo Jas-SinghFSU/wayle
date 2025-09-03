@@ -16,7 +16,7 @@ pub(crate) struct LiveAdapterParams<'a> {
     /// Adapter object path
     pub path: OwnedObjectPath,
     /// Token for cancelling monitoring operations
-    pub cancellation_token: CancellationToken,
+    pub cancellation_token: &'a CancellationToken,
 }
 
 pub struct AdapterProperties {

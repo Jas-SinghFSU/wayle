@@ -14,5 +14,5 @@ pub(crate) struct LiveOutputDeviceParams<'a> {
     pub command_tx: &'a CommandSender,
     pub event_tx: &'a EventSender,
     pub device_key: DeviceKey,
-    pub cancellation_token: CancellationToken,
+    pub cancellation_token: &'a CancellationToken,
 }

@@ -187,7 +187,7 @@ impl Reactive for Device {
         let device = Self::from_path(
             params.connection,
             params.object_path.clone(),
-            Some(params.cancellation_token),
+            Some(params.cancellation_token.child_token()),
         )
         .await
         .map_err(|e| NetworkError::ObjectCreationFailed {

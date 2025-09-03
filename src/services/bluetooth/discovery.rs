@@ -106,7 +106,7 @@ impl BluetoothDiscovery {
         match Adapter::get_live(LiveAdapterParams {
             connection,
             path: object_path.clone(),
-            cancellation_token,
+            cancellation_token: &cancellation_token,
         })
         .await
         {
@@ -136,7 +136,7 @@ impl BluetoothDiscovery {
         match Device::get_live(LiveDeviceParams {
             connection,
             path: object_path.clone(),
-            cancellation_token,
+            cancellation_token: &cancellation_token,
             notifier_tx,
         })
         .await

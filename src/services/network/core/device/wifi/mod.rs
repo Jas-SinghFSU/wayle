@@ -71,7 +71,7 @@ impl Reactive for DeviceWifi {
         let base_arc = Device::get_live(LiveDeviceParams {
             connection: params.connection,
             object_path: params.device_path.clone(),
-            cancellation_token: params.cancellation_token.clone(),
+            cancellation_token: params.cancellation_token,
         })
         .await?;
         let base = Device::clone(&base_arc);

@@ -9,9 +9,9 @@ pub(crate) struct TrackMetadataParams<'a> {
     pub proxy: &'a MediaPlayer2PlayerProxy<'a>,
 }
 
-pub(crate) struct LiveTrackMetadataParams {
+pub(crate) struct LiveTrackMetadataParams<'a> {
     pub proxy: MediaPlayer2PlayerProxy<'static>,
-    pub cancellation_token: CancellationToken,
+    pub cancellation_token: &'a CancellationToken,
 }
 
 #[derive(Debug, Clone)]

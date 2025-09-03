@@ -109,7 +109,7 @@ impl Reactive for ActiveConnection {
         let active_connection = Self::from_path(
             params.connection,
             params.path.clone(),
-            Some(params.cancellation_token.clone()),
+            Some(params.cancellation_token.child_token()),
         )
         .await?;
         let active_connection = Arc::new(active_connection);

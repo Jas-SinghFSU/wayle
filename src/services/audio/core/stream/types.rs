@@ -14,5 +14,5 @@ pub(crate) struct LiveAudioStreamParams<'a> {
     pub command_tx: &'a CommandSender,
     pub event_tx: &'a EventSender,
     pub stream_key: StreamKey,
-    pub cancellation_token: CancellationToken,
+    pub cancellation_token: &'a CancellationToken,
 }

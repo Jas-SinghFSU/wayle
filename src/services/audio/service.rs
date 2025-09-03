@@ -119,7 +119,7 @@ impl AudioService {
             command_tx: &self.command_tx,
             event_tx: &self.event_tx,
             device_key: key,
-            cancellation_token: self.cancellation_token.child_token(),
+            cancellation_token: &self.cancellation_token,
         })
         .await
     }
@@ -148,7 +148,7 @@ impl AudioService {
             command_tx: &self.command_tx,
             event_tx: &self.event_tx,
             device_key: key,
-            cancellation_token: self.cancellation_token.child_token(),
+            cancellation_token: &self.cancellation_token,
         })
         .await
     }
@@ -177,7 +177,7 @@ impl AudioService {
             command_tx: &self.command_tx,
             event_tx: &self.event_tx,
             stream_key: key,
-            cancellation_token: self.cancellation_token.child_token(),
+            cancellation_token: &self.cancellation_token,
         })
         .await
     }

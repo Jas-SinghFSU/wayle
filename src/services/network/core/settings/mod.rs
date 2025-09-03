@@ -55,8 +55,11 @@ impl Reactive for Settings {
     }
 
     async fn get_live(params: Self::LiveContext<'_>) -> Result<Arc<Self>, Self::Error> {
-        let settings =
-            Self::from_connection(params.zbus_connection, Some(params.cancellation_token)).await?;
+        let settings = Self::from_connection(
+            params.zbus_connection,
+            Some(params.cancellation_token.child_token()),
+        )
+        .await?;
         let settings = Arc::new(settings);
 
         settings.clone().start_monitoring().await?;

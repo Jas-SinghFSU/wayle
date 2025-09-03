@@ -35,7 +35,7 @@ pub(crate) struct LiveDeviceParams<'a> {
     /// Device object path
     pub path: OwnedObjectPath,
     /// Token for cancelling monitoring operations
-    pub cancellation_token: CancellationToken,
+    pub cancellation_token: &'a CancellationToken,
     /// Channel for sending service notifications
     pub notifier_tx: &'a broadcast::Sender<ServiceNotification>,
 }

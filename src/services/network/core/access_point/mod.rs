@@ -98,7 +98,7 @@ impl Reactive for AccessPoint {
         let access_point = Self::from_path(
             params.connection,
             params.path.clone(),
-            Some(params.cancellation_token),
+            Some(params.cancellation_token.child_token()),
         )
         .await
         .map_err(|e| match e {

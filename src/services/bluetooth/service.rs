@@ -152,7 +152,7 @@ impl BluetoothService {
             connection: &self.zbus_connection,
             notifier_tx: &self.notifier_tx,
             path: device_path,
-            cancellation_token: self.cancellation_token.child_token(),
+            cancellation_token: &self.cancellation_token,
         })
         .await
     }
@@ -180,7 +180,7 @@ impl BluetoothService {
         Adapter::get_live(LiveAdapterParams {
             connection: &self.zbus_connection,
             path: adapter_path,
-            cancellation_token: self.cancellation_token.child_token(),
+            cancellation_token: &self.cancellation_token,
         })
         .await
     }

@@ -214,7 +214,7 @@ impl Reactive for Device {
             context.connection,
             context.path.clone(),
             context.notifier_tx.clone(),
-            Some(context.cancellation_token),
+            Some(context.cancellation_token.child_token()),
         );
         let device_arc = Arc::new(device);
 

@@ -75,7 +75,7 @@ async fn populate_existing_access_points(
         if let Ok(ap) = AccessPoint::get_live(LiveAccessPointParams {
             connection,
             path,
-            cancellation_token: cancellation_token.child_token(),
+            cancellation_token,
         })
         .await
         {
@@ -211,7 +211,7 @@ async fn handle_ap_added(
     if let Ok(new_ap) = AccessPoint::get_live(LiveAccessPointParams {
         connection,
         path: ap_path,
-        cancellation_token: cancellation_token.child_token(),
+        cancellation_token,
     })
     .await
     {

@@ -157,7 +157,7 @@ impl Reactive for AudioStream {
             stream_info,
             params.command_tx.clone(),
             Some(params.event_tx.clone()),
-            Some(params.cancellation_token.clone()),
+            Some(params.cancellation_token.child_token()),
         ));
 
         stream.clone().start_monitoring().await?;

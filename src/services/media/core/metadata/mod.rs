@@ -49,7 +49,7 @@ pub struct TrackMetadata {
 
 impl Reactive for TrackMetadata {
     type Context<'a> = TrackMetadataParams<'a>;
-    type LiveContext<'a> = LiveTrackMetadataParams;
+    type LiveContext<'a> = LiveTrackMetadataParams<'a>;
     type Error = MediaError;
 
     async fn get(params: Self::Context<'_>) -> Result<Self, Self::Error> {
@@ -66,7 +66,7 @@ impl Reactive for TrackMetadata {
     async fn get_live(params: Self::LiveContext<'_>) -> Result<Arc<Self>, Self::Error> {
         let mut metadata = Self::unknown();
         metadata.proxy = Some(params.proxy.clone());
-        metadata.cancellation_token = Some(params.cancellation_token);
+        metadata.cancellation_token = Some(params.cancellation_token.child_token());
         let metadata = Arc::new(metadata);
 
         if let Ok(metadata_map) = params.proxy.metadata().await {

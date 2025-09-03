@@ -13,7 +13,7 @@ pub(crate) struct AccessPointParams<'a> {
 pub(crate) struct LiveAccessPointParams<'a> {
     pub connection: &'a Connection,
     pub path: OwnedObjectPath,
-    pub cancellation_token: CancellationToken,
+    pub cancellation_token: &'a CancellationToken,
 }
 
 /// Network identifier for SSIDs and BSSIDs.

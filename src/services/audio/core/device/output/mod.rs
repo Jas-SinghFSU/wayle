@@ -164,7 +164,7 @@ impl Reactive for OutputDevice {
                 &sink,
                 params.command_tx.clone(),
                 Some(params.event_tx.clone()),
-                Some(params.cancellation_token.clone()),
+                Some(params.cancellation_token.child_token()),
             )),
             Device::Source(_) => {
                 return Err(AudioError::DeviceNotFound(

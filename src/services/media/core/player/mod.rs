@@ -146,7 +146,7 @@ impl Reactive for Player {
 
         let metadata = TrackMetadata::get_live(LiveTrackMetadataParams {
             proxy: player_proxy.clone(),
-            cancellation_token: params.cancellation_token.child_token(),
+            cancellation_token: params.cancellation_token,
         })
         .await;
         let metadata = metadata.unwrap_or_else(|_| Arc::new(TrackMetadata::unknown()));
@@ -155,7 +155,7 @@ impl Reactive for Player {
             identity,
             player_proxy.clone(),
             metadata,
-            Some(params.cancellation_token),
+            Some(params.cancellation_token.child_token()),
         );
         player.desktop_entry.set(desktop_entry);
 

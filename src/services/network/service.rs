@@ -75,7 +75,7 @@ impl NetworkService {
 
         let settings = Settings::get_live(LiveSettingsParams {
             zbus_connection: &connection,
-            cancellation_token: cancellation_token.child_token(),
+            cancellation_token: &cancellation_token,
         })
         .await
         .map_err(|err| {
@@ -91,7 +91,7 @@ impl NetworkService {
             match Wifi::get_live(LiveWifiParams {
                 connection: &connection,
                 device_path: path.clone(),
-                cancellation_token: cancellation_token.child_token(),
+                cancellation_token: &cancellation_token,
             })
             .await
             {
@@ -109,7 +109,7 @@ impl NetworkService {
             match Wired::get_live(LiveWiredParams {
                 connection: &connection,
                 device_path: path.clone(),
-                cancellation_token: cancellation_token.child_token(),
+                cancellation_token: &cancellation_token,
             })
             .await
             {
@@ -170,7 +170,7 @@ impl NetworkService {
         ActiveConnection::get_live(LiveActiveConnectionParams {
             connection: &self.zbus_connection,
             path,
-            cancellation_token: self.cancellation_token.child_token(),
+            cancellation_token: &self.cancellation_token,
         })
         .await
     }
@@ -201,7 +201,7 @@ impl NetworkService {
         AccessPoint::get_live(LiveAccessPointParams {
             connection: &self.zbus_connection,
             path,
-            cancellation_token: self.cancellation_token.child_token(),
+            cancellation_token: &self.cancellation_token,
         })
         .await
     }
@@ -235,7 +235,7 @@ impl NetworkService {
         ConnectionSettings::get_live(LiveConnectionSettingsParams {
             connection: &self.zbus_connection,
             path,
-            cancellation_token: self.cancellation_token.child_token(),
+            cancellation_token: &self.cancellation_token,
         })
         .await
     }
@@ -266,7 +266,7 @@ impl NetworkService {
         Device::get_live(LiveDeviceParams {
             connection: &self.zbus_connection,
             object_path: path,
-            cancellation_token: self.cancellation_token.child_token(),
+            cancellation_token: &self.cancellation_token,
         })
         .await
     }
@@ -297,7 +297,7 @@ impl NetworkService {
         DeviceWifi::get_live(LiveDeviceWifiParams {
             connection: &self.zbus_connection,
             device_path: path,
-            cancellation_token: self.cancellation_token.child_token(),
+            cancellation_token: &self.cancellation_token,
         })
         .await
     }
@@ -328,7 +328,7 @@ impl NetworkService {
         DeviceWired::get_live(LiveDeviceWiredParams {
             connection: &self.zbus_connection,
             device_path: path,
-            cancellation_token: self.cancellation_token.child_token(),
+            cancellation_token: &self.cancellation_token,
         })
         .await
     }

@@ -66,7 +66,7 @@ impl Reactive for Wired {
         let device_arc = DeviceWired::get_live(LiveDeviceWiredParams {
             connection: params.connection,
             device_path: params.device_path,
-            cancellation_token: params.cancellation_token.child_token(),
+            cancellation_token: params.cancellation_token,
         })
         .await?;
         let device = DeviceWired::clone(&device_arc);

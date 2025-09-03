@@ -103,7 +103,7 @@ impl MediaService {
         Player::get_live(LivePlayerParams {
             connection: &self.connection,
             player_id: player_id.clone(),
-            cancellation_token: self.cancellation_token.child_token(),
+            cancellation_token: &self.cancellation_token,
         })
         .await
     }

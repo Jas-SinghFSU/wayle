@@ -9,5 +9,5 @@ pub(crate) struct ConnectionSettingsParams<'a> {
 pub(crate) struct LiveConnectionSettingsParams<'a> {
     pub connection: &'a Connection,
     pub path: OwnedObjectPath,
-    pub cancellation_token: CancellationToken,
+    pub cancellation_token: &'a CancellationToken,
 }

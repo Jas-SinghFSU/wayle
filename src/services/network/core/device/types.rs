@@ -9,7 +9,7 @@ pub(crate) struct DeviceParams<'a> {
 pub(crate) struct LiveDeviceParams<'a> {
     pub connection: &'a Connection,
     pub object_path: OwnedObjectPath,
-    pub cancellation_token: CancellationToken,
+    pub cancellation_token: &'a CancellationToken,
 }
 
 /// Fetched device properties from D-Bus

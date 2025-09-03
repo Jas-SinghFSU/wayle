@@ -7,5 +7,5 @@ pub(crate) struct SettingsParams<'a> {
 
 pub(crate) struct LiveSettingsParams<'a> {
     pub zbus_connection: &'a Connection,
-    pub cancellation_token: CancellationToken,
+    pub cancellation_token: &'a CancellationToken,
 }

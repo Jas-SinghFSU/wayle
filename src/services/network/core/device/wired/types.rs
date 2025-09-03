@@ -9,7 +9,7 @@ pub(crate) struct DeviceWiredParams<'a> {
 pub(crate) struct LiveDeviceWiredParams<'a> {
     pub connection: &'a Connection,
     pub device_path: OwnedObjectPath,
-    pub cancellation_token: CancellationToken,
+    pub cancellation_token: &'a CancellationToken,
 }
 
 /// Network speed in megabits per second.

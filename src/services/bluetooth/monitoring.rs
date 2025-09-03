@@ -350,7 +350,7 @@ async fn handle_device_added(
         && let Ok(created_device) = Device::get_live(LiveDeviceParams {
             connection,
             path: object_path,
-            cancellation_token: cancellation_token.child_token(),
+            cancellation_token: &cancellation_token,
             notifier_tx,
         })
         .await
@@ -373,7 +373,7 @@ async fn handle_adapter_added(
         && let Ok(created_adapter) = Adapter::get_live(LiveAdapterParams {
             connection,
             path: object_path,
-            cancellation_token: cancellation_token.child_token(),
+            cancellation_token: &cancellation_token,
         })
         .await
     {

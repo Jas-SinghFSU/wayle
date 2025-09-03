@@ -9,5 +9,5 @@ pub(crate) struct WiredParams<'a> {
 pub(crate) struct LiveWiredParams<'a> {
     pub connection: &'a Connection,
     pub device_path: OwnedObjectPath,
-    pub cancellation_token: CancellationToken,
+    pub cancellation_token: &'a CancellationToken,
 }

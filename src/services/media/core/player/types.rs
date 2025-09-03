@@ -11,5 +11,5 @@ pub(crate) struct PlayerParams<'a> {
 pub(crate) struct LivePlayerParams<'a> {
     pub connection: &'a Connection,
     pub player_id: PlayerId,
-    pub cancellation_token: CancellationToken,
+    pub cancellation_token: &'a CancellationToken,
 }

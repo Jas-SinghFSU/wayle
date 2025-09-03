@@ -62,7 +62,7 @@ impl Reactive for ConnectionSettings {
             params.path.clone(),
             properties,
             params.connection,
-            Some(params.cancellation_token),
+            Some(params.cancellation_token.child_token()),
         ));
 
         settings.clone().start_monitoring().await?;

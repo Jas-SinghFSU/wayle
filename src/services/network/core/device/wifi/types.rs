@@ -9,7 +9,7 @@ pub(crate) struct DeviceWifiParams<'a> {
 pub(crate) struct LiveDeviceWifiParams<'a> {
     pub connection: &'a Connection,
     pub device_path: OwnedObjectPath,
-    pub cancellation_token: CancellationToken,
+    pub cancellation_token: &'a CancellationToken,
 }
 
 /// WiFi bitrate in kilobits per second.

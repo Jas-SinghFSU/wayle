@@ -173,7 +173,7 @@ async fn handle_player_added(
     match Player::get_live(LivePlayerParams {
         connection,
         player_id: player_id.clone(),
-        cancellation_token,
+        cancellation_token: &cancellation_token,
     })
     .await
     {

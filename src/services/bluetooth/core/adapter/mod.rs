@@ -186,7 +186,7 @@ impl Reactive for Adapter {
             props,
             context.connection,
             context.path.clone(),
-            Some(context.cancellation_token),
+            Some(context.cancellation_token.child_token()),
         );
         let adapter_arc = Arc::new(adapter);
 
