@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::sync::{Arc, Weak};
 
 use futures::StreamExt;
 use tokio::sync::broadcast;
@@ -32,9 +32,10 @@ impl ModelMonitoring for Device {
 
         let cancel_token = cancellation_token.clone();
         let notifier_tx = self.notifier_tx.clone();
+        let weak_self = Arc::downgrade(&self);
 
         tokio::spawn(async move {
-            monitor(self, proxy, cancel_token, notifier_tx).await;
+            monitor(weak_self, proxy, cancel_token, notifier_tx).await;
         });
 
         Ok(())
@@ -44,7 +45,7 @@ impl ModelMonitoring for Device {
 #[allow(clippy::cognitive_complexity)]
 #[allow(clippy::too_many_lines)]
 async fn monitor(
-    device: Arc<Device>,
+    device: Weak<Device>,
     proxy: Device1Proxy<'static>,
     cancellation_token: CancellationToken,
     notifier_tx: broadcast::Sender<ServiceNotification>,
@@ -76,144 +77,142 @@ async fn monitor(
     let mut preferred_bearer_changed = proxy.receive_preferred_bearer_changed().await;
 
     loop {
+        let Some(strong_device) = device.upgrade() else {
+            return;
+        };
         tokio::select! {
             _ = cancellation_token.cancelled() => {
-                debug!("Device monitoring cancelled for {}", device.object_path);
+                debug!("Device monitoring cancelled for {}", strong_device.object_path);
                 return;
             }
             Some(change) = address_changed.next() => {
                 if let Ok(value) = change.get().await {
-                    device.address.set(value);
+                    strong_device.address.set(value);
                 }
             }
             Some(change) = address_type_changed.next() => {
                 if let Ok(value) = change.get().await {
-                    device.address_type.set(AddressType::from(value.as_str()));
+                    strong_device.address_type.set(AddressType::from(value.as_str()));
                 }
             }
             Some(change) = name_changed.next() => {
                 let new_name = change.get().await.ok();
-                device.name.set(new_name);
+                strong_device.name.set(new_name);
             }
             Some(change) = icon_changed.next() => {
                 let new_icon = change.get().await.ok();
-                device.icon.set(new_icon);
+                strong_device.icon.set(new_icon);
             }
             Some(change) = class_changed.next() => {
                 let new_class = change.get().await.ok();
-                device.class.set(new_class);
+                strong_device.class.set(new_class);
             }
             Some(change) = appearance_changed.next() => {
                 let new_appearance = change.get().await.ok();
-                device.appearance.set(new_appearance);
+                strong_device.appearance.set(new_appearance);
             }
             Some(change) = uuids_changed.next() => {
                 let new_uuids = change.get().await.ok();
-                device.uuids.set(new_uuids);
+                strong_device.uuids.set(new_uuids);
             }
             Some(change) = paired_changed.next() => {
                 if let Ok(value) = change.get().await {
-                    device.paired.set(value);
+                    strong_device.paired.set(value);
                 }
             }
             Some(change) = bonded_changed.next() => {
                 if let Ok(value) = change.get().await {
-                    device.bonded.set(value);
+                    strong_device.bonded.set(value);
                 }
             }
             Some(change) = connected_changed.next() => {
                 if let Ok(value) = change.get().await {
-                    device.connected.set(value);
+                    strong_device.connected.set(value);
                     let _ = notifier_tx.send(ServiceNotification::DeviceConnectionChanged);
                 }
             }
             Some(change) = trusted_changed.next() => {
                 if let Ok(value) = change.get().await {
-                    device.trusted.set(value);
+                    strong_device.trusted.set(value);
                 }
             }
             Some(change) = blocked_changed.next() => {
                 if let Ok(value) = change.get().await {
-                    device.blocked.set(value);
+                    strong_device.blocked.set(value);
                 }
             }
             Some(change) = wake_allowed_changed.next() => {
                 if let Ok(value) = change.get().await {
-                    device.wake_allowed.set(value);
+                    strong_device.wake_allowed.set(value);
                 }
             }
             Some(change) = alias_changed.next() => {
                 if let Ok(value) = change.get().await {
-                    device.alias.set(value);
+                    strong_device.alias.set(value);
                 }
             }
             Some(change) = adapter_changed.next() => {
                 if let Ok(value) = change.get().await {
-                    device.adapter.set(value);
+                    strong_device.adapter.set(value);
                 }
             }
             Some(change) = legacy_pairing_changed.next() => {
                 if let Ok(value) = change.get().await {
-                    device.legacy_pairing.set(value);
+                    strong_device.legacy_pairing.set(value);
                 }
             }
             Some(change) = modalias_changed.next() => {
                 if let Ok(value) = change.get().await {
-                    device.modalias.set(if value.is_empty() { None } else { Some(value) });
+                    strong_device.modalias.set(if value.is_empty() { None } else { Some(value) });
                 }
             }
             Some(change) = rssi_changed.next() => {
                 let new_rssi = change.get().await.ok();
-                device.rssi.set(new_rssi);
+                strong_device.rssi.set(new_rssi);
             }
             Some(change) = tx_power_changed.next() => {
                 let new_tx_power = change.get().await.ok();
-                device.tx_power.set(new_tx_power);
+                strong_device.tx_power.set(new_tx_power);
             }
             Some(change) = manufacturer_data_changed.next() => {
                 let new_manufacturer_data = change.get().await.ok();
-                device.manufacturer_data.set(new_manufacturer_data);
+                strong_device.manufacturer_data.set(new_manufacturer_data);
             }
             Some(change) = service_data_changed.next() => {
                 let new_service_data = change.get().await.ok();
-                device.service_data.set(new_service_data);
+                strong_device.service_data.set(new_service_data);
             }
             Some(change) = services_resolved_changed.next() => {
                 if let Ok(value) = change.get().await {
-                    device.services_resolved.set(value);
+                    strong_device.services_resolved.set(value);
                 }
             }
             Some(change) = advertising_flags_changed.next() => {
                 if let Ok(value) = change.get().await {
-                    device.advertising_flags.set(value);
+                    strong_device.advertising_flags.set(value);
                 }
             }
             Some(change) = advertising_data_changed.next() => {
                 if let Ok(value) = change.get().await {
-                    device.advertising_data.set(value);
+                    strong_device.advertising_data.set(value);
                 }
             }
             Some(change) = preferred_bearer_changed.next() => {
                 match change.get().await {
                     Ok(new_preferred_bearer) => {
-                        device.preferred_bearer.set(
+                        strong_device.preferred_bearer.set(
                             Some(PreferredBearer::from(new_preferred_bearer.as_str()))
                         );
                     }
                     Err(_) => {
-                        device.preferred_bearer.set(None);
+                        strong_device.preferred_bearer.set(None);
                     }
                 }
             }
             else => {
-                debug!("All property streams ended for device {}", device.object_path);
+                debug!("All property streams ended for device {}", strong_device.object_path);
                 break;
             }
         }
     }
-
-    debug!(
-        "Property monitoring ended for device {}",
-        device.object_path
-    );
 }
