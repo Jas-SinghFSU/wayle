@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::sync::{Arc, Weak};
 
 use tokio_stream::StreamExt;
 use tokio_util::sync::CancellationToken;
@@ -25,9 +25,13 @@ impl ModelMonitoring for Wired {
         };
 
         let cancel_token = cancellation_token.clone();
+        let weak_self = Arc::downgrade(&self);
+        let device_proxy = DeviceProxy::new(&self.connection, self.device.object_path.clone())
+            .await
+            .map_err(NetworkError::DbusError)?;
 
         tokio::spawn(async move {
-            let _ = monitor_wired_connectivity(self, cancel_token).await;
+            let _ = monitor_wired_connectivity(weak_self, device_proxy, cancel_token).await;
         });
 
         Ok(())
@@ -35,19 +39,17 @@ impl ModelMonitoring for Wired {
 }
 
 async fn monitor_wired_connectivity(
-    wired: Arc<Wired>,
+    weak_wired: Weak<Wired>,
+    proxy: DeviceProxy<'static>,
     cancellation_token: CancellationToken,
 ) -> Result<(), NetworkError> {
-    let connectivity_prop = wired.connectivity.clone();
-    let device_path = wired.device.object_path.clone();
-
-    let device_proxy = DeviceProxy::new(&wired.connection, device_path)
-        .await
-        .map_err(NetworkError::DbusError)?;
-
-    let mut connectivity_changed = device_proxy.receive_state_changed().await;
+    let mut connectivity_changed = proxy.receive_state_changed().await;
 
     loop {
+        let Some(wired) = weak_wired.upgrade() else {
+            return Ok(());
+        };
+
         tokio::select! {
             _ = cancellation_token.cancelled() => {
                 debug!("Wired monitoring cancelled for {}", wired.device.object_path);
@@ -56,7 +58,7 @@ async fn monitor_wired_connectivity(
             Some(change) = connectivity_changed.next() => {
                 if let Ok(new_connectivity) = change.get().await {
                     let device_state = NMDeviceState::from_u32(new_connectivity);
-                    connectivity_prop.set(NetworkStatus::from_device_state(device_state));
+                    wired.connectivity.set(NetworkStatus::from_device_state(device_state));
                 }
             }
             else => {

@@ -30,16 +30,16 @@ impl ModelMonitoring for AudioStream {
 
         tokio::spawn(async move {
             loop {
+                let Some(stream) = weak_stream.upgrade() else {
+                    return;
+                };
+
                 tokio::select! {
                     _ = cancellation_token.cancelled() => {
                         debug!("AudioStream monitor cancelled for {:?}", stream_key);
                         return;
                     }
                     Ok(event) = event_rx.recv() => {
-                        let Some(stream) = weak_stream.upgrade() else {
-                            break;
-                        };
-
                         match event {
                             AudioEvent::StreamChanged(info) if info.key() == stream_key => {
                                 stream.update_from_info(&info);

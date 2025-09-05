@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::sync::{Arc, Weak};
 
 use futures::StreamExt;
 use tokio_util::sync::CancellationToken;
@@ -28,9 +28,10 @@ impl ModelMonitoring for AccessPoint {
         };
 
         let cancel_token = cancellation_token.clone();
+        let weak_self = Arc::downgrade(&self);
 
         tokio::spawn(async move {
-            monitor(self, proxy, cancel_token).await;
+            monitor(weak_self, proxy, cancel_token).await;
         });
 
         Ok(())
@@ -40,7 +41,7 @@ impl ModelMonitoring for AccessPoint {
 #[allow(clippy::cognitive_complexity)]
 #[allow(clippy::too_many_lines)]
 async fn monitor(
-    access_point: Arc<AccessPoint>,
+    weak_access_point: Weak<AccessPoint>,
     proxy: AccessPointProxy<'static>,
     cancellation_token: CancellationToken,
 ) {
@@ -56,6 +57,10 @@ async fn monitor(
     let mut last_seen_changes = proxy.receive_last_seen_changed().await;
 
     loop {
+        let Some(access_point) = weak_access_point.upgrade() else {
+            return;
+        };
+
         tokio::select! {
             _ = cancellation_token.cancelled() => {
                 debug!("AccessPointMonitor cancelled");

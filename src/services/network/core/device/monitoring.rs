@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::sync::{Arc, Weak};
 
 use futures::StreamExt;
 use tokio_util::sync::CancellationToken;
@@ -29,9 +29,10 @@ impl ModelMonitoring for Device {
         };
 
         let cancel_token = cancellation_token.clone();
+        let weak_self = Arc::downgrade(&self);
 
         tokio::spawn(async move {
-            monitor(self, proxy, cancel_token).await;
+            monitor(weak_self, proxy, cancel_token).await;
         });
 
         Ok(())
@@ -41,7 +42,7 @@ impl ModelMonitoring for Device {
 #[allow(clippy::cognitive_complexity)]
 #[allow(clippy::too_many_lines)]
 async fn monitor(
-    device: Arc<Device>,
+    weak_device: Weak<Device>,
     proxy: DeviceProxy<'static>,
     cancellation_token: CancellationToken,
 ) {
@@ -77,6 +78,10 @@ async fn monitor(
     let mut ports_changed = proxy.receive_ports_changed().await;
 
     loop {
+        let Some(device) = weak_device.upgrade() else {
+            return;
+        };
+
         tokio::select! {
             _ = cancellation_token.cancelled() => {
                 debug!("DeviceMonitor cancelled");

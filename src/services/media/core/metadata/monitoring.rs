@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::sync::{Arc, Weak};
 
 use futures::StreamExt;
 use tokio_util::sync::CancellationToken;
@@ -28,9 +28,10 @@ impl ModelMonitoring for TrackMetadata {
 
         let cancel_token = cancellation_token.clone();
         let proxy_clone = proxy.clone();
+        let weak_self = Arc::downgrade(&self);
 
         tokio::spawn(async move {
-            monitor(self, proxy_clone, cancel_token).await;
+            monitor(weak_self, proxy_clone, cancel_token).await;
         });
 
         Ok(())
@@ -38,13 +39,17 @@ impl ModelMonitoring for TrackMetadata {
 }
 
 async fn monitor(
-    metadata: Arc<TrackMetadata>,
+    weak_metadata: Weak<TrackMetadata>,
     proxy: MediaPlayer2PlayerProxy<'static>,
     cancellation_token: CancellationToken,
 ) {
     let mut metadata_changed = proxy.receive_metadata_changed().await;
 
     loop {
+        let Some(metadata) = weak_metadata.upgrade() else {
+            return;
+        };
+
         tokio::select! {
             _ = cancellation_token.cancelled() => {
                 debug!("TrackMetadataMonitor cancelled");

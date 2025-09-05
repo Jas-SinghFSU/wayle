@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::sync::{Arc, Weak};
 
 use futures::StreamExt;
 use tokio_util::sync::CancellationToken;
@@ -29,9 +29,10 @@ impl ModelMonitoring for DeviceWifi {
         };
 
         let cancel_token = cancellation_token.clone();
+        let weak_self = Arc::downgrade(&self);
 
         tokio::spawn(async move {
-            monitor_wifi(self, proxy, cancel_token).await;
+            monitor_wifi(weak_self, proxy, cancel_token).await;
         });
 
         Ok(())
@@ -40,7 +41,7 @@ impl ModelMonitoring for DeviceWifi {
 
 #[allow(clippy::cognitive_complexity)]
 async fn monitor_wifi(
-    device: Arc<DeviceWifi>,
+    weak_device: Weak<DeviceWifi>,
     proxy: DeviceWirelessProxy<'static>,
     cancellation_token: CancellationToken,
 ) {
@@ -53,6 +54,10 @@ async fn monitor_wifi(
     let mut last_scan_changed = proxy.receive_last_scan_changed().await;
 
     loop {
+        let Some(device) = weak_device.upgrade() else {
+            return;
+        };
+
         tokio::select! {
             _ = cancellation_token.cancelled() => {
                 debug!("DeviceWifi monitoring cancelled for {}", device.object_path);

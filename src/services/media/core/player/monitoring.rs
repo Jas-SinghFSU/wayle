@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::sync::{Arc, Weak};
 
 use futures::StreamExt;
 use tokio_util::sync::CancellationToken;
@@ -27,21 +27,22 @@ impl ModelMonitoring for Player {
         let cancel_token = cancellation_token.clone();
         let proxy = self.proxy.clone();
         let player_id = self.id.clone();
+        let weak_self = Arc::downgrade(&self);
 
         debug!("Starting property monitoring for player: {}", player_id);
 
         tokio::spawn(async move {
-            monitor_properties(player_id, self, proxy, cancel_token).await;
+            monitor_properties(player_id, weak_self, proxy, cancel_token).await;
         });
 
         Ok(())
     }
 }
 
-#[instrument(skip(player, proxy))]
+#[instrument(skip(weak_player, proxy))]
 async fn monitor_properties(
     player_id: PlayerId,
-    player: Arc<Player>,
+    weak_player: Weak<Player>,
     proxy: MediaPlayer2PlayerProxy<'static>,
     cancellation_token: CancellationToken,
 ) {
@@ -55,6 +56,10 @@ async fn monitor_properties(
     let mut can_seek_changes = proxy.receive_can_seek_changed().await;
 
     loop {
+        let Some(player) = weak_player.upgrade() else {
+            return;
+        };
+
         tokio::select! {
             _ = cancellation_token.cancelled() => {
                 debug!("Player {} monitor received cancellation, stopping", player_id);

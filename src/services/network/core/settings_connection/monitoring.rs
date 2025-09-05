@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::sync::{Arc, Weak};
 
 use futures::StreamExt;
 use tokio_util::sync::CancellationToken;
@@ -29,9 +29,10 @@ impl ModelMonitoring for ConnectionSettings {
         };
 
         let cancel_token = cancellation_token.clone();
+        let weak_self = Arc::downgrade(&self);
 
         tokio::spawn(async move {
-            monitor(self, proxy, cancel_token).await;
+            monitor(weak_self, proxy, cancel_token).await;
         });
 
         Ok(())
@@ -39,7 +40,7 @@ impl ModelMonitoring for ConnectionSettings {
 }
 
 async fn monitor(
-    settings: Arc<ConnectionSettings>,
+    weak_settings: Weak<ConnectionSettings>,
     proxy: SettingsConnectionProxy<'static>,
     cancellation_token: CancellationToken,
 ) {
@@ -48,6 +49,10 @@ async fn monitor(
     let mut filename_changed = proxy.receive_filename_changed().await;
 
     loop {
+        let Some(settings) = weak_settings.upgrade() else {
+            return;
+        };
+
         tokio::select! {
             _ = cancellation_token.cancelled() => {
                 debug!("ConnectionSettingsMonitor cancelled");

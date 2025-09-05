@@ -42,7 +42,7 @@ impl ModelMonitoring for OutputDevice {
                     }
                     Ok(event) = event_rx.recv() => {
                         let Some(device) = weak_device.upgrade() else {
-                            break;
+                            return;
                         };
 
                         match event {

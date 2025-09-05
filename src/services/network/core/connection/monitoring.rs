@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::sync::{Arc, Weak};
 
 use futures::StreamExt;
 use tokio_util::sync::CancellationToken;
@@ -28,9 +28,10 @@ impl ModelMonitoring for ActiveConnection {
         };
 
         let cancel_token = cancellation_token.clone();
+        let weak_self = Arc::downgrade(&self);
 
         tokio::spawn(async move {
-            monitor(self, proxy, cancel_token).await;
+            monitor(weak_self, proxy, cancel_token).await;
         });
 
         Ok(())
@@ -40,7 +41,7 @@ impl ModelMonitoring for ActiveConnection {
 #[allow(clippy::cognitive_complexity)]
 #[allow(clippy::too_many_lines)]
 async fn monitor(
-    active_connection: Arc<ActiveConnection>,
+    weak_active_connection: Weak<ActiveConnection>,
     proxy: ConnectionActiveProxy<'static>,
     cancellation_token: CancellationToken,
 ) {
@@ -62,6 +63,10 @@ async fn monitor(
     let mut controller_changed = proxy.receive_controller_changed().await;
 
     loop {
+        let Some(active_connection) = weak_active_connection.upgrade() else {
+            return;
+        };
+
         tokio::select! {
             _ = cancellation_token.cancelled() => {
                 debug!("ActiveConnection monitoring cancelled for {}", active_connection.object_path);

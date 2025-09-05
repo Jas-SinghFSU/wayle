@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::sync::{Arc, Weak};
 
 use futures::StreamExt;
 use tokio_util::sync::CancellationToken;
@@ -29,9 +29,10 @@ impl ModelMonitoring for DeviceWired {
         };
 
         let cancel_token = cancellation_token.clone();
+        let weak_self = Arc::downgrade(&self);
 
         tokio::spawn(async move {
-            monitor_wired(self, proxy, cancel_token).await;
+            monitor_wired(weak_self, proxy, cancel_token).await;
         });
 
         Ok(())
@@ -39,7 +40,7 @@ impl ModelMonitoring for DeviceWired {
 }
 
 async fn monitor_wired(
-    device: Arc<DeviceWired>,
+    weak_device: Weak<DeviceWired>,
     proxy: DeviceWiredProxy<'static>,
     cancellation_token: CancellationToken,
 ) {
@@ -48,6 +49,10 @@ async fn monitor_wired(
     let mut s390_subchannels_changed = proxy.receive_s390_subchannels_changed().await;
 
     loop {
+        let Some(device) = weak_device.upgrade() else {
+            return;
+        };
+
         tokio::select! {
             _ = cancellation_token.cancelled() => {
                 debug!("DeviceWired monitoring cancelled for {}", device.object_path);

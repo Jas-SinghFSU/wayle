@@ -43,7 +43,7 @@ impl ModelMonitoring for Adapter {
 #[allow(clippy::cognitive_complexity)]
 #[allow(clippy::too_many_lines)]
 async fn monitor(
-    adapter: Weak<Adapter>,
+    weak_adapter: Weak<Adapter>,
     proxy: Adapter1Proxy<'static>,
     cancellation_token: CancellationToken,
 ) {
@@ -68,78 +68,78 @@ async fn monitor(
     let mut version_changed = proxy.receive_version_changed().await;
 
     loop {
-        let Some(strong_adapter) = adapter.upgrade() else {
+        let Some(adapter) = weak_adapter.upgrade() else {
             return;
         };
 
         tokio::select! {
             _ = cancellation_token.cancelled() => {
-                debug!("AdapterMonitor cancelled for {}", strong_adapter.object_path);
+                debug!("AdapterMonitor cancelled for {}", adapter.object_path);
                 return;
             }
             Some(change) = address_changed.next() => {
                 if let Ok(value) = change.get().await {
-                    strong_adapter.address.set(value);
+                    adapter.address.set(value);
                 }
             }
             Some(change) = address_type_changed.next() => {
                 if let Ok(value) = change.get().await {
-                    strong_adapter.address_type.set(AddressType::from(value.as_str()));
+                    adapter.address_type.set(AddressType::from(value.as_str()));
                 }
             }
             Some(change) = name_changed.next() => {
                 if let Ok(value) = change.get().await {
-                    strong_adapter.name.set(value);
+                    adapter.name.set(value);
                 }
             }
             Some(change) = alias_changed.next() => {
                 if let Ok(value) = change.get().await {
-                    strong_adapter.alias.set(value);
+                    adapter.alias.set(value);
                 }
             }
             Some(change) = class_changed.next() => {
                 if let Ok(value) = change.get().await {
-                    strong_adapter.class.set(value);
+                    adapter.class.set(value);
                 }
             }
             Some(change) = connectable_changed.next() => {
                 if let Ok(value) = change.get().await {
-                    strong_adapter.connectable.set(value);
+                    adapter.connectable.set(value);
                 }
             }
             Some(change) = powered_changed.next() => {
                 if let Ok(value) = change.get().await {
-                    strong_adapter.powered.set(value);
+                    adapter.powered.set(value);
                 }
             }
             Some(change) = power_state_changed.next() => {
                 if let Ok(value) = change.get().await {
-                    strong_adapter.power_state.set(PowerState::from(value.as_str()));
+                    adapter.power_state.set(PowerState::from(value.as_str()));
                 }
             }
             Some(change) = discoverable_changed.next() => {
                 if let Ok(value) = change.get().await {
-                    strong_adapter.discoverable.set(value);
+                    adapter.discoverable.set(value);
                 }
             }
             Some(change) = discoverable_timeout_changed.next() => {
                 if let Ok(value) = change.get().await {
-                    strong_adapter.discoverable_timeout.set(value);
+                    adapter.discoverable_timeout.set(value);
                 }
             }
             Some(change) = discovering_changed.next() => {
                 if let Ok(value) = change.get().await {
-                    strong_adapter.discovering.set(value);
+                    adapter.discovering.set(value);
                 }
             }
             Some(change) = pairable_changed.next() => {
                 if let Ok(value) = change.get().await {
-                    strong_adapter.pairable.set(value);
+                    adapter.pairable.set(value);
                 }
             }
             Some(change) = pairable_timeout_changed.next() => {
                 if let Ok(value) = change.get().await {
-                    strong_adapter.pairable_timeout.set(value);
+                    adapter.pairable_timeout.set(value);
                 }
             }
             Some(change) = uuids_changed.next() => {
@@ -147,12 +147,12 @@ async fn monitor(
                     let uuids: Vec<UUID> = value.into_iter()
                         .map(|s| UUID::from(s.as_str()))
                         .collect();
-                    strong_adapter.uuids.set(uuids);
+                    adapter.uuids.set(uuids);
                 }
             }
             Some(change) = modalias_changed.next() => {
                 if let Ok(value) = change.get().await {
-                    strong_adapter.modalias.set(if value.is_empty() { None } else { Some(value) });
+                    adapter.modalias.set(if value.is_empty() { None } else { Some(value) });
                 }
             }
             Some(change) = roles_changed.next() => {
@@ -160,7 +160,7 @@ async fn monitor(
                     let roles: Vec<AdapterRole> = value.into_iter()
                         .map(|s| AdapterRole::from(s.as_str()))
                         .collect();
-                    strong_adapter.roles.set(roles);
+                    adapter.roles.set(roles);
                 }
             }
             Some(change) = experimental_features_changed.next() => {
@@ -168,21 +168,21 @@ async fn monitor(
                     let features: Vec<UUID> = value.into_iter()
                         .map(|s| UUID::from(s.as_str()))
                         .collect();
-                    strong_adapter.experimental_features.set(features);
+                    adapter.experimental_features.set(features);
                 }
             }
             Some(change) = manufacturer_changed.next() => {
                 if let Ok(value) = change.get().await {
-                    strong_adapter.manufacturer.set(value);
+                    adapter.manufacturer.set(value);
                 }
             }
             Some(change) = version_changed.next() => {
                 if let Ok(value) = change.get().await {
-                    strong_adapter.version.set(value);
+                    adapter.version.set(value);
                 }
             }
             else => {
-                debug!("All property streams ended for adapter {}", strong_adapter.object_path);
+                debug!("All property streams ended for adapter {}", adapter.object_path);
                 break;
             }
         }

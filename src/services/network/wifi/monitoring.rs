@@ -1,8 +1,8 @@
-use std::sync::Arc;
+use std::sync::{Arc, Weak};
 
 use tokio_stream::StreamExt;
 use tokio_util::sync::CancellationToken;
-use tracing::debug;
+use tracing::{debug, error};
 use zbus::{Connection, proxy::PropertyStream, zvariant::OwnedObjectPath};
 
 use super::Wifi;
@@ -49,9 +49,27 @@ impl ModelMonitoring for Wifi {
         .await;
 
         let cancel_token = cancellation_token.clone();
+        let weak_self = Arc::downgrade(&self);
+
+        let wireless_proxy = DeviceWirelessProxy::new(&self.connection, self.object_path.clone())
+            .await
+            .map_err(NetworkError::DbusError)?;
+        let device_proxy = DeviceProxy::new(&self.connection, self.object_path.clone())
+            .await
+            .map_err(NetworkError::DbusError)?;
+        let nm_proxy = NetworkManagerProxy::new(&self.connection)
+            .await
+            .map_err(NetworkError::DbusError)?;
 
         tokio::spawn(async move {
-            let _ = monitor_wifi(self, cancel_token).await;
+            let _ = monitor_wifi(
+                weak_self,
+                wireless_proxy,
+                device_proxy,
+                nm_proxy,
+                cancel_token,
+            )
+            .await;
         });
 
         Ok(())
@@ -89,27 +107,12 @@ async fn populate_existing_access_points(
 }
 
 async fn monitor_wifi(
-    wifi: Arc<Wifi>,
+    weak_wifi: Weak<Wifi>,
+    wireless_proxy: DeviceWirelessProxy<'static>,
+    device_proxy: DeviceProxy<'static>,
+    nm_proxy: NetworkManagerProxy<'static>,
     cancellation_token: CancellationToken,
 ) -> Result<(), NetworkError> {
-    let access_points_prop = wifi.access_points.clone();
-    let device_prop = wifi.device.clone();
-    let enabled_state_prop = wifi.enabled.clone();
-    let ssid_prop = wifi.ssid.clone();
-    let strength_prop = wifi.strength.clone();
-    let connectivity_prop = wifi.connectivity.clone();
-
-    let wireless_proxy =
-        DeviceWirelessProxy::new(&wifi.connection, device_prop.object_path.clone())
-            .await
-            .map_err(NetworkError::DbusError)?;
-    let device_proxy = DeviceProxy::new(&wifi.connection, device_prop.object_path.clone())
-        .await
-        .map_err(NetworkError::DbusError)?;
-    let nm_proxy = NetworkManagerProxy::new(&wifi.connection)
-        .await
-        .map_err(NetworkError::DbusError)?;
-
     let mut ap_added = wireless_proxy
         .receive_access_point_added()
         .await
@@ -122,16 +125,31 @@ async fn monitor_wifi(
     let mut access_point_changed = wireless_proxy.receive_active_access_point_changed().await;
     let mut connectivity_changed = device_proxy.receive_state_changed().await;
 
-    let (mut ap_ssid_stream, mut ap_strength_stream) = handle_access_point_changed(
-        &wifi.connection,
-        device_prop.active_access_point.get(),
-        &ssid_prop,
-        &strength_prop,
-    )
-    .await;
+    let (mut ap_ssid_stream, mut ap_strength_stream) = {
+        let Some(wifi) = weak_wifi.upgrade() else {
+            error!("Failed to upgrade weak wifi reference.");
+            error!("Access Point monitoring may be degraded");
+            return Err(NetworkError::OperationFailed {
+                operation: "monitor_wifi",
+                reason: String::from("Failed to upgrade weak_wifi"),
+            });
+        };
+
+        handle_access_point_changed(
+            &wifi.connection,
+            wifi.device.active_access_point.get(),
+            &wifi.ssid,
+            &wifi.strength,
+        )
+        .await
+    };
 
     tokio::spawn(async move {
         loop {
+            let Some(wifi) = weak_wifi.upgrade() else {
+                return;
+            };
+
             tokio::select! {
                 _ = cancellation_token.cancelled() => {
                     debug!("WifiMonitor cancelled");
@@ -140,19 +158,19 @@ async fn monitor_wifi(
 
                 Some(added) = ap_added.next() => {
                     if let Ok(args) = added.args() {
-                        handle_ap_added(&wifi.connection, args.access_point, &access_points_prop, &cancellation_token).await;
+                        handle_ap_added(&wifi.connection, args.access_point, &wifi.access_points, &cancellation_token).await;
                     }
                 }
 
                 Some(removed) = ap_removed.next() => {
                     if let Ok(args) = removed.args() {
-                        handle_ap_removed(&args.access_point, &access_points_prop);
+                        handle_ap_removed(&args.access_point, &wifi.access_points);
                     }
                 }
 
                 Some(change) = enabled_changed.next() => {
                     if let Ok(new_state) = change.get().await {
-                        enabled_state_prop.set(new_state);
+                        wifi.enabled.set(new_state);
                     }
                 }
 
@@ -165,8 +183,8 @@ async fn monitor_wifi(
                         handle_access_point_changed(
                             &wifi.connection,
                             new_ap_path,
-                            &ssid_prop,
-                            &strength_prop
+                            &wifi.ssid,
+                            &wifi.strength
                         ).await;
 
                     ap_ssid_stream = new_ssid_stream;
@@ -175,20 +193,20 @@ async fn monitor_wifi(
 
                 Some(change) = async { ap_ssid_stream.as_mut()?.next().await } => {
                     if let Ok(new_ssid) = change.get().await {
-                        ssid_prop.set(Some(SSID::new(new_ssid).to_string()));
+                        wifi.ssid.set(Some(SSID::new(new_ssid).to_string()));
                     }
                 }
 
                 Some(change) = async { ap_strength_stream.as_mut()?.next().await } => {
                     if let Ok(new_strength) = change.get().await {
-                        strength_prop.set(Some(new_strength));
+                        wifi.strength.set(Some(new_strength));
                     }
                 }
 
                 Some(change) = connectivity_changed.next() => {
                     if let Ok(new_connectivity) = change.get().await {
                         let device_state = NMDeviceState::from_u32(new_connectivity);
-                        connectivity_prop.set(NetworkStatus::from_device_state(device_state));
+                        wifi.connectivity.set(NetworkStatus::from_device_state(device_state));
                     }
                 }
 

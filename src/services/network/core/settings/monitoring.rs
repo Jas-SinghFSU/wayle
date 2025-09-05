@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::sync::{Arc, Weak};
 
 use futures::StreamExt;
 use tokio_util::sync::CancellationToken;
@@ -28,10 +28,12 @@ impl ModelMonitoring for Settings {
             });
         };
 
+        let settings_proxy = SettingsProxy::new(&self.zbus_connection).await?;
         let cancel_token = cancellation_token.clone();
+        let weak_self = Arc::downgrade(&self);
 
         tokio::spawn(async move {
-            if let Err(e) = monitor(self, cancel_token).await {
+            if let Err(e) = monitor(weak_self, settings_proxy, cancel_token).await {
                 warn!("Failed to start SettingsMonitor: {e}");
             }
         });
@@ -42,11 +44,10 @@ impl ModelMonitoring for Settings {
 
 #[allow(clippy::cognitive_complexity)]
 async fn monitor(
-    settings: Arc<Settings>,
+    weak_settings: Weak<Settings>,
+    settings_proxy: SettingsProxy<'_>,
     cancellation_token: CancellationToken,
 ) -> Result<(), NetworkError> {
-    let settings_proxy = SettingsProxy::new(&settings.zbus_connection).await?;
-
     let mut connection_removed = settings_proxy.receive_connection_removed().await;
     let mut connection_added = settings_proxy.receive_new_connection().await;
     let mut hostname_changed = settings_proxy.receive_hostname_changed().await;
@@ -54,6 +55,10 @@ async fn monitor(
     let mut version_id_changed = settings_proxy.receive_version_id_changed().await;
 
     loop {
+        let Some(settings) = weak_settings.upgrade() else {
+            return Ok(());
+        };
+
         tokio::select! {
             _ = cancellation_token.cancelled() => {
                 debug!("SettingsMonitor cancelled");
