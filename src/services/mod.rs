@@ -11,6 +11,10 @@ pub mod network;
 /// Service traits for uniform interfaces
 pub mod traits;
 
+pub mod power_profiles;
+
+pub mod battery;
+
 pub use audio::{
     AudioError, AudioEvent, AudioService, DeviceInfo, DeviceKey, DeviceType, StreamInfo, StreamKey,
     StreamType, Volume,

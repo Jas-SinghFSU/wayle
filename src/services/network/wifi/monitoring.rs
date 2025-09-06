@@ -158,7 +158,12 @@ async fn monitor_wifi(
 
                 Some(added) = ap_added.next() => {
                     if let Ok(args) = added.args() {
-                        handle_ap_added(&wifi.connection, args.access_point, &wifi.access_points, &cancellation_token).await;
+                        handle_ap_added(
+                            &wifi.connection,
+                            args.access_point,
+                            &wifi.access_points,
+                            &cancellation_token
+                        ).await;
                     }
                 }
 
