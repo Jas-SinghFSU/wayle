@@ -12,7 +12,7 @@ use zbus::proxy;
     default_service = "org.bluez",
     default_path = "/org/bluez"
 )]
-pub trait AgentManager1 {
+pub(crate) trait AgentManager1 {
     /// Registers pairing agent.
     ///
     /// The object path defines the path of the agent that will be called when user

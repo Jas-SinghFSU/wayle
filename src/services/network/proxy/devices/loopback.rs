@@ -7,6 +7,6 @@ use zbus::proxy;
     default_service = "org.freedesktop.NetworkManager",
     interface = "org.freedesktop.NetworkManager.Device.Loopback"
 )]
-pub trait DeviceLoopback {
+pub(crate) trait DeviceLoopback {
     // No properties
 }

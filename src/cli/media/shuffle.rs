@@ -1,9 +1,13 @@
 use super::{commands::ShuffleModeArg, utils::get_player_or_active};
 use crate::{
     cli::CliAction,
-    services::media::{Config, MediaService, ShuffleMode},
+    services::media::{
+        service::{Config, MediaService},
+        types::ShuffleMode,
+    },
 };
 
+/// Execute the command
 pub async fn execute(state: Option<ShuffleModeArg>, player: Option<String>) -> CliAction {
     let service = MediaService::new(Config {
         ignored_players: vec![],

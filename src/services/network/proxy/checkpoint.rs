@@ -9,7 +9,7 @@ use zbus::{proxy, zvariant::OwnedObjectPath};
     default_service = "org.freedesktop.NetworkManager",
     interface = "org.freedesktop.NetworkManager.Checkpoint"
 )]
-pub trait Checkpoint {
+pub(crate) trait Checkpoint {
     /// Array of object paths for devices which are part of this checkpoint.
     #[zbus(property)]
     fn devices(&self) -> zbus::Result<Vec<OwnedObjectPath>>;

@@ -7,14 +7,12 @@ use tracing::{info, instrument};
 use zbus::Connection;
 
 use super::{
-    MediaError, PlayerId,
-    core::{
-        Player,
-        player::{LivePlayerParams, PlayerParams},
-    },
+    core::player::{LivePlayerParams, Player, PlayerParams},
+    types::PlayerId,
 };
 use crate::services::{
-    common::Property,
+    common::property::Property,
+    media::error::MediaError,
     traits::{Reactive, ServiceMonitoring},
 };
 

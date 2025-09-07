@@ -1,23 +1,21 @@
-/// Device-related command handling
-pub mod device;
-/// Server and default device command handling
-pub mod server;
-/// Stream-related command handling
-pub mod stream;
+pub(crate) mod device;
+pub(crate) mod server;
+pub(crate) mod stream;
 
 use tokio::sync::oneshot;
 
-use crate::services::{
-    AudioError,
-    audio::{
-        Volume,
-        types::{Device, DeviceKey, StreamInfo, StreamKey},
+use crate::services::audio::{
+    error::AudioError,
+    types::{
+        device::{Device, DeviceKey},
+        stream::{StreamInfo, StreamKey},
     },
+    volume::types::Volume,
 };
 
 /// Backend command with responders for queries
 #[derive(Debug)]
-pub enum Command {
+pub(crate) enum Command {
     /// Get device information
     GetDevice {
         /// Device to query.
@@ -110,6 +108,4 @@ pub enum Command {
         /// Channel to send response.
         responder: oneshot::Sender<Result<(), AudioError>>,
     },
-    /// Shutdown backend
-    Shutdown,
 }

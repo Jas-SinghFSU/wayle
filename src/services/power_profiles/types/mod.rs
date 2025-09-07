@@ -1,3 +1,2 @@
-mod profile;
-
-pub use profile::*;
+/// Power profile type definitions
+pub mod profile;

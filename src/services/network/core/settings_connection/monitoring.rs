@@ -7,8 +7,8 @@ use tracing::debug;
 use super::ConnectionSettings;
 use crate::services::{
     network::{
-        NMConnectionSettingsFlags, NetworkError,
-        proxy::settings::connection::SettingsConnectionProxy,
+        error::NetworkError, proxy::settings::connection::SettingsConnectionProxy,
+        types::flags::NMConnectionSettingsFlags,
     },
     traits::ModelMonitoring,
 };

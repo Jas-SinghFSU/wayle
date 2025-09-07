@@ -72,6 +72,7 @@ pub enum MediaCommands {
 }
 
 #[derive(ValueEnum, Debug, Clone, Copy)]
+/// Loop mode argument for CLI commands
 pub enum LoopModeArg {
     /// No looping
     None,
@@ -82,6 +83,7 @@ pub enum LoopModeArg {
 }
 
 #[derive(ValueEnum, Debug, Clone, Copy)]
+/// Shuffle mode argument for CLI commands
 pub enum ShuffleModeArg {
     /// Enable shuffle
     On,

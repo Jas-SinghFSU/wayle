@@ -11,7 +11,7 @@ use zbus::{proxy, zvariant::OwnedValue};
     default_service = "org.freedesktop.NetworkManager",
     interface = "org.freedesktop.NetworkManager.IP4Config"
 )]
-pub trait IP4Config {
+pub(crate) trait IP4Config {
     /// Array of arrays of IPv4 address/prefix/gateway.
     #[zbus(property)]
     fn addresses(&self) -> zbus::Result<Vec<Vec<u32>>>;

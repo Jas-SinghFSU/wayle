@@ -6,7 +6,7 @@ use zbus::{
 };
 
 use crate::services::network::{
-    NetworkError, proxy::settings::connection::SettingsConnectionProxy,
+    error::NetworkError, proxy::settings::connection::SettingsConnectionProxy,
 };
 
 pub(super) struct ConnectionSettingsControls;

@@ -3,7 +3,10 @@ use std::sync::Arc;
 use tracing::debug;
 
 use crate::services::{
-    audio::{core::stream::AudioStream, error::AudioError, events::AudioEvent, types::StreamState},
+    audio::{
+        core::stream::AudioStream, error::AudioError, events::AudioEvent,
+        types::stream::StreamState,
+    },
     traits::ModelMonitoring,
 };
 
@@ -43,36 +46,6 @@ impl ModelMonitoring for AudioStream {
                         match event {
                             AudioEvent::StreamChanged(info) if info.key() == stream_key => {
                                 stream.update_from_info(&info);
-                            }
-                            AudioEvent::StreamVolumeChanged {
-                                stream_key: key,
-                                volume,
-                            } if key == stream_key => {
-                                stream.volume.set(volume);
-                            }
-                            AudioEvent::StreamMuteChanged {
-                                stream_key: key,
-                                muted,
-                            } if key == stream_key => {
-                                stream.muted.set(muted);
-                            }
-                            AudioEvent::StreamStateChanged {
-                                stream_key: key,
-                                state,
-                            } if key == stream_key => {
-                                stream.state.set(state);
-                            }
-                            AudioEvent::StreamCorkedChanged {
-                                stream_key: key,
-                                corked,
-                            } if key == stream_key => {
-                                stream.corked.set(corked);
-                            }
-                            AudioEvent::StreamMovedToDevice {
-                                stream_key: key,
-                                device_index,
-                            } if key == stream_key => {
-                                stream.device_index.set(device_index);
                             }
                             AudioEvent::StreamRemoved(key) if key == stream_key => {
                                 stream.state.set(StreamState::Terminated);

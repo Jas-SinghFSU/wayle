@@ -1,6 +1,6 @@
-mod controls;
-mod monitoring;
-mod types;
+pub(crate) mod controls;
+pub(crate) mod monitoring;
+pub(crate) mod types;
 
 use std::{collections::HashMap, sync::Arc};
 
@@ -11,15 +11,19 @@ pub(crate) use types::{AudioStreamParams, LiveAudioStreamParams};
 
 use crate::services::{
     audio::{
-        Volume,
         backend::{
             commands::Command,
             types::{CommandSender, EventSender},
         },
         error::AudioError,
-        types::{ChannelMap, DeviceKey, MediaInfo, SampleSpec, StreamInfo, StreamKey, StreamState},
+        types::{
+            device::DeviceKey,
+            format::{ChannelMap, SampleSpec},
+            stream::{MediaInfo, StreamInfo, StreamKey, StreamState},
+        },
+        volume::types::Volume,
     },
-    common::Property,
+    common::property::Property,
     traits::{ModelMonitoring, Reactive},
 };
 

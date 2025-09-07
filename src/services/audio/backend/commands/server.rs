@@ -3,15 +3,13 @@ use std::sync::Arc;
 use libpulse_binding::context::Context;
 use tracing::warn;
 
-use crate::services::{
-    AudioEvent,
-    audio::{
-        backend::types::{DefaultDevice, DeviceStore, EventSender},
-        types::{Device, DeviceKey},
-    },
+use crate::services::audio::{
+    backend::types::{DefaultDevice, DeviceStore, EventSender},
+    events::AudioEvent,
+    types::device::{Device, DeviceKey},
 };
 
-pub(crate) fn trigger_server_info_query(
+pub(crate) fn trigger_info_query(
     context: &Context,
     devices: &DeviceStore,
     events_tx: &EventSender,

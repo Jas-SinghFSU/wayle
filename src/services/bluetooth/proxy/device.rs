@@ -14,7 +14,7 @@ use zbus::{
 /// Interface: `org.bluez.Device1`
 /// Object path: `[variable prefix]/{hci0,hci1,...}/dev_{BDADDR}`
 #[proxy(interface = "org.bluez.Device1", default_service = "org.bluez")]
-pub trait Device1 {
+pub(crate) trait Device1 {
     /// Connects all profiles the remote device supports that can be connected to and
     /// have been flagged as auto-connectable. If only subset of profiles is already
     /// connected it will try to connect currently disconnected ones.

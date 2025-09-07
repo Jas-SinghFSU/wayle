@@ -1,9 +1,13 @@
 use super::{commands::LoopModeArg, utils::get_player_or_active};
 use crate::{
     cli::CliAction,
-    services::media::{Config, LoopMode, MediaService},
+    services::media::{
+        service::{Config, MediaService},
+        types::LoopMode,
+    },
 };
 
+/// Execute the command
 pub async fn execute(mode: LoopModeArg, player: Option<String>) -> CliAction {
     let service = MediaService::new(Config {
         ignored_players: vec![],

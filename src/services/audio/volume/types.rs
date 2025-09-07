@@ -1,6 +1,6 @@
 use tracing::warn;
 
-use super::VolumeError;
+use super::error::VolumeError;
 
 /// Multi-channel volume with safety warnings
 ///

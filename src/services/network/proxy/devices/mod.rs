@@ -49,7 +49,7 @@ type NMAppliedConnection = HashMap<String, HashMap<String, OwnedValue>>;
     default_service = "org.freedesktop.NetworkManager",
     interface = "org.freedesktop.NetworkManager.Device"
 )]
-pub trait Device {
+pub(crate) trait Device {
     /// Attempts to update device with new connection settings and properties.
     ///
     /// # Arguments

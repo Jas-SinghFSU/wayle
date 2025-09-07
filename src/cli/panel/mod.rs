@@ -1,6 +1,7 @@
-mod commands;
+/// Panel command definitions
+pub mod commands;
 
-pub use commands::PanelCommands;
+use commands::PanelCommands;
 
 use crate::cli::CliAction;
 
@@ -8,7 +9,8 @@ use crate::cli::CliAction;
 ///
 /// # Errors
 /// Returns error if the command execution fails.
-pub async fn execute(command: PanelCommands) -> CliAction {
+/// Execute the command
+pub async fn execute(command: commands::PanelCommands) -> CliAction {
     match command {
         PanelCommands::Start => commands::start().await,
         PanelCommands::Stop => commands::stop().await,

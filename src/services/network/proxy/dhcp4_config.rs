@@ -11,7 +11,7 @@ use zbus::{proxy, zvariant::Value as Variant};
     default_service = "org.freedesktop.NetworkManager",
     interface = "org.freedesktop.NetworkManager.DHCP4Config"
 )]
-pub trait DHCP4Config {
+pub(crate) trait DHCP4Config {
     /// Configuration options returned by a DHCP server.
     #[zbus(property)]
     fn options(&self) -> zbus::Result<HashMap<String, Variant>>;

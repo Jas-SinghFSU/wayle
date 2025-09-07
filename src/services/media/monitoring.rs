@@ -6,15 +6,12 @@ use tokio_util::sync::CancellationToken;
 use tracing::{debug, instrument, warn};
 use zbus::{Connection, fdo::DBusProxy};
 
+use super::{core::player::Player, error::MediaError, types::PlayerId};
 use crate::{
     core::state::RuntimeState,
     services::{
-        common::Property,
-        media::{
-            MediaError, PlayerId,
-            core::{Player, player::LivePlayerParams},
-            service::MediaService,
-        },
+        common::property::Property,
+        media::{core::player::LivePlayerParams, service::MediaService},
         traits::{Reactive, ServiceMonitoring},
     },
 };

@@ -40,7 +40,7 @@ pub(crate) struct LiveDeviceParams<'a> {
     pub notifier_tx: &'a broadcast::Sender<ServiceNotification>,
 }
 
-pub struct DeviceProperties {
+pub(crate) struct DeviceProperties {
     pub address: String,
     pub address_type: String,
     pub name: Option<String>,

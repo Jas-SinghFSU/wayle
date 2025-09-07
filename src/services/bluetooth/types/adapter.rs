@@ -145,3 +145,59 @@ impl Display for DiscoveryTransport {
 
 /// Discovery filter parameters for Bluetooth device discovery.
 pub type DiscoveryFilter<'a> = HashMap<String, Value<'a>>;
+
+/// Options for creating discovery filters with type safety.
+#[derive(Debug, Clone, Default)]
+pub struct DiscoveryFilterOptions<'a> {
+    /// UUIDs to filter for. Only devices advertising these UUIDs will be discovered.
+    pub uuids: Option<Vec<&'a str>>,
+    /// RSSI threshold. Only devices with RSSI >= threshold will be discovered.
+    pub rssi: Option<i16>,
+    /// Pathloss threshold. Only devices with Pathloss <= threshold will be discovered.
+    pub pathloss: Option<u16>,
+    /// Transport type to filter for.
+    pub transport: Option<DiscoveryTransport>,
+    /// Whether to report duplicate advertisement data.
+    pub duplicate_data: Option<bool>,
+    /// Whether to make this client discoverable.
+    pub discoverable: Option<bool>,
+}
+
+impl<'a> DiscoveryFilterOptions<'a> {
+    /// Create a new discovery filter options struct.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Convert options to a discovery filter HashMap.
+    pub fn to_filter(self) -> DiscoveryFilter<'a> {
+        let mut filter = HashMap::new();
+
+        if let Some(uuids) = self.uuids {
+            let uuid_values: Vec<Value> = uuids.into_iter().map(Value::from).collect();
+            filter.insert("UUIDs".to_string(), Value::from(uuid_values));
+        }
+
+        if let Some(rssi) = self.rssi {
+            filter.insert("RSSI".to_string(), Value::from(rssi));
+        }
+
+        if let Some(pathloss) = self.pathloss {
+            filter.insert("Pathloss".to_string(), Value::from(pathloss));
+        }
+
+        if let Some(transport) = self.transport {
+            filter.insert("Transport".to_string(), Value::from(transport.to_string()));
+        }
+
+        if let Some(duplicate_data) = self.duplicate_data {
+            filter.insert("DuplicateData".to_string(), Value::from(duplicate_data));
+        }
+
+        if let Some(discoverable) = self.discoverable {
+            filter.insert("Discoverable".to_string(), Value::from(discoverable));
+        }
+
+        filter
+    }
+}

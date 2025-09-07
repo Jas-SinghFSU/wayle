@@ -7,7 +7,7 @@ use zbus::{proxy, zvariant::OwnedObjectPath};
     default_service = "org.freedesktop.NetworkManager",
     interface = "org.freedesktop.NetworkManager.Device.IPTunnel"
 )]
-pub trait DeviceIPTunnel {
+pub(crate) trait DeviceIPTunnel {
     /// The tunneling mode.
     #[zbus(property)]
     fn mode(&self) -> zbus::Result<u32>;

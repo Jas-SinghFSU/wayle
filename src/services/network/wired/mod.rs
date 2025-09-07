@@ -6,11 +6,12 @@ use std::{ops::Deref, sync::Arc};
 pub(crate) use types::{LiveWiredParams, WiredParams};
 
 use super::{
-    NetworkError, NetworkStatus,
     core::device::wired::{DeviceWired, DeviceWiredParams, LiveDeviceWiredParams},
+    error::NetworkError,
+    types::states::NetworkStatus,
 };
 use crate::services::{
-    common::Property,
+    common::property::Property,
     traits::{ModelMonitoring, Reactive},
 };
 

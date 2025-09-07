@@ -9,7 +9,7 @@ use zbus::proxy;
 /// Interface: `org.bluez.Agent1`
 /// Object path: `freely definable`
 #[proxy(interface = "org.bluez.Agent1")]
-pub trait Agent1 {
+pub(crate) trait Agent1 {
     /// This method gets called when bluetoothd unregisters the agent.
     ///
     /// An agent can use it to do cleanup tasks. There is no need to unregister the

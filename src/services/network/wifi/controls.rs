@@ -6,7 +6,9 @@ use zbus::{
 };
 
 use crate::services::network::{
-    AccessPointProxy, DeviceProxy, NetworkError, NetworkManagerProxy, SSID,
+    core::access_point::types::SSID,
+    error::NetworkError,
+    proxy::{access_point::AccessPointProxy, devices::DeviceProxy, manager::NetworkManagerProxy},
 };
 
 type ConnectionSettings = HashMap<String, HashMap<String, OwnedValue>>;

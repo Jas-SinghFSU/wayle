@@ -7,9 +7,12 @@ use tracing::debug;
 use super::Adapter;
 use crate::services::{
     bluetooth::{
-        BluetoothError,
-        proxy::Adapter1Proxy,
-        types::{AdapterRole, AddressType, PowerState, UUID},
+        error::BluetoothError,
+        proxy::adapter::Adapter1Proxy,
+        types::{
+            UUID,
+            adapter::{AdapterRole, AddressType, PowerState},
+        },
     },
     traits::ModelMonitoring,
 };

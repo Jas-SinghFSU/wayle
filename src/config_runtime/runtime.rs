@@ -8,20 +8,22 @@ use std::{
 use toml::Value;
 use tracing::{debug, info, instrument, warn};
 
-/// Thread-safe storage for configuration
+/// Storage for configuration
 pub type ConfigData = Arc<RwLock<Config>>;
 
-/// Thread-safe storage for runtime configuration values
+/// Storage for runtime configuration values
 pub type RuntimeConfig = Arc<RwLock<HashMap<String, Value>>>;
 
-use super::{
-    ConfigChange, ConfigError, Subscription,
-    broadcast::BroadcastService,
-    path_ops::{navigate_path, set_value_at_path},
+use crate::{
+    config::{Config, paths::ConfigPaths},
+    config_runtime::{
+        broadcast::{BroadcastService, Subscription},
+        changes::{ConfigChange, ConfigError},
+        path_ops::{navigate_path, set_value_at_path},
+    },
 };
-use crate::config::{Config, ConfigPaths};
 
-/// Thread-safe configuration store with reactive change notifications.
+/// Configuration store with reactive change notifications.
 ///
 /// Provides centralized configuration management with the ability to
 /// read, write, and observe configuration changes across the application.

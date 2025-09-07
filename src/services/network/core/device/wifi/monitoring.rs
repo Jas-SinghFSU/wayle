@@ -6,7 +6,10 @@ use tracing::debug;
 
 use super::DeviceWifi;
 use crate::services::{
-    network::{NetworkError, proxy::devices::wireless::DeviceWirelessProxy, types::NM80211Mode},
+    network::{
+        error::NetworkError, proxy::devices::wireless::DeviceWirelessProxy,
+        types::wifi::NM80211Mode,
+    },
     traits::ModelMonitoring,
 };
 

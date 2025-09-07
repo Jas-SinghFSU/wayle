@@ -11,8 +11,8 @@ use zbus::{
 
 use crate::{
     services::{
-        common::Property,
-        network::{NetworkError, proxy::ip4_config::IP4ConfigProxy},
+        common::property::Property,
+        network::{error::NetworkError, proxy::ip4_config::IP4ConfigProxy},
         traits::Static,
     },
     unwrap_i32, unwrap_string, unwrap_vec,

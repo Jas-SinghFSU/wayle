@@ -7,7 +7,7 @@ use zbus::proxy;
     default_service = "org.freedesktop.NetworkManager",
     interface = "org.freedesktop.NetworkManager.WifiP2PPeer"
 )]
-pub trait WifiP2PPeer {
+pub(crate) trait WifiP2PPeer {
     /// The name of the peer.
     #[zbus(property)]
     fn name(&self) -> zbus::Result<String>;

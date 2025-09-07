@@ -1,6 +1,6 @@
 use zbus::zvariant::OwnedObjectPath;
 
-use super::ConnectionType;
+use super::types::connectivity::ConnectionType;
 
 /// Network service errors
 #[derive(thiserror::Error, Debug)]

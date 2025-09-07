@@ -1,8 +1,10 @@
 use tokio::sync::oneshot;
 
 use crate::services::audio::{
-    AudioError, DeviceKey, Volume,
     backend::{commands::Command, types::CommandSender},
+    error::AudioError,
+    types::device::DeviceKey,
+    volume::types::Volume,
 };
 
 /// Controller for output device operations.

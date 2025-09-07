@@ -19,7 +19,7 @@ use zbus::{Result, proxy, zvariant::OwnedValue};
     default_service = "org.freedesktop.UPower.PowerProfiles",
     default_path = "/org/freedesktop/UPower/PowerProfiles"
 )]
-pub trait PowerProfiles {
+pub(crate) trait PowerProfiles {
     /// This forces the passed profile (either 'power-saver' or 'performance') to be
     /// activated until either the caller quits, "ReleaseProfile" is called, or the
     /// "ActiveProfile" is changed by the user.

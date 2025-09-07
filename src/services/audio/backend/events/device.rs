@@ -1,14 +1,12 @@
 use libpulse_binding::context::subscribe::{Facility, Operation};
 
-use crate::services::{
-    AudioEvent, DeviceType,
-    audio::{
-        backend::types::{DeviceStore, EventSender, InternalCommand, InternalCommandSender},
-        types::DeviceKey,
-    },
+use crate::services::audio::{
+    backend::types::{DeviceStore, EventSender, InternalCommandSender, InternalRefresh},
+    events::AudioEvent,
+    types::device::{DeviceKey, DeviceType},
 };
 
-pub(crate) async fn handle_device_change(
+pub(crate) async fn handle_change(
     facility: Facility,
     operation: Operation,
     index: u32,
@@ -36,7 +34,7 @@ pub(crate) async fn handle_device_change(
             }
         }
         Operation::New | Operation::Changed => {
-            let _ = command_tx.send(InternalCommand::RefreshDevice {
+            let _ = command_tx.send(InternalRefresh::Device {
                 device_key,
                 facility,
             });

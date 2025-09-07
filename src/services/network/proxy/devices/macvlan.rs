@@ -7,7 +7,7 @@ use zbus::{proxy, zvariant::OwnedObjectPath};
     default_service = "org.freedesktop.NetworkManager",
     interface = "org.freedesktop.NetworkManager.Device.Macvlan"
 )]
-pub trait DeviceMacvlan {
+pub(crate) trait DeviceMacvlan {
     /// The object path of the parent device.
     #[zbus(property)]
     fn parent(&self) -> zbus::Result<OwnedObjectPath>;

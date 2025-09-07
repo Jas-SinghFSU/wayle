@@ -6,7 +6,7 @@ use tracing::debug;
 
 use super::TrackMetadata;
 use crate::services::{
-    media::{MediaError, proxy::MediaPlayer2PlayerProxy},
+    media::{error::MediaError, proxy::MediaPlayer2PlayerProxy},
     traits::ModelMonitoring,
 };
 

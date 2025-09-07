@@ -3,7 +3,10 @@ use clap::{
     builder::styling::{AnsiColor, Effects, Styles},
 };
 
-use crate::cli::{config::ConfigCommands, media::MediaCommands, panel::PanelCommands};
+use crate::cli::{
+    config::commands::ConfigCommands, media::commands::MediaCommands,
+    panel::commands::PanelCommands,
+};
 
 fn get_styles() -> Styles {
     Styles::styled()

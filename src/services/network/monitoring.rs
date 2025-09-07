@@ -6,9 +6,10 @@ use tracing::debug;
 use zbus::{Connection, zvariant::OwnedObjectPath};
 
 use super::{
-    ConnectionType, NetworkError, NetworkManagerProxy, Wifi, Wired, service::NetworkService,
+    error::NetworkError, proxy::manager::NetworkManagerProxy, service::NetworkService,
+    types::connectivity::ConnectionType, wifi::Wifi, wired::Wired,
 };
-use crate::services::{common::Property, traits::ServiceMonitoring};
+use crate::services::{common::property::Property, traits::ServiceMonitoring};
 
 impl ServiceMonitoring for NetworkService {
     type Error = NetworkError;

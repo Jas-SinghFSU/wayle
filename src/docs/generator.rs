@@ -5,8 +5,8 @@ use std::{
 
 use thiserror::Error;
 
-use super::{ModuleInfo, ModuleRegistry};
-use crate::docs::generate_module_page;
+use super::{module::ModuleInfo, registry::ModuleRegistry};
+use crate::docs::markdown::generate_module_page;
 
 /// Generates markdown documentation for Wayle modules.
 ///

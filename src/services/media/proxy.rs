@@ -10,7 +10,7 @@ use zbus::{Result, proxy, zvariant::ObjectPath};
     default_service = "org.mpris.MediaPlayer2",
     default_path = "/org/mpris/MediaPlayer2"
 )]
-pub trait MediaPlayer2 {
+pub(crate) trait MediaPlayer2 {
     /// Quit the media player application
     fn quit(&self) -> Result<()>;
 
@@ -66,7 +66,7 @@ pub trait MediaPlayer2 {
     default_service = "org.mpris.MediaPlayer2",
     default_path = "/org/mpris/MediaPlayer2"
 )]
-pub trait MediaPlayer2Player {
+pub(crate) trait MediaPlayer2Player {
     /// Start playback
     fn play(&self) -> Result<()>;
 

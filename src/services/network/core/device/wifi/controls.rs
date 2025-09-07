@@ -5,7 +5,9 @@ use zbus::{
     zvariant::{OwnedObjectPath, OwnedValue},
 };
 
-use crate::services::network::{NetworkError, proxy::devices::wireless::DeviceWirelessProxy};
+use crate::services::network::{
+    error::NetworkError, proxy::devices::wireless::DeviceWirelessProxy,
+};
 
 pub(super) struct DeviceWifiControls;
 

@@ -21,11 +21,16 @@ use zbus::{
 
 use crate::{
     services::{
-        common::Property,
+        common::property::Property,
         network::{
-            LldpNeighbor, NMConnectivityState, NMDeviceCapabilities, NMDeviceInterfaceFlags,
-            NMDeviceState, NMDeviceStateReason, NMDeviceType, NMMetered, NetworkError,
+            error::NetworkError,
             proxy::devices::DeviceProxy,
+            types::{
+                connectivity::{NMConnectivityState, NMMetered},
+                device::{LldpNeighbor, NMDeviceType},
+                flags::{NMDeviceCapabilities, NMDeviceInterfaceFlags},
+                states::{NMDeviceState, NMDeviceStateReason},
+            },
         },
         traits::{ModelMonitoring, Reactive},
     },

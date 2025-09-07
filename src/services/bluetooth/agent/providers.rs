@@ -1,7 +1,7 @@
 use crate::services::bluetooth::{
-    BluetoothError,
+    error::BluetoothError,
     service::BluetoothService,
-    types::{PairingRequest, PairingResponder},
+    types::agent::{PairingRequest, PairingResponder},
 };
 
 pub(crate) async fn pin(service: &BluetoothService, pin: String) -> Result<(), BluetoothError> {

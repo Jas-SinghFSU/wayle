@@ -11,11 +11,12 @@ use libpulse_binding::{
 };
 
 use crate::services::audio::{
-    Volume,
     types::{
-        AudioFormat, ChannelMap, ChannelPosition, DeviceInfo, DevicePort, DeviceState, MediaInfo,
-        SampleFormat, SampleSpec, SinkInfo, SourceInfo, StreamInfo, StreamState,
+        device::{DeviceInfo, DevicePort, DeviceState, SinkInfo, SourceInfo},
+        format::{AudioFormat, ChannelMap, ChannelPosition, SampleFormat, SampleSpec},
+        stream::{MediaInfo, StreamInfo, StreamState},
     },
+    volume::types::Volume,
 };
 
 /// Convert our volume to PulseAudio volume
@@ -24,7 +25,7 @@ use crate::services::audio::{
 /// - 0.0 → PA_VOLUME_MUTED (0)
 /// - 1.0 → PA_VOLUME_NORM (65536)
 /// - 4.0 → PA_VOLUME_MAX (262144)
-pub fn convert_volume_to_pulse(volume: &Volume) -> ChannelVolumes {
+pub(crate) fn convert_volume_to_pulse(volume: &Volume) -> ChannelVolumes {
     let channels = volume.channels();
     if channels == 0 {
         return ChannelVolumes::default();
@@ -45,7 +46,7 @@ pub fn convert_volume_to_pulse(volume: &Volume) -> ChannelVolumes {
 /// - PA_VOLUME_MUTED (0) → 0.0
 /// - PA_VOLUME_NORM (65536) → 1.0
 /// - PA_VOLUME_MAX (262144) → 4.0
-pub fn convert_volume_from_pulse(pulse_volume: &ChannelVolumes) -> Volume {
+pub(crate) fn convert_volume_from_pulse(pulse_volume: &ChannelVolumes) -> Volume {
     let volumes: Vec<f64> = (0..pulse_volume.len())
         .map(|i| {
             let pulse_vol = pulse_volume.get()[i as usize].0 as f64;
@@ -78,7 +79,7 @@ fn convert_channel_position(position: Position) -> ChannelPosition {
 }
 
 /// Convert PulseAudio sample format to our format
-pub fn convert_sample_format(format: PulseFormat) -> SampleFormat {
+pub(crate) fn convert_sample_format(format: PulseFormat) -> SampleFormat {
     match format {
         PulseFormat::U8 => SampleFormat::U8,
         PulseFormat::S16le => SampleFormat::S16LE,
@@ -98,7 +99,7 @@ fn cow_str_to_string(cow_str: Option<&Cow<str>>) -> String {
 }
 
 /// Create device info from PulseAudio sink information
-pub fn create_device_info_from_sink(sink_info: &PulseSinkInfo) -> SinkInfo {
+pub(crate) fn create_device_info_from_sink(sink_info: &PulseSinkInfo) -> SinkInfo {
     let volume = convert_volume_from_pulse(&sink_info.volume);
     let name = cow_str_to_string(sink_info.name.as_ref());
     let description = cow_str_to_string(sink_info.description.as_ref());
@@ -183,7 +184,7 @@ pub fn create_device_info_from_sink(sink_info: &PulseSinkInfo) -> SinkInfo {
 }
 
 /// Create device info from PulseAudio source information
-pub fn create_device_info_from_source(source_info: &PulseSourceInfo) -> SourceInfo {
+pub(crate) fn create_device_info_from_source(source_info: &PulseSourceInfo) -> SourceInfo {
     let volume = convert_volume_from_pulse(&source_info.volume);
     let name = cow_str_to_string(source_info.name.as_ref());
     let description = cow_str_to_string(source_info.description.as_ref());
@@ -275,7 +276,7 @@ pub fn create_device_info_from_source(source_info: &PulseSourceInfo) -> SourceIn
 }
 
 /// Create stream info from PulseAudio sink input information
-pub fn create_stream_info_from_sink_input(sink_input_info: &SinkInputInfo) -> StreamInfo {
+pub(crate) fn create_stream_info_from_sink_input(sink_input_info: &SinkInputInfo) -> StreamInfo {
     let volume = convert_volume_from_pulse(&sink_input_info.volume);
     let name = sink_input_info.name.clone().unwrap_or_default().to_string();
 
@@ -344,7 +345,9 @@ pub fn create_stream_info_from_sink_input(sink_input_info: &SinkInputInfo) -> St
 }
 
 /// Create stream info from PulseAudio source output information
-pub fn create_stream_info_from_source_output(source_output_info: &SourceOutputInfo) -> StreamInfo {
+pub(crate) fn create_stream_info_from_source_output(
+    source_output_info: &SourceOutputInfo,
+) -> StreamInfo {
     let volume = convert_volume_from_pulse(&source_output_info.volume);
     let name = source_output_info
         .name

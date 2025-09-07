@@ -7,7 +7,7 @@ use zbus::{proxy, zvariant::OwnedObjectPath};
     default_service = "org.freedesktop.NetworkManager",
     interface = "org.freedesktop.NetworkManager.Device.Bridge"
 )]
-pub trait DeviceBridge {
+pub(crate) trait DeviceBridge {
     /// Hardware address of the device.
     #[zbus(property)]
     fn hw_address(&self) -> zbus::Result<String>;

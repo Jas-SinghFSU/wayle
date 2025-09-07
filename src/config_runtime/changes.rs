@@ -121,7 +121,7 @@ pub enum ConfigError {
         details: String,
     },
 
-    /// Error occurred while acquiring locks for thread-safe access
+    /// Error occurred while acquiring locks
     #[error("failed to acquire {lock_type} lock: {details}")]
     LockError {
         /// Type of lock that failed (read, write)

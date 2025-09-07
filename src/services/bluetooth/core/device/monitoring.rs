@@ -8,9 +8,9 @@ use tracing::debug;
 use super::Device;
 use crate::services::{
     bluetooth::{
-        BluetoothError,
-        proxy::Device1Proxy,
-        types::{AddressType, PreferredBearer, ServiceNotification},
+        error::BluetoothError,
+        proxy::device::Device1Proxy,
+        types::{ServiceNotification, adapter::AddressType, device::PreferredBearer},
     },
     traits::ModelMonitoring,
 };

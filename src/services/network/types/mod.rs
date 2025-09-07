@@ -1,11 +1,10 @@
-mod connectivity;
-mod device;
-mod flags;
-mod states;
-mod wifi;
-
-pub use connectivity::*;
-pub use device::*;
-pub use flags::*;
-pub use states::*;
-pub use wifi::*;
+/// Network connectivity type definitions
+pub mod connectivity;
+/// Network device type definitions
+pub mod device;
+/// NetworkManager flag definitions
+pub mod flags;
+/// NetworkManager state definitions
+pub mod states;
+/// WiFi-specific type definitions
+pub mod wifi;

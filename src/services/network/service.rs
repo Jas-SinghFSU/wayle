@@ -4,12 +4,18 @@ use tokio_util::sync::CancellationToken;
 use tracing::{instrument, warn};
 use zbus::{Connection, zvariant::OwnedObjectPath};
 
-use super::{ConnectionType, NetworkError, Wifi, Wired};
+use super::{
+    core::access_point::types::{AccessPointParams, LiveAccessPointParams},
+    error::NetworkError,
+    types::connectivity::ConnectionType,
+    wifi::Wifi,
+    wired::Wired,
+};
 use crate::services::{
-    common::Property,
+    common::property::Property,
     network::{
         core::{
-            access_point::{AccessPoint, AccessPointParams, LiveAccessPointParams},
+            access_point::AccessPoint,
             config::{
                 dhcp4_config::{Dhcp4Config, Dhcp4ConfigParams},
                 dhcp6_config::{Dhcp6Config, Dhcp6ConfigParams},

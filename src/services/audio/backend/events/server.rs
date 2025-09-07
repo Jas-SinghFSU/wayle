@@ -1,9 +1,9 @@
 use libpulse_binding::context::subscribe::Operation;
 
-use crate::services::audio::backend::types::{InternalCommand, InternalCommandSender};
+use crate::services::audio::backend::types::{InternalCommandSender, InternalRefresh};
 
-pub(crate) async fn handle_server_change(operation: Operation, command_tx: &InternalCommandSender) {
+pub(crate) async fn handle_change(operation: Operation, command_tx: &InternalCommandSender) {
     if operation == Operation::Changed {
-        let _ = command_tx.send(InternalCommand::RefreshServerInfo);
+        let _ = command_tx.send(InternalRefresh::ServerInfo);
     }
 }

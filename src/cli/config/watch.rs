@@ -1,5 +1,6 @@
-use crate::{cli::CliAction, config_runtime::ConfigRuntime};
+use crate::{cli::CliAction, config_runtime::runtime::ConfigRuntime};
 
+/// Execute the command
 pub async fn execute(path: String) -> CliAction {
     let config_runtime =
         ConfigRuntime::load().map_err(|e| format!("Failed to load config: {e}"))?;

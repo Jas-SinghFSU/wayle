@@ -7,7 +7,12 @@ use tracing::debug;
 use super::{AccessPoint, BSSID, SSID, SecurityType};
 use crate::services::{
     network::{
-        AccessPointProxy, NM80211ApFlags, NM80211ApSecurityFlags, NM80211Mode, NetworkError,
+        error::NetworkError,
+        proxy::access_point::AccessPointProxy,
+        types::{
+            flags::{NM80211ApFlags, NM80211ApSecurityFlags},
+            wifi::NM80211Mode,
+        },
     },
     traits::ModelMonitoring,
 };

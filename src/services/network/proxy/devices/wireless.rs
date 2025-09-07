@@ -14,7 +14,7 @@ use zbus::{
     default_service = "org.freedesktop.NetworkManager",
     interface = "org.freedesktop.NetworkManager.Device.Wireless"
 )]
-pub trait DeviceWireless {
+pub(crate) trait DeviceWireless {
     /// Get the list of all access points visible to this device, including hidden ones.
     fn get_all_access_points(&self) -> zbus::Result<Vec<OwnedObjectPath>>;
 

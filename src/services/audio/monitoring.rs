@@ -11,9 +11,12 @@ use crate::services::{
         error::AudioError,
         events::AudioEvent,
         service::AudioService,
-        types::{Device, DeviceKey, StreamKey, StreamType},
+        types::{
+            device::{Device, DeviceKey},
+            stream::{StreamKey, StreamType},
+        },
     },
-    common::Property,
+    common::property::Property,
     traits::{ModelMonitoring, ServiceMonitoring},
 };
 
@@ -189,8 +192,6 @@ impl ServiceMonitoring for AudioService {
                                 });
                                 default_output.set(device);
                             }
-
-                            _ => {}
                         }
                     }
                 }

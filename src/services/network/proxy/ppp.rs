@@ -9,7 +9,7 @@ use zbus::{proxy, zvariant::OwnedValue};
     default_service = "org.freedesktop.NetworkManager",
     interface = "org.freedesktop.NetworkManager.PPP"
 )]
-pub trait PPP {
+pub(crate) trait PPP {
     /// Asks NetworkManager for PPP secrets.
     ///
     /// # Returns

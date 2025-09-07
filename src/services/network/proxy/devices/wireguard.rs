@@ -7,7 +7,7 @@ use zbus::proxy;
     default_service = "org.freedesktop.NetworkManager",
     interface = "org.freedesktop.NetworkManager.Device.WireGuard"
 )]
-pub trait DeviceWireGuard {
+pub(crate) trait DeviceWireGuard {
     /// 32-byte public key used by this interface.
     #[zbus(property)]
     fn public_key(&self) -> zbus::Result<Vec<u8>>;

@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use super::PlayerId;
+use super::types::PlayerId;
 
 /// Errors that can occur during media operations
 #[derive(thiserror::Error, Debug)]

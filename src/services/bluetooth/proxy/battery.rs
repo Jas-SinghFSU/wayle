@@ -8,7 +8,7 @@ use zbus::proxy;
 /// Interface: `org.bluez.Battery1`
 /// Object path: `[variable prefix]/{hci0,hci1,...}/dev_{BDADDR}`
 #[proxy(interface = "org.bluez.Battery1", default_service = "org.bluez")]
-pub trait Battery1 {
+pub(crate) trait Battery1 {
     /// The percentage of battery left as an unsigned 8-bit integer.
     #[zbus(property)]
     fn percentage(&self) -> zbus::Result<u8>;

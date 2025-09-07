@@ -2,6 +2,8 @@ use std::{env, error::Error, io, mem};
 
 use tracing_subscriber::{EnvFilter, Layer, fmt, layer::SubscriberExt, util::SubscriberInitExt};
 
+use crate::config::paths::ConfigPaths;
+
 /// Initialize tracing for the application
 ///
 /// Sets up structured logging with info level by default.
@@ -72,7 +74,7 @@ fn init_with_file_and_console_option(enable_console: bool) -> Result<(), Box<dyn
         .map(EnvFilter::new)
         .unwrap_or_else(|_| EnvFilter::new("info"));
 
-    let log_dir = crate::config::ConfigPaths::log_dir()?;
+    let log_dir = ConfigPaths::log_dir()?;
 
     let file_appender = tracing_appender::rolling::Builder::new()
         .rotation(tracing_appender::rolling::Rotation::DAILY)

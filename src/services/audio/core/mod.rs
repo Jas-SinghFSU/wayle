@@ -1,7 +1,4 @@
-/// Device management functionality.
+/// Audio device implementations
 pub mod device;
-/// Stream management functionality.
+/// Audio stream implementations
 pub mod stream;
-
-pub use device::{InputDevice, OutputDevice};
-pub use stream::AudioStream;

@@ -12,12 +12,13 @@ use zbus::{
     zvariant::{self, OwnedObjectPath, OwnedValue},
 };
 
+use super::access_point::types::SSID;
 use crate::{
     services::{
-        common::Property,
+        common::property::Property,
         network::{
-            NMConnectionSettingsFlags, NetworkError, core::access_point::SSID,
-            proxy::settings::connection::SettingsConnectionProxy,
+            error::NetworkError, proxy::settings::connection::SettingsConnectionProxy,
+            types::flags::NMConnectionSettingsFlags,
         },
         traits::{ModelMonitoring, Reactive},
     },

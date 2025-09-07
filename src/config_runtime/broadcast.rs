@@ -8,18 +8,27 @@ use tokio::{
     task::JoinHandle,
 };
 
-use super::{ConfigChange, ConfigError, path_ops::path_matches};
+use crate::config_runtime::{
+    changes::{ConfigChange, ConfigError},
+    path_ops::path_matches,
+};
 
 /// Commands sent to the broadcast actor thread
 pub enum BroadcastCommand {
     /// Subscribe to configuration changes matching a pattern
     Subscribe {
+        /// Unique subscription identifier
         id: usize,
+        /// Pattern to match against config paths
         pattern: String,
+        /// Channel sender for config change notifications
         sender: Sender<ConfigChange>,
     },
     /// Remove a subscription by ID
-    Unsubscribe { id: usize },
+    Unsubscribe {
+        /// Subscription ID to remove
+        id: usize,
+    },
     /// Broadcast a configuration change to all matching subscribers
     Broadcast(ConfigChange),
 }
@@ -51,6 +60,12 @@ pub struct BroadcastService {
     command_tx: Sender<BroadcastCommand>,
     next_id: Arc<AtomicUsize>,
     _handle: Arc<JoinHandle<()>>,
+}
+
+impl Default for BroadcastService {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl BroadcastService {

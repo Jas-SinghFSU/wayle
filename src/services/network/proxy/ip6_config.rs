@@ -4,9 +4,6 @@ use std::collections::HashMap;
 
 use zbus::{proxy, zvariant::OwnedValue};
 
-/// (Address, Prefix, Gateway)
-type AddressInfo = (Vec<u8>, u32, Vec<u8>);
-
 /// IPv6 Configuration Set.
 ///
 /// Contains IPv6 configuration information.
@@ -14,10 +11,10 @@ type AddressInfo = (Vec<u8>, u32, Vec<u8>);
     default_service = "org.freedesktop.NetworkManager",
     interface = "org.freedesktop.NetworkManager.IP6Config"
 )]
-pub trait IP6Config {
+pub(crate) trait IP6Config {
     /// Array of tuples of IPv6 address/prefix/gateway.
     #[zbus(property)]
-    fn addresses(&self) -> zbus::Result<AddressInfo>;
+    fn addresses(&self) -> zbus::Result<Vec<(Vec<u8>, u32, Vec<u8>)>>;
 
     /// Array of IP address data objects.
     #[zbus(property)]
@@ -29,7 +26,7 @@ pub trait IP6Config {
 
     /// Array of tuples of IPv6 route/prefix/next-hop/metric.
     #[zbus(property)]
-    fn routes(&self) -> zbus::Result<AddressInfo>;
+    fn routes(&self) -> zbus::Result<Vec<(Vec<u8>, u32, Vec<u8>, u32)>>;
 
     /// Array of IP route data objects.
     #[zbus(property)]

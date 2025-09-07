@@ -1,6 +1,6 @@
 use toml::Value;
 
-use super::ConfigError;
+use crate::config_runtime::changes::ConfigError;
 
 pub(super) fn path_matches(path: &str, pattern: &str) -> bool {
     const WILDCARD: &str = "*";

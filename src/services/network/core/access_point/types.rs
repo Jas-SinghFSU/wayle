@@ -3,7 +3,7 @@ use std::fmt::{self, Display};
 use tokio_util::sync::CancellationToken;
 use zbus::{Connection, zvariant::OwnedObjectPath};
 
-use crate::services::network::{NM80211ApFlags, NM80211ApSecurityFlags};
+use crate::services::network::types::flags::{NM80211ApFlags, NM80211ApSecurityFlags};
 
 pub(crate) struct AccessPointParams<'a> {
     pub connection: &'a Connection,

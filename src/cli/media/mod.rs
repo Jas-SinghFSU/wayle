@@ -1,16 +1,27 @@
-mod active;
-mod commands;
-mod info;
-mod list;
-mod loop_mode;
-mod next;
-mod play_pause;
-mod previous;
-mod seek;
-mod shuffle;
-mod utils;
+/// Active player command
+pub mod active;
+/// Media command definitions
+pub mod commands;
+/// Player info command
+pub mod info;
+/// List players command
+pub mod list;
+/// Loop mode command
+pub mod loop_mode;
+/// Next track command
+pub mod next;
+/// Play/pause command
+pub mod play_pause;
+/// Previous track command
+pub mod previous;
+/// Seek command
+pub mod seek;
+/// Shuffle command
+pub mod shuffle;
+/// Media command utilities
+pub mod utils;
 
-pub use commands::MediaCommands;
+use commands::MediaCommands;
 
 use super::CliAction;
 
@@ -18,7 +29,8 @@ use super::CliAction;
 ///
 /// # Errors
 /// Returns error if the command execution fails.
-pub async fn execute(command: MediaCommands) -> CliAction {
+/// Execute the command
+pub async fn execute(command: commands::MediaCommands) -> CliAction {
     match command {
         MediaCommands::List => list::execute().await,
         MediaCommands::PlayPause { player } => play_pause::execute(player).await,

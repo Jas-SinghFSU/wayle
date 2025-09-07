@@ -15,7 +15,7 @@ use zbus::{
     interface = "org.freedesktop.NetworkManager",
     default_path = "/org/freedesktop/NetworkManager"
 )]
-pub trait NetworkManager {
+pub(crate) trait NetworkManager {
     /// Reload NetworkManager's configuration and perform certain updates, like flushing a cache or rewriting external state to disk.
     ///
     /// This is similar to sending SIGHUP to NetworkManager but it allows for more fine-grained control over what to reload (see flags).

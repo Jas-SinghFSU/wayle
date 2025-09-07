@@ -10,7 +10,7 @@ use schemars::{JsonSchema, schema_for};
 use serde::{Deserialize, Serialize};
 use styling::{ClockButtonStyling, ClockDropdownStyling, ClockStyling};
 
-use crate::docs::{BehaviorConfigs, ModuleInfo, ModuleInfoProvider, StylingConfigs};
+use crate::docs::module::{BehaviorConfigs, ModuleInfo, ModuleInfoProvider, StylingConfigs};
 
 /// Configuration for the clock module.
 ///

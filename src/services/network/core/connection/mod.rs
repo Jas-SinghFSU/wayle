@@ -10,9 +10,11 @@ use zbus::{Connection, zvariant::OwnedObjectPath};
 
 use crate::{
     services::{
-        common::Property,
+        common::property::Property,
         network::{
-            ConnectionActiveProxy, NMActivationStateFlags, NMActiveConnectionState, NetworkError,
+            error::NetworkError,
+            proxy::active_connection::ConnectionActiveProxy,
+            types::{flags::NMActivationStateFlags, states::NMActiveConnectionState},
         },
         traits::{ModelMonitoring, Reactive},
     },

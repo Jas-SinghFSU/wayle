@@ -5,7 +5,9 @@ use zbus::{
     zvariant::{OwnedObjectPath, Value},
 };
 
-use crate::services::bluetooth::{BluetoothError, proxy::Adapter1Proxy, types::DiscoveryFilter};
+use crate::services::bluetooth::{
+    error::BluetoothError, proxy::adapter::Adapter1Proxy, types::adapter::DiscoveryFilter,
+};
 
 pub(crate) struct AdapterControls;
 

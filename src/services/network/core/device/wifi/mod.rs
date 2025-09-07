@@ -1,24 +1,24 @@
-mod controls;
-mod monitoring;
-mod types;
+pub(crate) mod controls;
+pub(crate) mod monitoring;
+/// WiFi device types
+pub mod types;
 
 use std::{collections::HashMap, ops::Deref, sync::Arc};
 
 use controls::DeviceWifiControls;
 use tracing::warn;
-use types::WifiProperties;
-pub use types::{BitrateKbps, BootTimeMs, WirelessCapabilities};
+use types::{BitrateKbps, BootTimeMs, WifiProperties, WirelessCapabilities};
 pub(crate) use types::{DeviceWifiParams, LiveDeviceWifiParams};
 use zbus::{Connection, zvariant::OwnedObjectPath};
 
 use super::{Device, LiveDeviceParams};
 use crate::{
     services::{
-        common::Property,
+        common::property::Property,
         network::{
-            NMDeviceType, NetworkError,
+            error::NetworkError,
             proxy::devices::{DeviceProxy, wireless::DeviceWirelessProxy},
-            types::NM80211Mode,
+            types::{device::NMDeviceType, wifi::NM80211Mode},
         },
         traits::{ModelMonitoring, Reactive},
     },

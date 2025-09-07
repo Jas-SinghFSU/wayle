@@ -7,7 +7,7 @@ use zbus::proxy;
     default_service = "org.freedesktop.NetworkManager",
     interface = "org.freedesktop.NetworkManager.Device.Adsl"
 )]
-pub trait DeviceAdsl {
+pub(crate) trait DeviceAdsl {
     /// Indicates whether the physical carrier is found.
     #[zbus(property)]
     fn carrier(&self) -> zbus::Result<bool>;

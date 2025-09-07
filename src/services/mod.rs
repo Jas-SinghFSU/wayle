@@ -1,5 +1,7 @@
 /// Audio control service
 pub mod audio;
+/// Battery monitoring service
+pub mod battery;
 /// Bluetooth control service
 pub mod bluetooth;
 /// Common utilities and abstractions for services
@@ -8,15 +10,7 @@ pub mod common;
 pub mod media;
 /// Network control service
 pub mod network;
+/// Power profiles management service
+pub mod power_profiles;
 /// Service traits for uniform interfaces
 pub mod traits;
-
-pub mod power_profiles;
-
-pub mod battery;
-
-pub use audio::{
-    AudioError, AudioEvent, AudioService, DeviceInfo, DeviceKey, DeviceType, StreamInfo, StreamKey,
-    StreamType, Volume,
-};
-pub use media::MediaService;

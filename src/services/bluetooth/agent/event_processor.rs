@@ -6,10 +6,10 @@ use tracing::{debug, info};
 
 use crate::services::{
     bluetooth::{
-        BluetoothError,
-        types::{AgentEvent, PairingRequest, PairingResponder},
+        error::BluetoothError,
+        types::agent::{AgentEvent, PairingRequest, PairingResponder},
     },
-    common::Property,
+    common::property::Property,
 };
 
 pub(crate) async fn start(
@@ -82,8 +82,8 @@ pub(crate) async fn start(
                                 entered
                             }));
                         },
-                        AgentEvent::Cancelled { device_path } => {
-                            info!("Pairing cancelled for bluetooth device: {device_path}");
+                        AgentEvent::Cancelled => {
+                            info!("Pairing cancelled");
                             *pairing_responder.lock().await = None;
                             pairing_request.set(None);
                         },

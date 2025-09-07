@@ -3,7 +3,7 @@ pub(crate) mod providers;
 use tokio::sync::{mpsc::UnboundedSender, oneshot};
 use zbus::{fdo, interface, zvariant::OwnedObjectPath};
 
-use super::types::AgentEvent;
+use super::types::agent::AgentEvent;
 
 /// D-Bus Agent1 interface implementation for handling Bluetooth pairing and authentication.
 ///
@@ -209,6 +209,10 @@ impl BluetoothAgent {
     /// This method gets called to indicate that the agent request failed before a reply
     /// was returned.
     async fn cancel(&self) -> fdo::Result<()> {
+        self.service_tx
+            .send(AgentEvent::Cancelled)
+            .map_err(|_| fdo::Error::Failed("Service unavailable".into()))?;
+
         Ok(())
     }
 }

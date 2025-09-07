@@ -6,7 +6,7 @@ use tracing::debug;
 
 use super::DeviceWired;
 use crate::services::{
-    network::{NetworkError, wired_proxy::DeviceWiredProxy},
+    network::{error::NetworkError, proxy::devices::wired::DeviceWiredProxy},
     traits::ModelMonitoring,
 };
 

@@ -1,15 +1,15 @@
-/// Application CLI parser and command definitions.
+/// CLI application structure and parsing
 pub mod app;
-/// Configuration management CLI commands.
+/// Configuration management commands
 pub mod config;
-/// Media player control CLI commands.
+/// Media control commands
 pub mod media;
-/// Panel management CLI commands.
+/// Panel management commands
 pub mod panel;
 
-pub use app::{Cli, Commands};
-
-/// Result type for CLI operations that return output.
+/// Result type for CLI operations that return output text
 pub type CliResult = Result<String, String>;
-/// Result type for CLI operations that perform actions.
+/// Result type for CLI operations that perform actions
 pub type CliAction = Result<(), String>;
+
+pub use app::{Cli, Commands};

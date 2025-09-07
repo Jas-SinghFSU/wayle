@@ -6,22 +6,16 @@ use libpulse_binding::{
     volume::ChannelVolumes,
 };
 
-use crate::services::{
-    AudioEvent,
-    audio::{
-        backend::{
-            conversion::{create_device_info_from_sink, create_device_info_from_source},
-            types::{DeviceStore, EventSender},
-        },
-        types::{Device, DeviceKey, DeviceType},
+use crate::services::audio::{
+    backend::{
+        conversion::{create_device_info_from_sink, create_device_info_from_source},
+        types::{DeviceStore, EventSender},
     },
+    events::AudioEvent,
+    types::device::{Device, DeviceKey, DeviceType},
 };
 
-pub(crate) fn trigger_device_discovery(
-    context: &Context,
-    devices: &DeviceStore,
-    events_tx: &EventSender,
-) {
+pub(crate) fn trigger_discovery(context: &Context, devices: &DeviceStore, events_tx: &EventSender) {
     let introspect = context.introspect();
 
     let devices_clone = Arc::clone(devices);
@@ -51,7 +45,7 @@ pub(crate) fn trigger_device_discovery(
     });
 }
 
-pub(crate) fn trigger_device_refresh(
+pub(crate) fn trigger_refresh(
     context: &Context,
     devices: &DeviceStore,
     events_tx: &EventSender,

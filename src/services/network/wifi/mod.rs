@@ -10,15 +10,17 @@ pub(crate) use types::{LiveWifiParams, WifiParams};
 use zbus::{Connection, zvariant::OwnedObjectPath};
 
 use super::{
-    AccessPointProxy, NetworkError, NetworkManagerProxy, NetworkStatus, SSID,
     core::{
-        access_point::AccessPoint,
+        access_point::{AccessPoint, types::SSID},
         device::wifi::{DeviceWifi, DeviceWifiParams, LiveDeviceWifiParams},
     },
+    error::NetworkError,
+    proxy::{access_point::AccessPointProxy, manager::NetworkManagerProxy},
+    types::states::NetworkStatus,
 };
 use crate::{
     services::{
-        common::Property,
+        common::property::Property,
         traits::{ModelMonitoring, Reactive},
     },
     unwrap_bool, watch_all,

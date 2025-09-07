@@ -1,8 +1,12 @@
 use crate::{
     cli::CliAction,
-    services::media::{Config, MediaService, PlaybackState},
+    services::media::{
+        service::{Config, MediaService},
+        types::PlaybackState,
+    },
 };
 
+/// Execute the command
 pub async fn execute() -> CliAction {
     let service = MediaService::new(Config {
         ignored_players: vec![],

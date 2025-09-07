@@ -9,12 +9,22 @@ use super::Wifi;
 use crate::{
     remove_and_cancel,
     services::{
-        common::Property,
+        common::property::Property,
         network::{
-            AccessPoint, AccessPointProxy, DeviceProxy, NMDeviceState, NetworkError,
-            NetworkManagerProxy, NetworkStatus, SSID,
-            core::{access_point::LiveAccessPointParams, device::wifi::DeviceWifi},
-            wireless::DeviceWirelessProxy,
+            core::{
+                access_point::{
+                    AccessPoint,
+                    types::{LiveAccessPointParams, SSID},
+                },
+                device::wifi::DeviceWifi,
+            },
+            error::NetworkError,
+            proxy::{
+                access_point::AccessPointProxy,
+                devices::{DeviceProxy, wireless::DeviceWirelessProxy},
+                manager::NetworkManagerProxy,
+            },
+            types::states::{NMDeviceState, NetworkStatus},
         },
         traits::{ModelMonitoring, Reactive},
     },

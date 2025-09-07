@@ -10,7 +10,7 @@ use zbus::proxy;
     interface = "org.freedesktop.NetworkManager.AgentManager",
     default_path = "/org/freedesktop/NetworkManager/AgentManager"
 )]
-pub trait AgentManager {
+pub(crate) trait AgentManager {
     /// Called by secret Agents to register their ability to provide and save network secrets.
     ///
     /// # Arguments

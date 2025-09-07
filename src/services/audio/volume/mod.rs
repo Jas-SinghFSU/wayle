@@ -1,6 +1,4 @@
-/// Volume control types and operations
-mod error;
-mod types;
-
-pub use error::*;
-pub use types::Volume;
+/// Volume error types
+pub mod error;
+/// Volume control types
+pub mod types;

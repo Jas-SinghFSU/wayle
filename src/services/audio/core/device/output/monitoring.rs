@@ -4,10 +4,10 @@ use tracing::debug;
 
 use crate::services::{
     audio::{
-        core::device::OutputDevice,
+        core::device::output::OutputDevice,
         error::AudioError,
         events::AudioEvent,
-        types::{Device, DeviceState},
+        types::device::{Device, DeviceState},
     },
     traits::ModelMonitoring,
 };
@@ -46,32 +46,10 @@ impl ModelMonitoring for OutputDevice {
                         };
 
                         match event {
-                            AudioEvent::DeviceChanged(Device::Sink(sink)) if sink.key() == device_key => {
+                            AudioEvent::DeviceChanged(Device::Sink(sink))
+                                if sink.key() == device_key =>
+                            {
                                 device.update_from_sink(&sink);
-                            }
-                            AudioEvent::DeviceVolumeChanged {
-                                device_key: key,
-                                volume,
-                            } if key == device_key => {
-                                device.volume.set(volume);
-                            }
-                            AudioEvent::DeviceMuteChanged {
-                                device_key: key,
-                                muted,
-                            } if key == device_key => {
-                                device.muted.set(muted);
-                            }
-                            AudioEvent::DeviceStateChanged {
-                                device_key: key,
-                                state,
-                            } if key == device_key => {
-                                device.state.set(state);
-                            }
-                            AudioEvent::DevicePortChanged {
-                                device_key: key,
-                                port_name,
-                            } if key == device_key => {
-                                device.active_port.set(port_name);
                             }
                             AudioEvent::DeviceRemoved(key) if key == device_key => {
                                 device.state.set(DeviceState::Offline);

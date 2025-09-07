@@ -2,7 +2,7 @@ use tokio_util::sync::CancellationToken;
 
 use crate::services::audio::{
     backend::types::{CommandSender, EventSender},
-    types::StreamKey,
+    types::stream::StreamKey,
 };
 
 pub(crate) struct AudioStreamParams<'a> {

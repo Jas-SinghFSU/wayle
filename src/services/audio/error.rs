@@ -1,6 +1,6 @@
 use super::{
-    types::{DeviceType, StreamType},
-    volume::VolumeError,
+    types::{device::DeviceType, stream::StreamType},
+    volume::error::VolumeError,
 };
 
 /// PulseAudio service errors

@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use super::format::{ChannelMap, SampleSpec};
-use crate::services::audio::Volume;
+use crate::services::audio::volume::types::Volume;
 
 /// Stream state enumeration
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -60,7 +60,7 @@ pub struct MediaInfo {
 
 /// Complete stream information from PulseAudio
 #[derive(Debug, Clone, PartialEq)]
-pub struct StreamInfo {
+pub(crate) struct StreamInfo {
     /// Stream index
     pub index: u32,
     /// Stream name

@@ -1,7 +1,4 @@
-/// Input device management.
+/// Input device implementation
 pub mod input;
-/// Output device management.
+/// Output device implementation
 pub mod output;
-
-pub use input::InputDevice;
-pub use output::OutputDevice;

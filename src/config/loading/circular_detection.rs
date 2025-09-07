@@ -1,9 +1,9 @@
 use std::path::{Path, PathBuf};
 
-use crate::{Result, WayleError};
+use crate::config::error::WayleError;
 
 /// Tracks import chains for circular detection
-pub struct CircularDetector {
+pub(crate) struct CircularDetector {
     /// Current import chain (for circular detection)
     import_chain: Vec<PathBuf>,
 }
@@ -17,7 +17,7 @@ impl CircularDetector {
 
     /// Checks if a file can be visited without creating a cycle
     /// Returns an error if a circular import is detected
-    pub fn detect_circular_import(&self, path: &Path) -> Result<()> {
+    pub fn detect_circular_import(&self, path: &Path) -> Result<(), WayleError> {
         if self.import_chain.contains(&path.to_path_buf()) {
             let chain_display: Vec<String> = self
                 .import_chain

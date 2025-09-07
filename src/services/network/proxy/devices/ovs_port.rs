@@ -7,7 +7,7 @@ use zbus::{proxy, zvariant::OwnedObjectPath};
     default_service = "org.freedesktop.NetworkManager",
     interface = "org.freedesktop.NetworkManager.Device.OvsPort"
 )]
-pub trait DeviceOvsPort {
+pub(crate) trait DeviceOvsPort {
     /// Array of object paths representing slave devices which are part of this port.
     #[zbus(property)]
     fn slaves(&self) -> zbus::Result<Vec<OwnedObjectPath>>;

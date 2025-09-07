@@ -8,7 +8,7 @@ use libpulse_binding::context::Context;
 use super::{
     commands::{device, server, stream},
     types::{
-        DefaultDevice, DeviceStore, EventSender, ExternalCommand, InternalCommand, StreamStore,
+        DefaultDevice, DeviceStore, EventSender, ExternalCommand, InternalRefresh, StreamStore,
     },
 };
 
@@ -54,7 +54,7 @@ impl VolumeRateLimiter {
 #[allow(clippy::too_many_arguments)]
 pub(super) fn handle_internal_command(
     context: &mut Context,
-    command: InternalCommand,
+    command: InternalRefresh,
     devices: &DeviceStore,
     streams: &StreamStore,
     events_tx: &EventSender,
@@ -62,32 +62,26 @@ pub(super) fn handle_internal_command(
     default_output: &DefaultDevice,
 ) {
     match command {
-        InternalCommand::RefreshDevices => {
-            device::trigger_device_discovery(context, devices, events_tx);
+        InternalRefresh::Devices => {
+            device::trigger_discovery(context, devices, events_tx);
         }
-        InternalCommand::RefreshStreams => {
-            stream::trigger_stream_discovery(context, streams, events_tx);
+        InternalRefresh::Streams => {
+            stream::trigger_discovery(context, streams, events_tx);
         }
-        InternalCommand::RefreshServerInfo => {
-            server::trigger_server_info_query(
-                context,
-                devices,
-                events_tx,
-                default_input,
-                default_output,
-            );
+        InternalRefresh::ServerInfo => {
+            server::trigger_info_query(context, devices, events_tx, default_input, default_output);
         }
-        InternalCommand::RefreshDevice {
+        InternalRefresh::Device {
             device_key,
             facility,
         } => {
-            device::trigger_device_refresh(context, devices, events_tx, device_key, facility);
+            device::trigger_refresh(context, devices, events_tx, device_key, facility);
         }
-        InternalCommand::RefreshStream {
+        InternalRefresh::Stream {
             stream_key,
             facility,
         } => {
-            stream::trigger_stream_refresh(context, streams, events_tx, stream_key, facility);
+            stream::trigger_refresh(context, streams, events_tx, stream_key, facility);
         }
     }
 }
@@ -131,9 +125,6 @@ pub(super) fn handle_external_command(
         }
         ExternalCommand::SetPort { device_key, port } => {
             device::set_device_port(context, device_key, port, devices);
-        }
-        ExternalCommand::Shutdown => {
-            // Shutdown handled in main loop
         }
     }
 }

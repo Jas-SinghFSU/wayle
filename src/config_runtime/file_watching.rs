@@ -15,8 +15,14 @@ use tokio::{
 };
 use tracing::{debug, error, info, instrument, warn};
 
-use super::{ConfigChange, ConfigError, ConfigRuntime, diff};
-use crate::config::{Config, ConfigPaths};
+use crate::{
+    config::{Config, paths::ConfigPaths},
+    config_runtime::{
+        changes::{ConfigChange, ConfigError},
+        diff,
+        runtime::ConfigRuntime,
+    },
+};
 
 /// File watcher that monitors configuration changes.
 ///

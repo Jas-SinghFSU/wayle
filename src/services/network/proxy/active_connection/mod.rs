@@ -11,7 +11,7 @@ pub mod vpn;
     default_service = "org.freedesktop.NetworkManager",
     interface = "org.freedesktop.NetworkManager.Connection.Active"
 )]
-pub trait ConnectionActive {
+pub(crate) trait ConnectionActive {
     /// The path of the connection object that this ActiveConnection is using.
     #[zbus(property)]
     fn connection(&self) -> zbus::Result<OwnedObjectPath>;

@@ -11,8 +11,8 @@ use zbus::{
 
 use crate::{
     services::{
-        common::Property,
-        network::{NetworkError, proxy::ip6_config::IP6ConfigProxy},
+        common::property::Property,
+        network::{error::NetworkError, proxy::ip6_config::IP6ConfigProxy},
         traits::Static,
     },
     unwrap_i32, unwrap_string, unwrap_vec,

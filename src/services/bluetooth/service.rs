@@ -9,18 +9,24 @@ use tracing::error;
 use zbus::{Connection, zvariant::OwnedObjectPath};
 
 use super::{
-    BluetoothAgent, agent,
-    core::{Adapter, AdapterParams, Device, DeviceParams, LiveAdapterParams, LiveDeviceParams},
-    types::{PairingRequest, PairingResponder, ServiceNotification},
+    agent::{BluetoothAgent, event_processor, providers},
+    core::{
+        adapter::{Adapter, AdapterParams, LiveAdapterParams},
+        device::{Device, DeviceParams, LiveDeviceParams},
+    },
+    types::{
+        ServiceNotification,
+        agent::{PairingRequest, PairingResponder},
+    },
 };
 use crate::services::{
     bluetooth::{
-        BluetoothError,
         discovery::BluetoothDiscovery,
-        proxy::AgentManager1Proxy,
-        types::{AgentCapability, AgentEvent},
+        error::BluetoothError,
+        proxy::agent_manager::AgentManager1Proxy,
+        types::agent::{AgentCapability, AgentEvent},
     },
-    common::Property,
+    common::property::Property,
     traits::{Reactive, ServiceMonitoring},
 };
 
@@ -110,7 +116,7 @@ impl BluetoothService {
             pairing_request: Property::new(None),
         };
 
-        agent::event_processor::start(
+        event_processor::start(
             agent_rx,
             &service.pairing_responder,
             &service.pairing_request,
@@ -295,7 +301,7 @@ impl BluetoothService {
     ///
     /// Returns error if no PIN request is pending or responder channel is closed.
     pub async fn provide_pin(&self, pin: String) -> Result<(), BluetoothError> {
-        agent::providers::pin(self, pin).await
+        providers::pin(self, pin).await
     }
 
     /// Provides a numeric passkey for device pairing.
@@ -307,7 +313,7 @@ impl BluetoothService {
     ///
     /// Returns error if no passkey request is pending or responder channel is closed.
     pub async fn provide_passkey(&self, passkey: u32) -> Result<(), BluetoothError> {
-        agent::providers::passkey(self, passkey).await
+        providers::passkey(self, passkey).await
     }
 
     /// Provides confirmation for passkey matching.
@@ -319,7 +325,7 @@ impl BluetoothService {
     ///
     /// Returns error if no confirmation request is pending or responder channel is closed.
     pub async fn provide_confirmation(&self, confirmation: bool) -> Result<(), BluetoothError> {
-        agent::providers::confirmation(self, confirmation).await
+        providers::confirmation(self, confirmation).await
     }
 
     /// Provides authorization for device pairing or connection.
@@ -334,7 +340,7 @@ impl BluetoothService {
     ///
     /// Returns error if no authorization request is pending or responder channel is closed.
     pub async fn provide_authorization(&self, authorization: bool) -> Result<(), BluetoothError> {
-        agent::providers::authorization(self, authorization).await
+        providers::authorization(self, authorization).await
     }
 
     /// Provides authorization for specific Bluetooth service access.
@@ -352,7 +358,7 @@ impl BluetoothService {
         &self,
         authorization: bool,
     ) -> Result<(), BluetoothError> {
-        agent::providers::service_authorization(self, authorization).await
+        providers::service_authorization(self, authorization).await
     }
 }
 

@@ -1,6 +1,10 @@
 use zbus::{Connection, zvariant::OwnedObjectPath};
 
-use super::{DeviceProxy, NMDeviceType, NetworkError, NetworkManagerProxy};
+use super::{
+    error::NetworkError,
+    proxy::{devices::DeviceProxy, manager::NetworkManagerProxy},
+    types::device::NMDeviceType,
+};
 use crate::services::common::NULL_PATH;
 
 pub(crate) struct NetworkServiceDiscovery;

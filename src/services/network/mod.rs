@@ -1,27 +1,17 @@
-/// Core domain models for NetworkManager objects
+/// Core network domain models
 pub mod core;
-/// Base-line discovery for the network service
-mod discovery;
-/// Network service errors
-mod error;
-/// Base-line monitoring for the network service
-mod monitoring;
-/// D-Bus proxy implementations for NetworkManager interfaces.
-mod proxy;
-/// High-level service API for network operations.
-mod service;
-/// Type definitions for NetworkManager enums, flags, and states.
-mod types;
-/// Wi-Fi service API
-mod wifi;
-/// Wired service API
-mod wired;
-
-pub use core::access_point::{AccessPoint, BSSID, NetworkIdentifier, SSID, SecurityType};
-
-pub use error::NetworkError;
-pub use proxy::*;
-pub use service::NetworkService;
-pub use types::*;
-pub use wifi::Wifi;
-pub use wired::Wired;
+/// Network device discovery functionality
+pub mod discovery;
+/// Network error types
+pub mod error;
+pub(crate) mod monitoring;
+/// D-Bus proxy interfaces for NetworkManager
+pub mod proxy;
+/// Network service implementation
+pub mod service;
+/// Network type definitions
+pub mod types;
+/// WiFi device functionality
+pub mod wifi;
+/// Wired device functionality
+pub mod wired;

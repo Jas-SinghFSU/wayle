@@ -4,11 +4,17 @@ use futures::StreamExt;
 use tokio_util::sync::CancellationToken;
 use tracing::debug;
 
+use super::Device;
 use crate::services::{
     network::{
-        NMConnectivityState, NMDeviceCapabilities, NMDeviceInterfaceFlags, NMDeviceState,
-        NMDeviceStateReason, NMDeviceType, NMMetered, NetworkError, core::device::Device,
+        error::NetworkError,
         proxy::devices::DeviceProxy,
+        types::{
+            connectivity::{NMConnectivityState, NMMetered},
+            device::NMDeviceType,
+            flags::{NMDeviceCapabilities, NMDeviceInterfaceFlags},
+            states::{NMDeviceState, NMDeviceStateReason},
+        },
     },
     traits::ModelMonitoring,
 };

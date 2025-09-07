@@ -16,11 +16,14 @@ use crate::services::{
             PulseBackend,
             types::{CommandSender, EventSender},
         },
-        core::{AudioStream, InputDevice, OutputDevice},
+        core::{
+            device::{input::InputDevice, output::OutputDevice},
+            stream::AudioStream,
+        },
         error::AudioError,
-        types::{DeviceKey, StreamKey},
+        types::{device::DeviceKey, stream::StreamKey},
     },
-    common::Property,
+    common::property::Property,
     traits::{Reactive, ServiceMonitoring},
 };
 

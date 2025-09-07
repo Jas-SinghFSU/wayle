@@ -1,7 +1,6 @@
 use std::{
     fmt, io,
     path::{Path, PathBuf},
-    result,
 };
 
 use thiserror::Error;
@@ -63,12 +62,6 @@ pub enum WayleError {
         details: String,
     },
 }
-
-/// A specialized `Result` type for Wayle operations.
-///
-/// This type alias simplifies error handling by defaulting the error type
-/// to `WayleError` for all Wayle operations.
-pub type Result<T> = result::Result<T, WayleError>;
 
 impl WayleError {
     /// Creates a TOML parsing error with optional file path context.

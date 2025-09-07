@@ -1,8 +1,8 @@
 use zbus::{Connection, zvariant::OwnedObjectPath};
 
 use crate::services::bluetooth::{
-    BluetoothError,
-    proxy::{Adapter1Proxy, Device1Proxy},
+    error::BluetoothError,
+    proxy::{adapter::Adapter1Proxy, device::Device1Proxy},
     types::UUID,
 };
 

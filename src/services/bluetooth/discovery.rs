@@ -11,7 +11,10 @@ use zbus::{
 };
 
 use super::{
-    core::{Adapter, Device, LiveAdapterParams, LiveDeviceParams},
+    core::{
+        adapter::{Adapter, LiveAdapterParams},
+        device::{Device, LiveDeviceParams},
+    },
     error::BluetoothError,
     types::{ADAPTER_INTERFACE, BLUEZ_SERVICE, DEVICE_INTERFACE, ServiceNotification},
 };

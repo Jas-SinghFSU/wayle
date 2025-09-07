@@ -13,7 +13,7 @@ use zbus::{
 /// Interface: `org.bluez.Adapter1`
 /// Object path: `[variable prefix]/{hci0,hci1,...}`
 #[proxy(interface = "org.bluez.Adapter1", default_service = "org.bluez")]
-pub trait Adapter1 {
+pub(crate) trait Adapter1 {
     /// Starts device discovery session which may include starting an inquiry and/or
     /// scanning procedures and remote device name resolving.
     ///

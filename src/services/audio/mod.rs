@@ -6,24 +6,12 @@ pub mod core;
 pub mod error;
 /// Event types and handling
 pub mod events;
-/// Monitoring functionality
-pub mod monitoring;
+pub(crate) mod monitoring;
 /// Audio service implementation
-mod service;
+pub mod service;
 /// Tokio mainloop for PulseAudio
 pub mod tokio_mainloop;
 /// Types for the audio service
 pub mod types;
 /// Volume control domain
 pub mod volume;
-
-pub use core::{AudioStream, InputDevice, OutputDevice};
-
-pub use error::AudioError;
-pub use events::AudioEvent;
-pub use service::AudioService;
-pub use types::{
-    AudioFormat, ChannelMap, DeviceInfo, DeviceKey, DevicePort, DeviceState, DeviceType, MediaInfo,
-    SampleFormat, SampleSpec, StreamInfo, StreamKey, StreamState, StreamType,
-};
-pub use volume::{Volume, VolumeError};

@@ -1,25 +1,24 @@
-mod control;
-mod monitoring;
-pub mod types;
+pub(crate) mod controls;
+pub(crate) mod monitoring;
+pub(crate) mod types;
 
 use std::sync::Arc;
 
-use control::DeviceControls;
+use controls::DeviceControls;
 use tokio::sync::broadcast;
 use tokio_util::sync::CancellationToken;
-use types::DeviceProperties;
-pub use types::{AdvertisingData, DeviceSet, ManufacturerData, ServiceData};
+use types::{AdvertisingData, DeviceProperties, DeviceSet, ManufacturerData, ServiceData};
 pub(crate) use types::{DeviceParams, LiveDeviceParams};
 use zbus::{Connection, zvariant::OwnedObjectPath};
 
 use crate::{
     services::{
         bluetooth::{
-            BluetoothError,
-            proxy::{Battery1Proxy, Device1Proxy},
-            types::{AddressType, PreferredBearer, ServiceNotification, UUID},
+            error::BluetoothError,
+            proxy::{battery::Battery1Proxy, device::Device1Proxy},
+            types::{ServiceNotification, UUID, adapter::AddressType, device::PreferredBearer},
         },
-        common::Property,
+        common::property::Property,
         traits::{ModelMonitoring, Reactive},
     },
     unwrap_bool, unwrap_string,
@@ -366,6 +365,9 @@ impl Device {
     /// Sets whether the remote device is trusted.
     ///
     /// Trusted devices can connect without user authorization.
+    ///
+    /// # Errors
+    /// Returns error if D-Bus operation fails or device is not available.
     pub async fn set_trused(&self, trusted: bool) -> Result<(), BluetoothError> {
         DeviceControls::set_trusted(&self.zbus_connection, &self.object_path, trusted).await
     }
@@ -373,11 +375,17 @@ impl Device {
     /// Sets whether the remote device is blocked.
     ///
     /// Blocked devices will be automatically disconnected and further connections will be denied.
+    ///
+    /// # Errors
+    /// Returns error if D-Bus operation fails or device is not available.
     pub async fn set_blocked(&self, blocked: bool) -> Result<(), BluetoothError> {
         DeviceControls::set_blocked(&self.zbus_connection, &self.object_path, blocked).await
     }
 
     /// Sets whether the device is allowed to wake up the host from system suspend.
+    ///
+    /// # Errors
+    /// Returns error if D-Bus operation fails or device is not available.
     pub async fn set_wake_allowed(&self, wake_allowed: bool) -> Result<(), BluetoothError> {
         DeviceControls::set_wake_allowed(&self.zbus_connection, &self.object_path, wake_allowed)
             .await
@@ -386,6 +394,9 @@ impl Device {
     /// Sets a custom alias for the remote device.
     ///
     /// Setting an empty string will revert to the remote device's name.
+    ///
+    /// # Errors
+    /// Returns error if D-Bus operation fails or device is not available.
     pub async fn set_alias(&self, alias: &str) -> Result<(), BluetoothError> {
         DeviceControls::set_alias(&self.zbus_connection, &self.object_path, alias).await
     }
@@ -397,6 +408,9 @@ impl Device {
     /// Note: Changes only take effect when the device is disconnected.
     ///
     /// [experimental]
+    ///
+    /// # Errors
+    /// Returns error if D-Bus operation fails or device is not available.
     pub async fn set_preferred_bearer(&self, bearer: &str) -> Result<(), BluetoothError> {
         DeviceControls::set_preferred_bearer(&self.zbus_connection, &self.object_path, bearer).await
     }

@@ -19,7 +19,7 @@ pub(crate) struct LiveAdapterParams<'a> {
     pub cancellation_token: &'a CancellationToken,
 }
 
-pub struct AdapterProperties {
+pub(crate) struct AdapterProperties {
     pub address: String,
     pub address_type: String,
     pub name: String,

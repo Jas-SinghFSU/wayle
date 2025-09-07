@@ -7,7 +7,7 @@ use tracing::{debug, instrument};
 use super::Player;
 use crate::services::{
     media::{
-        MediaError,
+        error::MediaError,
         proxy::MediaPlayer2PlayerProxy,
         types::{LoopMode, PlaybackState, PlayerId, ShuffleMode, Volume},
     },

@@ -9,7 +9,7 @@ use zbus::proxy;
     default_service = "org.freedesktop.NetworkManager",
     interface = "org.freedesktop.NetworkManager.AccessPoint"
 )]
-pub trait AccessPoint {
+pub(crate) trait AccessPoint {
     /// Flags describing the capabilities of the access point.
     #[zbus(property)]
     fn flags(&self) -> zbus::Result<u32>;

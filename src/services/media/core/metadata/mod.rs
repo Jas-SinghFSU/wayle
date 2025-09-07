@@ -1,5 +1,6 @@
 pub(crate) mod monitoring;
-mod types;
+/// Track metadata types
+pub mod types;
 
 use std::{collections::HashMap, sync::Arc, time::Duration};
 
@@ -10,8 +11,8 @@ use zbus::zvariant::OwnedValue;
 
 use crate::{
     services::{
-        common::Property,
-        media::{MediaError, proxy::MediaPlayer2PlayerProxy},
+        common::property::Property,
+        media::{error::MediaError, proxy::MediaPlayer2PlayerProxy},
         traits::{ModelMonitoring, Reactive},
     },
     watch_all,
@@ -84,10 +85,10 @@ impl TrackMetadata {
         Self {
             proxy: None,
             cancellation_token: None,
-            title: Property::new(UNKNOWN_METADATA.to_string()),
-            artist: Property::new(UNKNOWN_METADATA.to_string()),
-            album: Property::new(UNKNOWN_METADATA.to_string()),
-            album_artist: Property::new(UNKNOWN_METADATA.to_string()),
+            title: Property::new(String::from(UNKNOWN_METADATA)),
+            artist: Property::new(String::from(UNKNOWN_METADATA)),
+            album: Property::new(String::from(UNKNOWN_METADATA)),
+            album_artist: Property::new(String::from(UNKNOWN_METADATA)),
             length: Property::new(None),
             art_url: Property::new(None),
             track_id: Property::new(None),

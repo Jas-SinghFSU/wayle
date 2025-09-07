@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::services::media::{MediaService, Player, PlayerId};
+use crate::services::media::{core::player::Player, service::MediaService, types::PlayerId};
 
 /// Finds a player by identifier (index or partial name match)
 pub fn find_player_by_identifier(

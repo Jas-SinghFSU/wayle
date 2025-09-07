@@ -7,7 +7,7 @@ use zbus::proxy;
     default_service = "org.freedesktop.NetworkManager",
     interface = "org.freedesktop.NetworkManager.Device.Modem"
 )]
-pub trait DeviceModem {
+pub(crate) trait DeviceModem {
     /// The generic family of access technologies the modem supports.
     #[zbus(property)]
     fn modem_capabilities(&self) -> zbus::Result<u32>;

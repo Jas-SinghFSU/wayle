@@ -11,7 +11,7 @@ use zbus::{proxy, zvariant::OwnedValue};
     default_service = "org.freedesktop.NetworkManager",
     interface = "org.freedesktop.NetworkManager.Settings.Connection"
 )]
-pub trait SettingsConnection {
+pub(crate) trait SettingsConnection {
     /// Update the connection with new settings and properties.
     ///
     /// # Arguments

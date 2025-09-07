@@ -12,7 +12,7 @@ use zbus::{
     default_service = "org.freedesktop.NetworkManager",
     interface = "org.freedesktop.NetworkManager.Device.WifiP2P"
 )]
-pub trait DeviceWifiP2P {
+pub(crate) trait DeviceWifiP2P {
     /// Start a Wi-Fi P2P find operation.
     ///
     /// # Arguments

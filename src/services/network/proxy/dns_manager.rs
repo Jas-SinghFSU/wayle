@@ -12,7 +12,7 @@ use zbus::{proxy, zvariant::OwnedValue};
     interface = "org.freedesktop.NetworkManager.DnsManager",
     default_path = "/org/freedesktop/NetworkManager/DnsManager"
 )]
-pub trait DnsManager {
+pub(crate) trait DnsManager {
     /// The current DNS processing mode.
     #[zbus(property)]
     fn mode(&self) -> zbus::Result<String>;

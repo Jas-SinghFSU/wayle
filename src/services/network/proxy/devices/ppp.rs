@@ -7,6 +7,6 @@ use zbus::proxy;
     default_service = "org.freedesktop.NetworkManager",
     interface = "org.freedesktop.NetworkManager.Device.Ppp"
 )]
-pub trait DevicePpp {
+pub(crate) trait DevicePpp {
     // No properties
 }

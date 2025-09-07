@@ -1,9 +1,10 @@
 use super::utils::get_player_or_active;
 use crate::{
     cli::CliAction,
-    services::media::{Config, MediaService},
+    services::media::service::{Config, MediaService},
 };
 
+/// Execute the command
 pub async fn execute(player: Option<String>) -> CliAction {
     let service = MediaService::new(Config {
         ignored_players: vec![],

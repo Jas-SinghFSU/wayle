@@ -38,6 +38,3 @@ pub mod services;
 
 /// Core runtime infrastructure.
 pub mod core;
-
-/// Re-exported error types for convenience.
-pub use config::{Result, WayleError};

@@ -106,12 +106,12 @@ impl Item {
 
 /// An implementation of the pulse Mainloop trait that dispatches through tokio.
 #[derive(Debug)]
-pub struct TokioMain {
+pub(crate) struct TokioMain {
     mi: Rc<MainInner>,
 }
 
 /// The state structure passed to pulse.
-pub struct MainInner {
+pub(crate) struct MainInner {
     api: MainloopApi,
     items: UnsafeCell<Vec<*mut Item>>,
     sleep: UnsafeCell<Option<tokio::time::Sleep>>,

@@ -1,18 +1,15 @@
-mod agent;
-/// Core domain models for Bluetooth service components.
-mod core;
-/// Bluetooth device discovery functionality.
+/// Bluetooth agent for handling pairing and authorization
+pub mod agent;
+/// Core Bluetooth domain models
+pub mod core;
+/// Device discovery functionality
 pub mod discovery;
-/// Bluetooth service error types.
+/// Bluetooth error types
 pub mod error;
-/// Background monitoring for Bluetooth adapters and devices.
-pub mod monitoring;
-/// D-Bus proxy implementations for BlueZ interfaces.
-mod proxy;
-/// Bluetooth service implementation.
+pub(crate) mod monitoring;
+/// D-Bus proxy interfaces for BlueZ
+pub mod proxy;
+/// Bluetooth service implementation
 pub mod service;
-/// Type definitions for Bluetooth enums, flags, and states.
+/// Bluetooth type definitions
 pub mod types;
-
-pub(crate) use agent::BluetoothAgent;
-pub use error::BluetoothError;

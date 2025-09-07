@@ -7,7 +7,7 @@ use zbus::{proxy, zvariant::OwnedObjectPath};
     default_service = "org.freedesktop.NetworkManager",
     interface = "org.freedesktop.NetworkManager.Device.Vlan"
 )]
-pub trait DeviceVlan {
+pub(crate) trait DeviceVlan {
     /// Hardware address of the device.
     #[zbus(property)]
     fn hw_address(&self) -> zbus::Result<String>;

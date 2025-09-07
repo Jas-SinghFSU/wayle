@@ -7,7 +7,7 @@ use zbus::{proxy, zvariant::OwnedObjectPath};
     default_service = "org.freedesktop.NetworkManager",
     interface = "org.freedesktop.NetworkManager.Device.OlpcMesh"
 )]
-pub trait DeviceOlpcMesh {
+pub(crate) trait DeviceOlpcMesh {
     /// The hardware address of the device.
     #[zbus(property)]
     fn hw_address(&self) -> zbus::Result<String>;

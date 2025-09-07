@@ -2,8 +2,13 @@ use std::{collections::HashSet, error::Error, sync::OnceLock, time::Instant};
 
 use toml::Value;
 
-use super::{ConfigChange, ConfigError, path_ops::navigate_path};
-use crate::config::Config;
+use crate::{
+    config::Config,
+    config_runtime::{
+        changes::{ConfigChange, ConfigError},
+        path_ops::navigate_path,
+    },
+};
 
 static DEFAULT_CONFIG: OnceLock<toml::Value> = OnceLock::new();
 

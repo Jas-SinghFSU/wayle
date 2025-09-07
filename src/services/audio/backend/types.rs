@@ -12,45 +12,36 @@ use tokio::sync::{broadcast, mpsc};
 use super::commands::Command;
 use crate::services::audio::{
     events::AudioEvent,
-    types::{Device, DeviceKey, StreamInfo, StreamKey},
+    types::{
+        device::{Device, DeviceKey},
+        stream::{StreamInfo, StreamKey},
+    },
 };
 
-/// Thread-safe storage for audio devices
-pub type DeviceStore = Arc<RwLock<HashMap<DeviceKey, Device>>>;
+/// Storage for audio devices
+pub(crate) type DeviceStore = Arc<RwLock<HashMap<DeviceKey, Device>>>;
 
-/// Thread-safe storage for audio streams
-pub type StreamStore = Arc<RwLock<HashMap<StreamKey, StreamInfo>>>;
+/// Storage for audio streams
+pub(crate) type StreamStore = Arc<RwLock<HashMap<StreamKey, StreamInfo>>>;
 
-/// Thread-safe storage for default device information
-pub type DefaultDevice = Arc<RwLock<Option<Device>>>;
+/// Storage for default device information
+pub(crate) type DefaultDevice = Arc<RwLock<Option<Device>>>;
 
 /// Channel sender for audio events
-pub type EventSender = broadcast::Sender<AudioEvent>;
-
-/// Channel receiver for audio events
-pub type EventReceiver = broadcast::Receiver<AudioEvent>;
-
-/// Channel sender for device list updates
-pub type DeviceListSender = broadcast::Sender<Vec<Device>>;
-
-/// Channel sender for stream list updates
-pub type StreamListSender = broadcast::Sender<Vec<StreamInfo>>;
+pub(crate) type EventSender = broadcast::Sender<AudioEvent>;
 
 /// Channel sender for backend commands
-pub type CommandSender = mpsc::UnboundedSender<Command>;
+pub(crate) type CommandSender = mpsc::UnboundedSender<Command>;
 
 /// Channel receiver for backend commands
-pub type CommandReceiver = mpsc::UnboundedReceiver<Command>;
+pub(crate) type CommandReceiver = mpsc::UnboundedReceiver<Command>;
 
 /// Channel sender for internal backend commands
-pub(super) type InternalCommandSender = mpsc::UnboundedSender<InternalCommand>;
-
-/// Thread-safe storage for server information
-pub type ServerInfo = Arc<RwLock<Option<String>>>;
+pub(super) type InternalCommandSender = mpsc::UnboundedSender<InternalRefresh>;
 
 /// Change notifications from PulseAudio subscription
 #[derive(Debug, Clone)]
-pub enum ChangeNotification {
+pub(crate) enum ChangeNotification {
     /// Device-related change notification
     Device {
         /// PulseAudio facility type
@@ -71,33 +62,29 @@ pub enum ChangeNotification {
     },
     /// Server-related change notification
     Server {
-        /// PulseAudio facility type
-        facility: Facility,
         /// Operation performed on the server
         operation: Operation,
-        /// Server index
-        index: u32,
     },
 }
 
 /// Internal commands triggered by PulseAudio events
 #[derive(Debug)]
-pub enum InternalCommand {
+pub(crate) enum InternalRefresh {
     /// Refresh device information after change notification
-    RefreshDevices,
+    Devices,
     /// Refresh stream information after change notification
-    RefreshStreams,
+    Streams,
     /// Refresh server info for default device updates
-    RefreshServerInfo,
+    ServerInfo,
     /// Refresh a specific device
-    RefreshDevice {
+    Device {
         /// Device key to refresh
         device_key: DeviceKey,
         /// Facility type (Sink or Source)
         facility: Facility,
     },
     /// Refresh a specific stream
-    RefreshStream {
+    Stream {
         /// Stream key to refresh
         stream_key: StreamKey,
         /// Facility type (SinkInput or SourceOutput)
@@ -107,7 +94,7 @@ pub enum InternalCommand {
 
 /// External commands from service requests
 #[derive(Debug)]
-pub enum ExternalCommand {
+pub(crate) enum ExternalCommand {
     /// Set device volume
     SetDeviceVolume {
         /// Target device
@@ -160,6 +147,4 @@ pub enum ExternalCommand {
         /// Port name to activate.
         port: String,
     },
-    /// Shutdown backend
-    Shutdown,
 }

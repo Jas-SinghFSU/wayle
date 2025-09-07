@@ -1,5 +1,7 @@
 use super::{
-    ModuleInfo, PropertyInfo, extract_property_info, generator::DocsError, module::SchemeFn,
+    generator::DocsError,
+    module::{ModuleInfo, SchemeFn},
+    schema::{PropertyInfo, extract_property_info},
 };
 
 const TABLE_HEADER: &str =

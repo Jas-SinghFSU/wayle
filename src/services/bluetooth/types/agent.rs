@@ -120,7 +120,7 @@ pub(crate) enum PairingResponder {
 
 /// Agent events for Bluetooth pairing operations.
 #[derive(Debug)]
-pub enum AgentEvent {
+pub(crate) enum AgentEvent {
     /// PIN code requested from user.
     PinRequested {
         /// D-Bus object path of the device requesting PIN.
@@ -177,24 +177,5 @@ pub enum AgentEvent {
         responder: Sender<bool>,
     },
     /// Pairing request was cancelled.
-    Cancelled {
-        /// D-Bus object path of the device.
-        device_path: OwnedObjectPath,
-    },
-}
-
-impl AgentEvent {
-    /// Returns the device path for this agent event.
-    pub fn device_path(&self) -> &OwnedObjectPath {
-        match self {
-            Self::PinRequested { device_path, .. } => device_path,
-            Self::DisplayPinCode { device_path, .. } => device_path,
-            Self::PasskeyRequested { device_path, .. } => device_path,
-            Self::DisplayPasskey { device_path, .. } => device_path,
-            Self::ConfirmationRequested { device_path, .. } => device_path,
-            Self::AuthorizationRequested { device_path, .. } => device_path,
-            Self::ServiceAuthorizationRequested { device_path, .. } => device_path,
-            Self::Cancelled { device_path } => device_path,
-        }
-    }
+    Cancelled,
 }

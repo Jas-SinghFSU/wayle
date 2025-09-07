@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use libpulse_binding::time::MicroSeconds;
 
 use super::format::{AudioFormat, ChannelMap, SampleSpec};
-use crate::services::audio::Volume;
+use crate::services::audio::volume::types::Volume;
 
 /// Device state enumeration
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -58,7 +58,7 @@ impl DeviceKey {
 
 /// Base device information common to all devices
 #[derive(Debug, Clone, PartialEq)]
-pub struct DeviceInfo {
+pub(crate) struct DeviceInfo {
     /// Device index
     pub index: u32,
     /// Device name (internal identifier)
@@ -103,7 +103,7 @@ pub struct DeviceInfo {
 
 /// Sink (output) device information
 #[derive(Debug, Clone, PartialEq)]
-pub struct SinkInfo {
+pub(crate) struct SinkInfo {
     /// Common device information
     pub base: DeviceInfo,
     /// Monitor source index
@@ -114,7 +114,7 @@ pub struct SinkInfo {
 
 /// Source (input) device information
 #[derive(Debug, Clone, PartialEq)]
-pub struct SourceInfo {
+pub(crate) struct SourceInfo {
     /// Common device information
     pub base: DeviceInfo,
     /// Index of the sink being monitored (if this is a monitor source)
@@ -165,16 +165,11 @@ impl SourceInfo {
     pub fn key(&self) -> DeviceKey {
         self.base.key(DeviceType::Input)
     }
-
-    /// Check if this device is a hardware device (not a monitor)
-    pub fn is_hardware(&self) -> bool {
-        !self.is_monitor
-    }
 }
 
 /// Enum wrapper for device types to handle both sinks and sources
 #[derive(Debug, Clone, PartialEq)]
-pub enum Device {
+pub(crate) enum Device {
     /// Output device (sink)
     Sink(SinkInfo),
     /// Input device (source)

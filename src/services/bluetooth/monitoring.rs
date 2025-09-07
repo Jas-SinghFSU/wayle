@@ -7,8 +7,11 @@ use tracing::debug;
 use zbus::{Connection, fdo::ObjectManagerProxy, zvariant::OwnedObjectPath};
 
 use super::{
-    BluetoothError,
-    core::{Adapter, Device, LiveAdapterParams, LiveDeviceParams},
+    core::{
+        adapter::{Adapter, LiveAdapterParams},
+        device::{Device, LiveDeviceParams},
+    },
+    error::BluetoothError,
     service::BluetoothService,
     types::{ADAPTER_INTERFACE, DEVICE_INTERFACE, ServiceNotification},
 };
@@ -16,7 +19,10 @@ use crate::{
     remove_and_cancel,
     services::{
         bluetooth::types::BLUEZ_SERVICE,
-        common::{Property, ROOT_PATH, property::PropertyStream},
+        common::{
+            ROOT_PATH,
+            property::{Property, PropertyStream},
+        },
         traits::{Reactive, ServiceMonitoring},
     },
 };

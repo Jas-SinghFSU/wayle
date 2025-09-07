@@ -1,33 +1,27 @@
-/// Command definitions
-pub mod commands;
-/// Data conversion utilities
-pub mod conversion;
-/// PulseAudio command handling
-pub mod dispatcher;
-/// Event subscription and handling
-mod events;
-/// Type definitions and aliases
-pub mod types;
+pub(crate) mod commands;
+pub(crate) mod conversion;
+pub(crate) mod dispatcher;
+pub(crate) mod events;
+pub(crate) mod types;
 
 use std::{
     collections::HashMap,
     sync::{Arc, RwLock},
 };
 
-pub use commands::Command;
-pub use conversion::{convert_volume_from_pulse, convert_volume_to_pulse};
+use commands::Command;
+use conversion::convert_volume_to_pulse;
 use dispatcher::{VolumeRateLimiter, handle_external_command, handle_internal_command};
 use libpulse_binding::context::{Context, FlagSet as ContextFlags};
 use tokio::sync::mpsc;
 use tokio_util::sync::CancellationToken;
 use tracing::{error, info};
-use types::CommandReceiver;
-pub use types::{
-    DefaultDevice, DeviceListSender, DeviceStore, EventSender, ExternalCommand, InternalCommand,
-    ServerInfo, StreamListSender, StreamStore,
+use types::{
+    CommandReceiver, DefaultDevice, DeviceStore, EventSender, ExternalCommand, InternalRefresh,
+    StreamStore,
 };
 
-use crate::services::{AudioError, audio::tokio_mainloop::TokioMain};
+use crate::services::audio::{error::AudioError, tokio_mainloop::TokioMain};
 
 struct BackendState {
     devices: DeviceStore,
@@ -48,7 +42,7 @@ impl BackendState {
 }
 
 /// PulseAudio backend implementation
-pub struct PulseBackend {
+pub(crate) struct PulseBackend {
     state: BackendState,
     mainloop: TokioMain,
     context: Context,
@@ -119,13 +113,13 @@ impl PulseBackend {
         cancellation_token: CancellationToken,
     ) -> Result<
         (
-            mpsc::UnboundedSender<InternalCommand>,
-            mpsc::UnboundedReceiver<InternalCommand>,
+            mpsc::UnboundedSender<InternalRefresh>,
+            mpsc::UnboundedReceiver<InternalRefresh>,
         ),
         AudioError,
     > {
         let (internal_command_tx, internal_command_rx) =
-            mpsc::unbounded_channel::<InternalCommand>();
+            mpsc::unbounded_channel::<InternalRefresh>();
 
         info!("Setting up PulseAudio event subscription");
         events::start_event_processor(
@@ -138,9 +132,9 @@ impl PulseBackend {
         )?;
 
         info!("Triggering initial device and stream discovery");
-        let _ = internal_command_tx.send(InternalCommand::RefreshDevices);
-        let _ = internal_command_tx.send(InternalCommand::RefreshStreams);
-        let _ = internal_command_tx.send(InternalCommand::RefreshServerInfo);
+        let _ = internal_command_tx.send(InternalRefresh::Devices);
+        let _ = internal_command_tx.send(InternalRefresh::Streams);
+        let _ = internal_command_tx.send(InternalRefresh::ServerInfo);
 
         Ok((internal_command_tx, internal_command_rx))
     }
@@ -167,11 +161,6 @@ impl PulseBackend {
                             return;
                         };
 
-                        if matches!(command, Command::Shutdown) {
-                            info!("Received shutdown command");
-                            return;
-                        }
-
                         Self::handle_command(command, &devices, &streams, &external_tx);
                     }
                 }
@@ -187,7 +176,6 @@ impl PulseBackend {
         external_tx: &mpsc::UnboundedSender<ExternalCommand>,
     ) {
         match command {
-            Command::Shutdown => unreachable!("Shutdown handled in loop"),
             Command::GetDevice {
                 device_key,
                 responder,
@@ -318,7 +306,7 @@ impl PulseBackend {
 
     fn spawn_context_handler(
         self,
-        mut internal_command_rx: mpsc::UnboundedReceiver<InternalCommand>,
+        mut internal_command_rx: mpsc::UnboundedReceiver<InternalRefresh>,
         mut external_rx: mpsc::UnboundedReceiver<ExternalCommand>,
         event_tx: EventSender,
         cancellation_token: CancellationToken,

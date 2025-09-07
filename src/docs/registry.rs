@@ -1,5 +1,7 @@
-use super::ModuleInfo;
-use crate::{config::ClockConfig, docs::ModuleInfoProvider};
+use crate::{
+    config::clock::ClockConfig,
+    docs::module::{ModuleInfo, ModuleInfoProvider},
+};
 
 /// Central registry for all available modules in the Wayle system.
 ///
@@ -13,7 +15,8 @@ impl ModuleRegistry {
     /// Collects and returns module metadata including names, descriptions,
     /// icons, and configuration schemas for every module in the system.
     pub fn get_all() -> Vec<ModuleInfo> {
-        let modules: Vec<ModuleInfo> = vec![Self::get_module_info::<ClockConfig>()];
+        let module_info = Self::get_module_info::<ClockConfig>();
+        let modules: Vec<ModuleInfo> = vec![module_info];
         modules
     }
 

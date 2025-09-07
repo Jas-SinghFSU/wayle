@@ -4,10 +4,10 @@ use tracing::debug;
 
 use crate::services::{
     audio::{
-        core::device::InputDevice,
+        core::device::input::InputDevice,
         error::AudioError,
         events::AudioEvent,
-        types::{Device, DeviceState},
+        types::device::{Device, DeviceState},
     },
     traits::ModelMonitoring,
 };
@@ -48,30 +48,6 @@ impl ModelMonitoring for InputDevice {
                         match event {
                             AudioEvent::DeviceChanged(Device::Source(source)) if source.key() == device_key => {
                                 device.update_from_source(&source);
-                            }
-                            AudioEvent::DeviceVolumeChanged {
-                                device_key: key,
-                                volume,
-                            } if key == device_key => {
-                                device.volume.set(volume);
-                            }
-                            AudioEvent::DeviceMuteChanged {
-                                device_key: key,
-                                muted,
-                            } if key == device_key => {
-                                device.muted.set(muted);
-                            }
-                            AudioEvent::DeviceStateChanged {
-                                device_key: key,
-                                state,
-                            } if key == device_key => {
-                                device.state.set(state);
-                            }
-                            AudioEvent::DevicePortChanged {
-                                device_key: key,
-                                port_name,
-                            } if key == device_key => {
-                                device.active_port.set(port_name);
                             }
                             AudioEvent::DeviceRemoved(key) if key == device_key => {
                                 device.state.set(DeviceState::Offline);

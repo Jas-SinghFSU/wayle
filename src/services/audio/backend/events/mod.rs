@@ -9,15 +9,11 @@ use tracing::info;
 use super::types::{
     ChangeNotification, DeviceStore, EventSender, InternalCommandSender, StreamStore,
 };
-use crate::services::AudioError;
+use crate::services::audio::error::AudioError;
 
-mod device;
-mod server;
-mod stream;
-
-use device::handle_device_change;
-use server::handle_server_change;
-use stream::handle_stream_change;
+pub(crate) mod device;
+pub(crate) mod server;
+pub(crate) mod stream;
 
 type SubscriptionCallback = Option<Box<dyn FnMut(Option<Facility>, Option<Operation>, u32)>>;
 
@@ -30,7 +26,7 @@ type SubscriptionCallback = Option<Box<dyn FnMut(Option<Facility>, Option<Operat
 ///
 /// # Errors
 /// Returns error if PulseAudio subscription setup fails
-pub fn start_event_processor(
+pub(crate) fn start_event_processor(
     context: &mut Context,
     devices: DeviceStore,
     streams: StreamStore,
@@ -98,11 +94,7 @@ fn setup_subscription(
                     operation,
                     index,
                 },
-                Facility::Server => ChangeNotification::Server {
-                    facility,
-                    operation,
-                    index,
-                },
+                Facility::Server => ChangeNotification::Server { operation },
                 _ => return,
             };
 
@@ -131,17 +123,17 @@ async fn process_change_notification(
             operation,
             index,
         } => {
-            handle_device_change(facility, operation, index, devices, events_tx, command_tx).await;
+            device::handle_change(facility, operation, index, devices, events_tx, command_tx).await;
         }
         ChangeNotification::Stream {
             facility,
             operation,
             index,
         } => {
-            handle_stream_change(facility, operation, index, streams, events_tx, command_tx).await;
+            stream::handle_change(facility, operation, index, streams, events_tx, command_tx).await;
         }
-        ChangeNotification::Server { operation, .. } => {
-            handle_server_change(operation, command_tx).await;
+        ChangeNotification::Server { operation } => {
+            server::handle_change(operation, command_tx).await;
         }
     }
 }

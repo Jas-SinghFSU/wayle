@@ -1,17 +1,21 @@
-mod monitoring;
-mod types;
+pub(crate) mod monitoring;
+pub(crate) mod types;
 
 use std::{ops::Deref, sync::Arc};
 
-pub use types::SpeedMbps;
+use types::SpeedMbps;
 pub(crate) use types::{DeviceWiredParams, LiveDeviceWiredParams, WiredProperties};
 use zbus::{Connection, zvariant::OwnedObjectPath};
 
 use super::{Device, LiveDeviceParams};
 use crate::{
     services::{
-        common::Property,
-        network::{DeviceProxy, NMDeviceType, NetworkError, wired_proxy::DeviceWiredProxy},
+        common::property::Property,
+        network::{
+            error::NetworkError,
+            proxy::devices::{DeviceProxy, wired::DeviceWiredProxy},
+            types::device::NMDeviceType,
+        },
         traits::{ModelMonitoring, Reactive},
     },
     unwrap_string, unwrap_u32, unwrap_vec,

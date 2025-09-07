@@ -6,24 +6,16 @@ use libpulse_binding::{
     volume::ChannelVolumes,
 };
 
-use crate::services::{
-    AudioEvent, StreamInfo,
-    audio::{
-        backend::{
-            conversion::{
-                create_stream_info_from_sink_input, create_stream_info_from_source_output,
-            },
-            types::{EventSender, StreamStore},
-        },
-        types::{StreamKey, StreamType},
+use crate::services::audio::{
+    backend::{
+        conversion::{create_stream_info_from_sink_input, create_stream_info_from_source_output},
+        types::{EventSender, StreamStore},
     },
+    events::AudioEvent,
+    types::stream::{StreamInfo, StreamKey, StreamType},
 };
 
-pub(crate) fn trigger_stream_discovery(
-    context: &Context,
-    streams: &StreamStore,
-    events_tx: &EventSender,
-) {
+pub(crate) fn trigger_discovery(context: &Context, streams: &StreamStore, events_tx: &EventSender) {
     let introspect = context.introspect();
 
     let streams_clone = Arc::clone(streams);
@@ -47,7 +39,7 @@ pub(crate) fn trigger_stream_discovery(
     });
 }
 
-pub(crate) fn trigger_stream_refresh(
+pub(crate) fn trigger_refresh(
     context: &Context,
     streams: &StreamStore,
     events_tx: &EventSender,
@@ -172,7 +164,7 @@ pub(crate) fn set_stream_mute(
 pub(crate) fn move_stream(
     context: &Context,
     stream_key: StreamKey,
-    device_key: crate::services::audio::types::DeviceKey,
+    device_key: crate::services::audio::types::device::DeviceKey,
     streams: &StreamStore,
 ) {
     let streams_clone = Arc::clone(streams);

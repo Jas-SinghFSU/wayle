@@ -15,10 +15,10 @@ use zbus::{
 
 use crate::{
     services::{
-        common::{NULL_PATH, Property},
+        common::{NULL_PATH, property::Property},
         media::{
-            MediaError,
             core::metadata::{LiveTrackMetadataParams, TrackMetadata, TrackMetadataParams},
+            error::MediaError,
             proxy::{MediaPlayer2PlayerProxy, MediaPlayer2Proxy},
             types::{LoopMode, PlaybackState, PlayerId, ShuffleMode, Volume},
         },

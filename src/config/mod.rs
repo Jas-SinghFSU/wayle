@@ -1,30 +1,30 @@
-//! Configuration schema definitions and validation.
-//!
-//! Defines the complete configuration structure for Wayle, including
-//! general settings and module-specific configurations. All configurations
-//! are serializable to/from TOML format.
-
-mod battery;
-mod clock;
-mod error;
-mod general;
-mod loading;
-mod media;
-mod modules;
-mod paths;
-mod styling;
+/// Battery configuration
+pub mod battery;
+/// Clock configuration
+pub mod clock;
+/// Configuration error types
+pub mod error;
+/// General application configuration
+pub mod general;
+/// Configuration loading
+pub mod loading;
+/// Media configuration
+pub mod media;
+/// Module configuration
+pub mod modules;
+/// Configuration paths
+pub mod paths;
+/// Styling configuration
+pub mod styling;
 
 #[cfg(test)]
-mod tests;
+/// Configuration tests
+pub mod tests;
 
-pub use clock::ClockConfig;
-pub use error::{Result, WayleError};
 use general::GeneralConfig;
-pub use media::MediaConfig;
+use media::MediaConfig;
 use modules::ModulesConfig;
-pub use paths::ConfigPaths;
 use serde::{Deserialize, Serialize};
-pub use styling::*;
 
 /// Main configuration structure for Wayle.
 ///

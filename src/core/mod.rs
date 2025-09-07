@@ -1,6 +1,6 @@
-/// Application initialization utilities.
+/// Application initialization
 pub mod init;
-/// Runtime state management.
+/// Application state management
 pub mod state;
-/// Tracing and logging configuration.
+/// Logging and tracing configuration
 pub mod tracing;

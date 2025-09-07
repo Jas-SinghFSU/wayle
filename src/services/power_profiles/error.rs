@@ -15,6 +15,10 @@ pub enum PowerProfilesError {
 
     /// Invalid field type in D-Bus data
     #[error("Invalid field type for {field}: expected {expected}")]
-    InvalidFieldType { field: String, expected: String },
+    InvalidFieldType {
+        /// Field name that had invalid type
+        field: String,
+        /// Expected type description
+        expected: String,
+    },
 }
-

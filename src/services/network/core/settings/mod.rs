@@ -14,13 +14,16 @@ use zbus::{
 };
 
 use super::{
-    access_point::SSID,
+    access_point::types::SSID,
     settings_connection::{ConnectionSettings, ConnectionSettingsParams},
 };
 use crate::{
     services::{
-        common::Property,
-        network::{NMSettingsAddConnection2Flags, NetworkError, SettingsProxy},
+        common::property::Property,
+        network::{
+            error::NetworkError, proxy::settings::SettingsProxy,
+            types::flags::NMSettingsAddConnection2Flags,
+        },
         traits::{ModelMonitoring, Reactive},
     },
     unwrap_bool, unwrap_string, unwrap_u64, unwrap_vec,

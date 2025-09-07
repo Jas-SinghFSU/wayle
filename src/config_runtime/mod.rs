@@ -1,19 +1,21 @@
 //! Reactive configuration store with change tracking.
 //!
-//! Provides a thread-safe configuration store that can load TOML files,
+//! Provides a configuration store that can load TOML files,
 //! track changes, and notify subscribers of configuration updates.
 
-mod broadcast;
-mod changes;
-mod diff;
-mod file_watching;
-mod path_ops;
-mod runtime;
+/// Configuration broadcast system
+pub mod broadcast;
+/// Configuration change tracking
+pub mod changes;
+/// Configuration diffing
+pub mod diff;
+/// File system watching
+pub mod file_watching;
+/// Path operations
+pub mod path_ops;
+/// Configuration runtime
+pub mod runtime;
 
 #[cfg(test)]
-mod tests;
-
-pub use broadcast::Subscription;
-pub use changes::{ConfigChange, ConfigError};
-pub use file_watching::FileWatcher;
-pub use runtime::ConfigRuntime;
+/// Configuration runtime tests
+pub mod tests;

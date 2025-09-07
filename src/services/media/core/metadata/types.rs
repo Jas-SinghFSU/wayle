@@ -15,7 +15,7 @@ pub(crate) struct LiveTrackMetadataParams<'a> {
 }
 
 #[derive(Debug, Clone)]
-pub struct TrackProperties {
+pub(crate) struct TrackProperties {
     pub title: String,
     pub artist: String,
     pub album: String,

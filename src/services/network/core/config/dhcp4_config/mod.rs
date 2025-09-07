@@ -9,8 +9,8 @@ use zbus::{
 };
 
 use crate::services::{
-    common::Property,
-    network::{NetworkError, proxy::dhcp4_config::DHCP4ConfigProxy},
+    common::property::Property,
+    network::{error::NetworkError, proxy::dhcp4_config::DHCP4ConfigProxy},
     traits::Static,
 };
 

@@ -3,7 +3,7 @@ use std::{fs, io::Error, path::PathBuf, time::SystemTime};
 use serde::{Deserialize, Serialize};
 use tracing::{info, instrument, warn};
 
-use crate::config::ConfigPaths;
+use crate::config::paths::ConfigPaths;
 
 /// Runtime state that persists between CLI calls and is shared with UI
 #[derive(Debug, Clone, Serialize, Deserialize)]

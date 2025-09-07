@@ -1,6 +1,6 @@
-mod controls;
-mod monitoring;
-pub mod types;
+pub(crate) mod controls;
+pub(crate) mod monitoring;
+pub(crate) mod types;
 
 use std::{collections::HashMap, sync::Arc};
 
@@ -16,11 +16,14 @@ use zbus::{
 use crate::{
     services::{
         bluetooth::{
-            BluetoothError,
-            proxy::Adapter1Proxy,
-            types::{AdapterRole, AddressType, DiscoveryFilter, PowerState, UUID},
+            error::BluetoothError,
+            proxy::adapter::Adapter1Proxy,
+            types::{
+                UUID,
+                adapter::{AdapterRole, AddressType, DiscoveryFilterOptions, PowerState},
+            },
         },
-        common::Property,
+        common::property::Property,
         traits::{ModelMonitoring, Reactive},
     },
     unwrap_bool, unwrap_string, unwrap_u8, unwrap_u16, unwrap_u32, unwrap_vec,
@@ -302,8 +305,9 @@ impl Adapter {
     /// Returns error if the D-Bus operation fails or the adapter is not available.
     pub async fn set_discovery_filter(
         &self,
-        filter: DiscoveryFilter<'_>,
+        options: DiscoveryFilterOptions<'_>,
     ) -> Result<(), BluetoothError> {
+        let filter = options.to_filter();
         AdapterControls::set_discovery_filter(&self.zbus_connection, &self.object_path, filter)
             .await
     }

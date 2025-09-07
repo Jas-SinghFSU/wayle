@@ -7,7 +7,7 @@ use zbus::{proxy, zvariant::OwnedObjectPath};
     default_service = "org.freedesktop.NetworkManager",
     interface = "org.freedesktop.NetworkManager.Device.Hsr"
 )]
-pub trait DeviceHsr {
+pub(crate) trait DeviceHsr {
     /// The path of the port1 device.
     #[zbus(property)]
     fn port1(&self) -> zbus::Result<OwnedObjectPath>;

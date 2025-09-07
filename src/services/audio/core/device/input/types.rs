@@ -2,7 +2,7 @@ use tokio_util::sync::CancellationToken;
 
 use crate::services::audio::{
     backend::types::{CommandSender, EventSender},
-    types::DeviceKey,
+    types::device::DeviceKey,
 };
 
 pub(crate) struct InputDeviceParams<'a> {

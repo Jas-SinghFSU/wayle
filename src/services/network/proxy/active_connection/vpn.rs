@@ -9,7 +9,7 @@ use zbus::proxy;
     default_service = "org.freedesktop.NetworkManager",
     interface = "org.freedesktop.NetworkManager.VPN.Connection"
 )]
-pub trait VPNConnection {
+pub(crate) trait VPNConnection {
     /// The VPN-specific state of the connection.
     #[zbus(property)]
     fn vpn_state(&self) -> zbus::Result<u32>;

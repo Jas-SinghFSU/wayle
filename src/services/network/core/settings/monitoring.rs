@@ -10,8 +10,9 @@ use crate::{
     remove_and_cancel,
     services::{
         network::{
-            NetworkError, SettingsProxy,
             core::settings_connection::{ConnectionSettings, ConnectionSettingsParams},
+            error::NetworkError,
+            proxy::settings::SettingsProxy,
         },
         traits::{ModelMonitoring, Reactive},
     },

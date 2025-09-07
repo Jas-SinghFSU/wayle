@@ -1,14 +1,12 @@
 use libpulse_binding::context::subscribe::{Facility, Operation};
 
-use crate::services::{
-    AudioEvent, StreamType,
-    audio::{
-        backend::types::{EventSender, InternalCommand, InternalCommandSender, StreamStore},
-        types::StreamKey,
-    },
+use crate::services::audio::{
+    backend::types::{EventSender, InternalCommandSender, InternalRefresh, StreamStore},
+    events::AudioEvent,
+    types::stream::{StreamKey, StreamType},
 };
 
-pub(crate) async fn handle_stream_change(
+pub(crate) async fn handle_change(
     facility: Facility,
     operation: Operation,
     stream_index: u32,
@@ -40,7 +38,7 @@ pub(crate) async fn handle_stream_change(
             }
         }
         Operation::New | Operation::Changed => {
-            let _ = command_tx.send(InternalCommand::RefreshStream {
+            let _ = command_tx.send(InternalRefresh::Stream {
                 stream_key,
                 facility,
             });

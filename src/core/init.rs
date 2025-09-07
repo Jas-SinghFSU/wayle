@@ -2,7 +2,7 @@ use std::{error::Error, fs};
 
 use tracing::{info, instrument};
 
-use crate::config::ConfigPaths;
+use crate::config::paths::ConfigPaths;
 
 /// Ensures all required Wayle directories exist, creating them if necessary
 ///

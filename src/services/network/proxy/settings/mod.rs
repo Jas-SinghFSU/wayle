@@ -17,7 +17,7 @@ pub mod connection;
     interface = "org.freedesktop.NetworkManager.Settings",
     default_path = "/org/freedesktop/NetworkManager/Settings"
 )]
-pub trait Settings {
+pub(crate) trait Settings {
     /// List the saved network connections known to NetworkManager.
     ///
     /// # Returns

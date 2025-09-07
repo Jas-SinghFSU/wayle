@@ -6,7 +6,7 @@ use std::{
 use serde::{Deserialize, Serialize};
 use zbus::zvariant::OwnedValue;
 
-use crate::services::power_profiles::PowerProfilesError;
+use crate::services::power_profiles::error::PowerProfilesError;
 
 /// Power profile types available in the system.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -78,7 +78,9 @@ impl Display for PerformanceDegradationReason {
 /// Profile information with driver details.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Profile {
+    /// Driver name providing this profile
     pub driver: String,
+    /// The power profile type
     pub profile: PowerProfile,
 }
 
@@ -112,8 +114,11 @@ impl TryFrom<HashMap<String, OwnedValue>> for Profile {
 /// Profile hold information.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ProfileHold {
+    /// Application ID that requested the hold
     pub application_id: String,
+    /// The power profile type
     pub profile: PowerProfile,
+    /// Reason for requesting the profile hold
     pub reason: String,
 }
 

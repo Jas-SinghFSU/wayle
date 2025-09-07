@@ -3,22 +3,27 @@ use std::sync::Arc;
 use tokio_util::sync::CancellationToken;
 use zbus::{Connection, zvariant::OwnedObjectPath};
 
+use self::types::{AccessPointParams, BSSID, LiveAccessPointParams, SSID, SecurityType};
 use crate::{
     services::{
-        common::Property,
+        common::property::Property,
         network::{
-            AccessPointProxy, NM80211ApFlags, NM80211ApSecurityFlags, NM80211Mode, NetworkError,
+            error::NetworkError,
+            proxy::access_point::AccessPointProxy,
+            types::{
+                flags::{NM80211ApFlags, NM80211ApSecurityFlags},
+                wifi::NM80211Mode,
+            },
         },
         traits::{ModelMonitoring, Reactive},
     },
     unwrap_i32_or, unwrap_string, unwrap_u8, unwrap_u32, unwrap_vec,
 };
 
-mod monitoring;
-mod types;
-
-pub(crate) use types::{AccessPointParams, LiveAccessPointParams};
-pub use types::{BSSID, NetworkIdentifier, SSID, SecurityType};
+/// Access point monitoring implementation
+pub(crate) mod monitoring;
+/// Access point type definitions
+pub(crate) mod types;
 
 /// WiFi access point representation.
 ///
