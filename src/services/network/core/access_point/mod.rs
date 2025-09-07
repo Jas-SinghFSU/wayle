@@ -3,7 +3,7 @@ use std::sync::Arc;
 use tokio_util::sync::CancellationToken;
 use zbus::{Connection, zvariant::OwnedObjectPath};
 
-use self::types::{AccessPointParams, Bssid, LiveAccessPointParams, Ssid, SecurityType};
+use self::types::{AccessPointParams, Bssid, LiveAccessPointParams, SecurityType, Ssid};
 use crate::{
     services::{
         common::property::Property,

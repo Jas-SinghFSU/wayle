@@ -21,4 +21,13 @@ pub enum PowerProfilesError {
         /// Expected type description
         expected: String,
     },
+
+    /// PowerProfiles operation failed
+    #[error("PowerProfiles operation failed: {operation} - {reason}")]
+    OperationFailed {
+        /// The operation that failed
+        operation: &'static str,
+        /// The reason the operation failed
+        reason: String,
+    },
 }

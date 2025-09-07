@@ -4,7 +4,7 @@ use futures::StreamExt;
 use tokio_util::sync::CancellationToken;
 use tracing::debug;
 
-use super::{AccessPoint, Bssid, Ssid, SecurityType};
+use super::{AccessPoint, Bssid, SecurityType, Ssid};
 use crate::services::{
     network::{
         error::NetworkError,
