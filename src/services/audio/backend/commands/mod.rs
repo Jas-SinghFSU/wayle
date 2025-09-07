@@ -30,16 +30,6 @@ pub(crate) enum Command {
         /// Channel to send response.
         responder: oneshot::Sender<Result<StreamInfo, AudioError>>,
     },
-    /// List all devices
-    ListDevices {
-        /// Channel to send response.
-        responder: oneshot::Sender<Result<Vec<Device>, AudioError>>,
-    },
-    /// List all streams
-    ListStreams {
-        /// Channel to send response.
-        responder: oneshot::Sender<Result<Vec<StreamInfo>, AudioError>>,
-    },
     /// Set device volume
     SetVolume {
         /// Device to modify.

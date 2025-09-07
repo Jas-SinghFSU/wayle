@@ -7,6 +7,9 @@ use crate::{
 };
 
 /// Execute the command
+///
+/// # Errors
+/// Returns error if position parsing fails, service communication fails, or player is not found.
 pub async fn execute(position: String, player: Option<String>) -> CliAction {
     let service = MediaService::new(Config {
         ignored_players: vec![],

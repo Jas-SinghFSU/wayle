@@ -1,6 +1,9 @@
 use crate::{cli::CliAction, config_runtime::runtime::ConfigRuntime};
 
 /// Execute the command
+///
+/// # Errors
+/// Returns error if config loading fails, value parsing fails, or path cannot be set.
 pub async fn execute(path: String, value: String) -> CliAction {
     let config_runtime =
         ConfigRuntime::load().map_err(|e| format!("Failed to load config: {e}"))?;

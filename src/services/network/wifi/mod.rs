@@ -11,7 +11,7 @@ use zbus::{Connection, zvariant::OwnedObjectPath};
 
 use super::{
     core::{
-        access_point::{AccessPoint, types::SSID},
+        access_point::{AccessPoint, types::Ssid},
         device::wifi::{DeviceWifi, DeviceWifiParams, LiveDeviceWifiParams},
     },
     error::NetworkError,
@@ -41,7 +41,7 @@ pub struct Wifi {
     pub enabled: Property<bool>,
     /// Current WiFi connectivity status.
     pub connectivity: Property<NetworkStatus>,
-    /// SSID of the currently connected network, if any.
+    /// Ssid of the currently connected network, if any.
     pub ssid: Property<Option<String>>,
     /// Signal strength of current connection (0-100).
     pub strength: Property<Option<u8>>,
@@ -177,7 +177,7 @@ impl Wifi {
                         .ssid()
                         .await
                         .ok()
-                        .map(|raw_ssid| SSID::new(raw_ssid).to_string());
+                        .map(|raw_ssid| Ssid::new(raw_ssid).to_string());
 
                     let strength = ap_proxy.strength().await.ok();
                     (ssid, strength)

@@ -14,7 +14,7 @@ use crate::{
             core::{
                 access_point::{
                     AccessPoint,
-                    types::{LiveAccessPointParams, SSID},
+                    types::{LiveAccessPointParams, Ssid},
                 },
                 device::wifi::DeviceWifi,
             },
@@ -208,7 +208,7 @@ async fn monitor_wifi(
 
                 Some(change) = async { ap_ssid_stream.as_mut()?.next().await } => {
                     if let Ok(new_ssid) = change.get().await {
-                        wifi.ssid.set(Some(SSID::new(new_ssid).to_string()));
+                        wifi.ssid.set(Some(Ssid::new(new_ssid).to_string()));
                     }
                 }
 
@@ -273,7 +273,7 @@ async fn handle_access_point_changed(
     match AccessPointProxy::new(connection, new_ap_path).await {
         Ok(ap_proxy) => {
             if let Ok(raw_ssid) = ap_proxy.ssid().await {
-                ssid_prop.set(Some(SSID::new(raw_ssid).to_string()));
+                ssid_prop.set(Some(Ssid::new(raw_ssid).to_string()));
             }
 
             if let Ok(strength) = ap_proxy.strength().await {

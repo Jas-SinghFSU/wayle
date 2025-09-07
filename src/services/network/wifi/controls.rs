@@ -6,7 +6,7 @@ use zbus::{
 };
 
 use crate::services::network::{
-    core::access_point::types::SSID,
+    core::access_point::types::Ssid,
     error::NetworkError,
     proxy::{access_point::AccessPointProxy, devices::DeviceProxy, manager::NetworkManagerProxy},
 };
@@ -108,7 +108,7 @@ impl WifiControls {
                 reason: e.to_string(),
             })?;
 
-        let ssid_string = SSID::new(ssid_bytes.clone()).as_str();
+        let ssid_string = Ssid::new(ssid_bytes.clone()).as_str();
 
         let bssid = if Self::is_manufacturer_default(&ssid_string) {
             ap_proxy.hw_address().await.ok()

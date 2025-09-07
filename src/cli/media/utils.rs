@@ -3,6 +3,9 @@ use std::sync::Arc;
 use crate::services::media::{core::player::Player, service::MediaService, types::PlayerId};
 
 /// Finds a player by identifier (index or partial name match)
+///
+/// # Errors
+/// Returns error if no players exist, invalid index provided, or multiple matches found.
 pub fn find_player_by_identifier(
     service: &MediaService,
     identifier: &str,
@@ -52,6 +55,9 @@ pub fn find_player_by_identifier(
 }
 
 /// Gets a player from optional identifier or returns active player
+///
+/// # Errors
+/// Returns error if player identification fails, setting active player fails, or no active player exists.
 pub async fn get_player_or_active(
     service: &MediaService,
     identifier: Option<&String>,

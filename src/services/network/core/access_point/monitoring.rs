@@ -4,7 +4,7 @@ use futures::StreamExt;
 use tokio_util::sync::CancellationToken;
 use tracing::debug;
 
-use super::{AccessPoint, BSSID, SSID, SecurityType};
+use super::{AccessPoint, Bssid, Ssid, SecurityType};
 use crate::services::{
     network::{
         error::NetworkError,
@@ -112,7 +112,7 @@ async fn monitor(
             }
             Some(change) = ssid_changes.next() => {
                 if let Ok(new_ssid) = change.get().await {
-                    let ssid = SSID::new(new_ssid);
+                    let ssid = Ssid::new(new_ssid);
                     let is_hidden = ssid.is_empty();
                     access_point.ssid.set(ssid);
                     access_point.is_hidden.set(is_hidden);
@@ -125,7 +125,7 @@ async fn monitor(
             }
             Some(change) = hw_address_changes.next() => {
                 if let Ok(new_hw_address) = change.get().await {
-                    let bssid = BSSID::new(new_hw_address.into_bytes());
+                    let bssid = Bssid::new(new_hw_address.into_bytes());
                     access_point.bssid.set(bssid);
                 }
             }

@@ -12,7 +12,7 @@ use zbus::{
     zvariant::{self, OwnedObjectPath, OwnedValue},
 };
 
-use super::access_point::types::SSID;
+use super::access_point::types::Ssid;
 use crate::{
     services::{
         common::property::Property,
@@ -226,7 +226,7 @@ impl ConnectionSettings {
         .await
     }
 
-    pub(crate) async fn matches_ssid(&self, ssid: &SSID) -> bool {
+    pub(crate) async fn matches_ssid(&self, ssid: &Ssid) -> bool {
         let Ok(settings) = self.get_settings().await else {
             return false;
         };

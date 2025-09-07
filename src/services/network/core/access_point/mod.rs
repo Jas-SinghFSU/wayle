@@ -3,7 +3,7 @@ use std::sync::Arc;
 use tokio_util::sync::CancellationToken;
 use zbus::{Connection, zvariant::OwnedObjectPath};
 
-use self::types::{AccessPointParams, BSSID, LiveAccessPointParams, SSID, SecurityType};
+use self::types::{AccessPointParams, Bssid, LiveAccessPointParams, Ssid, SecurityType};
 use crate::{
     services::{
         common::property::Property,
@@ -47,14 +47,14 @@ pub struct AccessPoint {
     pub rsn_flags: Property<NM80211ApSecurityFlags>,
 
     /// The Service Set Identifier identifying the access point.
-    /// The SSID is a binary array to support non-UTF-8 SSIDs.
-    pub ssid: Property<SSID>,
+    /// The Ssid is a binary array to support non-UTF-8 Ssids.
+    pub ssid: Property<Ssid>,
 
     /// The radio channel frequency in use by the access point, in MHz.
     pub frequency: Property<u32>,
 
-    /// The hardware address (BSSID) of the access point.
-    pub bssid: Property<BSSID>,
+    /// The hardware address (Bssid) of the access point.
+    pub bssid: Property<Bssid>,
 
     /// Describes the operating mode of the access point.
     pub mode: Property<NM80211Mode>,
@@ -75,7 +75,7 @@ pub struct AccessPoint {
     /// Provides a user-friendly classification of the AP's security.
     pub security: Property<SecurityType>,
 
-    /// Whether this is a hidden network (non-broadcasting SSID).
+    /// Whether this is a hidden network (non-broadcasting Ssid).
     pub is_hidden: Property<bool>,
 }
 
@@ -168,9 +168,9 @@ impl AccessPoint {
         let flags = NM80211ApFlags::from_bits_truncate(unwrap_u32!(flags, path));
         let wpa_flags = NM80211ApSecurityFlags::from_bits_truncate(unwrap_u32!(wpa_flags, path));
         let rsn_flags = NM80211ApSecurityFlags::from_bits_truncate(unwrap_u32!(rsn_flags, path));
-        let ssid = SSID::new(unwrap_vec!(ssid, path));
+        let ssid = Ssid::new(unwrap_vec!(ssid, path));
         let frequency = unwrap_u32!(frequency, path);
-        let hw_address = BSSID::new(unwrap_string!(hw_address, path).into_bytes());
+        let hw_address = Bssid::new(unwrap_string!(hw_address, path).into_bytes());
         let mode = NM80211Mode::from_u32(unwrap_u32!(mode, path));
         let max_bitrate = unwrap_u32!(max_bitrate, path);
         let strength = unwrap_u8!(strength, path);

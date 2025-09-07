@@ -14,6 +14,7 @@ use zbus::{proxy, zvariant::OwnedValue};
 pub(crate) trait IP6Config {
     /// Array of tuples of IPv6 address/prefix/gateway.
     #[zbus(property)]
+    #[allow(clippy::type_complexity)]
     fn addresses(&self) -> zbus::Result<Vec<(Vec<u8>, u32, Vec<u8>)>>;
 
     /// Array of IP address data objects.
@@ -26,6 +27,7 @@ pub(crate) trait IP6Config {
 
     /// Array of tuples of IPv6 route/prefix/next-hop/metric.
     #[zbus(property)]
+    #[allow(clippy::type_complexity)]
     fn routes(&self) -> zbus::Result<Vec<(Vec<u8>, u32, Vec<u8>, u32)>>;
 
     /// Array of IP route data objects.

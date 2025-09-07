@@ -23,10 +23,10 @@ pub(crate) struct LiveAccessPointParams<'a> {
 pub struct NetworkIdentifier(Vec<u8>);
 
 /// Service Set Identifier - the network name.
-pub type SSID = NetworkIdentifier;
+pub type Ssid = NetworkIdentifier;
 
 /// Basic Service Set Identifier - the hardware address.
-pub type BSSID = NetworkIdentifier;
+pub type Bssid = NetworkIdentifier;
 
 impl NetworkIdentifier {
     /// Creates a new identifier from raw bytes.
@@ -85,13 +85,13 @@ pub enum SecurityType {
     /// No security (open network).
     None,
     /// WEP (Wired Equivalent Privacy) - deprecated and insecure.
-    WEP,
+    Wep,
     /// WPA (WiFi Protected Access) version 1.
-    WPA,
+    Wpa,
     /// WPA2 (WiFi Protected Access) version 2 - most common.
-    WPA2,
+    Wpa2,
     /// WPA3 (WiFi Protected Access) version 3 - latest standard.
-    WPA3,
+    Wpa3,
     /// Enterprise security (802.1X) - requires authentication server.
     Enterprise,
 }
@@ -101,10 +101,10 @@ impl SecurityType {
     pub fn as_str(&self) -> &'static str {
         match self {
             Self::None => "Open",
-            Self::WEP => "WEP",
-            Self::WPA => "WPA",
-            Self::WPA2 => "WPA2",
-            Self::WPA3 => "WPA3",
+            Self::Wep => "WEP",
+            Self::Wpa => "WPA",
+            Self::Wpa2 => "WPA2",
+            Self::Wpa3 => "WPA3",
             Self::Enterprise => "Enterprise",
         }
     }
@@ -135,23 +135,23 @@ impl SecurityType {
         }
 
         if rsn_flags.intersects(WPA3_FLAGS) {
-            return Self::WPA3;
+            return Self::Wpa3;
         }
 
         if rsn_flags.contains(NM80211ApSecurityFlags::KEY_MGMT_PSK) {
-            return Self::WPA2;
+            return Self::Wpa2;
         }
 
         if wpa_flags.contains(NM80211ApSecurityFlags::KEY_MGMT_PSK) {
-            return Self::WPA;
+            return Self::Wpa;
         }
 
         if wpa_flags.intersects(WEP_FLAGS) || rsn_flags.intersects(WEP_FLAGS) {
-            return Self::WEP;
+            return Self::Wep;
         }
 
         if flags.contains(NM80211ApFlags::PRIVACY) && wpa_flags.is_empty() && rsn_flags.is_empty() {
-            return Self::WEP;
+            return Self::Wep;
         }
 
         Self::None

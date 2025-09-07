@@ -212,22 +212,6 @@ impl PulseBackend {
                 };
                 let _ = responder.send(result);
             }
-            Command::ListDevices { responder } => {
-                let result = if let Ok(devices_guard) = devices.read() {
-                    Ok(devices_guard.values().cloned().collect())
-                } else {
-                    Err(AudioError::BackendCommunicationFailed)
-                };
-                let _ = responder.send(result);
-            }
-            Command::ListStreams { responder } => {
-                let result = if let Ok(streams_guard) = streams.read() {
-                    Ok(streams_guard.values().cloned().collect())
-                } else {
-                    Err(AudioError::BackendCommunicationFailed)
-                };
-                let _ = responder.send(result);
-            }
             Command::SetVolume {
                 device_key,
                 volume,
