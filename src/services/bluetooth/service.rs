@@ -5,7 +5,7 @@ use tokio::{
     time::sleep,
 };
 use tokio_util::sync::CancellationToken;
-use tracing::error;
+use tracing::{error, instrument};
 use zbus::{Connection, zvariant::OwnedObjectPath};
 
 use super::{
@@ -199,6 +199,7 @@ impl BluetoothService {
     /// # Errors
     ///
     /// Returns error if no primary adapter is available or discovery operation fails.
+    #[instrument(skip(self), err)]
     pub async fn start_discovery(&self) -> Result<(), BluetoothError> {
         let Some(active_adapter) = self.primary_adapter.get() else {
             return Err(BluetoothError::OperationFailed {
@@ -218,6 +219,7 @@ impl BluetoothService {
     /// # Errors
     ///
     /// Returns error if no primary adapter is available or discovery operation fails.
+    #[instrument(skip(self), fields(duration_secs = duration.as_secs()), err)]
     pub async fn start_timed_discovery(&self, duration: Duration) -> Result<(), BluetoothError> {
         let Some(active_adapter) = self.primary_adapter.get() else {
             return Err(BluetoothError::OperationFailed {
@@ -245,6 +247,7 @@ impl BluetoothService {
     /// # Errors
     ///
     /// Returns error if no primary adapter is available or stop operation fails.
+    #[instrument(skip(self), err)]
     pub async fn stop_discovery(&self) -> Result<(), BluetoothError> {
         let Some(active_adapter) = self.primary_adapter.get() else {
             return Err(BluetoothError::OperationFailed {
@@ -263,6 +266,7 @@ impl BluetoothService {
     /// # Errors
     ///
     /// Returns error if no primary adapter is available or power operation fails.
+    #[instrument(skip(self), err)]
     pub async fn enable(&self) -> Result<(), BluetoothError> {
         let Some(active_adapter) = self.primary_adapter.get() else {
             return Err(BluetoothError::OperationFailed {
@@ -281,6 +285,7 @@ impl BluetoothService {
     /// # Errors
     ///
     /// Returns error if no primary adapter is available or power operation fails.
+    #[instrument(skip(self), err)]
     pub async fn disable(&self) -> Result<(), BluetoothError> {
         let Some(active_adapter) = self.primary_adapter.get() else {
             return Err(BluetoothError::OperationFailed {
@@ -300,6 +305,7 @@ impl BluetoothService {
     /// # Errors
     ///
     /// Returns error if no PIN request is pending or responder channel is closed.
+    #[instrument(skip(self, pin), err)]
     pub async fn provide_pin(&self, pin: String) -> Result<(), BluetoothError> {
         providers::pin(self, pin).await
     }
@@ -312,6 +318,7 @@ impl BluetoothService {
     /// # Errors
     ///
     /// Returns error if no passkey request is pending or responder channel is closed.
+    #[instrument(skip(self, passkey), err)]
     pub async fn provide_passkey(&self, passkey: u32) -> Result<(), BluetoothError> {
         providers::passkey(self, passkey).await
     }
@@ -324,6 +331,7 @@ impl BluetoothService {
     /// # Errors
     ///
     /// Returns error if no confirmation request is pending or responder channel is closed.
+    #[instrument(skip(self), fields(confirmed = confirmation), err)]
     pub async fn provide_confirmation(&self, confirmation: bool) -> Result<(), BluetoothError> {
         providers::confirmation(self, confirmation).await
     }

@@ -1,5 +1,10 @@
+use std::collections::HashMap;
+
 use tokio_util::sync::CancellationToken;
-use zbus::{Connection, zvariant::OwnedObjectPath};
+use zbus::{
+    Connection,
+    zvariant::{OwnedObjectPath, OwnedValue},
+};
 
 pub(crate) struct DeviceParams<'a> {
     pub connection: &'a Connection,
@@ -45,3 +50,5 @@ pub(crate) struct DeviceProperties {
     pub hw_address: String,
     pub ports: Vec<OwnedObjectPath>,
 }
+
+pub type AppliedConnection = (HashMap<String, HashMap<String, OwnedValue>>, u64);

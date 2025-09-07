@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use tokio::sync::{broadcast, mpsc};
 use tokio_util::sync::CancellationToken;
+use tracing::instrument;
 
 use super::core::{
     device::{
@@ -62,6 +63,7 @@ impl AudioService {
     ///
     /// # Errors
     /// Returns error if PulseAudio connection fails or service initialization fails.
+    #[instrument]
     pub async fn new() -> Result<Self, AudioError> {
         let (command_tx, command_rx) = mpsc::unbounded_channel();
         let (event_tx, _) = broadcast::channel(100);
@@ -102,6 +104,7 @@ impl AudioService {
     ///
     /// # Errors
     /// Returns error if device not found or backend query fails.
+    #[instrument(skip(self), fields(device_key = ?key), err)]
     pub async fn output_device(&self, key: DeviceKey) -> Result<OutputDevice, AudioError> {
         OutputDevice::get(OutputDeviceParams {
             command_tx: &self.command_tx,
@@ -114,6 +117,7 @@ impl AudioService {
     ///
     /// # Errors
     /// Returns error if device not found, backend query fails, or monitoring setup fails.
+    #[instrument(skip(self), fields(device_key = ?key), err)]
     pub async fn output_device_monitored(
         &self,
         key: DeviceKey,
@@ -131,6 +135,7 @@ impl AudioService {
     ///
     /// # Errors
     /// Returns error if device not found or backend query fails.
+    #[instrument(skip(self), fields(device_key = ?key), err)]
     pub async fn input_device(&self, key: DeviceKey) -> Result<InputDevice, AudioError> {
         InputDevice::get(InputDeviceParams {
             command_tx: &self.command_tx,
@@ -143,6 +148,7 @@ impl AudioService {
     ///
     /// # Errors
     /// Returns error if device not found, backend query fails, or monitoring setup fails.
+    #[instrument(skip(self), fields(device_key = ?key), err)]
     pub async fn input_device_monitored(
         &self,
         key: DeviceKey,
@@ -160,6 +166,7 @@ impl AudioService {
     ///
     /// # Errors
     /// Returns error if stream not found or backend query fails.
+    #[instrument(skip(self), fields(stream_key = ?key), err)]
     pub async fn audio_stream(&self, key: StreamKey) -> Result<AudioStream, AudioError> {
         AudioStream::get(AudioStreamParams {
             command_tx: &self.command_tx,
@@ -172,6 +179,7 @@ impl AudioService {
     ///
     /// # Errors
     /// Returns error if stream not found, backend query fails, or monitoring setup fails.
+    #[instrument(skip(self), fields(stream_key = ?key), err)]
     pub async fn audio_stream_monitored(
         &self,
         key: StreamKey,

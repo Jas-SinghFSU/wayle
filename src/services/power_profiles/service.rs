@@ -1,6 +1,7 @@
 use std::{ops::Deref, sync::Arc};
 
 use tokio_util::sync::CancellationToken;
+use tracing::instrument;
 use zbus::Connection;
 
 use super::{
@@ -37,6 +38,7 @@ impl PowerProfilesService {
     ///
     /// Returns `PowerProfilesError::ServiceInitializationFailed` if service initialization
     /// fails.
+    #[instrument]
     pub async fn new() -> Result<Self, PowerProfilesError> {
         let connection = Connection::system().await.map_err(|err| {
             PowerProfilesError::ServiceInitializationFailed(format!(

@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use tracing::instrument;
 use zbus::{
     Connection,
     zvariant::{OwnedObjectPath, OwnedValue},
@@ -12,6 +13,7 @@ use crate::services::network::{
 pub(super) struct DeviceWifiControls;
 
 impl DeviceWifiControls {
+    #[instrument(skip(connection), fields(device = %path), err)]
     pub(super) async fn get_all_access_points(
         connection: &Connection,
         path: &OwnedObjectPath,
@@ -29,6 +31,11 @@ impl DeviceWifiControls {
             })
     }
 
+    #[instrument(
+        skip(connection, options),
+        fields(device = %path),
+        err
+    )]
     pub(super) async fn request_scan(
         connection: &Connection,
         path: &OwnedObjectPath,

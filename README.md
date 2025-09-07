@@ -22,7 +22,7 @@ A fast, configurable desktop environment framework for Wayland compositors. Buil
 - [ ] **Battery** (WIP)
 - [ ] **Cava**
 - [ ] **Notification Daemon**
-- [ ] **Power Profiles**
+- [x] **Power Profiles**
 - [ ] **System Tray**
 
 ### UI Components

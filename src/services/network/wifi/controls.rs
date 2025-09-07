@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use tracing::instrument;
 use zbus::{
     Connection,
     zvariant::{OwnedObjectPath, OwnedValue, Value},
@@ -31,6 +32,7 @@ const MANUFACTURER_DEFAULT_SSIDS: &[&str] = &[
 pub(super) struct WifiControls;
 
 impl WifiControls {
+    #[instrument(skip(connection), fields(enabled = enabled), err)]
     pub(super) async fn set_enabled(
         connection: &Connection,
         enabled: bool,
@@ -48,6 +50,7 @@ impl WifiControls {
         Ok(())
     }
 
+    #[instrument(skip(connection), fields(device = %device_path), err)]
     pub(super) async fn disconnect(
         connection: &Connection,
         device_path: &str,
@@ -85,6 +88,11 @@ impl WifiControls {
         Ok(())
     }
 
+    #[instrument(
+        skip(connection, password),
+        fields(device = %device_path, ap = %ap_path),
+        err
+    )]
     pub(super) async fn connect(
         connection: &Connection,
         device_path: &str,

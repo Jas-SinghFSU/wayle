@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use tracing::instrument;
 use zbus::{
     Connection,
     zvariant::{OwnedObjectPath, OwnedValue},
@@ -7,9 +8,16 @@ use zbus::{
 
 use crate::services::network::{error::NetworkError, proxy::devices::DeviceProxy};
 
+use super::types::AppliedConnection;
+
 pub(super) struct DeviceControls;
 
 impl DeviceControls {
+    #[instrument(
+        skip(connection),
+        fields(device = %path, managed = managed),
+        err
+    )]
     pub(super) async fn set_managed(
         connection: &Connection,
         path: &OwnedObjectPath,
@@ -30,6 +38,11 @@ impl DeviceControls {
         Ok(())
     }
 
+    #[instrument(
+        skip(connection),
+        fields(device = %path, autoconnect = autoconnect),
+        err
+    )]
     pub(super) async fn set_autoconnect(
         connection: &Connection,
         path: &OwnedObjectPath,
@@ -50,6 +63,11 @@ impl DeviceControls {
         Ok(())
     }
 
+    #[instrument(
+        skip(connection, connection_settings),
+        fields(device = %path, version = version_id, flags = flags),
+        err
+    )]
     pub(super) async fn reapply(
         connection: &Connection,
         path: &OwnedObjectPath,
@@ -72,11 +90,16 @@ impl DeviceControls {
         Ok(())
     }
 
+    #[instrument(
+        skip(connection),
+        fields(device = %path, flags = flags),
+        err
+    )]
     pub(super) async fn get_applied_connection(
         connection: &Connection,
         path: &OwnedObjectPath,
         flags: u32,
-    ) -> Result<(HashMap<String, HashMap<String, OwnedValue>>, u64), NetworkError> {
+    ) -> Result<AppliedConnection, NetworkError> {
         let proxy = DeviceProxy::new(connection, path)
             .await
             .map_err(NetworkError::DbusError)?;
@@ -90,6 +113,7 @@ impl DeviceControls {
             })
     }
 
+    #[instrument(skip(connection), fields(device = %path), err)]
     pub(super) async fn disconnect(
         connection: &Connection,
         path: &OwnedObjectPath,
@@ -109,6 +133,7 @@ impl DeviceControls {
         Ok(())
     }
 
+    #[instrument(skip(connection), fields(device = %path), err)]
     pub(super) async fn delete(
         connection: &Connection,
         path: &OwnedObjectPath,

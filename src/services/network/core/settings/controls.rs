@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use tracing::instrument;
 use zbus::{
     Connection,
     zvariant::{OwnedObjectPath, OwnedValue},
@@ -13,6 +14,7 @@ use crate::services::network::{
 pub(super) struct SettingsController;
 
 impl SettingsController {
+    #[instrument(skip(zbus_connection), err)]
     pub(super) async fn list_connections(
         zbus_connection: &Connection,
     ) -> Result<Vec<OwnedObjectPath>, NetworkError> {
@@ -22,6 +24,7 @@ impl SettingsController {
         Ok(connections)
     }
 
+    #[instrument(skip(zbus_connection), fields(uuid = %uuid), err)]
     pub(super) async fn get_connection_by_uuid(
         zbus_connection: &Connection,
         uuid: &str,
@@ -32,6 +35,7 @@ impl SettingsController {
         Ok(connection)
     }
 
+    #[instrument(skip(zbus_connection, connection), err)]
     pub(super) async fn add_connection(
         zbus_connection: &Connection,
         connection: HashMap<String, HashMap<String, OwnedValue>>,
@@ -42,6 +46,7 @@ impl SettingsController {
         Ok(created_connection)
     }
 
+    #[instrument(skip(zbus_connection, connection), err)]
     pub(super) async fn add_connection_unsaved(
         zbus_connection: &Connection,
         connection: HashMap<String, HashMap<String, OwnedValue>>,
@@ -52,6 +57,11 @@ impl SettingsController {
         Ok(created_connection)
     }
 
+    #[instrument(
+        skip(zbus_connection, settings, args),
+        fields(flags = ?flags),
+        err
+    )]
     pub(super) async fn add_connection2(
         zbus_connection: &Connection,
         settings: HashMap<String, HashMap<String, OwnedValue>>,
@@ -68,6 +78,11 @@ impl SettingsController {
         Ok((path, result))
     }
 
+    #[instrument(
+        skip(zbus_connection),
+        fields(file_count = filenames.len()),
+        err
+    )]
     pub(super) async fn load_connections(
         zbus_connection: &Connection,
         filenames: Vec<String>,
@@ -82,6 +97,7 @@ impl SettingsController {
         Ok((status, failures))
     }
 
+    #[instrument(skip(zbus_connection), err)]
     pub(super) async fn reload_connections(
         zbus_connection: &Connection,
     ) -> Result<bool, NetworkError> {
@@ -95,6 +111,7 @@ impl SettingsController {
         Ok(status)
     }
 
+    #[instrument(skip(zbus_connection), fields(hostname = %hostname), err)]
     pub(super) async fn save_hostname(
         zbus_connection: &Connection,
         hostname: &str,

@@ -1,3 +1,4 @@
+use tracing::instrument;
 use zbus::Connection;
 
 use crate::services::power_profiles::{
@@ -9,6 +10,7 @@ use crate::services::power_profiles::{
 pub(super) struct PowerProfilesController;
 
 impl PowerProfilesController {
+    #[instrument(skip(connection), fields(profile = %profile), err)]
     pub async fn set_active_profile(
         connection: &Connection,
         profile: PowerProfile,
@@ -24,6 +26,11 @@ impl PowerProfilesController {
             })
     }
 
+    #[instrument(
+        skip(connection),
+        fields(profile = %hold.profile, reason = %hold.reason, app_id = %hold.application_id),
+        err
+    )]
     pub async fn hold_profile(
         connection: &Connection,
         hold: ProfileHold,
@@ -43,6 +50,7 @@ impl PowerProfilesController {
             })
     }
 
+    #[instrument(skip(connection, hold_cookie), err)]
     pub async fn release_profile(
         connection: &Connection,
         hold_cookie: HoldCookie,
