@@ -57,7 +57,8 @@ pub fn find_player_by_identifier(
 /// Gets a player from optional identifier or returns active player
 ///
 /// # Errors
-/// Returns error if player identification fails, setting active player fails, or no active player exists.
+/// Returns error if player identification fails, setting active player fails,
+/// or no active player exists.
 pub async fn get_player_or_active(
     service: &MediaService,
     identifier: Option<&String>,

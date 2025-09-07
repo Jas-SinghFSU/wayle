@@ -3,7 +3,8 @@ use crate::{cli::CliAction, config_runtime::runtime::ConfigRuntime};
 /// Execute the command
 ///
 /// # Errors
-/// Returns error if config loading fails, file watching cannot be started, or path subscription fails.
+/// Returns error if config loading fails, file watching cannot be started,
+/// or path subscription fails.
 pub async fn execute(path: String) -> CliAction {
     let config_runtime =
         ConfigRuntime::load().map_err(|e| format!("Failed to load config: {e}"))?;

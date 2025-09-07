@@ -66,10 +66,6 @@ pub(crate) trait PowerProfiles {
     #[zbus(property)]
     fn set_active_profile(&self, profile: &str) -> Result<()>;
 
-    /// This property is deprecated, and unused since version 0.9.
-    #[zbus(property)]
-    fn performance_inhibited(&self) -> Result<String>;
-
     /// This will be set if the performance power profile is running in degraded mode,
     /// with the value being used to identify the reason for that degradation. As new
     /// reasons can be added, it is recommended that front-ends show a generic reason

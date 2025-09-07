@@ -8,6 +8,9 @@ use zbus::zvariant::OwnedValue;
 
 use crate::services::power_profiles::error::PowerProfilesError;
 
+/// Cookie returned by profile hold operations for tracking and release.
+pub type HoldCookie = u32;
+
 /// Power profile types available in the system.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum PowerProfile {
