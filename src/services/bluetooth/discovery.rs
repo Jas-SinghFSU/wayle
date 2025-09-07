@@ -29,7 +29,7 @@ pub(crate) struct BluetoothDiscovery {
 }
 
 impl BluetoothDiscovery {
-    pub(crate) async fn new(
+    pub async fn new(
         connection: &Connection,
         cancellation_token: CancellationToken,
         notifier_tx: &broadcast::Sender<ServiceNotification>,

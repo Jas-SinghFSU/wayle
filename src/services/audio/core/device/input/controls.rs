@@ -17,7 +17,7 @@ impl InputDeviceController {
     ///
     /// # Errors
     /// Returns error if backend communication fails or device operation fails.
-    pub(crate) async fn set_volume(
+    pub async fn set_volume(
         command_tx: &CommandSender,
         device_key: DeviceKey,
         volume: Volume,
@@ -40,7 +40,7 @@ impl InputDeviceController {
     ///
     /// # Errors
     /// Returns error if backend communication fails or device operation fails.
-    pub(crate) async fn set_mute(
+    pub async fn set_mute(
         command_tx: &CommandSender,
         device_key: DeviceKey,
         muted: bool,
@@ -63,7 +63,7 @@ impl InputDeviceController {
     ///
     /// # Errors
     /// Returns error if backend communication fails or device operation fails.
-    pub(crate) async fn set_port(
+    pub async fn set_port(
         command_tx: &CommandSender,
         device_key: DeviceKey,
         port: String,
@@ -86,7 +86,7 @@ impl InputDeviceController {
     ///
     /// # Errors
     /// Returns error if backend communication fails or device operation fails.
-    pub(crate) async fn set_as_default(
+    pub async fn set_as_default(
         command_tx: &CommandSender,
         device_key: DeviceKey,
     ) -> Result<(), AudioError> {

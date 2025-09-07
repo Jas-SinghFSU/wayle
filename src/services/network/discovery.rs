@@ -10,13 +10,13 @@ use crate::services::common::NULL_PATH;
 pub(crate) struct NetworkServiceDiscovery;
 
 impl NetworkServiceDiscovery {
-    pub(crate) async fn wifi_device_path(
+    pub async fn wifi_device_path(
         connection: &Connection,
     ) -> Result<Option<OwnedObjectPath>, NetworkError> {
         Self::find_device_path(connection, NMDeviceType::Wifi, false).await
     }
 
-    pub(crate) async fn wired_device_path(
+    pub async fn wired_device_path(
         connection: &Connection,
     ) -> Result<Option<OwnedObjectPath>, NetworkError> {
         Self::find_device_path(connection, NMDeviceType::Ethernet, false).await

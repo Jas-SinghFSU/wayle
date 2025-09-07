@@ -2,6 +2,7 @@
 pub mod backend;
 /// Core domain models
 pub mod core;
+pub(crate) mod discovery;
 /// Error types
 pub mod error;
 /// Event types and handling

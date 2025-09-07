@@ -13,7 +13,7 @@ use crate::services::audio::{
 pub(crate) struct AudioStreamController;
 
 impl AudioStreamController {
-    pub(crate) async fn set_volume(
+    pub async fn set_volume(
         command_tx: &CommandSender,
         stream_key: StreamKey,
         volume: Volume,
@@ -36,7 +36,7 @@ impl AudioStreamController {
     ///
     /// # Errors
     /// Returns error if backend communication fails or stream operation fails.
-    pub(crate) async fn set_mute(
+    pub async fn set_mute(
         command_tx: &CommandSender,
         stream_key: StreamKey,
         muted: bool,
@@ -59,7 +59,7 @@ impl AudioStreamController {
     ///
     /// # Errors
     /// Returns error if backend communication fails or stream operation fails.
-    pub(crate) async fn move_to_device(
+    pub async fn move_to_device(
         command_tx: &CommandSender,
         stream_key: StreamKey,
         device_key: DeviceKey,
