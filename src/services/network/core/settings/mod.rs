@@ -19,7 +19,7 @@ use super::{
 };
 use crate::{
     services::{
-        common::property::Property,
+        common::Property,
         network::{
             error::Error, proxy::settings::SettingsProxy,
             types::flags::NMSettingsAddConnection2Flags,

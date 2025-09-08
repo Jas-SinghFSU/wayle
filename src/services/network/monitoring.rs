@@ -9,7 +9,7 @@ use super::{
     error::Error, proxy::manager::NetworkManagerProxy, service::NetworkService,
     types::connectivity::ConnectionType, wifi::Wifi, wired::Wired,
 };
-use crate::services::{common::property::Property, traits::ServiceMonitoring};
+use crate::services::{common::Property, traits::ServiceMonitoring};
 
 impl ServiceMonitoring for NetworkService {
     type Error = Error;

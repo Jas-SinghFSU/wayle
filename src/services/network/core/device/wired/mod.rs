@@ -10,7 +10,7 @@ use zbus::{Connection, zvariant::OwnedObjectPath};
 use super::{Device, LiveDeviceParams};
 use crate::{
     services::{
-        common::property::Property,
+        common::Property,
         network::{
             error::Error,
             proxy::devices::{DeviceProxy, wired::DeviceWiredProxy},

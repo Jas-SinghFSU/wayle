@@ -18,7 +18,7 @@ use crate::{
             proxy::{battery::Battery1Proxy, device::Device1Proxy},
             types::{ServiceNotification, UUID, adapter::AddressType, device::PreferredBearer},
         },
-        common::property::Property,
+        common::Property,
         traits::{ModelMonitoring, Reactive},
     },
     unwrap_bool, unwrap_string,

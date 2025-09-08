@@ -11,7 +11,7 @@ use super::{
     types::states::NetworkStatus,
 };
 use crate::services::{
-    common::property::Property,
+    common::Property,
     traits::{ModelMonitoring, Reactive},
 };
 

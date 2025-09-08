@@ -24,7 +24,7 @@ use crate::services::{
         error::Error,
         types::{device::DeviceKey, stream::StreamKey},
     },
-    common::property::Property,
+    common::Property,
     traits::{Reactive, ServiceMonitoring},
 };
 

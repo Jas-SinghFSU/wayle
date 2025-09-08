@@ -1,14 +1,10 @@
 /// Core network domain models
 pub mod core;
-/// Network device discovery functionality
-pub mod discovery;
-/// Network error types
-pub mod error;
-pub(crate) mod monitoring;
-/// D-Bus proxy interfaces for NetworkManager
-pub mod proxy;
-/// Network service implementation
-pub mod service;
+mod discovery;
+mod error;
+mod monitoring;
+mod proxy;
+mod service;
 /// Network type definitions
 pub mod types;
 /// WiFi device functionality
@@ -17,3 +13,4 @@ pub mod wifi;
 pub mod wired;
 
 pub use error::Error;
+pub use service::NetworkService;

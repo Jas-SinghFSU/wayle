@@ -16,7 +16,7 @@ use crate::services::{
             stream::{StreamKey, StreamType},
         },
     },
-    common::property::Property,
+    common::Property,
     traits::{ModelMonitoring, ServiceMonitoring},
 };
 

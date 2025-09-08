@@ -41,7 +41,7 @@ pub enum Error {
     },
 
     /// Standard I/O operation error (for compatibility)
-    #[error("IO error: {0}")]
+    #[error("IO error: {0:#?}")]
     Io(#[from] io::Error),
 
     /// TOML parsing error with location context

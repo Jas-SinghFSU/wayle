@@ -1,4 +1,10 @@
-/// Core battery domain models
+/// Battery service for monitoring power devices via UPower
 pub mod core;
-/// D-Bus proxy interfaces for UPower
-pub mod proxy;
+mod error;
+mod proxy;
+mod service;
+/// Type definitions for battery service domain models and enums
+pub mod types;
+
+pub use error::Error;
+pub use service::BatteryService;

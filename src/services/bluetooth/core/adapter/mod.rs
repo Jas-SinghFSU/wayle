@@ -23,7 +23,7 @@ use crate::{
                 adapter::{AdapterRole, AddressType, DiscoveryFilterOptions, PowerState},
             },
         },
-        common::property::Property,
+        common::Property,
         traits::{ModelMonitoring, Reactive},
     },
     unwrap_bool, unwrap_string, unwrap_u8, unwrap_u16, unwrap_u32, unwrap_vec,

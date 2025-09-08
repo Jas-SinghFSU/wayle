@@ -453,6 +453,50 @@ macro_rules! unwrap_path_or {
     };
 }
 
+/// Unwraps a DBus f64 property with 0.0 default.
+#[macro_export]
+macro_rules! unwrap_f64 {
+    ($result:expr) => {
+        $result.unwrap_or_else(|err| {
+            ::tracing::warn!("Failed to fetch '{}' property: {}", "property", err);
+            0.0
+        })
+    };
+    ($result:expr, $path:expr) => {
+        $result.unwrap_or_else(|err| {
+            ::tracing::warn!(
+                "Failed to fetch '{}' property for {:?}: {}",
+                "property",
+                $path,
+                err
+            );
+            0.0
+        })
+    };
+}
+
+/// Unwraps a DBus f64 property with custom default.
+#[macro_export]
+macro_rules! unwrap_f64_or {
+    ($result:expr, $default:expr) => {
+        $result.unwrap_or_else(|err| {
+            ::tracing::warn!("Failed to fetch '{}' property: {}", "property", err);
+            $default
+        })
+    };
+    ($result:expr, $path:expr, $default:expr) => {
+        $result.unwrap_or_else(|err| {
+            ::tracing::warn!(
+                "Failed to fetch '{}' property for {:?}: {}",
+                "property",
+                $path,
+                err
+            );
+            $default
+        })
+    };
+}
+
 /// Removes items from a Property<Vec<T>> by object path and cancels their tokens.
 ///
 /// This macro handles the common pattern of removing items from a reactive property

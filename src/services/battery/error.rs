@@ -1,4 +1,4 @@
-/// Bluetooth service errors
+/// Battery service errors
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     /// D-Bus communication error
@@ -6,15 +6,11 @@ pub enum Error {
     DbusError(#[from] zbus::Error),
 
     /// Service initialization failed
-    #[error("Failed to initialize Bluetooth service: {0:#?}")]
+    #[error("Failed to initialize battery service: {0:#?}")]
     ServiceInitializationFailed(String),
 
-    /// Agent registration failed
-    #[error("Failed to register agent: {0:#?}")]
-    AgentRegistrationFailed(String),
-
-    /// Bluetooth operation failed
-    #[error("Bluetooth operation failed: {operation} - {reason}")]
+    /// Battery operation failed
+    #[error("Battery operation failed: {operation} - {reason}")]
     OperationFailed {
         /// The operation that failed
         operation: &'static str,

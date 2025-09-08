@@ -1,7 +1,7 @@
 use super::utils::get_player_or_active;
 use crate::{
     cli::CliAction,
-    services::media::service::{Config, MediaService},
+    services::media::{MediaService, types::Config},
 };
 
 /// Execute the command

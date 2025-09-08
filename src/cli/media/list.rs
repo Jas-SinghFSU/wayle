@@ -1,8 +1,8 @@
 use crate::{
     cli::CliAction,
     services::media::{
-        service::{Config, MediaService},
-        types::PlaybackState,
+        MediaService,
+        types::{Config, PlaybackState},
     },
 };
 

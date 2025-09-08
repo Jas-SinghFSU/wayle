@@ -15,7 +15,7 @@ use zbus::{
 
 use crate::{
     services::{
-        common::{NULL_PATH, property::Property},
+        common::{NULL_PATH, Property},
         media::{
             core::metadata::{LiveTrackMetadataParams, TrackMetadata, TrackMetadataParams},
             error::Error,

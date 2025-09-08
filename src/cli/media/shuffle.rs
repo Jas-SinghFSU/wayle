@@ -2,8 +2,8 @@ use super::{commands::ShuffleModeArg, utils::get_player_or_active};
 use crate::{
     cli::CliAction,
     services::media::{
-        service::{Config, MediaService},
-        types::ShuffleMode,
+        MediaService,
+        types::{Config, ShuffleMode},
     },
 };
 

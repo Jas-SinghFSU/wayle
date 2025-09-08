@@ -9,7 +9,7 @@ use crate::services::{
         error::Error,
         types::agent::{AgentEvent, PairingRequest, PairingResponder},
     },
-    common::property::Property,
+    common::Property,
 };
 
 pub(crate) async fn start(

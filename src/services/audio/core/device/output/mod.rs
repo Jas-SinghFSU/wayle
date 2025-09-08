@@ -23,7 +23,7 @@ use crate::services::{
         },
         volume::types::Volume,
     },
-    common::property::Property,
+    common::Property,
     traits::{ModelMonitoring, Reactive},
 };
 

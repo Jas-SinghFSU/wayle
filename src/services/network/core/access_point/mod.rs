@@ -6,7 +6,7 @@ use zbus::{Connection, zvariant::OwnedObjectPath};
 use self::types::{AccessPointParams, Bssid, LiveAccessPointParams, SecurityType, Ssid};
 use crate::{
     services::{
-        common::property::Property,
+        common::Property,
         network::{
             error::Error,
             proxy::access_point::AccessPointProxy,

@@ -11,7 +11,7 @@ use zbus::zvariant::OwnedValue;
 
 use crate::{
     services::{
-        common::property::Property,
+        common::Property,
         media::{error::Error, proxy::MediaPlayer2PlayerProxy},
         traits::{ModelMonitoring, Reactive},
     },

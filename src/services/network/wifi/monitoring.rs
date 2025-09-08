@@ -9,7 +9,7 @@ use super::Wifi;
 use crate::{
     remove_and_cancel,
     services::{
-        common::property::Property,
+        common::Property,
         network::{
             core::{
                 access_point::{

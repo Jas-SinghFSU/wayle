@@ -8,20 +8,13 @@ use zbus::Connection;
 
 use super::{
     core::player::{LivePlayerParams, Player, PlayerParams},
-    types::PlayerId,
+    types::{Config, PlayerId},
 };
 use crate::services::{
-    common::property::Property,
+    common::Property,
     media::error::Error,
     traits::{Reactive, ServiceMonitoring},
 };
-
-/// Configuration for the MPRIS service
-#[derive(Default)]
-pub struct Config {
-    /// Patterns to ignore when discovering players
-    pub ignored_players: Vec<String>,
-}
 
 /// MPRIS service with reactive property-based architecture.
 ///

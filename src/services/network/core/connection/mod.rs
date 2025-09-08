@@ -10,7 +10,7 @@ use zbus::{Connection, zvariant::OwnedObjectPath};
 
 use crate::{
     services::{
-        common::property::Property,
+        common::Property,
         network::{
             error::Error,
             proxy::active_connection::ConnectionActiveProxy,

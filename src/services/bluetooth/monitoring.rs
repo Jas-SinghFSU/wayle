@@ -19,10 +19,7 @@ use crate::{
     remove_and_cancel,
     services::{
         bluetooth::types::BLUEZ_SERVICE,
-        common::{
-            ROOT_PATH,
-            property::{Property, PropertyStream},
-        },
+        common::{Property, PropertyStream, ROOT_PATH},
         traits::{Reactive, ServiceMonitoring},
     },
 };

@@ -1,20 +1,18 @@
 use zbus::zvariant::OwnedObjectPath;
 
-use super::types::connectivity::ConnectionType;
-
 /// Network service errors
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     /// D-Bus communication error
-    #[error("D-Bus operation failed: {0}")]
+    #[error("D-Bus operation failed: {0:#?}")]
     DbusError(#[from] zbus::Error),
 
     /// Service initialization failed (used for top-level service startup)
-    #[error("Failed to initialize network service: {0}")]
+    #[error("Failed to initialize network service: {0:#?}")]
     ServiceInitializationFailed(String),
 
     /// Object not found at the specified D-Bus path
-    #[error("Object not found at path: {0}")]
+    #[error("Object not found at path: {0:#?}")]
     ObjectNotFound(OwnedObjectPath),
 
     /// Object exists but is of wrong type
@@ -38,25 +36,6 @@ pub enum Error {
         /// Reason for the failure.
         reason: String,
     },
-
-    /// Device not found by identifier
-    #[error("Device {0} not found")]
-    DeviceNotFound(String),
-
-    /// Access point not found by SSID
-    #[error("Access point {ssid} not found")]
-    AccessPointNotFound {
-        /// SSID of the access point that was not found.
-        ssid: String,
-    },
-
-    /// Connection activation failed
-    #[error("Failed to activate connection: {0}")]
-    ActivationFailed(String),
-
-    /// No active connection of specified type
-    #[error("No active {0:?} connection")]
-    NoActiveConnection(ConnectionType),
 
     /// Network operation failed
     #[error("Network operation failed: {operation} - {reason}")]

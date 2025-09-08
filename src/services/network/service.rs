@@ -12,7 +12,7 @@ use super::{
     wired::Wired,
 };
 use crate::services::{
-    common::property::Property,
+    common::Property,
     network::{
         core::{
             access_point::AccessPoint,

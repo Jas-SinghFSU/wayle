@@ -19,7 +19,7 @@ use super::{
 };
 use crate::{
     services::{
-        common::property::Property,
+        common::Property,
         traits::{ModelMonitoring, Reactive},
     },
     unwrap_string, unwrap_vec,

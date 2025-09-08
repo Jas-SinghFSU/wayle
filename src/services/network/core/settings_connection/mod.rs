@@ -15,7 +15,7 @@ use zbus::{
 use super::access_point::types::Ssid;
 use crate::{
     services::{
-        common::property::Property,
+        common::Property,
         network::{
             error::Error, proxy::settings::connection::SettingsConnectionProxy,
             types::flags::NMConnectionSettingsFlags,

@@ -10,7 +10,7 @@ use super::{core::player::Player, error::Error, types::PlayerId};
 use crate::{
     core::state::RuntimeState,
     services::{
-        common::property::Property,
+        common::Property,
         media::{core::player::LivePlayerParams, service::MediaService},
         traits::{Reactive, ServiceMonitoring},
     },

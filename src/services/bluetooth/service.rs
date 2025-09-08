@@ -26,7 +26,7 @@ use crate::services::{
         proxy::agent_manager::AgentManager1Proxy,
         types::agent::{AgentCapability, AgentEvent},
     },
-    common::property::Property,
+    common::Property,
     traits::{Reactive, ServiceMonitoring},
 };
 

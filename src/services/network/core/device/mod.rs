@@ -21,7 +21,7 @@ use zbus::{
 
 use crate::{
     services::{
-        common::property::Property,
+        common::Property,
         network::{
             error::Error,
             proxy::devices::DeviceProxy,

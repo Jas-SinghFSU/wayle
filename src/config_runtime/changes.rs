@@ -22,7 +22,7 @@ pub struct ConfigChange {
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     /// The specified configuration path does not exist.
-    #[error("Invalid config path: {0}")]
+    #[error("Invalid config path: {0:#?}")]
     InvalidPath(String),
 
     /// The value type does not match the expected type for the field.
@@ -37,7 +37,7 @@ pub enum Error {
     },
 
     /// A configuration field that was previously available has been removed.
-    #[error("Config field removed: {0}")]
+    #[error("Config field removed: {0:#?}")]
     FieldRemoved(String),
 
     /// Error in path pattern matching or parsing
