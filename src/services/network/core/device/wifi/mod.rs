@@ -16,7 +16,7 @@ use crate::{
     services::{
         common::property::Property,
         network::{
-            error::NetworkError,
+            error::Error,
             proxy::devices::{DeviceProxy, wireless::DeviceWirelessProxy},
             types::{device::NMDeviceType, wifi::NM80211Mode},
         },
@@ -59,7 +59,7 @@ pub struct DeviceWifi {
 impl Reactive for DeviceWifi {
     type Context<'a> = DeviceWifiParams<'a>;
     type LiveContext<'a> = LiveDeviceWifiParams<'a>;
-    type Error = NetworkError;
+    type Error = Error;
 
     async fn get(params: Self::Context<'_>) -> Result<Self, Self::Error> {
         Self::from_path(params.connection, params.device_path).await
@@ -105,7 +105,7 @@ impl DeviceWifi {
     ///
     /// Returns `NetworkError::DbusError` if D-Bus proxy creation fails or
     /// `NetworkError::OperationFailed` if the scan request fails.
-    pub async fn request_scan(&self) -> Result<(), NetworkError> {
+    pub async fn request_scan(&self) -> Result<(), Error> {
         DeviceWifiControls::request_scan(&self.connection, &self.object_path, HashMap::new()).await
     }
 
@@ -113,25 +113,22 @@ impl DeviceWifi {
     ///
     /// # Errors
     /// Returns error if the D-Bus operation fails.
-    pub async fn get_all_access_points(&self) -> Result<Vec<OwnedObjectPath>, NetworkError> {
+    pub async fn get_all_access_points(&self) -> Result<Vec<OwnedObjectPath>, Error> {
         DeviceWifiControls::get_all_access_points(&self.connection, &self.object_path).await
     }
 
     async fn verify_is_wifi_device(
         connection: &Connection,
         object_path: &OwnedObjectPath,
-    ) -> Result<(), NetworkError> {
+    ) -> Result<(), Error> {
         let device_proxy = DeviceProxy::new(connection, object_path)
             .await
-            .map_err(NetworkError::DbusError)?;
+            .map_err(Error::DbusError)?;
 
-        let device_type = device_proxy
-            .device_type()
-            .await
-            .map_err(NetworkError::DbusError)?;
+        let device_type = device_proxy.device_type().await.map_err(Error::DbusError)?;
 
         if device_type != NMDeviceType::Wifi as u32 {
-            return Err(NetworkError::WrongObjectType {
+            return Err(Error::WrongObjectType {
                 object_path: object_path.clone(),
                 expected: String::from("WiFi device"),
                 actual: format!("device type {device_type}"),
@@ -144,10 +141,10 @@ impl DeviceWifi {
     async fn fetch_wifi_properties(
         connection: &Connection,
         device_path: &OwnedObjectPath,
-    ) -> Result<WifiProperties, NetworkError> {
+    ) -> Result<WifiProperties, Error> {
         let wifi_proxy = DeviceWirelessProxy::new(connection, device_path)
             .await
-            .map_err(NetworkError::DbusError)?;
+            .map_err(Error::DbusError)?;
 
         let (
             perm_hw_address,
@@ -198,7 +195,7 @@ impl DeviceWifi {
     async fn from_path(
         connection: &Connection,
         object_path: OwnedObjectPath,
-    ) -> Result<Self, NetworkError> {
+    ) -> Result<Self, Error> {
         let device_proxy = DeviceProxy::new(connection, &object_path).await?;
 
         let device_type = device_proxy.device_type().await?;
@@ -208,7 +205,7 @@ impl DeviceWifi {
                 device_type,
                 NMDeviceType::from_u32(device_type)
             );
-            return Err(NetworkError::WrongObjectType {
+            return Err(Error::WrongObjectType {
                 object_path: object_path.clone(),
                 expected: String::from("WiFi device"),
                 actual: format!("{:?}", NMDeviceType::from_u32(device_type)),
@@ -221,7 +218,7 @@ impl DeviceWifi {
             Ok(base) => base,
             Err(e) => {
                 warn!("Failed to create base Device for {}", object_path);
-                return Err(NetworkError::ObjectCreationFailed {
+                return Err(Error::ObjectCreationFailed {
                     object_type: String::from("Device"),
                     object_path: object_path.clone(),
                     reason: e.to_string(),

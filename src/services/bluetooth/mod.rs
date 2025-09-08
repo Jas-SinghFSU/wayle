@@ -13,3 +13,5 @@ pub mod proxy;
 pub mod service;
 /// Bluetooth type definitions
 pub mod types;
+
+pub use error::Error;

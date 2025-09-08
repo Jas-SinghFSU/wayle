@@ -14,7 +14,7 @@ use zbus::{Connection, zvariant::OwnedObjectPath};
 use crate::{
     services::{
         bluetooth::{
-            error::BluetoothError,
+            error::Error,
             proxy::{battery::Battery1Proxy, device::Device1Proxy},
             types::{ServiceNotification, UUID, adapter::AddressType, device::PreferredBearer},
         },
@@ -187,7 +187,7 @@ impl PartialEq for Device {
 }
 
 impl Reactive for Device {
-    type Error = BluetoothError;
+    type Error = Error;
     type Context<'a> = DeviceParams<'a>;
     type LiveContext<'a> = LiveDeviceParams<'a>;
 
@@ -250,7 +250,7 @@ impl Device {
     /// - `InProgress` - Connection in progress
     /// - `AlreadyConnected` - Already connected
     /// - `BrEdrProfileUnavailable` - BR/EDR profile unavailable
-    pub async fn connect(&self) -> Result<(), BluetoothError> {
+    pub async fn connect(&self) -> Result<(), Error> {
         DeviceControls::connect(&self.zbus_connection, &self.object_path).await
     }
 
@@ -268,7 +268,7 @@ impl Device {
     /// # Errors
     ///
     /// - `NotConnected` - Device not connected
-    pub async fn disconnect(&self) -> Result<(), BluetoothError> {
+    pub async fn disconnect(&self) -> Result<(), Error> {
         DeviceControls::disconnect(&self.zbus_connection, &self.object_path).await
     }
 
@@ -282,7 +282,7 @@ impl Device {
     /// - `InvalidArguments` - Invalid UUID
     /// - `NotAvailable` - Profile not available
     /// - `NotReady` - Adapter not ready
-    pub async fn connect_profile(&self, profile_uuid: UUID) -> Result<(), BluetoothError> {
+    pub async fn connect_profile(&self, profile_uuid: UUID) -> Result<(), Error> {
         DeviceControls::connect_profile(&self.zbus_connection, &self.object_path, profile_uuid)
             .await
     }
@@ -299,7 +299,7 @@ impl Device {
     /// - `InProgress` - Disconnection in progress
     /// - `InvalidArguments` - Invalid UUID
     /// - `NotSupported` - Profile not supported
-    pub async fn disconnect_profile(&self, profile_uuid: UUID) -> Result<(), BluetoothError> {
+    pub async fn disconnect_profile(&self, profile_uuid: UUID) -> Result<(), Error> {
         DeviceControls::disconnect_profile(&self.zbus_connection, &self.object_path, profile_uuid)
             .await
     }
@@ -326,7 +326,7 @@ impl Device {
     /// - `AuthenticationRejected` - Authentication rejected
     /// - `AuthenticationTimeout` - Authentication timeout
     /// - `ConnectionAttemptFailed` - Connection attempt failed
-    pub async fn pair(&self) -> Result<(), BluetoothError> {
+    pub async fn pair(&self) -> Result<(), Error> {
         DeviceControls::pair(&self.zbus_connection, &self.object_path).await
     }
 
@@ -336,7 +336,7 @@ impl Device {
     ///
     /// - `DoesNotExist` - No pairing in progress
     /// - `Failed` - Operation failed
-    pub async fn cancel_pairing(&self) -> Result<(), BluetoothError> {
+    pub async fn cancel_pairing(&self) -> Result<(), Error> {
         DeviceControls::cancel_pairing(&self.zbus_connection, &self.object_path).await
     }
 
@@ -358,7 +358,7 @@ impl Device {
     /// - `NotReady` - Adapter not ready
     /// - `NotConnected` - Device not connected
     /// - `DoesNotExist` - No service records
-    pub async fn get_service_records(&self) -> Result<Vec<Vec<u8>>, BluetoothError> {
+    pub async fn get_service_records(&self) -> Result<Vec<Vec<u8>>, Error> {
         DeviceControls::get_service_records(&self.zbus_connection, &self.object_path).await
     }
 
@@ -368,7 +368,7 @@ impl Device {
     ///
     /// # Errors
     /// Returns error if D-Bus operation fails or device is not available.
-    pub async fn set_trused(&self, trusted: bool) -> Result<(), BluetoothError> {
+    pub async fn set_trused(&self, trusted: bool) -> Result<(), Error> {
         DeviceControls::set_trusted(&self.zbus_connection, &self.object_path, trusted).await
     }
 
@@ -378,7 +378,7 @@ impl Device {
     ///
     /// # Errors
     /// Returns error if D-Bus operation fails or device is not available.
-    pub async fn set_blocked(&self, blocked: bool) -> Result<(), BluetoothError> {
+    pub async fn set_blocked(&self, blocked: bool) -> Result<(), Error> {
         DeviceControls::set_blocked(&self.zbus_connection, &self.object_path, blocked).await
     }
 
@@ -386,7 +386,7 @@ impl Device {
     ///
     /// # Errors
     /// Returns error if D-Bus operation fails or device is not available.
-    pub async fn set_wake_allowed(&self, wake_allowed: bool) -> Result<(), BluetoothError> {
+    pub async fn set_wake_allowed(&self, wake_allowed: bool) -> Result<(), Error> {
         DeviceControls::set_wake_allowed(&self.zbus_connection, &self.object_path, wake_allowed)
             .await
     }
@@ -397,7 +397,7 @@ impl Device {
     ///
     /// # Errors
     /// Returns error if D-Bus operation fails or device is not available.
-    pub async fn set_alias(&self, alias: &str) -> Result<(), BluetoothError> {
+    pub async fn set_alias(&self, alias: &str) -> Result<(), Error> {
         DeviceControls::set_alias(&self.zbus_connection, &self.object_path, alias).await
     }
 
@@ -411,7 +411,7 @@ impl Device {
     ///
     /// # Errors
     /// Returns error if D-Bus operation fails or device is not available.
-    pub async fn set_preferred_bearer(&self, bearer: &str) -> Result<(), BluetoothError> {
+    pub async fn set_preferred_bearer(&self, bearer: &str) -> Result<(), Error> {
         DeviceControls::set_preferred_bearer(&self.zbus_connection, &self.object_path, bearer).await
     }
 
@@ -426,7 +426,7 @@ impl Device {
     /// - `InvalidArguments` - Invalid device path
     /// - `DoesNotExist` - Device does not exist
     /// - `Failed` - Operation failed
-    pub async fn forget(&self) -> Result<(), BluetoothError> {
+    pub async fn forget(&self) -> Result<(), Error> {
         DeviceControls::forget(
             &self.zbus_connection,
             &self.adapter.get(),
@@ -439,7 +439,7 @@ impl Device {
     async fn fetch_properties(
         device_proxy: &Device1Proxy<'_>,
         battery_proxy: &Battery1Proxy<'_>,
-    ) -> Result<DeviceProperties, BluetoothError> {
+    ) -> Result<DeviceProperties, Error> {
         let (
             address,
             address_type,

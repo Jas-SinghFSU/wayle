@@ -16,7 +16,7 @@ use crate::services::{
             commands::Command,
             types::{CommandSender, EventSender},
         },
-        error::AudioError,
+        error::Error,
         types::{
             device::{Device, DeviceKey, DevicePort, DeviceState, DeviceType, SinkInfo},
             format::{AudioFormat, ChannelMap, SampleSpec},
@@ -115,7 +115,7 @@ impl PartialEq for OutputDevice {
 impl Reactive for OutputDevice {
     type Context<'a> = OutputDeviceParams<'a>;
     type LiveContext<'a> = LiveOutputDeviceParams<'a>;
-    type Error = AudioError;
+    type Error = Error;
 
     async fn get(params: Self::Context<'_>) -> Result<Self, Self::Error> {
         let (tx, rx) = oneshot::channel();
@@ -125,11 +125,11 @@ impl Reactive for OutputDevice {
                 device_key: params.device_key,
                 responder: tx,
             })
-            .map_err(|_| AudioError::BackendCommunicationFailed)?;
+            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))?;
 
         let device = rx
             .await
-            .map_err(|_| AudioError::BackendCommunicationFailed)??;
+            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))??;
 
         match device {
             Device::Sink(sink) => Ok(Self::from_sink(
@@ -138,7 +138,7 @@ impl Reactive for OutputDevice {
                 None,
                 None,
             )),
-            Device::Source(_) => Err(AudioError::DeviceNotFound(
+            Device::Source(_) => Err(Error::DeviceNotFound(
                 params.device_key.index,
                 DeviceType::Output,
             )),
@@ -153,11 +153,11 @@ impl Reactive for OutputDevice {
                 device_key: params.device_key,
                 responder: tx,
             })
-            .map_err(|_| AudioError::BackendCommunicationFailed)?;
+            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))?;
 
         let device = rx
             .await
-            .map_err(|_| AudioError::BackendCommunicationFailed)??;
+            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))??;
 
         let device = match device {
             Device::Sink(sink) => Arc::new(Self::from_sink(
@@ -167,7 +167,7 @@ impl Reactive for OutputDevice {
                 Some(params.cancellation_token.child_token()),
             )),
             Device::Source(_) => {
-                return Err(AudioError::DeviceNotFound(
+                return Err(Error::DeviceNotFound(
                     params.device_key.index,
                     DeviceType::Output,
                 ));
@@ -245,7 +245,7 @@ impl OutputDevice {
     ///
     /// # Errors
     /// Returns error if backend communication fails or device operation fails.
-    pub async fn set_volume(&self, volume: Volume) -> Result<(), AudioError> {
+    pub async fn set_volume(&self, volume: Volume) -> Result<(), Error> {
         OutputDeviceController::set_volume(&self.command_tx, self.key, volume).await
     }
 
@@ -253,7 +253,7 @@ impl OutputDevice {
     ///
     /// # Errors
     /// Returns error if backend communication fails or device operation fails.
-    pub async fn set_mute(&self, muted: bool) -> Result<(), AudioError> {
+    pub async fn set_mute(&self, muted: bool) -> Result<(), Error> {
         OutputDeviceController::set_mute(&self.command_tx, self.key, muted).await
     }
 
@@ -261,7 +261,7 @@ impl OutputDevice {
     ///
     /// # Errors
     /// Returns error if backend communication fails or device operation fails.
-    pub async fn set_port(&self, port: String) -> Result<(), AudioError> {
+    pub async fn set_port(&self, port: String) -> Result<(), Error> {
         OutputDeviceController::set_port(&self.command_tx, self.key, port).await
     }
 
@@ -269,7 +269,7 @@ impl OutputDevice {
     ///
     /// # Errors
     /// Returns error if backend communication fails or device operation fails.
-    pub async fn set_as_default(&self) -> Result<(), AudioError> {
+    pub async fn set_as_default(&self) -> Result<(), Error> {
         OutputDeviceController::set_as_default(&self.command_tx, self.key).await
     }
 }

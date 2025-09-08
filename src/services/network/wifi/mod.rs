@@ -14,7 +14,7 @@ use super::{
         access_point::{AccessPoint, types::Ssid},
         device::wifi::{DeviceWifi, DeviceWifiParams, LiveDeviceWifiParams},
     },
-    error::NetworkError,
+    error::Error,
     proxy::{access_point::AccessPointProxy, manager::NetworkManagerProxy},
     types::states::NetworkStatus,
 };
@@ -66,7 +66,7 @@ impl PartialEq for Wifi {
 impl Reactive for Wifi {
     type Context<'a> = WifiParams<'a>;
     type LiveContext<'a> = LiveWifiParams<'a>;
-    type Error = NetworkError;
+    type Error = Error;
 
     async fn get(params: Self::Context<'_>) -> Result<Self, Self::Error> {
         let device = DeviceWifi::get(DeviceWifiParams {
@@ -74,7 +74,7 @@ impl Reactive for Wifi {
             device_path: params.device_path.clone(),
         })
         .await
-        .map_err(|e| NetworkError::ObjectCreationFailed {
+        .map_err(|e| Error::ObjectCreationFailed {
             object_type: String::from("WiFi"),
             object_path: params.device_path.clone(),
             reason: e.to_string(),
@@ -116,7 +116,7 @@ impl Wifi {
     /// # Errors
     ///
     /// Returns `NetworkError::OperationFailed` if the operation fails.
-    pub async fn set_enabled(&self, enabled: bool) -> Result<(), NetworkError> {
+    pub async fn set_enabled(&self, enabled: bool) -> Result<(), Error> {
         WifiControls::set_enabled(&self.connection, enabled).await
     }
 
@@ -138,7 +138,7 @@ impl Wifi {
         &self,
         ap_path: OwnedObjectPath,
         password: Option<String>,
-    ) -> Result<(), NetworkError> {
+    ) -> Result<(), Error> {
         WifiControls::connect(
             &self.connection,
             &self.device.object_path,
@@ -156,14 +156,11 @@ impl Wifi {
     /// # Errors
     ///
     /// Returns `NetworkError::OperationFailed` if the disconnection fails
-    pub async fn disconnect(&self) -> Result<(), NetworkError> {
+    pub async fn disconnect(&self) -> Result<(), Error> {
         WifiControls::disconnect(&self.connection, &self.device.object_path).await
     }
 
-    async fn from_device(
-        connection: &Connection,
-        device: DeviceWifi,
-    ) -> Result<Self, NetworkError> {
+    async fn from_device(connection: &Connection, device: DeviceWifi) -> Result<Self, Error> {
         let nm_proxy = NetworkManagerProxy::new(connection).await?;
 
         let enabled_state = unwrap_bool!(nm_proxy.wireless_enabled().await);

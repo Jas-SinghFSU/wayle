@@ -9,7 +9,7 @@ use tracing::info;
 use super::types::{
     ChangeNotification, DeviceStore, EventSender, InternalCommandSender, StreamStore,
 };
-use crate::services::audio::error::AudioError;
+use crate::services::audio::error::Error;
 
 pub(crate) mod device;
 pub(crate) mod server;
@@ -33,7 +33,7 @@ pub(crate) fn start_event_processor(
     events_tx: EventSender,
     internal_command_tx: InternalCommandSender,
     cancellation_token: CancellationToken,
-) -> Result<(), AudioError> {
+) -> Result<(), Error> {
     let (change_tx, mut change_rx) = mpsc::unbounded_channel::<ChangeNotification>();
 
     setup_subscription(context, change_tx)?;
@@ -70,7 +70,7 @@ pub(crate) fn start_event_processor(
 fn setup_subscription(
     context: &mut Context,
     change_tx: mpsc::UnboundedSender<ChangeNotification>,
-) -> Result<(), AudioError> {
+) -> Result<(), Error> {
     let interest_mask = InterestMaskSet::SINK
         | InterestMaskSet::SOURCE
         | InterestMaskSet::SINK_INPUT

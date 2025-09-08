@@ -2,7 +2,7 @@ use tracing::instrument;
 use zbus::{Connection, zvariant::OwnedObjectPath};
 
 use crate::services::bluetooth::{
-    error::BluetoothError,
+    error::Error,
     proxy::{adapter::Adapter1Proxy, device::Device1Proxy},
     types::UUID,
 };
@@ -14,7 +14,7 @@ impl DeviceControls {
     pub(super) async fn connect(
         connection: &Connection,
         device_path: &OwnedObjectPath,
-    ) -> Result<(), BluetoothError> {
+    ) -> Result<(), Error> {
         let proxy = Device1Proxy::new(connection, device_path).await?;
         Ok(proxy.connect().await?)
     }
@@ -23,7 +23,7 @@ impl DeviceControls {
     pub(super) async fn disconnect(
         connection: &Connection,
         device_path: &OwnedObjectPath,
-    ) -> Result<(), BluetoothError> {
+    ) -> Result<(), Error> {
         let proxy = Device1Proxy::new(connection, device_path).await?;
         Ok(proxy.disconnect().await?)
     }
@@ -33,7 +33,7 @@ impl DeviceControls {
         connection: &Connection,
         device_path: &OwnedObjectPath,
         profile_uuid: UUID,
-    ) -> Result<(), BluetoothError> {
+    ) -> Result<(), Error> {
         let proxy = Device1Proxy::new(connection, device_path).await?;
         Ok(proxy.connect_profile(&profile_uuid).await?)
     }
@@ -43,7 +43,7 @@ impl DeviceControls {
         connection: &Connection,
         device_path: &OwnedObjectPath,
         profile_uuid: UUID,
-    ) -> Result<(), BluetoothError> {
+    ) -> Result<(), Error> {
         let proxy = Device1Proxy::new(connection, device_path).await?;
         Ok(proxy.disconnect_profile(&profile_uuid).await?)
     }
@@ -52,7 +52,7 @@ impl DeviceControls {
     pub(super) async fn pair(
         connection: &Connection,
         device_path: &OwnedObjectPath,
-    ) -> Result<(), BluetoothError> {
+    ) -> Result<(), Error> {
         let proxy = Device1Proxy::new(connection, device_path).await?;
         Ok(proxy.pair().await?)
     }
@@ -61,7 +61,7 @@ impl DeviceControls {
     pub(super) async fn cancel_pairing(
         connection: &Connection,
         device_path: &OwnedObjectPath,
-    ) -> Result<(), BluetoothError> {
+    ) -> Result<(), Error> {
         let proxy = Device1Proxy::new(connection, device_path).await?;
         Ok(proxy.cancel_pairing().await?)
     }
@@ -71,7 +71,7 @@ impl DeviceControls {
         connection: &Connection,
         adapter_path: &OwnedObjectPath,
         device_path: &OwnedObjectPath,
-    ) -> Result<(), BluetoothError> {
+    ) -> Result<(), Error> {
         let proxy = Adapter1Proxy::new(connection, adapter_path).await?;
         Ok(proxy.remove_device(device_path).await?)
     }
@@ -80,7 +80,7 @@ impl DeviceControls {
     pub(super) async fn get_service_records(
         connection: &Connection,
         device_path: &OwnedObjectPath,
-    ) -> Result<Vec<Vec<u8>>, BluetoothError> {
+    ) -> Result<Vec<Vec<u8>>, Error> {
         let proxy = Device1Proxy::new(connection, device_path).await?;
         Ok(proxy.get_service_records().await?)
     }
@@ -94,7 +94,7 @@ impl DeviceControls {
         connection: &Connection,
         device_path: &OwnedObjectPath,
         trusted: bool,
-    ) -> Result<(), BluetoothError> {
+    ) -> Result<(), Error> {
         let proxy = Device1Proxy::new(connection, device_path).await?;
         Ok(proxy.set_trusted(trusted).await?)
     }
@@ -108,7 +108,7 @@ impl DeviceControls {
         connection: &Connection,
         device_path: &OwnedObjectPath,
         blocked: bool,
-    ) -> Result<(), BluetoothError> {
+    ) -> Result<(), Error> {
         let proxy = Device1Proxy::new(connection, device_path).await?;
         Ok(proxy.set_blocked(blocked).await?)
     }
@@ -122,7 +122,7 @@ impl DeviceControls {
         connection: &Connection,
         device_path: &OwnedObjectPath,
         wake_allowed: bool,
-    ) -> Result<(), BluetoothError> {
+    ) -> Result<(), Error> {
         let proxy = Device1Proxy::new(connection, device_path).await?;
         Ok(proxy.set_wake_allowed(wake_allowed).await?)
     }
@@ -136,7 +136,7 @@ impl DeviceControls {
         connection: &Connection,
         device_path: &OwnedObjectPath,
         alias: &str,
-    ) -> Result<(), BluetoothError> {
+    ) -> Result<(), Error> {
         let proxy = Device1Proxy::new(connection, device_path).await?;
         Ok(proxy.set_alias(alias).await?)
     }
@@ -150,7 +150,7 @@ impl DeviceControls {
         connection: &Connection,
         device_path: &OwnedObjectPath,
         bearer: &str,
-    ) -> Result<(), BluetoothError> {
+    ) -> Result<(), Error> {
         let proxy = Device1Proxy::new(connection, device_path).await?;
         Ok(proxy.set_preferred_bearer(bearer).await?)
     }

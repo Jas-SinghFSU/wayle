@@ -6,7 +6,7 @@ use zbus::Connection;
 
 use super::{
     core::{PowerProfiles, types::LivePowerProfilesParams},
-    error::PowerProfilesError,
+    error::Error,
 };
 use crate::services::traits::Reactive;
 
@@ -39,11 +39,9 @@ impl PowerProfilesService {
     /// Returns `PowerProfilesError::ServiceInitializationFailed` if service initialization
     /// fails.
     #[instrument]
-    pub async fn new() -> Result<Self, PowerProfilesError> {
+    pub async fn new() -> Result<Self, Error> {
         let connection = Connection::system().await.map_err(|err| {
-            PowerProfilesError::ServiceInitializationFailed(format!(
-                "D-Bus connection failed: {err}"
-            ))
+            Error::ServiceInitializationFailed(format!("D-Bus connection failed: {err}"))
         })?;
 
         let cancellation_token = CancellationToken::new();

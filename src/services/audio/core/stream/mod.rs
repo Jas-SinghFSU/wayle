@@ -15,7 +15,7 @@ use crate::services::{
             commands::Command,
             types::{CommandSender, EventSender},
         },
-        error::AudioError,
+        error::Error,
         types::{
             device::DeviceKey,
             format::{ChannelMap, SampleSpec},
@@ -121,7 +121,7 @@ impl PartialEq for AudioStream {
 impl Reactive for AudioStream {
     type Context<'a> = AudioStreamParams<'a>;
     type LiveContext<'a> = LiveAudioStreamParams<'a>;
-    type Error = AudioError;
+    type Error = Error;
 
     async fn get(params: Self::Context<'_>) -> Result<Self, Self::Error> {
         let (tx, rx) = oneshot::channel();
@@ -131,11 +131,11 @@ impl Reactive for AudioStream {
                 stream_key: params.stream_key,
                 responder: tx,
             })
-            .map_err(|_| AudioError::BackendCommunicationFailed)?;
+            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))?;
 
         let stream_info = rx
             .await
-            .map_err(|_| AudioError::BackendCommunicationFailed)??;
+            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))??;
         Ok(Self::from_info(
             stream_info,
             params.command_tx.clone(),
@@ -152,11 +152,11 @@ impl Reactive for AudioStream {
                 stream_key: params.stream_key,
                 responder: tx,
             })
-            .map_err(|_| AudioError::BackendCommunicationFailed)?;
+            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))?;
 
         let stream_info = rx
             .await
-            .map_err(|_| AudioError::BackendCommunicationFailed)??;
+            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))??;
         let stream = Arc::new(Self::from_info(
             stream_info,
             params.command_tx.clone(),
@@ -238,7 +238,7 @@ impl AudioStream {
     ///
     /// # Errors
     /// Returns error if backend communication fails or stream operation fails.
-    pub async fn set_volume(&self, volume: Volume) -> Result<(), AudioError> {
+    pub async fn set_volume(&self, volume: Volume) -> Result<(), Error> {
         AudioStreamController::set_volume(&self.command_tx, self.key, volume).await
     }
 
@@ -246,7 +246,7 @@ impl AudioStream {
     ///
     /// # Errors
     /// Returns error if backend communication fails or stream operation fails.
-    pub async fn set_mute(&self, muted: bool) -> Result<(), AudioError> {
+    pub async fn set_mute(&self, muted: bool) -> Result<(), Error> {
         AudioStreamController::set_mute(&self.command_tx, self.key, muted).await
     }
 
@@ -254,7 +254,7 @@ impl AudioStream {
     ///
     /// # Errors
     /// Returns error if backend communication fails or device doesn't exist.
-    pub async fn move_to_device(&self, device_key: DeviceKey) -> Result<(), AudioError> {
+    pub async fn move_to_device(&self, device_key: DeviceKey) -> Result<(), Error> {
         AudioStreamController::move_to_device(&self.command_tx, self.key, device_key).await
     }
 }

@@ -2,7 +2,7 @@ use tracing::instrument;
 use zbus::Connection;
 
 use crate::services::power_profiles::{
-    error::PowerProfilesError,
+    error::Error,
     proxy::power_profiles::PowerProfilesProxy,
     types::profile::{HoldCookie, PowerProfile, ProfileHold},
 };
@@ -14,13 +14,13 @@ impl PowerProfilesController {
     pub async fn set_active_profile(
         connection: &Connection,
         profile: PowerProfile,
-    ) -> Result<(), PowerProfilesError> {
+    ) -> Result<(), Error> {
         let proxy = PowerProfilesProxy::new(connection).await?;
 
         proxy
             .set_active_profile(&profile.to_string())
             .await
-            .map_err(|err| PowerProfilesError::OperationFailed {
+            .map_err(|err| Error::OperationFailed {
                 operation: "set_active_profile",
                 reason: format!("Failed to set active profile: {err}"),
             })
@@ -34,7 +34,7 @@ impl PowerProfilesController {
     pub async fn hold_profile(
         connection: &Connection,
         hold: ProfileHold,
-    ) -> Result<HoldCookie, PowerProfilesError> {
+    ) -> Result<HoldCookie, Error> {
         let proxy = PowerProfilesProxy::new(connection).await?;
 
         proxy
@@ -44,7 +44,7 @@ impl PowerProfilesController {
                 &hold.application_id,
             )
             .await
-            .map_err(|err| PowerProfilesError::OperationFailed {
+            .map_err(|err| Error::OperationFailed {
                 operation: "hold_profile",
                 reason: format!("Failed to hold profile: {err}"),
             })
@@ -54,14 +54,15 @@ impl PowerProfilesController {
     pub async fn release_profile(
         connection: &Connection,
         hold_cookie: HoldCookie,
-    ) -> Result<(), PowerProfilesError> {
+    ) -> Result<(), Error> {
         let proxy = PowerProfilesProxy::new(connection).await?;
 
-        proxy.release_profile(hold_cookie).await.map_err(|err| {
-            PowerProfilesError::OperationFailed {
+        proxy
+            .release_profile(hold_cookie)
+            .await
+            .map_err(|err| Error::OperationFailed {
                 operation: "release_profile",
                 reason: format!("Failed to release profile: {err}"),
-            }
-        })
+            })
     }
 }

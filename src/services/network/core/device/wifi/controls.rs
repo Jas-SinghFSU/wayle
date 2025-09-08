@@ -6,9 +6,7 @@ use zbus::{
     zvariant::{OwnedObjectPath, OwnedValue},
 };
 
-use crate::services::network::{
-    error::NetworkError, proxy::devices::wireless::DeviceWirelessProxy,
-};
+use crate::services::network::{error::Error, proxy::devices::wireless::DeviceWirelessProxy};
 
 pub(super) struct DeviceWifiControls;
 
@@ -17,15 +15,15 @@ impl DeviceWifiControls {
     pub(super) async fn get_all_access_points(
         connection: &Connection,
         path: &OwnedObjectPath,
-    ) -> Result<Vec<OwnedObjectPath>, NetworkError> {
+    ) -> Result<Vec<OwnedObjectPath>, Error> {
         let proxy = DeviceWirelessProxy::new(connection, path)
             .await
-            .map_err(NetworkError::DbusError)?;
+            .map_err(Error::DbusError)?;
 
         proxy
             .get_all_access_points()
             .await
-            .map_err(|e| NetworkError::OperationFailed {
+            .map_err(|e| Error::OperationFailed {
                 operation: "get_all_access_points",
                 reason: e.to_string(),
             })
@@ -40,15 +38,15 @@ impl DeviceWifiControls {
         connection: &Connection,
         path: &OwnedObjectPath,
         options: HashMap<String, OwnedValue>,
-    ) -> Result<(), NetworkError> {
+    ) -> Result<(), Error> {
         let proxy = DeviceWirelessProxy::new(connection, path)
             .await
-            .map_err(NetworkError::DbusError)?;
+            .map_err(Error::DbusError)?;
 
         proxy
             .request_scan(options)
             .await
-            .map_err(|e| NetworkError::OperationFailed {
+            .map_err(|e| Error::OperationFailed {
                 operation: "request_scan",
                 reason: e.to_string(),
             })?;

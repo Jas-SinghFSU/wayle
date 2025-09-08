@@ -6,22 +6,22 @@ use tracing::debug;
 
 use super::TrackMetadata;
 use crate::services::{
-    media::{error::MediaError, proxy::MediaPlayer2PlayerProxy},
+    media::{error::Error, proxy::MediaPlayer2PlayerProxy},
     traits::ModelMonitoring,
 };
 
 impl ModelMonitoring for TrackMetadata {
-    type Error = MediaError;
+    type Error = Error;
 
     async fn start_monitoring(self: Arc<Self>) -> Result<(), Self::Error> {
         let Some(ref proxy) = self.proxy else {
-            return Err(MediaError::InitializationFailed(String::from(
+            return Err(Error::InitializationFailed(String::from(
                 "A proxy was not found.",
             )));
         };
 
         let Some(ref cancellation_token) = self.cancellation_token else {
-            return Err(MediaError::InitializationFailed(String::from(
+            return Err(Error::InitializationFailed(String::from(
                 "A cancellation_token was not found.",
             )));
         };

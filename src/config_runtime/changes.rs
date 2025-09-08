@@ -20,7 +20,7 @@ pub struct ConfigChange {
 
 /// Errors that can occur during configuration operations.
 #[derive(Debug, thiserror::Error)]
-pub enum ConfigError {
+pub enum Error {
     /// The specified configuration path does not exist.
     #[error("Invalid config path: {0}")]
     InvalidPath(String),
@@ -166,12 +166,12 @@ impl ConfigChange {
     ///
     /// Returns `ConfigError::TypeMismatch` if the value cannot be deserialized
     /// into the requested type.
-    pub fn extract<T>(&self) -> Result<T, ConfigError>
+    pub fn extract<T>(&self) -> Result<T, Error>
     where
         T: serde::de::DeserializeOwned,
     {
-        let handle_err = |_e: toml::de::Error| -> ConfigError {
-            ConfigError::TypeMismatch {
+        let handle_err = |_e: toml::de::Error| -> Error {
+            Error::TypeMismatch {
                 path: self.path.clone(),
                 expected_type: any::type_name::<T>(),
                 actual_value: self.new_value.clone(),

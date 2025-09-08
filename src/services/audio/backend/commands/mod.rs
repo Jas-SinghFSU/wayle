@@ -5,7 +5,7 @@ pub(crate) mod stream;
 use tokio::sync::oneshot;
 
 use crate::services::audio::{
-    error::AudioError,
+    error::Error,
     types::{
         device::{Device, DeviceKey},
         stream::{StreamInfo, StreamKey},
@@ -21,14 +21,14 @@ pub(crate) enum Command {
         /// Device to query.
         device_key: DeviceKey,
         /// Channel to send response.
-        responder: oneshot::Sender<Result<Device, AudioError>>,
+        responder: oneshot::Sender<Result<Device, Error>>,
     },
     /// Get stream information
     GetStream {
         /// Stream to query.
         stream_key: StreamKey,
         /// Channel to send response.
-        responder: oneshot::Sender<Result<StreamInfo, AudioError>>,
+        responder: oneshot::Sender<Result<StreamInfo, Error>>,
     },
     /// Set device volume
     SetVolume {
@@ -37,7 +37,7 @@ pub(crate) enum Command {
         /// New volume level.
         volume: Volume,
         /// Channel to send response.
-        responder: oneshot::Sender<Result<(), AudioError>>,
+        responder: oneshot::Sender<Result<(), Error>>,
     },
     /// Set device mute state
     SetMute {
@@ -46,7 +46,7 @@ pub(crate) enum Command {
         /// New mute state.
         muted: bool,
         /// Channel to send response.
-        responder: oneshot::Sender<Result<(), AudioError>>,
+        responder: oneshot::Sender<Result<(), Error>>,
     },
     /// Set stream volume
     SetStreamVolume {
@@ -55,7 +55,7 @@ pub(crate) enum Command {
         /// New volume level.
         volume: Volume,
         /// Channel to send response.
-        responder: oneshot::Sender<Result<(), AudioError>>,
+        responder: oneshot::Sender<Result<(), Error>>,
     },
     /// Set stream mute state
     SetStreamMute {
@@ -64,21 +64,21 @@ pub(crate) enum Command {
         /// New mute state.
         muted: bool,
         /// Channel to send response.
-        responder: oneshot::Sender<Result<(), AudioError>>,
+        responder: oneshot::Sender<Result<(), Error>>,
     },
     /// Set default input device
     SetDefaultInput {
         /// Device to set as default.
         device_key: DeviceKey,
         /// Channel to send response.
-        responder: oneshot::Sender<Result<(), AudioError>>,
+        responder: oneshot::Sender<Result<(), Error>>,
     },
     /// Set default output device
     SetDefaultOutput {
         /// Device to set as default.
         device_key: DeviceKey,
         /// Channel to send response.
-        responder: oneshot::Sender<Result<(), AudioError>>,
+        responder: oneshot::Sender<Result<(), Error>>,
     },
     /// Move stream to different device
     MoveStream {
@@ -87,7 +87,7 @@ pub(crate) enum Command {
         /// Target device.
         device_key: DeviceKey,
         /// Channel to send response.
-        responder: oneshot::Sender<Result<(), AudioError>>,
+        responder: oneshot::Sender<Result<(), Error>>,
     },
     /// Set device port
     SetPort {
@@ -96,6 +96,6 @@ pub(crate) enum Command {
         /// Port name to activate.
         port: String,
         /// Channel to send response.
-        responder: oneshot::Sender<Result<(), AudioError>>,
+        responder: oneshot::Sender<Result<(), Error>>,
     },
 }

@@ -2,7 +2,7 @@ use tokio::sync::oneshot;
 
 use crate::services::audio::{
     backend::{commands::Command, types::CommandSender},
-    error::AudioError,
+    error::Error,
     types::{device::DeviceKey, stream::StreamKey},
     volume::types::Volume,
 };
@@ -17,7 +17,7 @@ impl AudioStreamController {
         command_tx: &CommandSender,
         stream_key: StreamKey,
         volume: Volume,
-    ) -> Result<(), AudioError> {
+    ) -> Result<(), Error> {
         let (tx, rx) = oneshot::channel();
 
         command_tx
@@ -26,10 +26,10 @@ impl AudioStreamController {
                 volume,
                 responder: tx,
             })
-            .map_err(|_| AudioError::BackendCommunicationFailed)?;
+            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))?;
 
         rx.await
-            .map_err(|_| AudioError::BackendCommunicationFailed)?
+            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))?
     }
 
     /// Set the mute state for an audio stream.
@@ -40,7 +40,7 @@ impl AudioStreamController {
         command_tx: &CommandSender,
         stream_key: StreamKey,
         muted: bool,
-    ) -> Result<(), AudioError> {
+    ) -> Result<(), Error> {
         let (tx, rx) = oneshot::channel();
 
         command_tx
@@ -49,10 +49,10 @@ impl AudioStreamController {
                 muted,
                 responder: tx,
             })
-            .map_err(|_| AudioError::BackendCommunicationFailed)?;
+            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))?;
 
         rx.await
-            .map_err(|_| AudioError::BackendCommunicationFailed)?
+            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))?
     }
 
     /// Move a stream to a different device.
@@ -63,7 +63,7 @@ impl AudioStreamController {
         command_tx: &CommandSender,
         stream_key: StreamKey,
         device_key: DeviceKey,
-    ) -> Result<(), AudioError> {
+    ) -> Result<(), Error> {
         let (tx, rx) = oneshot::channel();
 
         command_tx
@@ -72,9 +72,9 @@ impl AudioStreamController {
                 device_key,
                 responder: tx,
             })
-            .map_err(|_| AudioError::BackendCommunicationFailed)?;
+            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))?;
 
         rx.await
-            .map_err(|_| AudioError::BackendCommunicationFailed)?
+            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))?
     }
 }

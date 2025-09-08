@@ -6,7 +6,7 @@ use tokio_util::sync::CancellationToken;
 use tracing::{debug, instrument, warn};
 use zbus::{Connection, fdo::DBusProxy};
 
-use super::{core::player::Player, error::MediaError, types::PlayerId};
+use super::{core::player::Player, error::Error, types::PlayerId};
 use crate::{
     core::state::RuntimeState,
     services::{
@@ -19,7 +19,7 @@ use crate::{
 const MPRIS_BUS_PREFIX: &str = "org.mpris.MediaPlayer2.";
 
 impl ServiceMonitoring for MediaService {
-    type Error = MediaError;
+    type Error = Error;
 
     #[instrument(skip_all)]
     async fn start_monitoring(&self) -> Result<(), Self::Error> {
@@ -42,7 +42,7 @@ impl ServiceMonitoring for MediaService {
                 let pl = players_map
                     .get(player_id)
                     .cloned()
-                    .ok_or_else(|| MediaError::PlayerNotFound(player_id.clone()))?;
+                    .ok_or_else(|| Error::PlayerNotFound(player_id.clone()))?;
                 self.active_player.set(Some(pl));
                 debug!("Restored active player from state: {}", saved_player_id);
             }
@@ -68,15 +68,15 @@ async fn discover_existing_players(
     active_player: &Property<Option<Arc<Player>>>,
     ignored_patterns: &[String],
     cancellation_token: &CancellationToken,
-) -> Result<(), MediaError> {
+) -> Result<(), Error> {
     let dbus_proxy = DBusProxy::new(connection)
         .await
-        .map_err(|e| MediaError::InitializationFailed(format!("DBus proxy failed: {e}")))?;
+        .map_err(|e| Error::InitializationFailed(format!("DBus proxy failed: {e}")))?;
 
     let names = dbus_proxy
         .list_names()
         .await
-        .map_err(|e| MediaError::DbusError(e.into()))?;
+        .map_err(|e| Error::DbusError(e.into()))?;
 
     for name in names {
         if name.starts_with(MPRIS_BUS_PREFIX) && !should_ignore(&name, ignored_patterns) {

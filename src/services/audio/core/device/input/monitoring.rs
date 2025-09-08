@@ -5,7 +5,7 @@ use tracing::debug;
 use crate::services::{
     audio::{
         core::device::input::InputDevice,
-        error::AudioError,
+        error::Error,
         events::AudioEvent,
         types::device::{Device, DeviceState},
     },
@@ -13,17 +13,17 @@ use crate::services::{
 };
 
 impl ModelMonitoring for InputDevice {
-    type Error = AudioError;
+    type Error = Error;
 
     async fn start_monitoring(self: Arc<Self>) -> Result<(), Self::Error> {
         let Some(ref cancellation_token) = self.cancellation_token else {
-            return Err(AudioError::OperationFailed(String::from(
+            return Err(Error::OperationFailed(String::from(
                 "Cancellation token not available for monitoring",
             )));
         };
 
         let Some(ref event_tx) = self.event_tx else {
-            return Err(AudioError::OperationFailed(String::from(
+            return Err(Error::OperationFailed(String::from(
                 "Event sender not available for monitoring",
             )));
         };

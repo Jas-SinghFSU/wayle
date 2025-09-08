@@ -8,7 +8,7 @@ use crate::{
     services::{
         common::property::Property,
         network::{
-            error::NetworkError,
+            error::Error,
             proxy::access_point::AccessPointProxy,
             types::{
                 flags::{NM80211ApFlags, NM80211ApSecurityFlags},
@@ -82,14 +82,14 @@ pub struct AccessPoint {
 impl Reactive for AccessPoint {
     type Context<'a> = AccessPointParams<'a>;
     type LiveContext<'a> = LiveAccessPointParams<'a>;
-    type Error = NetworkError;
+    type Error = Error;
 
     async fn get(params: Self::Context<'_>) -> Result<Self, Self::Error> {
         let ap = Self::from_path(params.connection, params.path.clone(), None)
             .await
             .map_err(|e| match e {
-                NetworkError::ObjectNotFound(_) => e,
-                _ => NetworkError::ObjectCreationFailed {
+                Error::ObjectNotFound(_) => e,
+                _ => Error::ObjectCreationFailed {
                     object_type: String::from("AccessPoint"),
                     object_path: params.path.clone(),
                     reason: e.to_string(),
@@ -107,8 +107,8 @@ impl Reactive for AccessPoint {
         )
         .await
         .map_err(|e| match e {
-            NetworkError::ObjectNotFound(_) => e,
-            _ => NetworkError::ObjectCreationFailed {
+            Error::ObjectNotFound(_) => e,
+            _ => Error::ObjectCreationFailed {
                 object_type: String::from("AccessPoint"),
                 object_path: params.path.clone(),
                 reason: e.to_string(),
@@ -132,13 +132,13 @@ impl AccessPoint {
         connection: &Connection,
         path: OwnedObjectPath,
         cancellation_token: Option<CancellationToken>,
-    ) -> Result<Self, NetworkError> {
+    ) -> Result<Self, Error> {
         let ap_proxy = AccessPointProxy::new(connection, &path)
             .await
-            .map_err(NetworkError::DbusError)?;
+            .map_err(Error::DbusError)?;
 
         if ap_proxy.strength().await.is_err() {
-            return Err(NetworkError::ObjectNotFound(path.clone()));
+            return Err(Error::ObjectNotFound(path.clone()));
         }
 
         let (

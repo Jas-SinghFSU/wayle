@@ -6,13 +6,13 @@ use tracing::debug;
 use zbus::{Connection, zvariant::OwnedObjectPath};
 
 use super::{
-    error::NetworkError, proxy::manager::NetworkManagerProxy, service::NetworkService,
+    error::Error, proxy::manager::NetworkManagerProxy, service::NetworkService,
     types::connectivity::ConnectionType, wifi::Wifi, wired::Wired,
 };
 use crate::services::{common::property::Property, traits::ServiceMonitoring};
 
 impl ServiceMonitoring for NetworkService {
-    type Error = NetworkError;
+    type Error = Error;
 
     async fn start_monitoring(&self) -> Result<(), Self::Error> {
         spawn_primary_monitoring(
@@ -32,10 +32,10 @@ async fn spawn_primary_monitoring(
     wired: Option<Arc<Wired>>,
     primary: Property<ConnectionType>,
     cancellation_token: CancellationToken,
-) -> Result<(), NetworkError> {
+) -> Result<(), Error> {
     let nm_proxy = NetworkManagerProxy::new(connection)
         .await
-        .map_err(NetworkError::DbusError)?;
+        .map_err(Error::DbusError)?;
 
     let primary_connection = nm_proxy.primary_connection().await?;
     update_primary_connection(primary_connection, &wifi, &wired, &primary).await;

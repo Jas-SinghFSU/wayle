@@ -10,7 +10,7 @@ use thiserror::Error;
 /// This enum represents all possible errors that can occur during
 /// configuration loading, parsing, and import operations.
 #[derive(Error, Debug)]
-pub enum WayleError {
+pub enum Error {
     /// Configuration validation error
     #[error("configuration validation failed for '{component}': {details}")]
     ConfigValidation {
@@ -63,7 +63,7 @@ pub enum WayleError {
     },
 }
 
-impl WayleError {
+impl Error {
     /// Creates a TOML parsing error with optional file path context.
     ///
     /// # Arguments
@@ -79,7 +79,7 @@ impl WayleError {
             None => String::from("string"),
         };
 
-        WayleError::TomlParseError {
+        Error::TomlParseError {
             location,
             details: error.to_string(),
         }
@@ -94,7 +94,7 @@ impl WayleError {
     pub fn import(error: impl fmt::Display, path: &Path) -> Self {
         let clean_path = path.canonicalize().unwrap_or_else(|_| path.to_path_buf());
 
-        WayleError::ImportError {
+        Error::ImportError {
             path: clean_path,
             details: error.to_string(),
         }

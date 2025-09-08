@@ -12,7 +12,7 @@ use zbus::zvariant::OwnedValue;
 use crate::{
     services::{
         common::property::Property,
-        media::{error::MediaError, proxy::MediaPlayer2PlayerProxy},
+        media::{error::Error, proxy::MediaPlayer2PlayerProxy},
         traits::{ModelMonitoring, Reactive},
     },
     watch_all,
@@ -51,7 +51,7 @@ pub struct TrackMetadata {
 impl Reactive for TrackMetadata {
     type Context<'a> = TrackMetadataParams<'a>;
     type LiveContext<'a> = LiveTrackMetadataParams<'a>;
-    type Error = MediaError;
+    type Error = Error;
 
     async fn get(params: Self::Context<'_>) -> Result<Self, Self::Error> {
         let metadata = Self::unknown();

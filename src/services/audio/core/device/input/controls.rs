@@ -3,7 +3,7 @@ use tracing::instrument;
 
 use crate::services::audio::{
     backend::{commands::Command, types::CommandSender},
-    error::AudioError,
+    error::Error,
     types::device::DeviceKey,
     volume::types::Volume,
 };
@@ -23,7 +23,7 @@ impl InputDeviceController {
         command_tx: &CommandSender,
         device_key: DeviceKey,
         volume: Volume,
-    ) -> Result<(), AudioError> {
+    ) -> Result<(), Error> {
         let (tx, rx) = oneshot::channel();
 
         command_tx
@@ -32,10 +32,10 @@ impl InputDeviceController {
                 volume,
                 responder: tx,
             })
-            .map_err(|_| AudioError::BackendCommunicationFailed)?;
+            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))?;
 
         rx.await
-            .map_err(|_| AudioError::BackendCommunicationFailed)?
+            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))?
     }
 
     /// Set the mute state for an input device.
@@ -47,7 +47,7 @@ impl InputDeviceController {
         command_tx: &CommandSender,
         device_key: DeviceKey,
         muted: bool,
-    ) -> Result<(), AudioError> {
+    ) -> Result<(), Error> {
         let (tx, rx) = oneshot::channel();
 
         command_tx
@@ -56,10 +56,10 @@ impl InputDeviceController {
                 muted,
                 responder: tx,
             })
-            .map_err(|_| AudioError::BackendCommunicationFailed)?;
+            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))?;
 
         rx.await
-            .map_err(|_| AudioError::BackendCommunicationFailed)?
+            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))?
     }
 
     /// Set the active port for an input device.
@@ -71,7 +71,7 @@ impl InputDeviceController {
         command_tx: &CommandSender,
         device_key: DeviceKey,
         port: String,
-    ) -> Result<(), AudioError> {
+    ) -> Result<(), Error> {
         let (tx, rx) = oneshot::channel();
 
         command_tx
@@ -80,10 +80,10 @@ impl InputDeviceController {
                 port,
                 responder: tx,
             })
-            .map_err(|_| AudioError::BackendCommunicationFailed)?;
+            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))?;
 
         rx.await
-            .map_err(|_| AudioError::BackendCommunicationFailed)?
+            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))?
     }
 
     /// Set a device as the default input.
@@ -94,7 +94,7 @@ impl InputDeviceController {
     pub async fn set_as_default(
         command_tx: &CommandSender,
         device_key: DeviceKey,
-    ) -> Result<(), AudioError> {
+    ) -> Result<(), Error> {
         let (tx, rx) = oneshot::channel();
 
         command_tx
@@ -102,9 +102,9 @@ impl InputDeviceController {
                 device_key,
                 responder: tx,
             })
-            .map_err(|_| AudioError::BackendCommunicationFailed)?;
+            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))?;
 
         rx.await
-            .map_err(|_| AudioError::BackendCommunicationFailed)?
+            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))?
     }
 }

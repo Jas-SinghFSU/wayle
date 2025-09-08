@@ -21,7 +21,7 @@ use crate::{
     services::{
         common::property::Property,
         network::{
-            error::NetworkError, proxy::settings::SettingsProxy,
+            error::Error, proxy::settings::SettingsProxy,
             types::flags::NMSettingsAddConnection2Flags,
         },
         traits::{ModelMonitoring, Reactive},
@@ -51,7 +51,7 @@ pub struct Settings {
 impl Reactive for Settings {
     type Context<'a> = SettingsParams<'a>;
     type LiveContext<'a> = LiveSettingsParams<'a>;
-    type Error = NetworkError;
+    type Error = Error;
 
     async fn get(params: Self::Context<'_>) -> Result<Self, Self::Error> {
         Self::from_connection(params.zbus_connection, None).await
@@ -81,7 +81,7 @@ impl Settings {
     /// # Errors
     ///
     /// Returns `NetworkError::DbusError` if the DBus operation fails.
-    pub async fn list_connections(&self) -> Result<Vec<OwnedObjectPath>, NetworkError> {
+    pub async fn list_connections(&self) -> Result<Vec<OwnedObjectPath>, Error> {
         SettingsController::list_connections(&self.zbus_connection).await
     }
 
@@ -98,10 +98,7 @@ impl Settings {
     /// # Errors
     ///
     /// Returns `NetworkError::DbusError` if the DBus operation fails or connection not found.
-    pub async fn get_connection_by_uuid(
-        &self,
-        uuid: &str,
-    ) -> Result<OwnedObjectPath, NetworkError> {
+    pub async fn get_connection_by_uuid(&self, uuid: &str) -> Result<OwnedObjectPath, Error> {
         SettingsController::get_connection_by_uuid(&self.zbus_connection, uuid).await
     }
 
@@ -126,7 +123,7 @@ impl Settings {
     pub async fn add_connection(
         &self,
         connection: HashMap<String, HashMap<String, OwnedValue>>,
-    ) -> Result<OwnedObjectPath, NetworkError> {
+    ) -> Result<OwnedObjectPath, Error> {
         SettingsController::add_connection(&self.zbus_connection, connection).await
     }
 
@@ -151,7 +148,7 @@ impl Settings {
     pub async fn add_connection_unsaved(
         &self,
         connection: HashMap<String, HashMap<String, OwnedValue>>,
-    ) -> Result<OwnedObjectPath, NetworkError> {
+    ) -> Result<OwnedObjectPath, Error> {
         SettingsController::add_connection_unsaved(&self.zbus_connection, connection).await
     }
 
@@ -186,7 +183,7 @@ impl Settings {
         settings: HashMap<String, HashMap<String, OwnedValue>>,
         flags: NMSettingsAddConnection2Flags,
         args: HashMap<String, OwnedValue>,
-    ) -> Result<(OwnedObjectPath, HashMap<String, OwnedValue>), NetworkError> {
+    ) -> Result<(OwnedObjectPath, HashMap<String, OwnedValue>), Error> {
         SettingsController::add_connection2(&self.zbus_connection, settings, flags, args).await
     }
 
@@ -215,7 +212,7 @@ impl Settings {
     pub async fn load_connections(
         &self,
         filenames: Vec<String>,
-    ) -> Result<(bool, Vec<String>), NetworkError> {
+    ) -> Result<(bool, Vec<String>), Error> {
         SettingsController::load_connections(&self.zbus_connection, filenames).await
     }
 
@@ -231,7 +228,7 @@ impl Settings {
     /// # Errors
     ///
     /// Returns `NetworkError::DbusError` if the DBus operation fails.
-    pub async fn reload_connections(&self) -> Result<bool, NetworkError> {
+    pub async fn reload_connections(&self) -> Result<bool, Error> {
         SettingsController::reload_connections(&self.zbus_connection).await
     }
 
@@ -245,7 +242,7 @@ impl Settings {
     /// # Errors
     ///
     /// Returns `NetworkError::OperationFailed` if the operations fails.
-    pub async fn save_hostname(&self, hostname: &str) -> Result<(), NetworkError> {
+    pub async fn save_hostname(&self, hostname: &str) -> Result<(), Error> {
         SettingsController::save_hostname(&self.zbus_connection, hostname).await
     }
 
@@ -293,7 +290,7 @@ impl Settings {
     async fn from_connection(
         zbus_connection: &Connection,
         cancellation_token: Option<CancellationToken>,
-    ) -> Result<Self, NetworkError> {
+    ) -> Result<Self, Error> {
         let settings_proxy = SettingsProxy::new(zbus_connection).await?;
 
         let (connections, hostname, can_modify, version_id) = tokio::join!(

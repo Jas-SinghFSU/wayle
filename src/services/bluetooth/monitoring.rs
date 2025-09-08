@@ -11,7 +11,7 @@ use super::{
         adapter::{Adapter, LiveAdapterParams},
         device::{Device, LiveDeviceParams},
     },
-    error::BluetoothError,
+    error::Error,
     service::BluetoothService,
     types::{ADAPTER_INTERFACE, DEVICE_INTERFACE, ServiceNotification},
 };
@@ -28,7 +28,7 @@ use crate::{
 };
 
 impl ServiceMonitoring for BluetoothService {
-    type Error = BluetoothError;
+    type Error = Error;
 
     async fn start_monitoring(&self) -> Result<(), Self::Error> {
         let object_manager =
@@ -84,7 +84,7 @@ async fn monitor_devices(
     cancellation_token: CancellationToken,
     devices: &Property<Vec<Arc<Device>>>,
     notifier_tx: &broadcast::Sender<ServiceNotification>,
-) -> Result<(), BluetoothError> {
+) -> Result<(), Error> {
     let mut device_interface_added = object_manager
         .receive_interfaces_added_with_args(&[(1, DEVICE_INTERFACE)])
         .await?;
@@ -134,7 +134,7 @@ async fn monitor_adapters(
     object_manager: &ObjectManagerProxy<'_>,
     cancellation_token: CancellationToken,
     adapters: &Property<Vec<Arc<Adapter>>>,
-) -> Result<(), BluetoothError> {
+) -> Result<(), Error> {
     let mut adapter_interface_added = object_manager
         .receive_interfaces_added_with_args(&[(1, ADAPTER_INTERFACE)])
         .await?;
@@ -182,7 +182,7 @@ async fn monitor_primary_adapter(
     primary_adapter: &Property<Option<Arc<Adapter>>>,
     adapters: &Property<Vec<Arc<Adapter>>>,
     cancellation_token: CancellationToken,
-) -> Result<(), BluetoothError> {
+) -> Result<(), Error> {
     let primary_adapter_prop = primary_adapter.clone();
     let adapters_prop = adapters.clone();
 
@@ -249,7 +249,7 @@ async fn monitor_enabled(
     enabled: &Property<bool>,
     primary_adapter: &Property<Option<Arc<Adapter>>>,
     cancellation_token: CancellationToken,
-) -> Result<(), BluetoothError> {
+) -> Result<(), Error> {
     let enabled_prop = enabled.clone();
     let primary_adapter_prop = primary_adapter.clone();
 
@@ -288,7 +288,7 @@ async fn monitor_available(
     available: &Property<bool>,
     primary_adapter: &Property<Option<Arc<Adapter>>>,
     cancellation_token: CancellationToken,
-) -> Result<(), BluetoothError> {
+) -> Result<(), Error> {
     let available_prop = available.clone();
     let primary_adapter_prop = primary_adapter.clone();
 
@@ -316,7 +316,7 @@ async fn monitor_connected(
     devices: &Property<Vec<Arc<Device>>>,
     mut notifier_rx: broadcast::Receiver<ServiceNotification>,
     cancellation_token: CancellationToken,
-) -> Result<(), BluetoothError> {
+) -> Result<(), Error> {
     let devices_prop = devices.clone();
     let connected_prop = connected.clone();
 

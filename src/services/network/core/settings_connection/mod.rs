@@ -17,7 +17,7 @@ use crate::{
     services::{
         common::property::Property,
         network::{
-            error::NetworkError, proxy::settings::connection::SettingsConnectionProxy,
+            error::Error, proxy::settings::connection::SettingsConnectionProxy,
             types::flags::NMConnectionSettingsFlags,
         },
         traits::{ModelMonitoring, Reactive},
@@ -51,7 +51,7 @@ pub struct ConnectionSettings {
 impl Reactive for ConnectionSettings {
     type Context<'a> = ConnectionSettingsParams<'a>;
     type LiveContext<'a> = LiveConnectionSettingsParams<'a>;
-    type Error = NetworkError;
+    type Error = Error;
 
     async fn get(params: Self::Context<'_>) -> Result<Self, Self::Error> {
         Self::from_path(params.connection, params.path, None).await
@@ -95,7 +95,7 @@ impl ConnectionSettings {
     pub async fn update(
         &self,
         properties: HashMap<String, HashMap<String, OwnedValue>>,
-    ) -> Result<(), NetworkError> {
+    ) -> Result<(), Error> {
         ConnectionSettingsControls::update(&self.connection, &self.object_path, properties).await
     }
 
@@ -116,7 +116,7 @@ impl ConnectionSettings {
     pub async fn update_unsaved(
         &self,
         properties: HashMap<String, HashMap<String, OwnedValue>>,
-    ) -> Result<(), NetworkError> {
+    ) -> Result<(), Error> {
         ConnectionSettingsControls::update_unsaved(&self.connection, &self.object_path, properties)
             .await
     }
@@ -126,7 +126,7 @@ impl ConnectionSettings {
     /// # Errors
     ///
     /// Returns `NetworkError::OperationFailed` if the delete operation fails.
-    pub async fn delete(&self) -> Result<(), NetworkError> {
+    pub async fn delete(&self) -> Result<(), Error> {
         ConnectionSettingsControls::delete(&self.connection, &self.object_path).await
     }
 
@@ -141,7 +141,7 @@ impl ConnectionSettings {
     /// Returns `NetworkError::OperationFailed` if retrieving settings fails.
     pub async fn get_settings(
         &self,
-    ) -> Result<HashMap<String, HashMap<String, OwnedValue>>, NetworkError> {
+    ) -> Result<HashMap<String, HashMap<String, OwnedValue>>, Error> {
         ConnectionSettingsControls::get_settings(&self.connection, &self.object_path).await
     }
 
@@ -162,7 +162,7 @@ impl ConnectionSettings {
     pub async fn get_secrets(
         &self,
         setting_name: &str,
-    ) -> Result<HashMap<String, HashMap<String, OwnedValue>>, NetworkError> {
+    ) -> Result<HashMap<String, HashMap<String, OwnedValue>>, Error> {
         ConnectionSettingsControls::get_secrets(&self.connection, &self.object_path, setting_name)
             .await
     }
@@ -172,7 +172,7 @@ impl ConnectionSettings {
     /// # Errors
     ///
     /// Returns `NetworkError::OperationFailed` if clearing secrets fails.
-    pub async fn clear_secrets(&self) -> Result<(), NetworkError> {
+    pub async fn clear_secrets(&self) -> Result<(), Error> {
         ConnectionSettingsControls::clear_secrets(&self.connection, &self.object_path).await
     }
 
@@ -184,7 +184,7 @@ impl ConnectionSettings {
     /// # Errors
     ///
     /// Returns `NetworkError::OperationFailed` if saving fails.
-    pub async fn save(&self) -> Result<(), NetworkError> {
+    pub async fn save(&self) -> Result<(), Error> {
         ConnectionSettingsControls::save(&self.connection, &self.object_path).await
     }
 
@@ -215,7 +215,7 @@ impl ConnectionSettings {
         settings: HashMap<String, HashMap<String, OwnedValue>>,
         flags: u32,
         args: HashMap<String, OwnedValue>,
-    ) -> Result<HashMap<String, OwnedValue>, NetworkError> {
+    ) -> Result<HashMap<String, OwnedValue>, Error> {
         ConnectionSettingsControls::update2(
             &self.connection,
             &self.object_path,
@@ -243,7 +243,7 @@ impl ConnectionSettings {
         connection: &Connection,
         path: OwnedObjectPath,
         cancellation_token: Option<CancellationToken>,
-    ) -> Result<Self, NetworkError> {
+    ) -> Result<Self, Error> {
         let properties = Self::fetch_properties(connection, &path).await?;
         Ok(Self::from_props(
             path,
@@ -256,10 +256,10 @@ impl ConnectionSettings {
     async fn fetch_properties(
         connection: &Connection,
         path: &OwnedObjectPath,
-    ) -> Result<SettingsConnectionProperties, NetworkError> {
+    ) -> Result<SettingsConnectionProperties, Error> {
         let proxy = SettingsConnectionProxy::new(connection, path)
             .await
-            .map_err(NetworkError::DbusError)?;
+            .map_err(Error::DbusError)?;
 
         let (unsaved, flags, filename) =
             tokio::join!(proxy.unsaved(), proxy.flags(), proxy.filename());

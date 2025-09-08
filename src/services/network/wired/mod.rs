@@ -7,7 +7,7 @@ pub(crate) use types::{LiveWiredParams, WiredParams};
 
 use super::{
     core::device::wired::{DeviceWired, DeviceWiredParams, LiveDeviceWiredParams},
-    error::NetworkError,
+    error::Error,
     types::states::NetworkStatus,
 };
 use crate::services::{
@@ -46,7 +46,7 @@ impl PartialEq for Wired {
 impl Reactive for Wired {
     type Context<'a> = WiredParams<'a>;
     type LiveContext<'a> = LiveWiredParams<'a>;
-    type Error = NetworkError;
+    type Error = Error;
 
     async fn get(params: Self::Context<'_>) -> Result<Self, Self::Error> {
         let device = DeviceWired::get(DeviceWiredParams {
@@ -54,7 +54,7 @@ impl Reactive for Wired {
             device_path: params.device_path.clone(),
         })
         .await
-        .map_err(|e| NetworkError::ObjectCreationFailed {
+        .map_err(|e| Error::ObjectCreationFailed {
             object_type: String::from("Wired"),
             object_path: params.device_path.clone(),
             reason: e.to_string(),
@@ -82,7 +82,7 @@ impl Reactive for Wired {
 }
 
 impl Wired {
-    async fn from_device(device: DeviceWired) -> Result<Self, NetworkError> {
+    async fn from_device(device: DeviceWired) -> Result<Self, Error> {
         let device_state = &device.state.get();
         let connectivity = NetworkStatus::from_device_state(*device_state);
 

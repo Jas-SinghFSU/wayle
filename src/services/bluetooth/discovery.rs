@@ -15,7 +15,7 @@ use super::{
         adapter::{Adapter, LiveAdapterParams},
         device::{Device, LiveDeviceParams},
     },
-    error::BluetoothError,
+    error::Error,
     types::{ADAPTER_INTERFACE, BLUEZ_SERVICE, DEVICE_INTERFACE, ServiceNotification},
 };
 use crate::services::{common::ROOT_PATH, traits::Reactive};
@@ -33,14 +33,16 @@ impl BluetoothDiscovery {
         connection: &Connection,
         cancellation_token: CancellationToken,
         notifier_tx: &broadcast::Sender<ServiceNotification>,
-    ) -> Result<Self, BluetoothError> {
+    ) -> Result<Self, Error> {
         let object_manager = ObjectManagerProxy::new(connection, BLUEZ_SERVICE, ROOT_PATH).await?;
-        let managed_objects = object_manager.get_managed_objects().await.map_err(|e| {
-            BluetoothError::OperationFailed {
-                operation: "object_manager.get_managed_objects",
-                reason: e.to_string(),
-            }
-        })?;
+        let managed_objects =
+            object_manager
+                .get_managed_objects()
+                .await
+                .map_err(|e| Error::OperationFailed {
+                    operation: "object_manager.get_managed_objects",
+                    reason: e.to_string(),
+                })?;
 
         let mut adapters = Vec::new();
         let mut devices = Vec::new();

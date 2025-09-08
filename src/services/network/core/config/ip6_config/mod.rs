@@ -12,7 +12,7 @@ use zbus::{
 use crate::{
     services::{
         common::property::Property,
-        network::{error::NetworkError, proxy::ip6_config::IP6ConfigProxy},
+        network::{error::Error, proxy::ip6_config::IP6ConfigProxy},
         traits::Static,
     },
     unwrap_i32, unwrap_string, unwrap_vec,
@@ -87,7 +87,7 @@ struct Ip6ConfigProperties {
 }
 
 impl Static for Ip6Config {
-    type Error = NetworkError;
+    type Error = Error;
     type Context<'a> = Ip6ConfigParams<'a>;
 
     async fn get(params: Self::Context<'_>) -> Result<Self, Self::Error> {
@@ -96,10 +96,7 @@ impl Static for Ip6Config {
 }
 
 impl Ip6Config {
-    async fn from_path(
-        connection: &Connection,
-        path: OwnedObjectPath,
-    ) -> Result<Self, NetworkError> {
+    async fn from_path(connection: &Connection, path: OwnedObjectPath) -> Result<Self, Error> {
         let properties = Self::fetch_properties(connection, &path).await?;
         Ok(Self::from_props(path, properties))
     }
@@ -107,10 +104,10 @@ impl Ip6Config {
     async fn fetch_properties(
         connection: &Connection,
         path: &OwnedObjectPath,
-    ) -> Result<Ip6ConfigProperties, NetworkError> {
+    ) -> Result<Ip6ConfigProperties, Error> {
         let proxy = IP6ConfigProxy::new(connection, path)
             .await
-            .map_err(NetworkError::DbusError)?;
+            .map_err(Error::DbusError)?;
 
         let (
             address_data,

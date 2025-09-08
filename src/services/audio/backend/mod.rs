@@ -21,7 +21,7 @@ use types::{
     StreamStore,
 };
 
-use crate::services::audio::{error::AudioError, tokio_mainloop::TokioMain};
+use crate::services::audio::{Error, tokio_mainloop::TokioMain};
 
 struct BackendState {
     devices: DeviceStore,
@@ -59,7 +59,7 @@ impl PulseBackend {
         command_rx: CommandReceiver,
         event_tx: EventSender,
         cancellation_token: CancellationToken,
-    ) -> Result<(), AudioError> {
+    ) -> Result<(), Error> {
         tokio::task::spawn_blocking(move || {
             let runtime = tokio::runtime::Handle::current();
 
@@ -83,21 +83,20 @@ impl PulseBackend {
         Ok(())
     }
 
-    async fn new() -> Result<Self, AudioError> {
+    async fn new() -> Result<Self, Error> {
         let mut mainloop = TokioMain::new();
         info!("Creating PulseAudio context");
-        let mut context = Context::new(&mainloop, "wayle-pulse").ok_or_else(|| {
-            AudioError::ConnectionFailed(String::from("Failed to create context"))
-        })?;
+        let mut context = Context::new(&mainloop, "wayle-pulse")
+            .ok_or_else(|| Error::ConnectionFailed(String::from("Failed to create context")))?;
 
         info!("Connecting to PulseAudio server");
         context
             .connect(None, ContextFlags::NOFLAGS, None)
-            .map_err(|e| AudioError::ConnectionFailed(format!("Connection failed: {e}")))?;
+            .map_err(|e| Error::ConnectionFailed(format!("Connection failed: {e}")))?;
 
         info!("Waiting for PulseAudio context to become ready");
         mainloop.wait_for_ready(&context).await.map_err(|e| {
-            AudioError::ConnectionFailed(format!("Context failed to become ready: {e:?}"))
+            Error::ConnectionFailed(format!("Context failed to become ready: {e:?}"))
         })?;
 
         Ok(Self {
@@ -116,7 +115,7 @@ impl PulseBackend {
             mpsc::UnboundedSender<InternalRefresh>,
             mpsc::UnboundedReceiver<InternalRefresh>,
         ),
-        AudioError,
+        Error,
     > {
         let (internal_command_tx, internal_command_rx) =
             mpsc::unbounded_channel::<InternalRefresh>();
@@ -185,12 +184,12 @@ impl PulseBackend {
                         .values()
                         .find(|d| d.key() == device_key)
                         .cloned()
-                        .ok_or(AudioError::DeviceNotFound(
+                        .ok_or(Error::DeviceNotFound(
                             device_key.index,
                             device_key.device_type,
                         ))
                 } else {
-                    Err(AudioError::BackendCommunicationFailed)
+                    Err(Error::BackendCommunicationFailed("Failed to acquire read lock".into()))
                 };
                 let _ = responder.send(result);
             }
@@ -203,12 +202,12 @@ impl PulseBackend {
                         .values()
                         .find(|s| s.key() == stream_key)
                         .cloned()
-                        .ok_or(AudioError::StreamNotFound(
+                        .ok_or(Error::StreamNotFound(
                             stream_key.index,
                             stream_key.stream_type,
                         ))
                 } else {
-                    Err(AudioError::BackendCommunicationFailed)
+                    Err(Error::BackendCommunicationFailed("Failed to acquire read lock".into()))
                 };
                 let _ = responder.send(result);
             }
@@ -337,7 +336,7 @@ impl PulseBackend {
         command_rx: CommandReceiver,
         event_tx: EventSender,
         cancellation_token: CancellationToken,
-    ) -> Result<(), AudioError> {
+    ) -> Result<(), Error> {
         let (_, internal_command_rx) =
             self.setup_event_monitoring(event_tx.clone(), cancellation_token.child_token())?;
 

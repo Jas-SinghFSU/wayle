@@ -6,7 +6,7 @@ use std::{
 use serde::{Deserialize, Serialize};
 use zbus::zvariant::OwnedValue;
 
-use crate::services::power_profiles::error::PowerProfilesError;
+use crate::services::power_profiles::error::Error;
 
 /// Cookie returned by profile hold operations for tracking and release.
 pub type HoldCookie = u32;
@@ -88,13 +88,13 @@ pub struct Profile {
 }
 
 impl TryFrom<HashMap<String, OwnedValue>> for Profile {
-    type Error = PowerProfilesError;
+    type Error = Error;
 
     fn try_from(dict: HashMap<String, OwnedValue>) -> Result<Self, Self::Error> {
         let driver = dict
             .get("Driver")
             .and_then(|v| v.downcast_ref::<String>().ok())
-            .ok_or_else(|| PowerProfilesError::InvalidFieldType {
+            .ok_or_else(|| Error::InvalidFieldType {
                 field: "Driver".to_string(),
                 expected: "String".to_string(),
             })?
@@ -103,7 +103,7 @@ impl TryFrom<HashMap<String, OwnedValue>> for Profile {
         let profile_str = dict
             .get("Profile")
             .and_then(|v| v.downcast_ref::<String>().ok())
-            .ok_or_else(|| PowerProfilesError::InvalidFieldType {
+            .ok_or_else(|| Error::InvalidFieldType {
                 field: "Profile".to_string(),
                 expected: "String".to_string(),
             })?;
@@ -126,13 +126,13 @@ pub struct ProfileHold {
 }
 
 impl TryFrom<HashMap<String, OwnedValue>> for ProfileHold {
-    type Error = PowerProfilesError;
+    type Error = Error;
 
     fn try_from(dict: HashMap<String, OwnedValue>) -> Result<Self, Self::Error> {
         let application_id = dict
             .get("ApplicationId")
             .and_then(|v| v.downcast_ref::<String>().ok())
-            .ok_or_else(|| PowerProfilesError::InvalidFieldType {
+            .ok_or_else(|| Error::InvalidFieldType {
                 field: "ApplicationId".to_string(),
                 expected: "String".to_string(),
             })?
@@ -141,7 +141,7 @@ impl TryFrom<HashMap<String, OwnedValue>> for ProfileHold {
         let profile_str = dict
             .get("Profile")
             .and_then(|v| v.downcast_ref::<String>().ok())
-            .ok_or_else(|| PowerProfilesError::InvalidFieldType {
+            .ok_or_else(|| Error::InvalidFieldType {
                 field: "Profile".to_string(),
                 expected: "String".to_string(),
             })?;
@@ -151,7 +151,7 @@ impl TryFrom<HashMap<String, OwnedValue>> for ProfileHold {
         let reason = dict
             .get("Reason")
             .and_then(|v| v.downcast_ref::<String>().ok())
-            .ok_or_else(|| PowerProfilesError::InvalidFieldType {
+            .ok_or_else(|| Error::InvalidFieldType {
                 field: "Reason".to_string(),
                 expected: "String".to_string(),
             })?

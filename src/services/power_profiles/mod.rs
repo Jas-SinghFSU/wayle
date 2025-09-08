@@ -8,3 +8,5 @@ pub mod proxy;
 pub mod service;
 /// Power profiles type definitions
 pub mod types;
+
+pub use error::Error;

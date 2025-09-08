@@ -7,7 +7,7 @@ use tracing::debug;
 use super::PowerProfiles;
 use crate::services::{
     power_profiles::{
-        error::PowerProfilesError,
+        error::Error,
         proxy::power_profiles::PowerProfilesProxy,
         types::profile::{PerformanceDegradationReason, PowerProfile, Profile, ProfileHold},
     },
@@ -15,13 +15,13 @@ use crate::services::{
 };
 
 impl ModelMonitoring for PowerProfiles {
-    type Error = PowerProfilesError;
+    type Error = Error;
 
     async fn start_monitoring(self: Arc<Self>) -> Result<(), Self::Error> {
         let proxy = PowerProfilesProxy::new(&self.zbus_connection).await?;
         let weak_self = Arc::downgrade(&self);
         let Some(ref cancellation_token) = self.cancellation_token else {
-            return Err(PowerProfilesError::OperationFailed {
+            return Err(Error::OperationFailed {
                 operation: "start_monitoring",
                 reason: String::from("A cancellation_token was not found."),
             });
@@ -35,7 +35,7 @@ async fn monitor_power_profiles(
     weak_power_profiles: Weak<PowerProfiles>,
     proxy: PowerProfilesProxy<'static>,
     cancel_token: CancellationToken,
-) -> Result<(), PowerProfilesError> {
+) -> Result<(), Error> {
     let mut active_profile_changed = proxy.receive_active_profile_changed().await;
     let mut performance_degraded_changed = proxy.receive_performance_degraded_changed().await;
     let mut profiles_changed = proxy.receive_profiles_changed().await;

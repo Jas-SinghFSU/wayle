@@ -8,7 +8,7 @@ use tracing::debug;
 use super::Device;
 use crate::services::{
     bluetooth::{
-        error::BluetoothError,
+        error::Error,
         proxy::device::Device1Proxy,
         types::{ServiceNotification, adapter::AddressType, device::PreferredBearer},
     },
@@ -16,15 +16,15 @@ use crate::services::{
 };
 
 impl ModelMonitoring for Device {
-    type Error = BluetoothError;
+    type Error = Error;
 
     async fn start_monitoring(self: Arc<Self>) -> Result<(), Self::Error> {
         let proxy = Device1Proxy::new(&self.zbus_connection, self.object_path.clone())
             .await
-            .map_err(BluetoothError::DbusError)?;
+            .map_err(Error::DbusError)?;
 
         let Some(ref cancellation_token) = self.cancellation_token else {
-            return Err(BluetoothError::OperationFailed {
+            return Err(Error::OperationFailed {
                 operation: "start_monitoring",
                 reason: String::from("A cancellation_token was not found."),
             });

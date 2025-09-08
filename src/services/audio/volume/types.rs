@@ -1,6 +1,6 @@
 use tracing::warn;
 
-use super::error::VolumeError;
+use super::error::Error;
 
 /// Multi-channel volume with safety warnings
 ///
@@ -49,10 +49,10 @@ impl Volume {
     ///
     /// # Errors
     /// Returns error if any volume is negative or exceeds 4.0.
-    pub fn with_amplification(volumes: Vec<f64>) -> Result<Self, VolumeError> {
+    pub fn with_amplification(volumes: Vec<f64>) -> Result<Self, Error> {
         for &volume in &volumes {
             if !(0.0..=4.0).contains(&volume) {
-                return Err(VolumeError::InvalidVolume { channel: 0, volume });
+                return Err(Error::InvalidVolume { channel: 0, volume });
             }
         }
         Ok(Self { volumes })
@@ -85,7 +85,7 @@ impl Volume {
     ///
     /// # Errors
     /// Returns error if channel index is out of bounds.
-    pub fn set_channel(&mut self, channel: usize, volume: f64) -> Result<(), VolumeError> {
+    pub fn set_channel(&mut self, channel: usize, volume: f64) -> Result<(), Error> {
         if let Some(vol) = self.volumes.get_mut(channel) {
             let clamped = volume.clamp(0.0, 4.0);
             if volume > 2.0 && volume <= 4.0 {
@@ -102,7 +102,7 @@ impl Volume {
             *vol = clamped;
             Ok(())
         } else {
-            Err(VolumeError::InvalidChannel { channel })
+            Err(Error::InvalidChannel { channel })
         }
     }
 

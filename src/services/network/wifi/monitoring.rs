@@ -18,7 +18,7 @@ use crate::{
                 },
                 device::wifi::DeviceWifi,
             },
-            error::NetworkError,
+            error::Error,
             proxy::{
                 access_point::AccessPointProxy,
                 devices::{DeviceProxy, wireless::DeviceWirelessProxy},
@@ -34,14 +34,14 @@ type SsidStream = PropertyStream<'static, Vec<u8>>;
 type StrengthStream = PropertyStream<'static, u8>;
 
 impl ModelMonitoring for Wifi {
-    type Error = NetworkError;
+    type Error = Error;
 
     async fn start_monitoring(self: Arc<Self>) -> Result<(), Self::Error> {
         let device_arc = Arc::new(self.device.clone());
         device_arc.start_monitoring().await?;
 
         let Some(ref cancellation_token) = self.cancellation_token else {
-            return Err(NetworkError::OperationFailed {
+            return Err(Error::OperationFailed {
                 operation: "start_monitoring",
                 reason: String::from("A cancellation_token was not found."),
             });
@@ -63,13 +63,13 @@ impl ModelMonitoring for Wifi {
 
         let wireless_proxy = DeviceWirelessProxy::new(&self.connection, self.object_path.clone())
             .await
-            .map_err(NetworkError::DbusError)?;
+            .map_err(Error::DbusError)?;
         let device_proxy = DeviceProxy::new(&self.connection, self.object_path.clone())
             .await
-            .map_err(NetworkError::DbusError)?;
+            .map_err(Error::DbusError)?;
         let nm_proxy = NetworkManagerProxy::new(&self.connection)
             .await
-            .map_err(NetworkError::DbusError)?;
+            .map_err(Error::DbusError)?;
 
         tokio::spawn(async move {
             let _ = monitor_wifi(
@@ -122,15 +122,15 @@ async fn monitor_wifi(
     device_proxy: DeviceProxy<'static>,
     nm_proxy: NetworkManagerProxy<'static>,
     cancellation_token: CancellationToken,
-) -> Result<(), NetworkError> {
+) -> Result<(), Error> {
     let mut ap_added = wireless_proxy
         .receive_access_point_added()
         .await
-        .map_err(NetworkError::DbusError)?;
+        .map_err(Error::DbusError)?;
     let mut ap_removed = wireless_proxy
         .receive_access_point_removed()
         .await
-        .map_err(NetworkError::DbusError)?;
+        .map_err(Error::DbusError)?;
     let mut enabled_changed = nm_proxy.receive_wireless_enabled_changed().await;
     let mut access_point_changed = wireless_proxy.receive_active_access_point_changed().await;
     let mut connectivity_changed = device_proxy.receive_state_changed().await;
@@ -139,7 +139,7 @@ async fn monitor_wifi(
         let Some(wifi) = weak_wifi.upgrade() else {
             error!("Failed to upgrade weak wifi reference.");
             error!("Access Point monitoring may be degraded");
-            return Err(NetworkError::OperationFailed {
+            return Err(Error::OperationFailed {
                 operation: "monitor_wifi",
                 reason: String::from("Failed to upgrade weak_wifi"),
             });

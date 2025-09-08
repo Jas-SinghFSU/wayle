@@ -6,7 +6,7 @@ use zbus::{
     zvariant::{OwnedObjectPath, OwnedValue},
 };
 
-use crate::services::network::{error::NetworkError, proxy::devices::DeviceProxy};
+use crate::services::network::{error::Error, proxy::devices::DeviceProxy};
 
 use super::types::AppliedConnection;
 
@@ -22,15 +22,15 @@ impl DeviceControls {
         connection: &Connection,
         path: &OwnedObjectPath,
         managed: bool,
-    ) -> Result<(), NetworkError> {
+    ) -> Result<(), Error> {
         let proxy = DeviceProxy::new(connection, path)
             .await
-            .map_err(NetworkError::DbusError)?;
+            .map_err(Error::DbusError)?;
 
         proxy
             .set_managed(managed)
             .await
-            .map_err(|e| NetworkError::OperationFailed {
+            .map_err(|e| Error::OperationFailed {
                 operation: "set_managed",
                 reason: e.to_string(),
             })?;
@@ -47,15 +47,15 @@ impl DeviceControls {
         connection: &Connection,
         path: &OwnedObjectPath,
         autoconnect: bool,
-    ) -> Result<(), NetworkError> {
+    ) -> Result<(), Error> {
         let proxy = DeviceProxy::new(connection, path)
             .await
-            .map_err(NetworkError::DbusError)?;
+            .map_err(Error::DbusError)?;
 
         proxy
             .set_autoconnect(autoconnect)
             .await
-            .map_err(|e| NetworkError::OperationFailed {
+            .map_err(|e| Error::OperationFailed {
                 operation: "set_autoconnect",
                 reason: e.to_string(),
             })?;
@@ -74,15 +74,15 @@ impl DeviceControls {
         connection_settings: HashMap<String, HashMap<String, OwnedValue>>,
         version_id: u64,
         flags: u32,
-    ) -> Result<(), NetworkError> {
+    ) -> Result<(), Error> {
         let proxy = DeviceProxy::new(connection, path)
             .await
-            .map_err(NetworkError::DbusError)?;
+            .map_err(Error::DbusError)?;
 
         proxy
             .reapply(connection_settings, version_id, flags)
             .await
-            .map_err(|e| NetworkError::OperationFailed {
+            .map_err(|e| Error::OperationFailed {
                 operation: "reapply",
                 reason: e.to_string(),
             })?;
@@ -99,15 +99,15 @@ impl DeviceControls {
         connection: &Connection,
         path: &OwnedObjectPath,
         flags: u32,
-    ) -> Result<AppliedConnection, NetworkError> {
+    ) -> Result<AppliedConnection, Error> {
         let proxy = DeviceProxy::new(connection, path)
             .await
-            .map_err(NetworkError::DbusError)?;
+            .map_err(Error::DbusError)?;
 
         proxy
             .get_applied_connection(flags)
             .await
-            .map_err(|e| NetworkError::OperationFailed {
+            .map_err(|e| Error::OperationFailed {
                 operation: "get_applied_connection",
                 reason: e.to_string(),
             })
@@ -117,15 +117,15 @@ impl DeviceControls {
     pub(super) async fn disconnect(
         connection: &Connection,
         path: &OwnedObjectPath,
-    ) -> Result<(), NetworkError> {
+    ) -> Result<(), Error> {
         let proxy = DeviceProxy::new(connection, path)
             .await
-            .map_err(NetworkError::DbusError)?;
+            .map_err(Error::DbusError)?;
 
         proxy
             .disconnect()
             .await
-            .map_err(|e| NetworkError::OperationFailed {
+            .map_err(|e| Error::OperationFailed {
                 operation: "disconnect",
                 reason: e.to_string(),
             })?;
@@ -137,18 +137,15 @@ impl DeviceControls {
     pub(super) async fn delete(
         connection: &Connection,
         path: &OwnedObjectPath,
-    ) -> Result<(), NetworkError> {
+    ) -> Result<(), Error> {
         let proxy = DeviceProxy::new(connection, path)
             .await
-            .map_err(NetworkError::DbusError)?;
+            .map_err(Error::DbusError)?;
 
-        proxy
-            .delete()
-            .await
-            .map_err(|e| NetworkError::OperationFailed {
-                operation: "delete",
-                reason: e.to_string(),
-            })?;
+        proxy.delete().await.map_err(|e| Error::OperationFailed {
+            operation: "delete",
+            reason: e.to_string(),
+        })?;
 
         Ok(())
     }

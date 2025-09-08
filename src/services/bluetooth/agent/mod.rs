@@ -38,11 +38,11 @@ impl BluetoothAgent {
                 device_path: device,
                 responder: response_tx,
             })
-            .map_err(|_| fdo::Error::Failed("Service unavailable".into()))?;
+            .map_err(|e| fdo::Error::Failed(format!("Service unavailable: {e}")))?;
 
         response_rx
             .await
-            .map_err(|_| fdo::Error::Failed("User cancelled".into()))
+            .map_err(|e| fdo::Error::Failed(format!("User cancelled: {e}")))
     }
 
     /// This method gets called when bluetoothd needs to display a pincode for
@@ -71,7 +71,7 @@ impl BluetoothAgent {
                 device_path: device,
                 pincode,
             })
-            .map_err(|_| fdo::Error::Failed("Service unavailable".into()))
+            .map_err(|e| fdo::Error::Failed(format!("Service unavailable: {e}")))
     }
 
     /// This method gets called when bluetoothd needs to get the passkey for an
@@ -91,11 +91,11 @@ impl BluetoothAgent {
                 device_path: device,
                 responder: response_tx,
             })
-            .map_err(|_| fdo::Error::Failed("Service unavailable".into()))?;
+            .map_err(|e| fdo::Error::Failed(format!("Service unavailable: {e}")))?;
 
         response_rx
             .await
-            .map_err(|_| fdo::Error::Failed("User cancelled".into()))
+            .map_err(|e| fdo::Error::Failed(format!("User cancelled: {e}")))
     }
 
     /// This method gets called when bluetoothd needs to display a passkey for
@@ -124,7 +124,7 @@ impl BluetoothAgent {
                 passkey,
                 entered,
             })
-            .map_err(|_| fdo::Error::Failed("Service unavailable".into()))
+            .map_err(|e| fdo::Error::Failed(format!("Service unavailable: {e}")))
     }
 
     /// This method gets called when bluetoothd needs to confirm a passkey for
@@ -149,7 +149,7 @@ impl BluetoothAgent {
                 passkey,
                 responder: response_tx,
             })
-            .map_err(|_| fdo::Error::Failed("Service unavailable".into()))?;
+            .map_err(|e| fdo::Error::Failed(format!("Service unavailable: {e}")))?;
 
         match response_rx.await {
             Ok(true) => Ok(()),
@@ -198,7 +198,7 @@ impl BluetoothAgent {
                 uuid,
                 responder: response_tx,
             })
-            .map_err(|_| fdo::Error::Failed("Service unavailable".into()))?;
+            .map_err(|e| fdo::Error::Failed(format!("Service unavailable: {e}")))?;
 
         match response_rx.await {
             Ok(true) => Ok(()),
@@ -211,7 +211,7 @@ impl BluetoothAgent {
     async fn cancel(&self) -> fdo::Result<()> {
         self.service_tx
             .send(AgentEvent::Cancelled)
-            .map_err(|_| fdo::Error::Failed("Service unavailable".into()))?;
+            .map_err(|e| fdo::Error::Failed(format!("Service unavailable: {e}")))?;
 
         Ok(())
     }

@@ -44,8 +44,8 @@ impl DocsGenerator {
     /// # Errors
     ///
     /// Returns `DocsError::FileWrite` if direction creation failes.
-    pub fn generate_all(&self) -> Result<(), DocsError> {
-        fs::create_dir_all(&self.output_dir).map_err(|err| DocsError::FileWriteError {
+    pub fn generate_all(&self) -> Result<(), Error> {
+        fs::create_dir_all(&self.output_dir).map_err(|err| Error::FileWriteError {
             path: PathBuf::from(&self.output_dir),
             details: format!("Failed to create output directory: {err}"),
         })?;
@@ -65,9 +65,9 @@ impl DocsGenerator {
     /// # Errors
     ///
     /// Returns `DocsError::InvalidModuleName` if the module doesn't exist.
-    pub fn generate_module_by_name(&self, module_name: &str) -> Result<(), DocsError> {
+    pub fn generate_module_by_name(&self, module_name: &str) -> Result<(), Error> {
         let module = ModuleRegistry::get_module_by_name(module_name).ok_or_else(|| {
-            DocsError::ModuleNotFound {
+            Error::ModuleNotFound {
                 name: module_name.to_string(),
             }
         })?;
@@ -80,12 +80,12 @@ impl DocsGenerator {
         ModuleRegistry::list_module_names()
     }
 
-    fn generate_single_module(&self, module: &ModuleInfo) -> Result<(), DocsError> {
+    fn generate_single_module(&self, module: &ModuleInfo) -> Result<(), Error> {
         let content = generate_module_page(module)?;
         let filename = format!("{}.md", module.name);
         let filepath = Path::new(&self.output_dir).join(filename);
 
-        fs::write(&filepath, content).map_err(|err| DocsError::FileWriteError {
+        fs::write(&filepath, content).map_err(|err| Error::FileWriteError {
             path: filepath.clone(),
             details: err.to_string(),
         })?;
@@ -97,7 +97,7 @@ impl DocsGenerator {
 
 /// Errors that can occur during documentation generation.
 #[derive(Error, Debug)]
-pub enum DocsError {
+pub enum Error {
     /// Failed to write documentation file
     #[error("failed to write documentation to '{path}': {details}")]
     FileWriteError {

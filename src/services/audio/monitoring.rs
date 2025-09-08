@@ -8,7 +8,7 @@ use crate::services::{
             device::{input::InputDevice, output::OutputDevice},
             stream::AudioStream,
         },
-        error::AudioError,
+        error::Error,
         events::AudioEvent,
         service::AudioService,
         types::{
@@ -21,7 +21,7 @@ use crate::services::{
 };
 
 impl ServiceMonitoring for AudioService {
-    type Error = AudioError;
+    type Error = Error;
 
     #[allow(clippy::too_many_lines)]
     async fn start_monitoring(&self) -> Result<(), Self::Error> {

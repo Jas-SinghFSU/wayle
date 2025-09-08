@@ -4,7 +4,7 @@ use super::types::connectivity::ConnectionType;
 
 /// Network service errors
 #[derive(thiserror::Error, Debug)]
-pub enum NetworkError {
+pub enum Error {
     /// D-Bus communication error
     #[error("D-Bus operation failed: {0}")]
     DbusError(#[from] zbus::Error),

@@ -16,7 +16,7 @@ use zbus::{
 use crate::{
     services::{
         bluetooth::{
-            error::BluetoothError,
+            error::Error,
             proxy::adapter::Adapter1Proxy,
             types::{
                 UUID,
@@ -167,7 +167,7 @@ impl PartialEq for Adapter {
 }
 
 impl Reactive for Adapter {
-    type Error = BluetoothError;
+    type Error = Error;
     type Context<'a> = AdapterParams<'a>;
     type LiveContext<'a> = LiveAdapterParams<'a>;
 
@@ -207,7 +207,7 @@ impl Adapter {
     /// # Errors
     ///
     /// Returns error if the D-Bus operation fails or the adapter is not available.
-    pub async fn set_alias(&self, alias: &str) -> Result<(), BluetoothError> {
+    pub async fn set_alias(&self, alias: &str) -> Result<(), Error> {
         AdapterControls::set_alias(&self.zbus_connection, &self.object_path, alias).await
     }
 
@@ -218,7 +218,7 @@ impl Adapter {
     /// # Errors
     ///
     /// Returns error if the D-Bus operation fails or the adapter is not available.
-    pub async fn set_connectable(&self, connectable: bool) -> Result<(), BluetoothError> {
+    pub async fn set_connectable(&self, connectable: bool) -> Result<(), Error> {
         AdapterControls::set_connectable(&self.zbus_connection, &self.object_path, connectable)
             .await
     }
@@ -230,7 +230,7 @@ impl Adapter {
     /// # Errors
     ///
     /// Returns error if the D-Bus operation fails or the adapter is not available.
-    pub async fn set_powered(&self, powered: bool) -> Result<(), BluetoothError> {
+    pub async fn set_powered(&self, powered: bool) -> Result<(), Error> {
         AdapterControls::set_powered(&self.zbus_connection, &self.object_path, powered).await
     }
 
@@ -241,7 +241,7 @@ impl Adapter {
     /// # Errors
     ///
     /// Returns error if the D-Bus operation fails or the adapter is not available.
-    pub async fn set_discoverable(&self, discoverable: bool) -> Result<(), BluetoothError> {
+    pub async fn set_discoverable(&self, discoverable: bool) -> Result<(), Error> {
         AdapterControls::set_discoverable(&self.zbus_connection, &self.object_path, discoverable)
             .await
     }
@@ -253,7 +253,7 @@ impl Adapter {
     /// # Errors
     ///
     /// Returns error if the D-Bus operation fails or the adapter is not available.
-    pub async fn set_discoverable_timeout(&self, timeout: u32) -> Result<(), BluetoothError> {
+    pub async fn set_discoverable_timeout(&self, timeout: u32) -> Result<(), Error> {
         AdapterControls::set_discoverable_timeout(&self.zbus_connection, &self.object_path, timeout)
             .await
     }
@@ -265,7 +265,7 @@ impl Adapter {
     /// # Errors
     ///
     /// Returns error if the D-Bus operation fails or the adapter is not available.
-    pub async fn set_pairable(&self, pairable: bool) -> Result<(), BluetoothError> {
+    pub async fn set_pairable(&self, pairable: bool) -> Result<(), Error> {
         AdapterControls::set_pairable(&self.zbus_connection, &self.object_path, pairable).await
     }
 
@@ -276,7 +276,7 @@ impl Adapter {
     /// # Errors
     ///
     /// Returns error if the D-Bus operation fails or the adapter is not available.
-    pub async fn set_pairable_timeout(&self, timeout: u32) -> Result<(), BluetoothError> {
+    pub async fn set_pairable_timeout(&self, timeout: u32) -> Result<(), Error> {
         AdapterControls::set_pairable_timeout(&self.zbus_connection, &self.object_path, timeout)
             .await
     }
@@ -306,7 +306,7 @@ impl Adapter {
     pub async fn set_discovery_filter(
         &self,
         options: DiscoveryFilterOptions<'_>,
-    ) -> Result<(), BluetoothError> {
+    ) -> Result<(), Error> {
         let filter = options.to_filter();
         AdapterControls::set_discovery_filter(&self.zbus_connection, &self.object_path, filter)
             .await
@@ -323,7 +323,7 @@ impl Adapter {
     /// - `NotReady` - Adapter not ready
     /// - `Failed` - Operation failed
     /// - `InProgress` - Discovery already in progress
-    pub async fn start_discovery(&self) -> Result<(), BluetoothError> {
+    pub async fn start_discovery(&self) -> Result<(), Error> {
         AdapterControls::start_discovery(&self.zbus_connection, &self.object_path).await
     }
 
@@ -338,7 +338,7 @@ impl Adapter {
     /// - `NotReady` - Adapter not ready
     /// - `Failed` - Operation failed
     /// - `NotAuthorized` - Not authorized to stop discovery
-    pub async fn stop_discovery(&self) -> Result<(), BluetoothError> {
+    pub async fn stop_discovery(&self) -> Result<(), Error> {
         AdapterControls::stop_discovery(&self.zbus_connection, &self.object_path).await
     }
 
@@ -349,7 +349,7 @@ impl Adapter {
     ///
     /// - `InvalidArguments` - Invalid device path
     /// - `Failed` - Operation failed
-    pub async fn remove_device(&self, device_path: &OwnedObjectPath) -> Result<(), BluetoothError> {
+    pub async fn remove_device(&self, device_path: &OwnedObjectPath) -> Result<(), Error> {
         AdapterControls::remove_device(&self.zbus_connection, &self.object_path, device_path).await
     }
 
@@ -358,7 +358,7 @@ impl Adapter {
     /// # Errors
     ///
     /// Returns error if the D-Bus operation fails or the adapter is not available.
-    pub async fn get_discovery_filters(&self) -> Result<Vec<String>, BluetoothError> {
+    pub async fn get_discovery_filters(&self) -> Result<Vec<String>, Error> {
         AdapterControls::get_discovery_filters(&self.zbus_connection, &self.object_path).await
     }
 
@@ -383,14 +383,12 @@ impl Adapter {
     pub async fn connect_device(
         &self,
         properties: HashMap<String, Value<'_>>,
-    ) -> Result<OwnedObjectPath, BluetoothError> {
+    ) -> Result<OwnedObjectPath, Error> {
         AdapterControls::connect_device(&self.zbus_connection, &self.object_path, properties).await
     }
 
     #[allow(clippy::too_many_lines)]
-    async fn fetch_properties(
-        proxy: &Adapter1Proxy<'_>,
-    ) -> Result<AdapterProperties, BluetoothError> {
+    async fn fetch_properties(proxy: &Adapter1Proxy<'_>) -> Result<AdapterProperties, Error> {
         let (
             address,
             address_type,

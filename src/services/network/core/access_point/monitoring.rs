@@ -7,7 +7,7 @@ use tracing::debug;
 use super::{AccessPoint, Bssid, SecurityType, Ssid};
 use crate::services::{
     network::{
-        error::NetworkError,
+        error::Error,
         proxy::access_point::AccessPointProxy,
         types::{
             flags::{NM80211ApFlags, NM80211ApSecurityFlags},
@@ -18,15 +18,15 @@ use crate::services::{
 };
 
 impl ModelMonitoring for AccessPoint {
-    type Error = NetworkError;
+    type Error = Error;
 
     async fn start_monitoring(self: Arc<Self>) -> Result<(), Self::Error> {
         let proxy = AccessPointProxy::new(&self.connection, self.object_path.clone())
             .await
-            .map_err(NetworkError::DbusError)?;
+            .map_err(Error::DbusError)?;
 
         let Some(ref cancellation_token) = self.cancellation_token else {
-            return Err(NetworkError::OperationFailed {
+            return Err(Error::OperationFailed {
                 operation: "start_monitoring",
                 reason: String::from("A cancellation_token was not found."),
             });

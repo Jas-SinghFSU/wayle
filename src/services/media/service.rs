@@ -12,7 +12,7 @@ use super::{
 };
 use crate::services::{
     common::property::Property,
-    media::error::MediaError,
+    media::error::Error,
     traits::{Reactive, ServiceMonitoring},
 };
 
@@ -46,12 +46,12 @@ impl MediaService {
     ///
     /// Returns `MediaError::InitializationFailed` if D-Bus connection fails
     #[instrument(skip(config))]
-    pub async fn new(config: Config) -> Result<Self, MediaError> {
+    pub async fn new(config: Config) -> Result<Self, Error> {
         info!("Starting MPRIS service with property-based architecture");
 
-        let connection = Connection::session().await.map_err(|e| {
-            MediaError::InitializationFailed(format!("D-Bus connection failed: {e}"))
-        })?;
+        let connection = Connection::session()
+            .await
+            .map_err(|e| Error::InitializationFailed(format!("D-Bus connection failed: {e}")))?;
 
         let cancellation_token = CancellationToken::new();
 
@@ -79,7 +79,7 @@ impl MediaService {
     ///
     /// Returns `MediaError::PlayerNotFound` if the player doesn't exist.
     /// Returns `MediaError::DbusError` if D-Bus operations fail.
-    pub async fn player(&self, player_id: &PlayerId) -> Result<Player, MediaError> {
+    pub async fn player(&self, player_id: &PlayerId) -> Result<Player, Error> {
         Player::get(PlayerParams {
             connection: &self.connection,
             player_id: player_id.clone(),
@@ -97,7 +97,7 @@ impl MediaService {
     ///
     /// Returns `MediaError::PlayerNotFound` if the player doesn't exist.
     /// Returns `MediaError::DbusError` if D-Bus operations fail.
-    pub async fn player_monitored(&self, player_id: &PlayerId) -> Result<Arc<Player>, MediaError> {
+    pub async fn player_monitored(&self, player_id: &PlayerId) -> Result<Arc<Player>, Error> {
         Player::get_live(LivePlayerParams {
             connection: &self.connection,
             player_id: player_id.clone(),
@@ -146,7 +146,7 @@ impl MediaService {
     /// # Errors
     ///
     /// Returns `MediaError::PlayerNotFound` if the specified player doesn't exist.
-    pub async fn set_active_player(&self, player_id: Option<PlayerId>) -> Result<(), MediaError> {
+    pub async fn set_active_player(&self, player_id: Option<PlayerId>) -> Result<(), Error> {
         let Some(ref id) = player_id else {
             self.active_player.set(None);
             return Ok(());
@@ -155,7 +155,7 @@ impl MediaService {
         let players = self.players.read().await;
 
         let Some(found_player) = players.get(id) else {
-            return Err(MediaError::PlayerNotFound(id.clone()));
+            return Err(Error::PlayerNotFound(id.clone()));
         };
 
         self.active_player.set(Some(found_player.clone()));

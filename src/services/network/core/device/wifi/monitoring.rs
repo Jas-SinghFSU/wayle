@@ -7,14 +7,13 @@ use tracing::debug;
 use super::DeviceWifi;
 use crate::services::{
     network::{
-        error::NetworkError, proxy::devices::wireless::DeviceWirelessProxy,
-        types::wifi::NM80211Mode,
+        error::Error, proxy::devices::wireless::DeviceWirelessProxy, types::wifi::NM80211Mode,
     },
     traits::ModelMonitoring,
 };
 
 impl ModelMonitoring for DeviceWifi {
-    type Error = NetworkError;
+    type Error = Error;
 
     async fn start_monitoring(self: Arc<Self>) -> Result<(), Self::Error> {
         let base_arc = Arc::new(self.base.clone());
@@ -22,10 +21,10 @@ impl ModelMonitoring for DeviceWifi {
 
         let proxy = DeviceWirelessProxy::new(&self.connection, self.object_path.clone())
             .await
-            .map_err(NetworkError::DbusError)?;
+            .map_err(Error::DbusError)?;
 
         let Some(ref cancellation_token) = self.cancellation_token else {
-            return Err(NetworkError::OperationFailed {
+            return Err(Error::OperationFailed {
                 operation: "start_monitoring",
                 reason: String::from("A cancellation_token was not found."),
             });

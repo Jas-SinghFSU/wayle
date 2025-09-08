@@ -1,5 +1,5 @@
 use std::{
-    error::Error,
+    error,
     time::{Duration, Instant},
 };
 
@@ -18,7 +18,7 @@ use tracing::{debug, error, info, instrument, warn};
 use crate::{
     config::{Config, paths::ConfigPaths},
     config_runtime::{
-        changes::{ConfigChange, ConfigError},
+        changes::{self, ConfigChange},
         diff,
         runtime::ConfigRuntime,
     },
@@ -51,7 +51,7 @@ impl ConfigRuntime {
     /// Returns `ConfigError::FileWatcherInitError` if file watching cannot be initialized
     /// or configuration directory cannot be accessed.
     #[instrument(skip(self))]
-    pub fn start_file_watching(&self) -> Result<FileWatcher, ConfigError> {
+    pub fn start_file_watching(&self) -> Result<FileWatcher, changes::Error> {
         info!("Starting configuration file monitoring");
         let (tx, mut rx) = mpsc::channel(100);
 
@@ -60,18 +60,18 @@ impl ConfigRuntime {
                 let _ = tx.blocking_send(event);
             }
         })
-        .map_err(|e| ConfigError::FileWatcherInitError {
+        .map_err(|e| changes::Error::FileWatcherInitError {
             details: format!("Failed to create watcher: {e}"),
         })?;
 
         let config_dir =
-            ConfigPaths::config_dir().map_err(|e| ConfigError::FileWatcherInitError {
+            ConfigPaths::config_dir().map_err(|e| changes::Error::FileWatcherInitError {
                 details: format!("Failed to get config directory: {e}"),
             })?;
 
         watcher
             .watch(&config_dir, RecursiveMode::NonRecursive)
-            .map_err(|e| ConfigError::FileWatcherInitError {
+            .map_err(|e| changes::Error::FileWatcherInitError {
                 details: format!("Failed to watch config directory: {e}"),
             })?;
 
@@ -87,17 +87,17 @@ impl ConfigRuntime {
         })
     }
 
-    fn reload_from_files(&self) -> Result<(), ConfigError> {
+    fn reload_from_files(&self) -> Result<(), changes::Error> {
         let old_config = self.get_current();
         let new_config = Config::load_with_imports(&ConfigPaths::main_config()).map_err(|e| {
-            ConfigError::ProcessingError {
+            changes::Error::ProcessingError {
                 operation: String::from("reload config"),
                 details: e.to_string(),
             }
         })?;
 
         let changes = self.diff_configs(&old_config, &new_config).map_err(|e| {
-            ConfigError::ProcessingError {
+            changes::Error::ProcessingError {
                 operation: String::from("diff configs"),
                 details: e.to_string(),
             }
@@ -122,7 +122,7 @@ impl ConfigRuntime {
         &self,
         old: &Config,
         new: &Config,
-    ) -> Result<Vec<ConfigChange>, Box<dyn Error>> {
+    ) -> Result<Vec<ConfigChange>, Box<dyn error::Error>> {
         diff::diff_configs(old, new)
     }
 }

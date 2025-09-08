@@ -12,7 +12,7 @@ use crate::{
     services::{
         common::property::Property,
         network::{
-            error::NetworkError,
+            error::Error,
             proxy::active_connection::ConnectionActiveProxy,
             types::{flags::NMActivationStateFlags, states::NMActiveConnectionState},
         },
@@ -101,7 +101,7 @@ pub struct ActiveConnection {
 impl Reactive for ActiveConnection {
     type Context<'a> = ActiveConnectionParams<'a>;
     type LiveContext<'a> = LiveActiveConnectionParams<'a>;
-    type Error = NetworkError;
+    type Error = Error;
 
     async fn get(params: Self::Context<'_>) -> Result<Self, Self::Error> {
         Self::from_path(params.connection, params.path, None).await
@@ -127,7 +127,7 @@ impl ActiveConnection {
         connection: &Connection,
         path: OwnedObjectPath,
         cancellation_token: Option<CancellationToken>,
-    ) -> Result<Self, NetworkError> {
+    ) -> Result<Self, Error> {
         let connection_proxy = ConnectionActiveProxy::new(connection, &path).await?;
 
         if connection_proxy.connection().await.is_err() {
@@ -135,7 +135,7 @@ impl ActiveConnection {
                 "Active Connection at path '{}' does not exist.",
                 path.clone()
             );
-            return Err(NetworkError::ObjectNotFound(path.clone()));
+            return Err(Error::ObjectNotFound(path.clone()));
         }
 
         let (

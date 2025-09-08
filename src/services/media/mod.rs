@@ -9,3 +9,5 @@ pub mod proxy;
 pub mod service;
 /// Media type definitions
 pub mod types;
+
+pub use error::Error;

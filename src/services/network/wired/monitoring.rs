@@ -7,7 +7,7 @@ use tracing::debug;
 use super::Wired;
 use crate::services::{
     network::{
-        error::NetworkError,
+        error::Error,
         proxy::devices::DeviceProxy,
         types::states::{NMDeviceState, NetworkStatus},
     },
@@ -15,14 +15,14 @@ use crate::services::{
 };
 
 impl ModelMonitoring for Wired {
-    type Error = NetworkError;
+    type Error = Error;
 
     async fn start_monitoring(self: Arc<Self>) -> Result<(), Self::Error> {
         let device_arc = Arc::new(self.device.clone());
         device_arc.start_monitoring().await?;
 
         let Some(ref cancellation_token) = self.cancellation_token else {
-            return Err(NetworkError::OperationFailed {
+            return Err(Error::OperationFailed {
                 operation: "start_monitoring",
                 reason: String::from("A cancellation_token was not found."),
             });
@@ -32,7 +32,7 @@ impl ModelMonitoring for Wired {
         let weak_self = Arc::downgrade(&self);
         let device_proxy = DeviceProxy::new(&self.connection, self.device.object_path.clone())
             .await
-            .map_err(NetworkError::DbusError)?;
+            .map_err(Error::DbusError)?;
 
         tokio::spawn(async move {
             let _ = monitor_wired_connectivity(weak_self, device_proxy, cancel_token).await;
@@ -46,7 +46,7 @@ async fn monitor_wired_connectivity(
     weak_wired: Weak<Wired>,
     proxy: DeviceProxy<'static>,
     cancellation_token: CancellationToken,
-) -> Result<(), NetworkError> {
+) -> Result<(), Error> {
     let mut connectivity_changed = proxy.receive_state_changed().await;
 
     loop {

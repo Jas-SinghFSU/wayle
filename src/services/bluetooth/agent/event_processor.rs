@@ -6,7 +6,7 @@ use tracing::{debug, info};
 
 use crate::services::{
     bluetooth::{
-        error::BluetoothError,
+        error::Error,
         types::agent::{AgentEvent, PairingRequest, PairingResponder},
     },
     common::property::Property,
@@ -17,7 +17,7 @@ pub(crate) async fn start(
     pairing_responder: &Arc<Mutex<Option<PairingResponder>>>,
     pairing_request: &Property<Option<PairingRequest>>,
     cancellation_token: CancellationToken,
-) -> Result<(), BluetoothError> {
+) -> Result<(), Error> {
     let pairing_responder = pairing_responder.clone();
     let pairing_request = pairing_request.clone();
 

@@ -8,7 +8,7 @@ use zbus::{
 
 use crate::services::network::{
     core::access_point::types::Ssid,
-    error::NetworkError,
+    error::Error,
     proxy::{access_point::AccessPointProxy, devices::DeviceProxy, manager::NetworkManagerProxy},
 };
 
@@ -33,16 +33,13 @@ pub(super) struct WifiControls;
 
 impl WifiControls {
     #[instrument(skip(connection), fields(enabled = enabled), err)]
-    pub(super) async fn set_enabled(
-        connection: &Connection,
-        enabled: bool,
-    ) -> Result<(), NetworkError> {
+    pub(super) async fn set_enabled(connection: &Connection, enabled: bool) -> Result<(), Error> {
         let proxy = NetworkManagerProxy::new(connection).await?;
 
         proxy
             .set_wireless_enabled(enabled)
             .await
-            .map_err(|e| NetworkError::OperationFailed {
+            .map_err(|e| Error::OperationFailed {
                 operation: "set_wireless_enabled",
                 reason: e.to_string(),
             })?;
@@ -54,12 +51,12 @@ impl WifiControls {
     pub(super) async fn disconnect(
         connection: &Connection,
         device_path: &str,
-    ) -> Result<(), NetworkError> {
+    ) -> Result<(), Error> {
         let proxy = NetworkManagerProxy::new(connection).await?;
 
         let device_proxy = DeviceProxy::new(connection, device_path)
             .await
-            .map_err(|e| NetworkError::OperationFailed {
+            .map_err(|e| Error::OperationFailed {
                 operation: "device_proxy",
                 reason: e.to_string(),
             })?;
@@ -68,7 +65,7 @@ impl WifiControls {
             device_proxy
                 .active_connection()
                 .await
-                .map_err(|e| NetworkError::OperationFailed {
+                .map_err(|e| Error::OperationFailed {
                     operation: "active_connection",
                     reason: e.to_string(),
                 })?;
@@ -80,7 +77,7 @@ impl WifiControls {
         proxy
             .deactivate_connection(&active_connection_path)
             .await
-            .map_err(|e| NetworkError::OperationFailed {
+            .map_err(|e| Error::OperationFailed {
                 operation: "deactivate_connection",
                 reason: e.to_string(),
             })?;
@@ -98,23 +95,20 @@ impl WifiControls {
         device_path: &str,
         ap_path: OwnedObjectPath,
         password: Option<String>,
-    ) -> Result<(), NetworkError> {
+    ) -> Result<(), Error> {
         let proxy = NetworkManagerProxy::new(connection).await?;
 
         let ap_proxy = AccessPointProxy::new(connection, ap_path.clone())
             .await
-            .map_err(|e| NetworkError::OperationFailed {
+            .map_err(|e| Error::OperationFailed {
                 operation: "create_ap_proxy",
                 reason: e.to_string(),
             })?;
 
-        let ssid_bytes = ap_proxy
-            .ssid()
-            .await
-            .map_err(|e| NetworkError::OperationFailed {
-                operation: "get_ssid",
-                reason: e.to_string(),
-            })?;
+        let ssid_bytes = ap_proxy.ssid().await.map_err(|e| Error::OperationFailed {
+            operation: "get_ssid",
+            reason: e.to_string(),
+        })?;
 
         let ssid_string = Ssid::new(ssid_bytes.clone()).as_str();
 
@@ -127,13 +121,13 @@ impl WifiControls {
         let connection_settings =
             Self::build_connection_settings(ssid_string, ssid_bytes, bssid, password)?;
 
-        let device_path = OwnedObjectPath::try_from(device_path)
-            .map_err(|e| NetworkError::DbusError(e.into()))?;
+        let device_path =
+            OwnedObjectPath::try_from(device_path).map_err(|e| Error::DbusError(e.into()))?;
 
         proxy
             .add_and_activate_connection(connection_settings, &device_path, &ap_path)
             .await
-            .map_err(|e| NetworkError::OperationFailed {
+            .map_err(|e| Error::OperationFailed {
                 operation: "add_and_activate_connection",
                 reason: e.to_string(),
             })?;
@@ -150,14 +144,12 @@ impl WifiControls {
         ssid_bytes: Vec<u8>,
         bssid: Option<String>,
         password: Option<String>,
-    ) -> Result<ConnectionSettings, NetworkError> {
+    ) -> Result<ConnectionSettings, Error> {
         let to_owned = |value: Value| {
-            value
-                .try_to_owned()
-                .map_err(|e| NetworkError::OperationFailed {
-                    operation: "to_owned",
-                    reason: e.to_string(),
-                })
+            value.try_to_owned().map_err(|e| Error::OperationFailed {
+                operation: "to_owned",
+                reason: e.to_string(),
+            })
         };
 
         let mut settings = HashMap::new();

@@ -12,7 +12,7 @@ use zbus::{
 use crate::{
     services::{
         common::property::Property,
-        network::{error::NetworkError, proxy::ip4_config::IP4ConfigProxy},
+        network::{error::Error, proxy::ip4_config::IP4ConfigProxy},
         traits::Static,
     },
     unwrap_i32, unwrap_string, unwrap_vec,
@@ -91,7 +91,7 @@ struct Ip4ConfigProperties {
 }
 
 impl Static for Ip4Config {
-    type Error = NetworkError;
+    type Error = Error;
     type Context<'a> = Ip4ConfigParams<'a>;
 
     async fn get(params: Self::Context<'_>) -> Result<Self, Self::Error> {
@@ -100,10 +100,7 @@ impl Static for Ip4Config {
 }
 
 impl Ip4Config {
-    async fn from_path(
-        connection: &Connection,
-        path: OwnedObjectPath,
-    ) -> Result<Self, NetworkError> {
+    async fn from_path(connection: &Connection, path: OwnedObjectPath) -> Result<Self, Error> {
         let properties = Self::fetch_properties(connection, &path).await?;
         Ok(Self::from_props(path, properties))
     }
@@ -111,10 +108,10 @@ impl Ip4Config {
     async fn fetch_properties(
         connection: &Connection,
         path: &OwnedObjectPath,
-    ) -> Result<Ip4ConfigProperties, NetworkError> {
+    ) -> Result<Ip4ConfigProperties, Error> {
         let proxy = IP4ConfigProxy::new(connection, path)
             .await
-            .map_err(NetworkError::DbusError)?;
+            .map_err(Error::DbusError)?;
 
         let (
             address_data,

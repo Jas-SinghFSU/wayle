@@ -6,12 +6,12 @@ use tracing::debug;
 
 use super::DeviceWired;
 use crate::services::{
-    network::{error::NetworkError, proxy::devices::wired::DeviceWiredProxy},
+    network::{error::Error, proxy::devices::wired::DeviceWiredProxy},
     traits::ModelMonitoring,
 };
 
 impl ModelMonitoring for DeviceWired {
-    type Error = NetworkError;
+    type Error = Error;
 
     async fn start_monitoring(self: Arc<Self>) -> Result<(), Self::Error> {
         let base_arc = Arc::new(self.base.clone());
@@ -19,10 +19,10 @@ impl ModelMonitoring for DeviceWired {
 
         let proxy = DeviceWiredProxy::new(&self.connection, self.object_path.clone())
             .await
-            .map_err(NetworkError::DbusError)?;
+            .map_err(Error::DbusError)?;
 
         let Some(ref cancellation_token) = self.cancellation_token else {
-            return Err(NetworkError::OperationFailed {
+            return Err(Error::OperationFailed {
                 operation: "start_monitoring",
                 reason: String::from("A cancellation_token was not found."),
             });

@@ -1,6 +1,6 @@
 use toml::Value;
 
-use crate::config_runtime::changes::ConfigError;
+use crate::config_runtime::changes::Error;
 
 pub(super) fn path_matches(path: &str, pattern: &str) -> bool {
     const WILDCARD: &str = "*";
@@ -25,7 +25,7 @@ pub(super) fn path_matches(path: &str, pattern: &str) -> bool {
     true
 }
 
-pub(super) fn navigate_path(value: &Value, path: &str) -> Result<Value, ConfigError> {
+pub(super) fn navigate_path(value: &Value, path: &str) -> Result<Value, Error> {
     let parts: Vec<&str> = path.split(".").collect();
     let mut current = value;
 
@@ -33,7 +33,7 @@ pub(super) fn navigate_path(value: &Value, path: &str) -> Result<Value, ConfigEr
         match current {
             Value::Table(table) => {
                 current = table.get(*part).ok_or_else(|| {
-                    ConfigError::InvalidPath(format!(
+                    Error::InvalidPath(format!(
                         "Key '{}' not found in table at path '{}'",
                         part,
                         parts[..i].join(".")
@@ -42,7 +42,7 @@ pub(super) fn navigate_path(value: &Value, path: &str) -> Result<Value, ConfigEr
             }
             Value::Array(array) => {
                 let index = part.parse::<usize>().map_err(|_| {
-                    ConfigError::InvalidPath(format!(
+                    Error::InvalidPath(format!(
                         "Invalid array index '{}' at path '{}'",
                         part,
                         parts[..i].join(".")
@@ -50,7 +50,7 @@ pub(super) fn navigate_path(value: &Value, path: &str) -> Result<Value, ConfigEr
                 })?;
 
                 current = array.get(index).ok_or_else(|| {
-                    ConfigError::InvalidPath(format!(
+                    Error::InvalidPath(format!(
                         "Array index '{}' out of bounds at path '{}'",
                         index,
                         parts[..i].join(".")
@@ -58,7 +58,7 @@ pub(super) fn navigate_path(value: &Value, path: &str) -> Result<Value, ConfigEr
                 })?;
             }
             _ => {
-                return Err(ConfigError::InvalidPath(format!(
+                return Err(Error::InvalidPath(format!(
                     "Cannot navigate into {:?} at path '{}'",
                     current.type_str(),
                     parts[..i].join("."),
@@ -74,11 +74,11 @@ pub(super) fn set_value_at_path(
     value: &mut Value,
     path: &str,
     new_value: Value,
-) -> Result<(), ConfigError> {
+) -> Result<(), Error> {
     let parts: Vec<&str> = path.split('.').collect();
 
     if parts.is_empty() {
-        return Err(ConfigError::InvalidPath(String::from("Empty path")));
+        return Err(Error::InvalidPath(String::from("Empty path")));
     }
 
     let (parent, last_key) = navigate_to_parent_mut(value, &parts)?;
@@ -89,7 +89,7 @@ pub(super) fn set_value_at_path(
 pub(super) fn navigate_to_parent_mut<'a>(
     value: &'a mut Value,
     parts: &'a [&'a str],
-) -> Result<(&'a mut Value, &'a str), ConfigError> {
+) -> Result<(&'a mut Value, &'a str), Error> {
     let mut current = value;
 
     for (i, part) in parts[..parts.len() - 1].iter().enumerate() {
@@ -103,7 +103,7 @@ pub(super) fn navigate_step_mut<'a>(
     current: &'a mut Value,
     key: &str,
     path_so_far: &[&str],
-) -> Result<&'a mut Value, ConfigError> {
+) -> Result<&'a mut Value, Error> {
     match current {
         Value::Table(table) => {
             if !table.contains_key(key) {
@@ -111,7 +111,7 @@ pub(super) fn navigate_step_mut<'a>(
             }
 
             table.get_mut(key).ok_or_else(|| {
-                ConfigError::InvalidPath(format!(
+                Error::InvalidPath(format!(
                     "Key '{}' not found at path '{}'",
                     key,
                     path_so_far.join(".")
@@ -120,7 +120,7 @@ pub(super) fn navigate_step_mut<'a>(
         }
         Value::Array(arr) => {
             let index = key.parse::<usize>().map_err(|_| {
-                ConfigError::InvalidPath(format!(
+                Error::InvalidPath(format!(
                     "Invalid array index '{}' at path '{}'",
                     key,
                     path_so_far.join(".")
@@ -128,14 +128,14 @@ pub(super) fn navigate_step_mut<'a>(
             })?;
 
             arr.get_mut(index).ok_or_else(|| {
-                ConfigError::InvalidPath(format!(
+                Error::InvalidPath(format!(
                     "Array index {} out of bounds at path '{}'",
                     index,
                     path_so_far.join(".")
                 ))
             })
         }
-        _ => Err(ConfigError::InvalidPath(format!(
+        _ => Err(Error::InvalidPath(format!(
             "Cannot navigate into {} at path '{}'",
             current.type_str(),
             path_so_far.join(".")
@@ -147,7 +147,7 @@ pub(super) fn insert_value(
     container: &mut Value,
     key: &str,
     new_value: Value,
-) -> Result<(), ConfigError> {
+) -> Result<(), Error> {
     match container {
         Value::Table(table) => {
             table.insert(String::from(key), new_value);
@@ -156,15 +156,13 @@ pub(super) fn insert_value(
         Value::Array(arr) => {
             let index = key
                 .parse::<usize>()
-                .map_err(|_| ConfigError::InvalidPath(format!("Invalid array index '{key}'")))?;
+                .map_err(|_| Error::InvalidPath(format!("Invalid array index '{key}'")))?;
 
             arr.get_mut(index)
                 .map(|elem| *elem = new_value)
-                .ok_or_else(|| {
-                    ConfigError::InvalidPath(format!("Array index {index} out of bounds"))
-                })
+                .ok_or_else(|| Error::InvalidPath(format!("Array index {index} out of bounds")))
         }
-        _ => Err(ConfigError::InvalidPath(format!(
+        _ => Err(Error::InvalidPath(format!(
             "Cannot insert into {}",
             container.type_str()
         ))),

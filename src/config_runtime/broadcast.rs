@@ -9,7 +9,7 @@ use tokio::{
 };
 
 use crate::config_runtime::{
-    changes::{ConfigChange, ConfigError},
+    changes::{ConfigChange, Error},
     path_ops::path_matches,
 };
 
@@ -97,7 +97,7 @@ impl BroadcastService {
     ///
     /// # Errors
     /// Returns `ConfigError::ServiceUnavailable` if the broadcast service is not running.
-    pub async fn subscribe(&self, pattern: &str) -> Result<Subscription, ConfigError> {
+    pub async fn subscribe(&self, pattern: &str) -> Result<Subscription, Error> {
         let (tx, rx) = mpsc::channel(100);
         let id = self.next_id.fetch_add(1, Ordering::Relaxed);
 
@@ -108,7 +108,7 @@ impl BroadcastService {
                 sender: tx,
             })
             .await
-            .map_err(|_| ConfigError::ServiceUnavailable {
+            .map_err(|_| Error::ServiceUnavailable {
                 service: String::from("broadcast"),
                 details: String::from("Broadcast service is not running"),
             })?;
@@ -130,11 +130,11 @@ impl BroadcastService {
     ///
     /// # Errors
     /// Returns `ConfigError::ServiceUnavailable` if the broadcast service is not running.
-    pub async fn broadcast(&self, change: ConfigChange) -> Result<(), ConfigError> {
+    pub async fn broadcast(&self, change: ConfigChange) -> Result<(), Error> {
         self.command_tx
             .send(BroadcastCommand::Broadcast(change))
             .await
-            .map_err(|_| ConfigError::ServiceUnavailable {
+            .map_err(|_| Error::ServiceUnavailable {
                 service: String::from("broadcast"),
                 details: String::from("Broadcast service is not running"),
             })

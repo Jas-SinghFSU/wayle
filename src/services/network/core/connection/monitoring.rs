@@ -7,7 +7,7 @@ use tracing::debug;
 use super::ActiveConnection;
 use crate::services::{
     network::{
-        error::NetworkError,
+        error::Error,
         proxy::active_connection::ConnectionActiveProxy,
         types::{flags::NMActivationStateFlags, states::NMActiveConnectionState},
     },
@@ -15,15 +15,15 @@ use crate::services::{
 };
 
 impl ModelMonitoring for ActiveConnection {
-    type Error = NetworkError;
+    type Error = Error;
 
     async fn start_monitoring(self: Arc<Self>) -> Result<(), Self::Error> {
         let proxy = ConnectionActiveProxy::new(&self.zbus_connection, self.object_path.clone())
             .await
-            .map_err(NetworkError::DbusError)?;
+            .map_err(Error::DbusError)?;
 
         let Some(ref cancellation_token) = self.cancellation_token else {
-            return Err(NetworkError::OperationFailed {
+            return Err(Error::OperationFailed {
                 operation: "start_monitoring",
                 reason: String::from("A cancellation_token was not found."),
             });

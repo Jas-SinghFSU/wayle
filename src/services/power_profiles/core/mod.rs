@@ -11,7 +11,7 @@ use types::{LivePowerProfilesParams, PowerProfilesParams, PowerProfilesProps};
 use zbus::Connection;
 
 use super::{
-    error::PowerProfilesError,
+    error::Error,
     proxy::power_profiles::PowerProfilesProxy,
     types::profile::{
         HoldCookie, PerformanceDegradationReason, PowerProfile, Profile, ProfileHold,
@@ -46,7 +46,7 @@ pub struct PowerProfiles {
 }
 
 impl Reactive for PowerProfiles {
-    type Error = PowerProfilesError;
+    type Error = Error;
     type LiveContext<'a> = LivePowerProfilesParams<'a>;
     type Context<'a> = PowerProfilesParams<'a>;
 
@@ -80,10 +80,7 @@ impl PowerProfiles {
     ///
     /// # Errors
     /// Returns error if profile setting fails.
-    pub async fn set_active_profile(
-        &self,
-        profile: PowerProfile,
-    ) -> Result<(), PowerProfilesError> {
+    pub async fn set_active_profile(&self, profile: PowerProfile) -> Result<(), Error> {
         PowerProfilesController::set_active_profile(&self.zbus_connection, profile).await
     }
 
@@ -92,7 +89,7 @@ impl PowerProfiles {
     ///
     /// # Errors
     /// Returns error if profile hold cannot be established.
-    pub async fn hold_profile(&self, hold: ProfileHold) -> Result<HoldCookie, PowerProfilesError> {
+    pub async fn hold_profile(&self, hold: ProfileHold) -> Result<HoldCookie, Error> {
         PowerProfilesController::hold_profile(&self.zbus_connection, hold).await
     }
 
@@ -100,13 +97,11 @@ impl PowerProfiles {
     ///
     /// # Errors
     /// Returns error if hold release fails or cookie is invalid.
-    pub async fn release_profile(&self, hold_cookie: HoldCookie) -> Result<(), PowerProfilesError> {
+    pub async fn release_profile(&self, hold_cookie: HoldCookie) -> Result<(), Error> {
         PowerProfilesController::release_profile(&self.zbus_connection, hold_cookie).await
     }
 
-    async fn from_connection(
-        connection: &Connection,
-    ) -> Result<PowerProfilesProps, PowerProfilesError> {
+    async fn from_connection(connection: &Connection) -> Result<PowerProfilesProps, Error> {
         let proxy = PowerProfilesProxy::new(connection).await?;
 
         let (active_profile, performance_degraded, profiles, actions, active_profile_holds) = tokio::join!(

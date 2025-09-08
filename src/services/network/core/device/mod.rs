@@ -23,7 +23,7 @@ use crate::{
     services::{
         common::property::Property,
         network::{
-            error::NetworkError,
+            error::Error,
             proxy::devices::DeviceProxy,
             types::{
                 connectivity::{NMConnectivityState, NMMetered},
@@ -182,7 +182,7 @@ pub struct Device {
 impl Reactive for Device {
     type Context<'a> = DeviceParams<'a>;
     type LiveContext<'a> = LiveDeviceParams<'a>;
-    type Error = NetworkError;
+    type Error = Error;
 
     async fn get(params: Self::Context<'_>) -> Result<Self, Self::Error> {
         Self::from_path(params.connection, params.object_path, None).await
@@ -195,7 +195,7 @@ impl Reactive for Device {
             Some(params.cancellation_token.child_token()),
         )
         .await
-        .map_err(|e| NetworkError::ObjectCreationFailed {
+        .map_err(|e| Error::ObjectCreationFailed {
             object_type: String::from("Device"),
             object_path: params.object_path.clone(),
             reason: e.to_string(),
@@ -213,7 +213,7 @@ impl Device {
         connection: &Connection,
         object_path: OwnedObjectPath,
         cancellation_token: Option<CancellationToken>,
-    ) -> Result<Self, NetworkError> {
+    ) -> Result<Self, Error> {
         let proxy = DeviceProxy::new(connection, &object_path).await?;
         let props = Self::fetch_properties(&proxy).await?;
         Ok(Self::from_properties(
@@ -225,7 +225,7 @@ impl Device {
     }
 
     #[allow(clippy::too_many_lines)]
-    async fn fetch_properties(proxy: &DeviceProxy<'_>) -> Result<DeviceProperties, NetworkError> {
+    async fn fetch_properties(proxy: &DeviceProxy<'_>) -> Result<DeviceProperties, Error> {
         let (udi, path, interface, ip_interface, driver, driver_version, firmware_version) = tokio::join!(
             proxy.udi(),
             proxy.path(),
@@ -400,7 +400,7 @@ impl Device {
     ///
     /// # Errors
     /// Returns error if the D-Bus operation fails.
-    pub async fn set_managed(&self, managed: bool) -> Result<(), NetworkError> {
+    pub async fn set_managed(&self, managed: bool) -> Result<(), Error> {
         DeviceControls::set_managed(&self.connection, &self.object_path, managed).await
     }
 
@@ -408,7 +408,7 @@ impl Device {
     ///
     /// # Errors
     /// Returns error if the D-Bus operation fails.
-    pub async fn set_autoconnect(&self, autoconnect: bool) -> Result<(), NetworkError> {
+    pub async fn set_autoconnect(&self, autoconnect: bool) -> Result<(), Error> {
         DeviceControls::set_autoconnect(&self.connection, &self.object_path, autoconnect).await
     }
 
@@ -426,7 +426,7 @@ impl Device {
         connection_settings: HashMap<String, HashMap<String, OwnedValue>>,
         version_id: u64,
         flags: u32,
-    ) -> Result<(), NetworkError> {
+    ) -> Result<(), Error> {
         DeviceControls::reapply(
             &self.connection,
             &self.object_path,
@@ -451,7 +451,7 @@ impl Device {
     pub async fn get_applied_connection(
         &self,
         flags: u32,
-    ) -> Result<(HashMap<String, HashMap<String, OwnedValue>>, u64), NetworkError> {
+    ) -> Result<(HashMap<String, HashMap<String, OwnedValue>>, u64), Error> {
         DeviceControls::get_applied_connection(&self.connection, &self.object_path, flags).await
     }
 
@@ -459,7 +459,7 @@ impl Device {
     ///
     /// # Errors
     /// Returns error if the disconnect operation fails.
-    pub async fn disconnect(&self) -> Result<(), NetworkError> {
+    pub async fn disconnect(&self) -> Result<(), Error> {
         DeviceControls::disconnect(&self.connection, &self.object_path).await
     }
 
@@ -467,7 +467,7 @@ impl Device {
     ///
     /// # Errors
     /// Returns error if the delete operation fails.
-    pub async fn delete(&self) -> Result<(), NetworkError> {
+    pub async fn delete(&self) -> Result<(), Error> {
         DeviceControls::delete(&self.connection, &self.object_path).await
     }
 }

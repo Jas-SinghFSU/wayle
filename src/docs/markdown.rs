@@ -1,5 +1,5 @@
 use super::{
-    generator::DocsError,
+    generator::Error,
     module::{ModuleInfo, SchemeFn},
     schema::{PropertyInfo, extract_property_info},
 };
@@ -44,7 +44,7 @@ pub fn generate_property_table(
 /// # Errors
 ///
 /// Returns `DocsError::SchemaConversion` if schema serialization fails.
-pub fn generate_module_page(module: &ModuleInfo) -> Result<String, DocsError> {
+pub fn generate_module_page(module: &ModuleInfo) -> Result<String, Error> {
     let mut content = String::new();
 
     content.push_str(&generate_header(module));
@@ -63,11 +63,11 @@ fn generate_header(module: &ModuleInfo) -> String {
     )
 }
 
-fn generate_behavior_sections(module: &ModuleInfo) -> Result<String, DocsError> {
+fn generate_behavior_sections(module: &ModuleInfo) -> Result<String, Error> {
     generate_sections(&module.behavior_configs, &module.name, "Behavior", "")
 }
 
-fn generate_styling_sections(module: &ModuleInfo) -> Result<String, DocsError> {
+fn generate_styling_sections(module: &ModuleInfo) -> Result<String, Error> {
     generate_sections(&module.styling_configs, &module.name, "Styling", ".styling")
 }
 
@@ -76,12 +76,12 @@ fn generate_sections(
     module_name: &str,
     section_type: &str,
     path_prefix: &str,
-) -> Result<String, DocsError> {
+) -> Result<String, Error> {
     let mut content = String::new();
 
     for (config_name, schema_fn) in configs {
         let schema_value =
-            serde_json::to_value(schema_fn()).map_err(|e| DocsError::SchemaConversionError {
+            serde_json::to_value(schema_fn()).map_err(|e| Error::SchemaConversionError {
                 module: module_name.to_string(),
                 details: format!("Failed to generate section for '{config_name}': {e}"),
             })?;

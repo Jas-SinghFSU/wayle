@@ -7,7 +7,7 @@ use tracing::{debug, instrument};
 use super::Player;
 use crate::services::{
     media::{
-        error::MediaError,
+        error::Error,
         proxy::MediaPlayer2PlayerProxy,
         types::{LoopMode, PlaybackState, PlayerId, ShuffleMode, Volume},
     },
@@ -15,11 +15,11 @@ use crate::services::{
 };
 
 impl ModelMonitoring for Player {
-    type Error = MediaError;
+    type Error = Error;
 
     async fn start_monitoring(self: Arc<Self>) -> Result<(), Self::Error> {
         let Some(ref cancellation_token) = self.cancellation_token else {
-            return Err(MediaError::InitializationFailed(String::from(
+            return Err(Error::InitializationFailed(String::from(
                 "A cancellation_token was not found.",
             )));
         };

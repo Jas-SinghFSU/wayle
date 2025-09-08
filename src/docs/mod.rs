@@ -13,3 +13,5 @@ pub mod module;
 pub mod registry;
 /// Schema documentation
 pub mod schema;
+
+pub use generator::Error;

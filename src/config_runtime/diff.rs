@@ -5,7 +5,7 @@ use toml::Value;
 use crate::{
     config::Config,
     config_runtime::{
-        changes::{ConfigChange, ConfigError},
+        changes::{self, ConfigChange},
         path_ops::navigate_path,
     },
 };
@@ -101,7 +101,7 @@ fn get_default_config() -> &'static toml::Value {
     })
 }
 
-fn get_default_for_path(path: &str) -> Result<toml::Value, ConfigError> {
+fn get_default_for_path(path: &str) -> Result<toml::Value, changes::Error> {
     let default_config = get_default_config();
     navigate_path(default_config, path)
 }

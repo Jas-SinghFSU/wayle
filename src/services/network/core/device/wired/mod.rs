@@ -12,7 +12,7 @@ use crate::{
     services::{
         common::property::Property,
         network::{
-            error::NetworkError,
+            error::Error,
             proxy::devices::{DeviceProxy, wired::DeviceWiredProxy},
             types::device::NMDeviceType,
         },
@@ -42,7 +42,7 @@ pub struct DeviceWired {
 impl Reactive for DeviceWired {
     type Context<'a> = DeviceWiredParams<'a>;
     type LiveContext<'a> = LiveDeviceWiredParams<'a>;
-    type Error = NetworkError;
+    type Error = Error;
 
     async fn get(params: Self::Context<'_>) -> Result<Self, Self::Error> {
         Self::from_path(params.connection, params.device_path).await
@@ -80,18 +80,15 @@ impl DeviceWired {
     async fn verify_is_ethernet_device(
         connection: &Connection,
         device_path: &OwnedObjectPath,
-    ) -> Result<(), NetworkError> {
+    ) -> Result<(), Error> {
         let device_proxy = DeviceProxy::new(connection, device_path)
             .await
-            .map_err(NetworkError::DbusError)?;
+            .map_err(Error::DbusError)?;
 
-        let device_type = device_proxy
-            .device_type()
-            .await
-            .map_err(NetworkError::DbusError)?;
+        let device_type = device_proxy.device_type().await.map_err(Error::DbusError)?;
 
         if device_type != NMDeviceType::Ethernet as u32 {
-            return Err(NetworkError::WrongObjectType {
+            return Err(Error::WrongObjectType {
                 object_path: device_path.clone(),
                 expected: String::from("Ethernet device"),
                 actual: format!("device type {device_type}"),
@@ -104,10 +101,10 @@ impl DeviceWired {
     async fn fetch_wired_properties(
         connection: &Connection,
         device_path: &OwnedObjectPath,
-    ) -> Result<WiredProperties, NetworkError> {
+    ) -> Result<WiredProperties, Error> {
         let wired_proxy = DeviceWiredProxy::new(connection, device_path)
             .await
-            .map_err(NetworkError::DbusError)?;
+            .map_err(Error::DbusError)?;
 
         let (perm_hw_address, speed, s390_subchannels) = tokio::join!(
             wired_proxy.perm_hw_address(),
@@ -131,10 +128,7 @@ impl DeviceWired {
         }
     }
 
-    async fn from_path(
-        connection: &Connection,
-        path: OwnedObjectPath,
-    ) -> Result<Self, NetworkError> {
+    async fn from_path(connection: &Connection, path: OwnedObjectPath) -> Result<Self, Error> {
         Self::verify_is_ethernet_device(connection, &path).await?;
 
         let base = Device::from_path(connection, path.clone(), None).await?;

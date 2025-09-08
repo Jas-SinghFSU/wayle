@@ -15,3 +15,5 @@ pub mod types;
 pub mod wifi;
 /// Wired device functionality
 pub mod wired;
+
+pub use error::Error;

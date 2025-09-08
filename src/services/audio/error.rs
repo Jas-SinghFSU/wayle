@@ -1,11 +1,11 @@
 use super::{
     types::{device::DeviceType, stream::StreamType},
-    volume::error::VolumeError,
+    volume,
 };
 
 /// PulseAudio service errors
 #[derive(thiserror::Error, Debug)]
-pub enum AudioError {
+pub enum Error {
     /// PulseAudio connection failed
     #[error("PulseAudio connection failed: {0}")]
     ConnectionFailed(String),
@@ -16,7 +16,7 @@ pub enum AudioError {
 
     /// Volume conversion failed
     #[error("Volume conversion failed")]
-    VolumeConversion(#[from] VolumeError),
+    VolumeConversion(#[from] volume::Error),
 
     /// Volume exceeds safe limits
     #[error(
@@ -33,8 +33,8 @@ pub enum AudioError {
     StreamNotFound(u32, StreamType),
 
     /// Command channel disconnected
-    #[error("Command channel disconnected")]
-    CommandChannelDisconnected,
+    #[error("command channel disconnected: {0}")]
+    CommandChannelDisconnected(String),
 
     /// Lock poisoned due to panic in another thread
     #[error("Shared data lock poisoned: {0}")]
@@ -45,8 +45,8 @@ pub enum AudioError {
     InitializationFailed(String),
 
     /// Backend communication failed
-    #[error("Backend communication failed")]
-    BackendCommunicationFailed,
+    #[error("backend communication failed: {0}")]
+    BackendCommunicationFailed(String),
 
     /// Operation not supported
     #[error("Operation not supported: {0}")]

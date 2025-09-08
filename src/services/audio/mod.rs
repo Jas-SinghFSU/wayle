@@ -15,3 +15,5 @@ pub mod tokio_mainloop;
 pub mod types;
 /// Volume control domain
 pub mod volume;
+
+pub use error::Error;

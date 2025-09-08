@@ -21,6 +21,7 @@ pub mod styling;
 /// Configuration tests
 pub mod tests;
 
+pub use error::Error;
 use general::GeneralConfig;
 use media::MediaConfig;
 use modules::ModulesConfig;

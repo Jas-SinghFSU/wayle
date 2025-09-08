@@ -14,7 +14,7 @@ use merging::merge_toml_configs;
 use toml::Value;
 
 use super::Config;
-use crate::config::error::WayleError;
+use crate::config::error::Error;
 
 impl Config {
     /// Loads a configuration file with support for importing other TOML files
@@ -48,12 +48,12 @@ impl Config {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn load_with_imports(path: &Path) -> Result<Config, WayleError> {
+    pub fn load_with_imports(path: &Path) -> Result<Config, Error> {
         if !path.exists() {
             create_default_config_file(path)?;
         }
 
-        let canonical_path = path.canonicalize().map_err(|e| WayleError::IoError {
+        let canonical_path = path.canonicalize().map_err(|e| Error::IoError {
             path: path.to_path_buf(),
             details: format!("Failed to resolve path: {e}"),
         })?;
@@ -76,7 +76,7 @@ impl Config {
     ///
     /// # Errors
     /// Returns error if any file cannot be read or contains invalid TOML
-    pub fn get_all_config_files(path: &Path) -> Result<Vec<PathBuf>, WayleError> {
+    pub fn get_all_config_files(path: &Path) -> Result<Vec<PathBuf>, Error> {
         let mut files = Vec::new();
         let mut visited = HashSet::new();
 
@@ -87,7 +87,7 @@ impl Config {
     fn load_config_with_tracking(
         path: &Path,
         detector: &mut CircularDetector,
-    ) -> Result<Config, WayleError> {
+    ) -> Result<Config, Error> {
         detector.detect_circular_import(path)?;
         detector.push_to_chain(path);
 
@@ -96,21 +96,18 @@ impl Config {
         result
     }
 
-    fn load_main_config(
-        path: &Path,
-        detector: &mut CircularDetector,
-    ) -> Result<Config, WayleError> {
+    fn load_main_config(path: &Path, detector: &mut CircularDetector) -> Result<Config, Error> {
         let main_config_content = fs::read_to_string(path)?;
         let import_paths = Self::extract_import_paths(&main_config_content)?;
         let imported_configs = Self::load_all_imports(path, &import_paths, detector)?;
 
-        let main_config: Value = toml::from_str(&main_config_content)
-            .map_err(|e| WayleError::toml_parse(e, Some(path)))?;
+        let main_config: Value =
+            toml::from_str(&main_config_content).map_err(|e| Error::toml_parse(e, Some(path)))?;
 
         let merged_config = merge_toml_configs(imported_configs, main_config);
         merged_config
             .try_into()
-            .map_err(|e| WayleError::ConfigValidation {
+            .map_err(|e| Error::ConfigValidation {
                 component: String::from("config parsing"),
                 details: format!("Configuration validation failed: {e}"),
             })
@@ -120,14 +117,14 @@ impl Config {
         base_path: &Path,
         import_paths: &[String],
         detector: &mut CircularDetector,
-    ) -> Result<Vec<Value>, WayleError> {
+    ) -> Result<Vec<Value>, Error> {
         import_paths
             .iter()
             .map(|import_path| {
                 let resolved_path = Self::resolve_import_path(base_path, import_path)?;
                 let canonical_import = resolved_path
                     .canonicalize()
-                    .map_err(|e| WayleError::import(e, &resolved_path))?;
+                    .map_err(|e| Error::import(e, &resolved_path))?;
 
                 Self::load_imported_file_with_tracking(&canonical_import, detector)
             })
@@ -137,7 +134,7 @@ impl Config {
     fn load_imported_file_with_tracking(
         path: &Path,
         detector: &mut CircularDetector,
-    ) -> Result<Value, WayleError> {
+    ) -> Result<Value, Error> {
         detector.detect_circular_import(path)?;
         detector.push_to_chain(path);
 
@@ -149,19 +146,19 @@ impl Config {
     fn load_toml_file_with_imports(
         path: &Path,
         detector: &mut CircularDetector,
-    ) -> Result<Value, WayleError> {
-        let content = fs::read_to_string(path).map_err(|e| WayleError::import(e, path))?;
+    ) -> Result<Value, Error> {
+        let content = fs::read_to_string(path).map_err(|e| Error::import(e, path))?;
         let import_paths = Self::extract_import_paths(&content)?;
         let imported_configs = Self::load_all_imports(path, &import_paths, detector)?;
 
         let main_value: Value =
-            toml::from_str(&content).map_err(|e| WayleError::toml_parse(e, Some(path)))?;
+            toml::from_str(&content).map_err(|e| Error::toml_parse(e, Some(path)))?;
 
         Ok(merge_toml_configs(imported_configs, main_value))
     }
 
-    fn extract_import_paths(config_content: &str) -> Result<Vec<String>, WayleError> {
-        let value = toml::from_str(config_content).map_err(|e| WayleError::toml_parse(e, None))?;
+    fn extract_import_paths(config_content: &str) -> Result<Vec<String>, Error> {
+        let value = toml::from_str(config_content).map_err(|e| Error::toml_parse(e, None))?;
 
         let import_paths = if let Value::Table(table) = value {
             if let Some(Value::Array(imports)) = table.get("imports") {
@@ -181,8 +178,8 @@ impl Config {
         Ok(import_paths)
     }
 
-    fn resolve_import_path(base_path: &Path, import_path: &str) -> Result<PathBuf, WayleError> {
-        let parent_dir = base_path.parent().ok_or_else(|| WayleError::ImportError {
+    fn resolve_import_path(base_path: &Path, import_path: &str) -> Result<PathBuf, Error> {
+        let parent_dir = base_path.parent().ok_or_else(|| Error::ImportError {
             path: base_path.to_path_buf(),
             details: String::from("Invalid base path - no parent directory"),
         })?;
@@ -200,7 +197,7 @@ impl Config {
         path: &Path,
         files: &mut Vec<PathBuf>,
         visited: &mut HashSet<PathBuf>,
-    ) -> Result<(), WayleError> {
+    ) -> Result<(), Error> {
         let canonical = path.canonicalize().unwrap_or_else(|_| path.to_path_buf());
 
         if visited.contains(&canonical) {

@@ -7,8 +7,7 @@ use zbus::{
 };
 
 use crate::services::network::{
-    error::NetworkError, proxy::settings::SettingsProxy,
-    types::flags::NMSettingsAddConnection2Flags,
+    error::Error, proxy::settings::SettingsProxy, types::flags::NMSettingsAddConnection2Flags,
 };
 
 pub(super) struct SettingsController;
@@ -17,7 +16,7 @@ impl SettingsController {
     #[instrument(skip(zbus_connection), err)]
     pub(super) async fn list_connections(
         zbus_connection: &Connection,
-    ) -> Result<Vec<OwnedObjectPath>, NetworkError> {
+    ) -> Result<Vec<OwnedObjectPath>, Error> {
         let settings_proxy = SettingsProxy::new(zbus_connection).await?;
         let connections = settings_proxy.list_connections().await?;
 
@@ -28,7 +27,7 @@ impl SettingsController {
     pub(super) async fn get_connection_by_uuid(
         zbus_connection: &Connection,
         uuid: &str,
-    ) -> Result<OwnedObjectPath, NetworkError> {
+    ) -> Result<OwnedObjectPath, Error> {
         let settings_proxy = SettingsProxy::new(zbus_connection).await?;
         let connection = settings_proxy.get_connection_by_uuid(uuid).await?;
 
@@ -39,7 +38,7 @@ impl SettingsController {
     pub(super) async fn add_connection(
         zbus_connection: &Connection,
         connection: HashMap<String, HashMap<String, OwnedValue>>,
-    ) -> Result<OwnedObjectPath, NetworkError> {
+    ) -> Result<OwnedObjectPath, Error> {
         let settings_proxy = SettingsProxy::new(zbus_connection).await?;
         let created_connection = settings_proxy.add_connection(connection).await?;
 
@@ -50,7 +49,7 @@ impl SettingsController {
     pub(super) async fn add_connection_unsaved(
         zbus_connection: &Connection,
         connection: HashMap<String, HashMap<String, OwnedValue>>,
-    ) -> Result<OwnedObjectPath, NetworkError> {
+    ) -> Result<OwnedObjectPath, Error> {
         let settings_proxy = SettingsProxy::new(zbus_connection).await?;
         let created_connection = settings_proxy.add_connection_unsaved(connection).await?;
 
@@ -67,13 +66,13 @@ impl SettingsController {
         settings: HashMap<String, HashMap<String, OwnedValue>>,
         flags: NMSettingsAddConnection2Flags,
         args: HashMap<String, OwnedValue>,
-    ) -> Result<(OwnedObjectPath, HashMap<String, OwnedValue>), NetworkError> {
+    ) -> Result<(OwnedObjectPath, HashMap<String, OwnedValue>), Error> {
         let settings_proxy = SettingsProxy::new(zbus_connection).await?;
 
         let (path, result) = settings_proxy
             .add_connection2(settings, flags.bits(), args)
             .await
-            .map_err(NetworkError::DbusError)?;
+            .map_err(Error::DbusError)?;
 
         Ok((path, result))
     }
@@ -86,27 +85,25 @@ impl SettingsController {
     pub(super) async fn load_connections(
         zbus_connection: &Connection,
         filenames: Vec<String>,
-    ) -> Result<(bool, Vec<String>), NetworkError> {
+    ) -> Result<(bool, Vec<String>), Error> {
         let settings_proxy = SettingsProxy::new(zbus_connection).await?;
 
         let (status, failures) = settings_proxy
             .load_connections(filenames)
             .await
-            .map_err(NetworkError::DbusError)?;
+            .map_err(Error::DbusError)?;
 
         Ok((status, failures))
     }
 
     #[instrument(skip(zbus_connection), err)]
-    pub(super) async fn reload_connections(
-        zbus_connection: &Connection,
-    ) -> Result<bool, NetworkError> {
+    pub(super) async fn reload_connections(zbus_connection: &Connection) -> Result<bool, Error> {
         let settings_proxy = SettingsProxy::new(zbus_connection).await?;
 
         let status = settings_proxy
             .reload_connections()
             .await
-            .map_err(NetworkError::DbusError)?;
+            .map_err(Error::DbusError)?;
 
         Ok(status)
     }
@@ -115,12 +112,12 @@ impl SettingsController {
     pub(super) async fn save_hostname(
         zbus_connection: &Connection,
         hostname: &str,
-    ) -> Result<(), NetworkError> {
+    ) -> Result<(), Error> {
         let settings_proxy = SettingsProxy::new(zbus_connection).await?;
 
         settings_proxy
             .save_hostname(hostname)
             .await
-            .map_err(NetworkError::DbusError)
+            .map_err(Error::DbusError)
     }
 }

@@ -21,7 +21,7 @@ use crate::services::{
             device::{input::InputDevice, output::OutputDevice},
             stream::AudioStream,
         },
-        error::AudioError,
+        error::Error,
         types::{device::DeviceKey, stream::StreamKey},
     },
     common::property::Property,
@@ -64,7 +64,7 @@ impl AudioService {
     /// # Errors
     /// Returns error if PulseAudio connection fails or service initialization fails.
     #[instrument]
-    pub async fn new() -> Result<Self, AudioError> {
+    pub async fn new() -> Result<Self, Error> {
         let (command_tx, command_rx) = mpsc::unbounded_channel();
         let (event_tx, _) = broadcast::channel(100);
         let cancellation_token = CancellationToken::new();
@@ -105,7 +105,7 @@ impl AudioService {
     /// # Errors
     /// Returns error if device not found or backend query fails.
     #[instrument(skip(self), fields(device_key = ?key), err)]
-    pub async fn output_device(&self, key: DeviceKey) -> Result<OutputDevice, AudioError> {
+    pub async fn output_device(&self, key: DeviceKey) -> Result<OutputDevice, Error> {
         OutputDevice::get(OutputDeviceParams {
             command_tx: &self.command_tx,
             device_key: key,
@@ -121,7 +121,7 @@ impl AudioService {
     pub async fn output_device_monitored(
         &self,
         key: DeviceKey,
-    ) -> Result<Arc<OutputDevice>, AudioError> {
+    ) -> Result<Arc<OutputDevice>, Error> {
         OutputDevice::get_live(LiveOutputDeviceParams {
             command_tx: &self.command_tx,
             event_tx: &self.event_tx,
@@ -136,7 +136,7 @@ impl AudioService {
     /// # Errors
     /// Returns error if device not found or backend query fails.
     #[instrument(skip(self), fields(device_key = ?key), err)]
-    pub async fn input_device(&self, key: DeviceKey) -> Result<InputDevice, AudioError> {
+    pub async fn input_device(&self, key: DeviceKey) -> Result<InputDevice, Error> {
         InputDevice::get(InputDeviceParams {
             command_tx: &self.command_tx,
             device_key: key,
@@ -149,10 +149,7 @@ impl AudioService {
     /// # Errors
     /// Returns error if device not found, backend query fails, or monitoring setup fails.
     #[instrument(skip(self), fields(device_key = ?key), err)]
-    pub async fn input_device_monitored(
-        &self,
-        key: DeviceKey,
-    ) -> Result<Arc<InputDevice>, AudioError> {
+    pub async fn input_device_monitored(&self, key: DeviceKey) -> Result<Arc<InputDevice>, Error> {
         InputDevice::get_live(LiveInputDeviceParams {
             command_tx: &self.command_tx,
             event_tx: &self.event_tx,
@@ -167,7 +164,7 @@ impl AudioService {
     /// # Errors
     /// Returns error if stream not found or backend query fails.
     #[instrument(skip(self), fields(stream_key = ?key), err)]
-    pub async fn audio_stream(&self, key: StreamKey) -> Result<AudioStream, AudioError> {
+    pub async fn audio_stream(&self, key: StreamKey) -> Result<AudioStream, Error> {
         AudioStream::get(AudioStreamParams {
             command_tx: &self.command_tx,
             stream_key: key,
@@ -180,10 +177,7 @@ impl AudioService {
     /// # Errors
     /// Returns error if stream not found, backend query fails, or monitoring setup fails.
     #[instrument(skip(self), fields(stream_key = ?key), err)]
-    pub async fn audio_stream_monitored(
-        &self,
-        key: StreamKey,
-    ) -> Result<Arc<AudioStream>, AudioError> {
+    pub async fn audio_stream_monitored(&self, key: StreamKey) -> Result<Arc<AudioStream>, Error> {
         AudioStream::get_live(LiveAudioStreamParams {
             command_tx: &self.command_tx,
             event_tx: &self.event_tx,

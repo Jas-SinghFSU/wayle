@@ -11,7 +11,7 @@ use crate::{
     services::{
         network::{
             core::settings_connection::{ConnectionSettings, ConnectionSettingsParams},
-            error::NetworkError,
+            error::Error,
             proxy::settings::SettingsProxy,
         },
         traits::{ModelMonitoring, Reactive},
@@ -19,11 +19,11 @@ use crate::{
 };
 
 impl ModelMonitoring for Settings {
-    type Error = NetworkError;
+    type Error = Error;
 
     async fn start_monitoring(self: Arc<Self>) -> Result<(), Self::Error> {
         let Some(ref cancellation_token) = self.cancellation_token else {
-            return Err(NetworkError::OperationFailed {
+            return Err(Error::OperationFailed {
                 operation: "start_monitoring",
                 reason: String::from("A cancellation_token was not found."),
             });
@@ -48,7 +48,7 @@ async fn monitor(
     weak_settings: Weak<Settings>,
     settings_proxy: SettingsProxy<'_>,
     cancellation_token: CancellationToken,
-) -> Result<(), NetworkError> {
+) -> Result<(), Error> {
     let mut connection_removed = settings_proxy.receive_connection_removed().await;
     let mut connection_added = settings_proxy.receive_new_connection().await;
     let mut hostname_changed = settings_proxy.receive_hostname_changed().await;
@@ -106,7 +106,7 @@ async fn monitor(
 async fn add_connection(
     connection_path: OwnedObjectPath,
     settings: &Arc<Settings>,
-) -> Result<(), NetworkError> {
+) -> Result<(), Error> {
     let new_connection = ConnectionSettings::get(ConnectionSettingsParams {
         connection: &settings.zbus_connection,
         path: connection_path.clone(),
@@ -130,7 +130,7 @@ async fn add_connection(
 async fn remove_connection(
     connection_path: OwnedObjectPath,
     settings: &Arc<Settings>,
-) -> Result<(), NetworkError> {
+) -> Result<(), Error> {
     remove_and_cancel!(settings.connections.clone(), connection_path);
     Ok(())
 }

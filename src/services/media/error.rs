@@ -4,7 +4,7 @@ use super::types::PlayerId;
 
 /// Errors that can occur during media operations
 #[derive(thiserror::Error, Debug)]
-pub enum MediaError {
+pub enum Error {
     /// Player with the given ID was not found
     #[error("Player {0:?} not found")]
     PlayerNotFound(PlayerId),

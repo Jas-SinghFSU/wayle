@@ -22,7 +22,7 @@ use super::{
 use crate::services::{
     bluetooth::{
         discovery::BluetoothDiscovery,
-        error::BluetoothError,
+        error::Error,
         proxy::agent_manager::AgentManager1Proxy,
         types::agent::{AgentCapability, AgentEvent},
     },
@@ -66,9 +66,9 @@ impl BluetoothService {
     ///
     /// # Errors
     /// Returns error if D-Bus connection fails or service initialization fails.
-    pub async fn new() -> Result<Self, BluetoothError> {
+    pub async fn new() -> Result<Self, Error> {
         let connection = Connection::system().await.map_err(|err| {
-            BluetoothError::ServiceInitializationFailed(format!("D-Bus connection failed: {err}"))
+            Error::ServiceInitializationFailed(format!("D-Bus connection failed: {err}"))
         })?;
 
         let cancellation_token = CancellationToken::new();
@@ -80,9 +80,7 @@ impl BluetoothService {
             service_tx: agent_tx.clone(),
         };
         let agent_path = OwnedObjectPath::try_from("/org/wayle/BluetoothAgent").map_err(|err| {
-            BluetoothError::AgentRegistrationFailed(format!(
-                "Failed to construct agent path: {err}"
-            ))
+            Error::AgentRegistrationFailed(format!("Failed to construct agent path: {err}"))
         })?;
 
         connection.object_server().at(&agent_path, agent).await?;
@@ -137,7 +135,7 @@ impl BluetoothService {
     ///
     /// # Errors
     /// Returns error if the device path is invalid or D-Bus communication fails.
-    pub async fn device(&self, device_path: OwnedObjectPath) -> Result<Device, BluetoothError> {
+    pub async fn device(&self, device_path: OwnedObjectPath) -> Result<Device, Error> {
         Device::get(DeviceParams {
             connection: &self.zbus_connection,
             notifier_tx: &self.notifier_tx,
@@ -153,7 +151,7 @@ impl BluetoothService {
     pub async fn device_monitored(
         &self,
         device_path: OwnedObjectPath,
-    ) -> Result<Arc<Device>, BluetoothError> {
+    ) -> Result<Arc<Device>, Error> {
         Device::get_live(LiveDeviceParams {
             connection: &self.zbus_connection,
             notifier_tx: &self.notifier_tx,
@@ -167,7 +165,7 @@ impl BluetoothService {
     ///
     /// # Errors
     /// Returns error if the adapter path is invalid or D-Bus communication fails.
-    pub async fn adapter(&self, adapter_path: OwnedObjectPath) -> Result<Adapter, BluetoothError> {
+    pub async fn adapter(&self, adapter_path: OwnedObjectPath) -> Result<Adapter, Error> {
         Adapter::get(AdapterParams {
             connection: &self.zbus_connection,
             path: adapter_path,
@@ -182,7 +180,7 @@ impl BluetoothService {
     pub async fn adapter_monitored(
         &self,
         adapter_path: OwnedObjectPath,
-    ) -> Result<Arc<Adapter>, BluetoothError> {
+    ) -> Result<Arc<Adapter>, Error> {
         Adapter::get_live(LiveAdapterParams {
             connection: &self.zbus_connection,
             path: adapter_path,
@@ -200,9 +198,9 @@ impl BluetoothService {
     ///
     /// Returns error if no primary adapter is available or discovery operation fails.
     #[instrument(skip(self), err)]
-    pub async fn start_discovery(&self) -> Result<(), BluetoothError> {
+    pub async fn start_discovery(&self) -> Result<(), Error> {
         let Some(active_adapter) = self.primary_adapter.get() else {
-            return Err(BluetoothError::OperationFailed {
+            return Err(Error::OperationFailed {
                 operation: "start_discovery",
                 reason: String::from("No primary adapter found to perform the operation."),
             });
@@ -220,9 +218,9 @@ impl BluetoothService {
     ///
     /// Returns error if no primary adapter is available or discovery operation fails.
     #[instrument(skip(self), fields(duration_secs = duration.as_secs()), err)]
-    pub async fn start_timed_discovery(&self, duration: Duration) -> Result<(), BluetoothError> {
+    pub async fn start_timed_discovery(&self, duration: Duration) -> Result<(), Error> {
         let Some(active_adapter) = self.primary_adapter.get() else {
-            return Err(BluetoothError::OperationFailed {
+            return Err(Error::OperationFailed {
                 operation: "start_discovery",
                 reason: String::from("No primary adapter found to perform the operation."),
             });
@@ -248,9 +246,9 @@ impl BluetoothService {
     ///
     /// Returns error if no primary adapter is available or stop operation fails.
     #[instrument(skip(self), err)]
-    pub async fn stop_discovery(&self) -> Result<(), BluetoothError> {
+    pub async fn stop_discovery(&self) -> Result<(), Error> {
         let Some(active_adapter) = self.primary_adapter.get() else {
-            return Err(BluetoothError::OperationFailed {
+            return Err(Error::OperationFailed {
                 operation: "stop_discovery",
                 reason: String::from("No primary adapter found to perform the operation."),
             });
@@ -267,9 +265,9 @@ impl BluetoothService {
     ///
     /// Returns error if no primary adapter is available or power operation fails.
     #[instrument(skip(self), err)]
-    pub async fn enable(&self) -> Result<(), BluetoothError> {
+    pub async fn enable(&self) -> Result<(), Error> {
         let Some(active_adapter) = self.primary_adapter.get() else {
-            return Err(BluetoothError::OperationFailed {
+            return Err(Error::OperationFailed {
                 operation: "enable",
                 reason: String::from("No primary adapter found to perform the operation."),
             });
@@ -286,9 +284,9 @@ impl BluetoothService {
     ///
     /// Returns error if no primary adapter is available or power operation fails.
     #[instrument(skip(self), err)]
-    pub async fn disable(&self) -> Result<(), BluetoothError> {
+    pub async fn disable(&self) -> Result<(), Error> {
         let Some(active_adapter) = self.primary_adapter.get() else {
-            return Err(BluetoothError::OperationFailed {
+            return Err(Error::OperationFailed {
                 operation: "disable",
                 reason: String::from("No primary adapter found to perform the operation."),
             });
@@ -306,7 +304,7 @@ impl BluetoothService {
     ///
     /// Returns error if no PIN request is pending or responder channel is closed.
     #[instrument(skip(self, pin), err)]
-    pub async fn provide_pin(&self, pin: String) -> Result<(), BluetoothError> {
+    pub async fn provide_pin(&self, pin: String) -> Result<(), Error> {
         providers::pin(self, pin).await
     }
 
@@ -319,7 +317,7 @@ impl BluetoothService {
     ///
     /// Returns error if no passkey request is pending or responder channel is closed.
     #[instrument(skip(self, passkey), err)]
-    pub async fn provide_passkey(&self, passkey: u32) -> Result<(), BluetoothError> {
+    pub async fn provide_passkey(&self, passkey: u32) -> Result<(), Error> {
         providers::passkey(self, passkey).await
     }
 
@@ -332,7 +330,7 @@ impl BluetoothService {
     ///
     /// Returns error if no confirmation request is pending or responder channel is closed.
     #[instrument(skip(self), fields(confirmed = confirmation), err)]
-    pub async fn provide_confirmation(&self, confirmation: bool) -> Result<(), BluetoothError> {
+    pub async fn provide_confirmation(&self, confirmation: bool) -> Result<(), Error> {
         providers::confirmation(self, confirmation).await
     }
 
@@ -347,7 +345,7 @@ impl BluetoothService {
     /// # Errors
     ///
     /// Returns error if no authorization request is pending or responder channel is closed.
-    pub async fn provide_authorization(&self, authorization: bool) -> Result<(), BluetoothError> {
+    pub async fn provide_authorization(&self, authorization: bool) -> Result<(), Error> {
         providers::authorization(self, authorization).await
     }
 
@@ -362,10 +360,7 @@ impl BluetoothService {
     /// # Errors
     ///
     /// Returns error if no service authorization request is pending or responder channel is closed.
-    pub async fn provide_service_authorization(
-        &self,
-        authorization: bool,
-    ) -> Result<(), BluetoothError> {
+    pub async fn provide_service_authorization(&self, authorization: bool) -> Result<(), Error> {
         providers::service_authorization(self, authorization).await
     }
 }

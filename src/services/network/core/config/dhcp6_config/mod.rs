@@ -10,7 +10,7 @@ use zbus::{
 
 use crate::services::{
     common::property::Property,
-    network::{error::NetworkError, proxy::dhcp6_config::DHCP6ConfigProxy},
+    network::{error::Error, proxy::dhcp6_config::DHCP6ConfigProxy},
     traits::Static,
 };
 
@@ -28,7 +28,7 @@ pub struct Dhcp6Config {
 }
 
 impl Static for Dhcp6Config {
-    type Error = NetworkError;
+    type Error = Error;
     type Context<'a> = Dhcp6ConfigParams<'a>;
 
     async fn get(params: Self::Context<'_>) -> Result<Self, Self::Error> {
@@ -37,10 +37,7 @@ impl Static for Dhcp6Config {
 }
 
 impl Dhcp6Config {
-    async fn from_path(
-        connection: &Connection,
-        path: OwnedObjectPath,
-    ) -> Result<Self, NetworkError> {
+    async fn from_path(connection: &Connection, path: OwnedObjectPath) -> Result<Self, Error> {
         let options = Self::fetch_options(connection, &path).await?;
         Ok(Self::from_options(path, options))
     }
@@ -48,12 +45,12 @@ impl Dhcp6Config {
     async fn fetch_options(
         connection: &Connection,
         path: &OwnedObjectPath,
-    ) -> Result<HashMap<String, OwnedValue>, NetworkError> {
+    ) -> Result<HashMap<String, OwnedValue>, Error> {
         let proxy = DHCP6ConfigProxy::new(connection, path)
             .await
-            .map_err(NetworkError::DbusError)?;
+            .map_err(Error::DbusError)?;
 
-        let options = proxy.options().await.map_err(NetworkError::DbusError)?;
+        let options = proxy.options().await.map_err(Error::DbusError)?;
 
         let mut converted = HashMap::new();
         for (key, value) in options {
@@ -62,7 +59,7 @@ impl Dhcp6Config {
                     converted.insert(key, owned_value);
                 }
                 Err(_) => {
-                    return Err(NetworkError::DataConversionFailed {
+                    return Err(Error::DataConversionFailed {
                         data_type: format!("DHCP6 option '{key}'"),
                         reason: String::from("Failed to convert to OwnedValue"),
                     });
