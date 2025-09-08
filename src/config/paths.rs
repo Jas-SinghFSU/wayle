@@ -23,10 +23,10 @@ impl ConfigPaths {
     pub fn config_dir() -> Result<PathBuf, Error> {
         let config_home = env::var("XDG_CONFIG_HOME")
             .or_else(|_| env::var("HOME").map(|home| format!("{home}/.config")))
-            .map_err(|_| {
+            .map_err(|e| {
                 Error::new(
                     ErrorKind::NotFound,
-                    "Neither XDG_CONFIG_HOME nor HOME environment variable found",
+                    format!("Neither XDG_CONFIG_HOME nor HOME environment variable found: {e}"),
                 )
             })?;
 
@@ -42,7 +42,12 @@ impl ConfigPaths {
     pub fn app_data_dir() -> Result<PathBuf, Error> {
         let data_dir = env::var("HOME")
             .map(|home| format!("{home}/.wayle"))
-            .map_err(|_| Error::new(ErrorKind::NotFound, "HOME environment variable found"))?;
+            .map_err(|e| {
+                Error::new(
+                    ErrorKind::NotFound,
+                    format!("HOME environment variable not found: {e}"),
+                )
+            })?;
 
         let app_dir = PathBuf::from(data_dir);
 

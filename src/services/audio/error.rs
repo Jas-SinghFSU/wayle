@@ -25,12 +25,22 @@ pub enum Error {
     VolumeExceedsSafeLimit(f64),
 
     /// Device not found
-    #[error("Device {0:?} ({1:?}) not found")]
-    DeviceNotFound(u32, DeviceType),
+    #[error("Device {index:?} ({device_type:?}) not found")]
+    DeviceNotFound {
+        /// Device index that was not found
+        index: u32,
+        /// Type of device (input/output)
+        device_type: DeviceType,
+    },
 
     /// Stream not found
-    #[error("Stream {0:?} not found")]
-    StreamNotFound(u32, StreamType),
+    #[error("Stream {index:?} ({stream_type:?}) not found")]
+    StreamNotFound {
+        /// Stream index that was not found
+        index: u32,
+        /// Type of stream
+        stream_type: StreamType,
+    },
 
     /// Command channel disconnected
     #[error("command channel disconnected: {0}")]
@@ -51,4 +61,8 @@ pub enum Error {
     /// Operation not supported
     #[error("Operation not supported: {0}")]
     OperationNotSupported(String),
+
+    /// Monitoring not initialized - missing required components for live monitoring
+    #[error("Monitoring not initialized: {0}")]
+    MonitoringNotInitialized(String),
 }

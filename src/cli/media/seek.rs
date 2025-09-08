@@ -46,7 +46,7 @@ fn parse_position(
     if let Some(percentage_str) = position_str.strip_suffix('%') {
         let percentage = percentage_str
             .parse::<f64>()
-            .map_err(|_| String::from("Invalid percentage format"))?;
+            .map_err(|e| format!("Invalid percentage format: {e}"))?;
 
         if !(0.0..=100.0).contains(&percentage) {
             return Err(String::from("Percentage must be between 0 and 100"));
@@ -67,7 +67,7 @@ fn parse_position(
         let delta_str = &position_str[1..];
         let delta_secs = delta_str
             .parse::<i64>()
-            .map_err(|_| String::from("Invalid relative seek format"))?;
+            .map_err(|e| format!("Invalid relative seek format: {e}"))?;
 
         let new_position = if position_str.starts_with('+') {
             current.saturating_add(Duration::from_secs(delta_secs.unsigned_abs()))
@@ -86,11 +86,11 @@ fn parse_position(
 
         let minutes = parts[0]
             .parse::<u64>()
-            .map_err(|_| String::from("Invalid minutes value"))?;
+            .map_err(|e| format!("Invalid minutes value: {e}"))?;
 
         let seconds = parts[1]
             .parse::<u64>()
-            .map_err(|_| String::from("Invalid seconds value"))?;
+            .map_err(|e| format!("Invalid seconds value: {e}"))?;
 
         if seconds >= 60 {
             return Err(String::from("Seconds must be less than 60"));
@@ -99,9 +99,9 @@ fn parse_position(
         return Ok(Duration::from_secs(minutes * 60 + seconds));
     }
 
-    let seconds = position_str.parse::<u64>().map_err(|_| {
-        String::from(
-            "Invalid position format. Use seconds, mm:ss, percentage (50%), or relative (+10, -10)",
+    let seconds = position_str.parse::<u64>().map_err(|e| {
+        format!(
+            "Invalid position format '{position_str}': {e}. Use seconds, mm:ss, percentage (50%), or relative (+10, -10)"
         )
     })?;
 

@@ -17,14 +17,14 @@ impl ModelMonitoring for OutputDevice {
 
     async fn start_monitoring(self: Arc<Self>) -> Result<(), Self::Error> {
         let Some(ref cancellation_token) = self.cancellation_token else {
-            return Err(Error::OperationFailed(String::from(
-                "Cancellation token not available for monitoring",
+            return Err(Error::MonitoringNotInitialized(String::from(
+                "Cancellation token not available",
             )));
         };
 
         let Some(ref event_tx) = self.event_tx else {
-            return Err(Error::OperationFailed(String::from(
-                "Event sender not available for monitoring",
+            return Err(Error::MonitoringNotInitialized(String::from(
+                "Event sender not available",
             )));
         };
 

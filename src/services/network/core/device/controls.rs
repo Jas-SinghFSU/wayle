@@ -6,9 +6,8 @@ use zbus::{
     zvariant::{OwnedObjectPath, OwnedValue},
 };
 
-use crate::services::network::{error::Error, proxy::devices::DeviceProxy};
-
 use super::types::AppliedConnection;
+use crate::services::network::{error::Error, proxy::devices::DeviceProxy};
 
 pub(super) struct DeviceControls;
 

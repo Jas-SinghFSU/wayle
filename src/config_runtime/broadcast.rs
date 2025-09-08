@@ -108,9 +108,9 @@ impl BroadcastService {
                 sender: tx,
             })
             .await
-            .map_err(|_| Error::ServiceUnavailable {
+            .map_err(|e| Error::ServiceUnavailable {
                 service: String::from("broadcast"),
-                details: String::from("Broadcast service is not running"),
+                details: format!("Failed to send subscribe command to broadcast service: {e}"),
             })?;
 
         Ok(Subscription {
@@ -134,9 +134,9 @@ impl BroadcastService {
         self.command_tx
             .send(BroadcastCommand::Broadcast(change))
             .await
-            .map_err(|_| Error::ServiceUnavailable {
+            .map_err(|e| Error::ServiceUnavailable {
                 service: String::from("broadcast"),
-                details: String::from("Broadcast service is not running"),
+                details: format!("Failed to send broadcast command: {e}"),
             })
     }
 

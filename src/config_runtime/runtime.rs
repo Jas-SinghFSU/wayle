@@ -211,9 +211,9 @@ impl ConfigRuntime {
         })?;
 
         let main_path = ConfigPaths::main_config();
-        let mut main_config_toml = fs::read_to_string(&main_path).map_err(|_| Error::IoError {
+        let mut main_config_toml = fs::read_to_string(&main_path).map_err(|e| Error::IoError {
             path: main_path.clone(),
-            details: String::from("Main config file not found during persist operation"),
+            details: format!("Failed to read main config file during persist operation: {e}"),
         })?;
 
         if !main_config_toml.contains("\"@runtime\"") {

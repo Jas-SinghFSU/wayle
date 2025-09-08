@@ -184,12 +184,14 @@ impl PulseBackend {
                         .values()
                         .find(|d| d.key() == device_key)
                         .cloned()
-                        .ok_or(Error::DeviceNotFound(
-                            device_key.index,
-                            device_key.device_type,
-                        ))
+                        .ok_or(Error::DeviceNotFound {
+                            index: device_key.index,
+                            device_type: device_key.device_type,
+                        })
                 } else {
-                    Err(Error::BackendCommunicationFailed("Failed to acquire read lock".into()))
+                    Err(Error::LockPoisoned(String::from(
+                        "Device storage lock poisoned",
+                    )))
                 };
                 let _ = responder.send(result);
             }
@@ -202,12 +204,14 @@ impl PulseBackend {
                         .values()
                         .find(|s| s.key() == stream_key)
                         .cloned()
-                        .ok_or(Error::StreamNotFound(
-                            stream_key.index,
-                            stream_key.stream_type,
-                        ))
+                        .ok_or(Error::StreamNotFound {
+                            index: stream_key.index,
+                            stream_type: stream_key.stream_type,
+                        })
                 } else {
-                    Err(Error::BackendCommunicationFailed("Failed to acquire read lock".into()))
+                    Err(Error::LockPoisoned(String::from(
+                        "Stream storage lock poisoned",
+                    )))
                 };
                 let _ = responder.send(result);
             }

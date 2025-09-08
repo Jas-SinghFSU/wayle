@@ -41,11 +41,12 @@ pub(super) fn navigate_path(value: &Value, path: &str) -> Result<Value, Error> {
                 })?;
             }
             Value::Array(array) => {
-                let index = part.parse::<usize>().map_err(|_| {
+                let index = part.parse::<usize>().map_err(|e| {
                     Error::InvalidPath(format!(
-                        "Invalid array index '{}' at path '{}'",
+                        "Invalid array index '{}' at path '{}': {}",
                         part,
-                        parts[..i].join(".")
+                        parts[..i].join("."),
+                        e
                     ))
                 })?;
 
@@ -119,11 +120,12 @@ pub(super) fn navigate_step_mut<'a>(
             })
         }
         Value::Array(arr) => {
-            let index = key.parse::<usize>().map_err(|_| {
+            let index = key.parse::<usize>().map_err(|e| {
                 Error::InvalidPath(format!(
-                    "Invalid array index '{}' at path '{}'",
+                    "Invalid array index '{}' at path '{}': {}",
                     key,
-                    path_so_far.join(".")
+                    path_so_far.join("."),
+                    e
                 ))
             })?;
 
@@ -156,7 +158,7 @@ pub(super) fn insert_value(
         Value::Array(arr) => {
             let index = key
                 .parse::<usize>()
-                .map_err(|_| Error::InvalidPath(format!("Invalid array index '{key}'")))?;
+                .map_err(|e| Error::InvalidPath(format!("Invalid array index '{key}': {e}")))?;
 
             arr.get_mut(index)
                 .map(|elem| *elem = new_value)

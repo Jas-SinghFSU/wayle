@@ -141,10 +141,10 @@ impl Reactive for InputDevice {
                 None,
                 None,
             )),
-            Device::Sink(_) => Err(Error::DeviceNotFound(
-                params.device_key.index,
-                DeviceType::Input,
-            )),
+            Device::Sink(_) => Err(Error::DeviceNotFound {
+                index: params.device_key.index,
+                device_type: DeviceType::Input,
+            }),
         }
     }
 
@@ -170,10 +170,10 @@ impl Reactive for InputDevice {
                 Some(params.cancellation_token.child_token()),
             )),
             Device::Sink(_) => {
-                return Err(Error::DeviceNotFound(
-                    params.device_key.index,
-                    DeviceType::Input,
-                ));
+                return Err(Error::DeviceNotFound {
+                    index: params.device_key.index,
+                    device_type: DeviceType::Input,
+                });
             }
         };
 

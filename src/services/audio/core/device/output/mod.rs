@@ -138,10 +138,10 @@ impl Reactive for OutputDevice {
                 None,
                 None,
             )),
-            Device::Source(_) => Err(Error::DeviceNotFound(
-                params.device_key.index,
-                DeviceType::Output,
-            )),
+            Device::Source(_) => Err(Error::DeviceNotFound {
+                index: params.device_key.index,
+                device_type: DeviceType::Output,
+            }),
         }
     }
 
@@ -167,10 +167,10 @@ impl Reactive for OutputDevice {
                 Some(params.cancellation_token.child_token()),
             )),
             Device::Source(_) => {
-                return Err(Error::DeviceNotFound(
-                    params.device_key.index,
-                    DeviceType::Output,
-                ));
+                return Err(Error::DeviceNotFound {
+                    index: params.device_key.index,
+                    device_type: DeviceType::Output,
+                });
             }
         };
 
