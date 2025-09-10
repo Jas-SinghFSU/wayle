@@ -2,7 +2,7 @@
 
 > **⚠️ Work in Progress**: Wayle is under active development. Core infrastructure is functional, but UI components and many services are not yet implemented. Not ready for daily use.
 
-A fast, configurable desktop environment framework for Wayland compositors. Built in Rust with Relm4 and focused on performance, modularity, and a great user experience. A successor to HyprPanel without the pain or dependency on Hyprland.
+A fast, configurable desktop environment shell for Wayland compositors. Built in Rust with Relm4 and focused on performance, modularity, and a great user experience. A successor to HyprPanel without the pain or dependency on Hyprland.
 
 ## Progress
 
@@ -19,7 +19,7 @@ A fast, configurable desktop environment framework for Wayland compositors. Buil
 - [x] **Network**
 - [x] **Bluetooth**
 - [ ] **Hyprland**
-- [ ] **Battery** (WIP)
+- [x] **Battery**
 - [ ] **Cava**
 - [ ] **Notification Daemon**
 - [x] **Power Profiles**
