@@ -10,6 +10,8 @@ pub mod common;
 pub mod media;
 /// Network control service
 pub mod network;
+/// Notification management service
+pub mod notification;
 /// Power profiles management service
 pub mod power_profiles;
 /// Service traits for uniform interfaces
