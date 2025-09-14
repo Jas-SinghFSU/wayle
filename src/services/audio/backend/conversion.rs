@@ -126,7 +126,7 @@ pub(crate) fn create_device_info_from_sink(sink_info: &PulseSinkInfo) -> SinkInf
     }
 
     SinkInfo {
-        base: DeviceInfo {
+        device: DeviceInfo {
             index: sink_info.index,
             name,
             description,
@@ -213,7 +213,7 @@ pub(crate) fn create_device_info_from_source(source_info: &PulseSourceInfo) -> S
     }
 
     SourceInfo {
-        base: DeviceInfo {
+        device: DeviceInfo {
             index: source_info.index,
             name,
             description,

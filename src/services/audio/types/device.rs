@@ -105,7 +105,7 @@ pub(crate) struct DeviceInfo {
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) struct SinkInfo {
     /// Common device information
-    pub base: DeviceInfo,
+    pub device: DeviceInfo,
     /// Monitor source index
     pub monitor_source: u32,
     /// Monitor source name
@@ -116,7 +116,7 @@ pub(crate) struct SinkInfo {
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) struct SourceInfo {
     /// Common device information
-    pub base: DeviceInfo,
+    pub device: DeviceInfo,
     /// Index of the sink being monitored (if this is a monitor source)
     pub monitor_of_sink: Option<u32>,
     /// Name of the sink being monitored (if this is a monitor source)
@@ -135,35 +135,17 @@ impl DeviceInfo {
     }
 }
 
-use std::ops::Deref;
-
-impl Deref for SinkInfo {
-    type Target = DeviceInfo;
-
-    fn deref(&self) -> &Self::Target {
-        &self.base
-    }
-}
-
-impl Deref for SourceInfo {
-    type Target = DeviceInfo;
-
-    fn deref(&self) -> &Self::Target {
-        &self.base
-    }
-}
-
 impl SinkInfo {
     /// Get device key for this sink
     pub fn key(&self) -> DeviceKey {
-        self.base.key(DeviceType::Output)
+        self.device.key(DeviceType::Output)
     }
 }
 
 impl SourceInfo {
     /// Get device key for this source
     pub fn key(&self) -> DeviceKey {
-        self.base.key(DeviceType::Input)
+        self.device.key(DeviceType::Input)
     }
 }
 

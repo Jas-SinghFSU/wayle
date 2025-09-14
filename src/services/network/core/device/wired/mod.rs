@@ -1,7 +1,7 @@
 pub(crate) mod monitoring;
 pub(crate) mod types;
 
-use std::{ops::Deref, sync::Arc};
+use std::sync::Arc;
 
 use types::SpeedMbps;
 pub(crate) use types::{DeviceWiredParams, LiveDeviceWiredParams, WiredProperties};
@@ -27,7 +27,8 @@ use crate::{
 /// hardware address while inheriting all base device properties through Deref.
 #[derive(Debug, Clone)]
 pub struct DeviceWired {
-    base: Device,
+    /// The underlying NetworkManager device providing core network functionality.
+    pub core: Device,
 
     /// Permanent hardware address of the device.
     pub perm_hw_address: Property<String>,
@@ -65,14 +66,6 @@ impl Reactive for DeviceWired {
         device.clone().start_monitoring().await?;
 
         Ok(device)
-    }
-}
-
-impl Deref for DeviceWired {
-    type Target = Device;
-
-    fn deref(&self) -> &Self::Target {
-        &self.base
     }
 }
 
@@ -119,9 +112,9 @@ impl DeviceWired {
         })
     }
 
-    fn from_props(base: Device, props: WiredProperties) -> Self {
+    fn from_props(core: Device, props: WiredProperties) -> Self {
         Self {
-            base,
+            core,
             perm_hw_address: Property::new(props.perm_hw_address),
             speed: Property::new(props.speed),
             s390_subchannels: Property::new(props.s390_subchannels),

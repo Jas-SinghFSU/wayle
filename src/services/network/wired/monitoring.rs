@@ -21,7 +21,7 @@ impl ModelMonitoring for Wired {
         let device_arc = Arc::new(self.device.clone());
         device_arc.start_monitoring().await?;
 
-        let Some(ref cancellation_token) = self.cancellation_token else {
+        let Some(ref cancellation_token) = self.device.core.cancellation_token else {
             return Err(Error::OperationFailed {
                 operation: "start_monitoring",
                 reason: String::from("A cancellation_token was not found."),
@@ -30,9 +30,12 @@ impl ModelMonitoring for Wired {
 
         let cancel_token = cancellation_token.clone();
         let weak_self = Arc::downgrade(&self);
-        let device_proxy = DeviceProxy::new(&self.connection, self.device.object_path.clone())
-            .await
-            .map_err(Error::DbusError)?;
+        let device_proxy = DeviceProxy::new(
+            &self.device.core.connection,
+            self.device.core.object_path.clone(),
+        )
+        .await
+        .map_err(Error::DbusError)?;
 
         tokio::spawn(async move {
             let _ = monitor_wired_connectivity(weak_self, device_proxy, cancel_token).await;
@@ -56,7 +59,7 @@ async fn monitor_wired_connectivity(
 
         tokio::select! {
             _ = cancellation_token.cancelled() => {
-                debug!("Wired monitoring cancelled for {}", wired.device.object_path);
+                debug!("Wired monitoring cancelled for {}", wired.device.core.object_path);
                 return Ok(());
             }
             Some(change) = connectivity_changed.next() => {

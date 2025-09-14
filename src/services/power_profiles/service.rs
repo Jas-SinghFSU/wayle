@@ -1,4 +1,4 @@
-use std::{ops::Deref, sync::Arc};
+use std::sync::Arc;
 
 use tokio_util::sync::CancellationToken;
 use tracing::instrument;
@@ -16,15 +16,8 @@ use crate::services::traits::Reactive;
 /// allowing access to available profiles, current active profile, and reactive
 /// monitoring of profile changes through the D-Bus interface.
 pub struct PowerProfilesService {
-    power_profiles: Arc<PowerProfiles>,
-}
-
-impl Deref for PowerProfilesService {
-    type Target = PowerProfiles;
-
-    fn deref(&self) -> &Self::Target {
-        &self.power_profiles
-    }
+    /// The power profiles D-Bus proxy for system power management operations.
+    pub power_profiles: Arc<PowerProfiles>,
 }
 
 impl PowerProfilesService {

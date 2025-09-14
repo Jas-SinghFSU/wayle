@@ -1,7 +1,7 @@
 mod monitoring;
 mod types;
 
-use std::{ops::Deref, sync::Arc};
+use std::sync::Arc;
 
 pub(crate) use types::{LiveWiredParams, WiredParams};
 
@@ -29,17 +29,9 @@ pub struct Wired {
     pub connectivity: Property<NetworkStatus>,
 }
 
-impl Deref for Wired {
-    type Target = DeviceWired;
-
-    fn deref(&self) -> &Self::Target {
-        &self.device
-    }
-}
-
 impl PartialEq for Wired {
     fn eq(&self, other: &Self) -> bool {
-        self.device.object_path == other.device.object_path
+        self.device.core.object_path == other.device.core.object_path
     }
 }
 
@@ -83,7 +75,7 @@ impl Reactive for Wired {
 
 impl Wired {
     async fn from_device(device: DeviceWired) -> Result<Self, Error> {
-        let device_state = &device.state.get();
+        let device_state = &device.core.state.get();
         let connectivity = NetworkStatus::from_device_state(*device_state);
 
         Ok(Self {

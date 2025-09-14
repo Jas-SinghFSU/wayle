@@ -40,7 +40,7 @@ impl ModelMonitoring for Wifi {
         let device_arc = Arc::new(self.device.clone());
         device_arc.start_monitoring().await?;
 
-        let Some(ref cancellation_token) = self.cancellation_token else {
+        let Some(ref cancellation_token) = self.device.core.cancellation_token else {
             return Err(Error::OperationFailed {
                 operation: "start_monitoring",
                 reason: String::from("A cancellation_token was not found."),
@@ -51,7 +51,7 @@ impl ModelMonitoring for Wifi {
         let device = &self.device;
 
         populate_existing_access_points(
-            &self.connection,
+            &self.device.core.connection,
             device,
             access_points,
             cancellation_token,
@@ -61,13 +61,19 @@ impl ModelMonitoring for Wifi {
         let cancel_token = cancellation_token.clone();
         let weak_self = Arc::downgrade(&self);
 
-        let wireless_proxy = DeviceWirelessProxy::new(&self.connection, self.object_path.clone())
-            .await
-            .map_err(Error::DbusError)?;
-        let device_proxy = DeviceProxy::new(&self.connection, self.object_path.clone())
-            .await
-            .map_err(Error::DbusError)?;
-        let nm_proxy = NetworkManagerProxy::new(&self.connection)
+        let wireless_proxy = DeviceWirelessProxy::new(
+            &self.device.core.connection,
+            self.device.core.object_path.clone(),
+        )
+        .await
+        .map_err(Error::DbusError)?;
+        let device_proxy = DeviceProxy::new(
+            &self.device.core.connection,
+            self.device.core.object_path.clone(),
+        )
+        .await
+        .map_err(Error::DbusError)?;
+        let nm_proxy = NetworkManagerProxy::new(&self.device.core.connection)
             .await
             .map_err(Error::DbusError)?;
 
@@ -146,7 +152,7 @@ async fn monitor_wifi(
         };
 
         handle_access_point_changed(
-            &wifi.connection,
+            &wifi.device.core.connection,
             wifi.device.active_access_point.get(),
             &wifi.ssid,
             &wifi.strength,
@@ -169,7 +175,7 @@ async fn monitor_wifi(
                 Some(added) = ap_added.next() => {
                     if let Ok(args) = added.args() {
                         handle_ap_added(
-                            &wifi.connection,
+                            &wifi.device.core.connection,
                             args.access_point,
                             &wifi.access_points,
                             &cancellation_token
@@ -196,7 +202,7 @@ async fn monitor_wifi(
 
                     let (new_ssid_stream, new_strength_stream) =
                         handle_access_point_changed(
-                            &wifi.connection,
+                            &wifi.device.core.connection,
                             new_ap_path,
                             &wifi.ssid,
                             &wifi.strength

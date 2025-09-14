@@ -16,14 +16,14 @@ impl ModelMonitoring for DeviceWifi {
     type Error = Error;
 
     async fn start_monitoring(self: Arc<Self>) -> Result<(), Self::Error> {
-        let base_arc = Arc::new(self.base.clone());
+        let base_arc = Arc::new(self.core.clone());
         base_arc.start_monitoring().await?;
 
-        let proxy = DeviceWirelessProxy::new(&self.connection, self.object_path.clone())
+        let proxy = DeviceWirelessProxy::new(&self.core.connection, self.core.object_path.clone())
             .await
             .map_err(Error::DbusError)?;
 
-        let Some(ref cancellation_token) = self.cancellation_token else {
+        let Some(ref cancellation_token) = self.core.cancellation_token else {
             return Err(Error::OperationFailed {
                 operation: "start_monitoring",
                 reason: String::from("A cancellation_token was not found."),
@@ -62,7 +62,7 @@ async fn monitor_wifi(
 
         tokio::select! {
             _ = cancellation_token.cancelled() => {
-                debug!("DeviceWifi monitoring cancelled for {}", device.object_path);
+                debug!("DeviceWifi monitoring cancelled for {}", device.core.object_path);
                 return;
             }
             Some(change) = perm_hw_address_changed.next() => {

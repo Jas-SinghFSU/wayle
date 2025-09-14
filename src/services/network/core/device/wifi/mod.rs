@@ -3,7 +3,7 @@ pub(crate) mod monitoring;
 /// WiFi device types
 pub mod types;
 
-use std::{collections::HashMap, ops::Deref, sync::Arc};
+use std::{collections::HashMap, sync::Arc};
 
 use controls::DeviceWifiControls;
 use tracing::warn;
@@ -31,7 +31,8 @@ use crate::{
 /// strength, and scanning while inheriting all base device properties through Deref.
 #[derive(Debug, Clone)]
 pub struct DeviceWifi {
-    base: Device,
+    /// The underlying NetworkManager device providing core network functionality.
+    pub core: Device,
 
     /// Permanent hardware address of the device.
     pub perm_hw_address: Property<String>,
@@ -86,14 +87,6 @@ impl Reactive for DeviceWifi {
     }
 }
 
-impl Deref for DeviceWifi {
-    type Target = Device;
-
-    fn deref(&self) -> &Self::Target {
-        &self.base
-    }
-}
-
 impl DeviceWifi {
     /// Request a scan for available access points.
     ///
@@ -106,7 +99,12 @@ impl DeviceWifi {
     /// Returns `NetworkError::DbusError` if D-Bus proxy creation fails or
     /// `NetworkError::OperationFailed` if the scan request fails.
     pub async fn request_scan(&self) -> Result<(), Error> {
-        DeviceWifiControls::request_scan(&self.connection, &self.object_path, HashMap::new()).await
+        DeviceWifiControls::request_scan(
+            &self.core.connection,
+            &self.core.object_path,
+            HashMap::new(),
+        )
+        .await
     }
 
     /// Get the list of all access points visible to this device, including hidden ones.
@@ -114,7 +112,8 @@ impl DeviceWifi {
     /// # Errors
     /// Returns error if the D-Bus operation fails.
     pub async fn get_all_access_points(&self) -> Result<Vec<OwnedObjectPath>, Error> {
-        DeviceWifiControls::get_all_access_points(&self.connection, &self.object_path).await
+        DeviceWifiControls::get_all_access_points(&self.core.connection, &self.core.object_path)
+            .await
     }
 
     async fn verify_is_wifi_device(
@@ -179,9 +178,9 @@ impl DeviceWifi {
         })
     }
 
-    fn from_props(base: Device, props: WifiProperties) -> Self {
+    fn from_props(core: Device, props: WifiProperties) -> Self {
         Self {
-            base,
+            core,
             perm_hw_address: Property::new(props.perm_hw_address),
             mode: Property::new(NM80211Mode::from_u32(props.mode)),
             bitrate: Property::new(props.bitrate),
@@ -245,7 +244,7 @@ impl DeviceWifi {
         );
 
         let device = Self {
-            base,
+            core: base,
             perm_hw_address: Property::new(unwrap_string!(perm_hw_address)),
             mode: Property::new(NM80211Mode::from_u32(unwrap_u32!(mode))),
             bitrate: Property::new(unwrap_u32!(bitrate)),

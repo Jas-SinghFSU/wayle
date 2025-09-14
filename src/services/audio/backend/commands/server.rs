@@ -32,7 +32,7 @@ pub(crate) fn trigger_info_query(
                     .values()
                     .find(|device| {
                         if let Device::Sink(sink) = device {
-                            return sink.name == sink_name;
+                            return sink.device.name == sink_name;
                         }
 
                         false
@@ -59,7 +59,7 @@ pub(crate) fn trigger_info_query(
                     .values()
                     .find(|device| {
                         if let Device::Source(source) = device {
-                            source.name == source_name
+                            source.device.name == source_name
                         } else {
                             false
                         }
@@ -89,8 +89,8 @@ pub(crate) fn set_default_input(
         && let Some(device) = devices_guard.values().find(|d| d.key() == device_key)
     {
         let name = match device {
-            Device::Sink(sink) => &sink.name,
-            Device::Source(source) => &source.name,
+            Device::Sink(sink) => &sink.device.name,
+            Device::Source(source) => &source.device.name,
         };
         context.set_default_source(name.as_str(), |_success| {});
     }
@@ -105,8 +105,8 @@ pub(crate) fn set_default_output(
         && let Some(device) = devices_guard.values().find(|d| d.key() == device_key)
     {
         let name = match device {
-            Device::Sink(sink) => &sink.name,
-            Device::Source(source) => &source.name,
+            Device::Sink(sink) => &sink.device.name,
+            Device::Source(source) => &source.device.name,
         };
         context.set_default_sink(name.as_str(), |_success| {});
     }

@@ -1,4 +1,4 @@
-use std::{ops::Deref, sync::Arc};
+use std::sync::Arc;
 
 use tokio_util::sync::CancellationToken;
 use tracing::instrument;
@@ -16,15 +16,8 @@ use crate::services::traits::Reactive;
 /// allowing access to battery state, capacity, charge status, and reactive
 /// monitoring of changes through the D-Bus interface.
 pub struct BatteryService {
-    device: Arc<Device>,
-}
-
-impl Deref for BatteryService {
-    type Target = Device;
-
-    fn deref(&self) -> &Self::Target {
-        &self.device
-    }
+    /// The UPower battery device proxy for power metrics and charging state.
+    pub device: Arc<Device>,
 }
 
 impl BatteryService {

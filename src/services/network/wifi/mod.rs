@@ -2,7 +2,7 @@ mod controls;
 mod monitoring;
 mod types;
 
-use std::{ops::Deref, sync::Arc};
+use std::sync::Arc;
 
 use controls::WifiControls;
 use futures::stream::Stream;
@@ -49,17 +49,9 @@ pub struct Wifi {
     pub access_points: Property<Vec<Arc<AccessPoint>>>,
 }
 
-impl Deref for Wifi {
-    type Target = DeviceWifi;
-
-    fn deref(&self) -> &Self::Target {
-        &self.device
-    }
-}
-
 impl PartialEq for Wifi {
     fn eq(&self, other: &Self) -> bool {
-        self.device.object_path == other.device.object_path
+        self.device.core.object_path == other.device.core.object_path
     }
 }
 
@@ -117,7 +109,7 @@ impl Wifi {
     ///
     /// Returns `NetworkError::OperationFailed` if the operation fails.
     pub async fn set_enabled(&self, enabled: bool) -> Result<(), Error> {
-        WifiControls::set_enabled(&self.connection, enabled).await
+        WifiControls::set_enabled(&self.device.core.connection, enabled).await
     }
 
     /// Connect to a WiFi access point.
@@ -140,8 +132,8 @@ impl Wifi {
         password: Option<String>,
     ) -> Result<(), Error> {
         WifiControls::connect(
-            &self.connection,
-            &self.device.object_path,
+            &self.device.core.connection,
+            &self.device.core.object_path,
             ap_path,
             password,
         )
@@ -157,14 +149,14 @@ impl Wifi {
     ///
     /// Returns `NetworkError::OperationFailed` if the disconnection fails
     pub async fn disconnect(&self) -> Result<(), Error> {
-        WifiControls::disconnect(&self.connection, &self.device.object_path).await
+        WifiControls::disconnect(&self.device.core.connection, &self.device.core.object_path).await
     }
 
     async fn from_device(connection: &Connection, device: DeviceWifi) -> Result<Self, Error> {
         let nm_proxy = NetworkManagerProxy::new(connection).await?;
 
         let enabled_state = unwrap_bool!(nm_proxy.wireless_enabled().await);
-        let device_state = &device.state.get();
+        let device_state = &device.core.state.get();
 
         let active_ap_path = &device.active_access_point.get();
         let (ssid, strength) =

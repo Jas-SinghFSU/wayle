@@ -195,55 +195,56 @@ impl InputDevice {
             event_tx,
             cancellation_token,
             key: source.key(),
-            name: Property::new(source.name.clone()),
-            description: Property::new(source.description.clone()),
-            card_index: Property::new(source.card_index),
-            owner_module: Property::new(source.owner_module),
-            driver: Property::new(source.driver.clone()),
-            state: Property::new(source.state),
-            volume: Property::new(source.volume.clone()),
-            base_volume: Property::new(source.base_volume.clone()),
-            n_volume_steps: Property::new(source.n_volume_steps),
-            muted: Property::new(source.muted),
-            properties: Property::new(source.properties.clone()),
-            ports: Property::new(source.ports.clone()),
-            active_port: Property::new(source.active_port.clone()),
-            formats: Property::new(source.formats.clone()),
-            sample_spec: Property::new(source.sample_spec.clone()),
-            channel_map: Property::new(source.channel_map.clone()),
+            name: Property::new(source.device.name.clone()),
+            description: Property::new(source.device.description.clone()),
+            card_index: Property::new(source.device.card_index),
+            owner_module: Property::new(source.device.owner_module),
+            driver: Property::new(source.device.driver.clone()),
+            state: Property::new(source.device.state),
+            volume: Property::new(source.device.volume.clone()),
+            base_volume: Property::new(source.device.base_volume.clone()),
+            n_volume_steps: Property::new(source.device.n_volume_steps),
+            muted: Property::new(source.device.muted),
+            properties: Property::new(source.device.properties.clone()),
+            ports: Property::new(source.device.ports.clone()),
+            active_port: Property::new(source.device.active_port.clone()),
+            formats: Property::new(source.device.formats.clone()),
+            sample_spec: Property::new(source.device.sample_spec.clone()),
+            channel_map: Property::new(source.device.channel_map.clone()),
             monitor_of_sink: Property::new(source.monitor_of_sink),
             monitor_of_sink_name: Property::new(source.monitor_of_sink_name.clone()),
             is_monitor: Property::new(source.is_monitor),
-            latency: Property::new(source.latency),
-            configured_latency: Property::new(source.configured_latency),
-            flags: Property::new(source.flags),
+            latency: Property::new(source.device.latency),
+            configured_latency: Property::new(source.device.configured_latency),
+            flags: Property::new(source.device.flags),
         }
     }
 
     pub(crate) fn update_from_source(&self, source: &SourceInfo) {
-        self.name.set(source.name.clone());
-        self.description.set(source.description.clone());
-        self.card_index.set(source.card_index);
-        self.owner_module.set(source.owner_module);
-        self.driver.set(source.driver.clone());
-        self.state.set(source.state);
-        self.volume.set(source.volume.clone());
-        self.base_volume.set(source.base_volume.clone());
-        self.n_volume_steps.set(source.n_volume_steps);
-        self.muted.set(source.muted);
-        self.properties.set(source.properties.clone());
-        self.ports.set(source.ports.clone());
-        self.active_port.set(source.active_port.clone());
-        self.formats.set(source.formats.clone());
-        self.sample_spec.set(source.sample_spec.clone());
-        self.channel_map.set(source.channel_map.clone());
+        self.name.set(source.device.name.clone());
+        self.description.set(source.device.description.clone());
+        self.card_index.set(source.device.card_index);
+        self.owner_module.set(source.device.owner_module);
+        self.driver.set(source.device.driver.clone());
+        self.state.set(source.device.state);
+        self.volume.set(source.device.volume.clone());
+        self.base_volume.set(source.device.base_volume.clone());
+        self.n_volume_steps.set(source.device.n_volume_steps);
+        self.muted.set(source.device.muted);
+        self.properties.set(source.device.properties.clone());
+        self.ports.set(source.device.ports.clone());
+        self.active_port.set(source.device.active_port.clone());
+        self.formats.set(source.device.formats.clone());
+        self.sample_spec.set(source.device.sample_spec.clone());
+        self.channel_map.set(source.device.channel_map.clone());
         self.monitor_of_sink.set(source.monitor_of_sink);
         self.monitor_of_sink_name
             .set(source.monitor_of_sink_name.clone());
         self.is_monitor.set(source.is_monitor);
-        self.latency.set(source.latency);
-        self.configured_latency.set(source.configured_latency);
-        self.flags.set(source.flags);
+        self.latency.set(source.device.latency);
+        self.configured_latency
+            .set(source.device.configured_latency);
+        self.flags.set(source.device.flags);
     }
 
     /// Set the volume for this input device.

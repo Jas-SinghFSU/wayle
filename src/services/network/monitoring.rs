@@ -75,14 +75,14 @@ async fn update_primary_connection(
     primary: &Property<ConnectionType>,
 ) {
     if let Some(wifi_service) = wifi
-        && wifi_service.active_connection.get().as_str() == connection.as_str()
+        && wifi_service.device.core.active_connection.get().as_str() == connection.as_str()
     {
         primary.set(ConnectionType::Wifi);
         return;
     }
 
     if let Some(wired_service) = wired
-        && wired_service.active_connection.get().as_str() == connection.as_str()
+        && wired_service.device.core.active_connection.get().as_str() == connection.as_str()
     {
         primary.set(ConnectionType::Wired);
         return;
