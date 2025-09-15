@@ -1,4 +1,4 @@
-use std::num::NonZeroU32;
+use std::cmp::PartialEq;
 
 use zbus::Connection;
 
@@ -19,11 +19,12 @@ use crate::services::{
 /// Each notification displayed is allocated a unique ID by the server. This is unique
 /// within the session. While the notification server is running, the ID will not be
 /// recycled unless the capacity of a uint32 is exceeded.
+#[derive(Clone, Debug)]
 pub struct Notification {
     zbus_connection: Connection,
 
     /// The ID of the notification
-    pub id: NonZeroU32,
+    pub id: u32,
     /// The optional name of the application sending the notification. This should be the
     /// application's formal name, rather than some sort of ID. An example would be
     /// "FredApp E-Mail Client," rather than "fredapp-email-client."
@@ -36,7 +37,7 @@ pub struct Notification {
     /// or "A friend has come online". It should generally not be longer than 40 characters,
     /// though this is not a requirement, and server implementations should word wrap if
     /// necessary. The summary must be encoded using UTF-8.
-    pub summmary: Property<String>,
+    pub summary: Property<String>,
     /// This is a multi-line body of text. Each line is a paragraph, server implementations
     /// are free to word wrap them as they see fit.
     ///
@@ -70,9 +71,15 @@ pub struct Notification {
     pub category: Property<Option<Category>>,
 }
 
+impl PartialEq for Notification {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+    }
+}
+
 impl Notification {
-    pub(crate) fn new(props: NotificationProps) -> Self {
-        Self::from_props(props)
+    pub(crate) fn new(props: NotificationProps, connection: Connection) -> Self {
+        Self::from_props(props, connection)
     }
 
     /// Causes a notification to be forcefully closed and removed from the user's view.
@@ -95,7 +102,7 @@ impl Notification {
         NotificationControls::invoke(&self.zbus_connection, &self.id, action_key).await
     }
 
-    fn from_props(props: NotificationProps) -> Notification {
+    fn from_props(props: NotificationProps, connection: Connection) -> Notification {
         let app_name = if !props.app_name.is_empty() {
             Some(props.app_name)
         } else {
@@ -144,15 +151,19 @@ impl Notification {
             None
         };
 
-        let id = NonZeroU32::new(props.replaces_id).unwrap_or_else(rand::random);
+        let id = if props.replaces_id > 0 {
+            props.replaces_id
+        } else {
+            rand::random::<u32>().max(1)
+        };
 
         Self {
-            zbus_connection: props.connection.clone(),
+            zbus_connection: connection.clone(),
             id,
             app_name: Property::new(app_name),
             app_icon: Property::new(app_icon),
             replaces_id: Property::new(replaces_id),
-            summmary: Property::new(props.summary),
+            summary: Property::new(props.summary),
             actions: Property::new(props.actions),
             body: Property::new(body),
             hints: Property::new(hints),

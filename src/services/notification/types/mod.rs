@@ -5,14 +5,19 @@ pub use notification::*;
 /// D-Bus interface constants for the notification service.
 pub mod dbus {
     /// The D-Bus service name for notifications.
-    pub const SERVICE: &str = "org.freedesktop.Notifications";
+    pub const SERVICE_NAME: &str = "org.freedesktop.Notifications";
 
     /// The D-Bus object path for notifications.
-    pub const PATH: &str = "/org/freedesktop/Notifications";
+    pub const SERVICE_PATH: &str = "/org/freedesktop/Notifications";
 
     /// The D-Bus interface name for notifications.
-    pub const INTERFACE: &str = "org.freedesktop.Notifications";
+    pub const SERVICE_INTERFACE: &str = "org.freedesktop.Notifications";
 }
+
+pub(crate) type Name = String;
+pub(crate) type Vendor = String;
+pub(crate) type Version = String;
+pub(crate) type SpecVersion = String;
 
 /// D-Bus signal names for the notification service.
 pub enum Signal {
