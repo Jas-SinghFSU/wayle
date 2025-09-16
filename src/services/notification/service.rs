@@ -1,15 +1,17 @@
-use std::sync::Arc;
+use std::sync::{Arc, atomic::AtomicU32};
 
+use chrono::{DateTime, Utc};
 use tokio::sync::broadcast;
 use tokio_util::sync::CancellationToken;
-use tracing::warn;
+use tracing::{error, info, instrument, warn};
 use zbus::Connection;
 
 use super::{
-    core::notification::Notification,
+    core::{notification::Notification, types::NotificationProps},
     daemon::NotificationDaemon,
     error::Error,
     events::NotificationEvent,
+    persistence::NotificationStore,
     types::dbus::{SERVICE_NAME, SERVICE_PATH},
 };
 use crate::services::{common::Property, traits::ServiceMonitoring};
@@ -18,6 +20,7 @@ use crate::services::{common::Property, traits::ServiceMonitoring};
 pub struct NotificationService {
     pub(crate) cancellation_token: CancellationToken,
     pub(crate) notif_tx: broadcast::Sender<NotificationEvent>,
+    pub(crate) store: Option<NotificationStore>,
 
     /// The list of all notifications that have been received.
     pub notifications: Property<Vec<Arc<Notification>>>,
@@ -34,6 +37,7 @@ impl NotificationService {
     ///
     /// # Errors
     /// Returns error if D-Bus connection fails or service registration fails.
+    #[instrument(name = "NotificationService::new", err)]
     pub async fn new() -> Result<Self, Error> {
         let connection = Connection::session().await.map_err(|err| {
             Error::ServiceInitializationFailed(format!("D-Bus connection failed: {err}"))
@@ -41,7 +45,50 @@ impl NotificationService {
         let (notif_tx, _) = broadcast::channel(100);
         let cancellation_token = CancellationToken::new();
 
+        let store = match NotificationStore::new() {
+            Ok(store) => {
+                info!("Notification persistence enabled");
+                Some(store)
+            }
+            Err(e) => {
+                error!("Failed to initialize notification store: {}", e);
+                error!("Notifications will not persist across restarts");
+                None
+            }
+        };
+
+        let stored_notifications: Vec<Arc<Notification>> = store
+            .as_ref()
+            .and_then(|s| s.load_all().ok())
+            .map(|stored| {
+                stored
+                    .into_iter()
+                    .map(|n| {
+                        Arc::new(Notification::new(
+                            NotificationProps {
+                                id: n.id,
+                                app_name: n.app_name.unwrap_or_default(),
+                                replaces_id: n.replaces_id.unwrap_or(0),
+                                app_icon: n.app_icon.unwrap_or_default(),
+                                summary: n.summary,
+                                body: n.body.unwrap_or_default(),
+                                actions: n.actions,
+                                hints: n.hints,
+                                expire_timeout: n.expire_timeout.unwrap_or(0) as i32,
+                                timestamp: DateTime::<Utc>::from_timestamp_millis(n.timestamp)
+                                    .unwrap_or_else(Utc::now),
+                            },
+                            connection.clone(),
+                        ))
+                    })
+                    .collect()
+            })
+            .unwrap_or_default();
+
+        let max_id = stored_notifications.iter().map(|n| n.id).max().unwrap_or(0);
+        let counter = AtomicU32::new(max_id + 1);
         let daemon = NotificationDaemon {
+            counter,
             zbus_connection: connection.clone(),
             notif_tx: notif_tx.clone(),
         };
@@ -61,7 +108,8 @@ impl NotificationService {
         let service = Self {
             cancellation_token,
             notif_tx,
-            notifications: Property::new(vec![]),
+            store,
+            notifications: Property::new(stored_notifications),
             popups: Property::new(vec![]),
             popup_duration: Property::new(5000),
             dnd: Property::new(false),
@@ -79,6 +127,7 @@ impl NotificationService {
     ///
     /// # Errors
     /// Returns error if the event channel is closed.
+    #[instrument(skip(self), err)]
     pub async fn dismiss_all(&self) -> Result<(), Error> {
         let notifications = self.notifications.get();
 
@@ -98,6 +147,7 @@ impl NotificationService {
     ///
     /// When enabled, new notifications will not appear as popups but will
     /// still be added to the notification list.
+    #[instrument(skip(self), fields(dnd = %dnd))]
     pub async fn set_dnd(&self, dnd: bool) {
         self.dnd.set(dnd)
     }
@@ -105,6 +155,7 @@ impl NotificationService {
     /// Sets the duration for how long popup notifications are displayed.
     ///
     /// The duration is specified in milliseconds.
+    #[instrument(skip(self), fields(duration_ms = %duration))]
     pub async fn set_popup_duration(&self, duration: u32) {
         self.popup_duration.set(duration)
     }

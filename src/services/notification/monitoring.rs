@@ -2,16 +2,17 @@ use std::{sync::Arc, time::Duration};
 
 use tokio::sync::broadcast;
 use tokio_util::sync::CancellationToken;
-use tracing::info;
+use tracing::{info, instrument};
 
 use super::{
     core::notification::Notification, error::Error, events::NotificationEvent,
-    service::NotificationService,
+    persistence::NotificationStore, service::NotificationService,
 };
 use crate::services::{common::Property, traits::ServiceMonitoring};
 
 impl ServiceMonitoring for NotificationService {
     type Error = Error;
+    #[instrument(skip_all, err)]
     async fn start_monitoring(&self) -> Result<(), Self::Error> {
         handle_notifications(
             &self.notif_tx,
@@ -19,6 +20,7 @@ impl ServiceMonitoring for NotificationService {
             &self.popups,
             &self.popup_duration,
             &self.dnd,
+            &self.store,
             &self.cancellation_token,
         )
         .await?;
@@ -27,12 +29,14 @@ impl ServiceMonitoring for NotificationService {
     }
 }
 
+#[instrument(skip_all)]
 async fn handle_notifications(
     notif_tx: &broadcast::Sender<NotificationEvent>,
     notifications: &Property<Vec<Arc<Notification>>>,
     popups: &Property<Vec<Arc<Notification>>>,
     popup_duration: &Property<u32>,
     dnd: &Property<bool>,
+    store: &Option<NotificationStore>,
     cancellation_token: &CancellationToken,
 ) -> Result<(), Error> {
     let mut event_receiver = notif_tx.subscribe();
@@ -40,6 +44,7 @@ async fn handle_notifications(
     let popup_list = popups.clone();
     let popup_dur = popup_duration.clone();
     let dnd = dnd.clone();
+    let store = store.clone();
     let cancellation_token = cancellation_token.clone();
 
     tokio::spawn(async move {
@@ -52,11 +57,11 @@ async fn handle_notifications(
                 Ok(event) = event_receiver.recv() => {
                     match event {
                         NotificationEvent::Add(notif) => {
-                            handle_notification_added(&notif, &notification_list);
+                            handle_notification_added(&notif, &notification_list, &store);
                             handle_popup_added(&notif, &popup_list, &popup_dur, dnd.clone());
                         }
                         NotificationEvent::Remove(id) => {
-                            handle_notification_removed(id, &notification_list, &popup_list);
+                            handle_notification_removed(id, &notification_list, &popup_list, &store);
                         }
                     }
                 }
@@ -99,23 +104,33 @@ fn handle_popup_added(
 fn handle_notification_added(
     incoming_notif: &Notification,
     notifications: &Property<Vec<Arc<Notification>>>,
+    store: &Option<NotificationStore>,
 ) {
-    let incoming_notif = Arc::new(incoming_notif.clone());
+    let inc_notif_arc = Arc::new(incoming_notif.clone());
     let mut list = notifications.get();
-    list.retain(|notif| notif != &incoming_notif);
-    list.insert(0, incoming_notif);
+    list.retain(|notif| notif != &inc_notif_arc);
+    list.insert(0, inc_notif_arc);
 
     notifications.set(list);
+
+    if let Some(store) = store.as_ref() {
+        let _ = store.add(incoming_notif);
+    };
 }
 
 fn handle_notification_removed(
     id: u32,
     notifications: &Property<Vec<Arc<Notification>>>,
     popups: &Property<Vec<Arc<Notification>>>,
+    store: &Option<NotificationStore>,
 ) {
     let mut notif_list = notifications.get();
     notif_list.retain(|notif| notif.id != id);
-    notifications.set(notif_list);
+    notifications.set(notif_list.clone());
+
+    if let Some(store) = store.as_ref() {
+        let _ = store.remove(id);
+    };
 
     let mut popup_list = popups.get();
     popup_list.retain(|popup| popup.id != id);

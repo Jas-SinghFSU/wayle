@@ -5,6 +5,7 @@ pub(crate) mod daemon;
 pub mod error;
 pub(crate) mod events;
 pub(crate) mod monitoring;
+pub(crate) mod persistence;
 pub(crate) mod proxy;
 /// Notification service implementation.
 pub mod service;

@@ -1,3 +1,4 @@
+use tracing::instrument;
 use zbus::Connection;
 
 use crate::services::notification::{
@@ -11,6 +12,7 @@ use crate::services::notification::{
 pub(super) struct NotificationControls;
 
 impl NotificationControls {
+    #[instrument(skip(connection), fields(notification_id = %id), err)]
     pub async fn dismiss(connection: &Connection, id: &u32) -> Result<(), Error> {
         connection
             .emit_signal(
@@ -25,6 +27,7 @@ impl NotificationControls {
         Ok(())
     }
 
+    #[instrument(skip(connection), fields(notification_id = %id, action = %action_key), err)]
     pub async fn invoke(connection: &Connection, id: &u32, action_key: &str) -> Result<(), Error> {
         connection
             .emit_signal(

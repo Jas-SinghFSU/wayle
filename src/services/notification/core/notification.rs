@@ -1,10 +1,12 @@
 use std::cmp::PartialEq;
 
+use chrono::{DateTime, Utc};
+use tracing::instrument;
 use zbus::Connection;
 
 use super::{
     controls::NotificationControls,
-    types::{NotificationHints, NotificationProps},
+    types::{Action, NotificationHints, NotificationProps},
 };
 use crate::services::{
     common::Property,
@@ -45,14 +47,13 @@ pub struct Notification {
     ///
     /// If the body is omitted, just the summary is displayed.
     pub body: Property<Option<String>>,
-    /// Actions are sent over as a list of pairs. Each even element in the list (starting at
-    /// index 0) represents the identifier for the action. Each odd element in the list is
-    /// the localized string that will be displayed to the user.
+    /// Available actions for this notification.
     ///
-    /// The default action (usually invoked by clicking the notification) should have a key
-    /// named "default". The name can be anything, though implementations are free not to
-    /// display it.
-    pub actions: Property<Vec<String>>,
+    /// Each action has an identifier and a human-readable label.
+    /// The "default" action is typically invoked when clicking the notification body.
+    pub actions: Property<Vec<Action>>,
+    /// The default action, triggered when clicking the notification body.
+    pub default_action: Property<Option<Action>>,
     /// Hints are a way to provide extra data to a notification server that the server may
     /// be able to make use of.
     ///
@@ -69,6 +70,28 @@ pub struct Notification {
     pub urgency: Property<Urgency>,
     /// The type of notification this is.
     pub category: Property<Option<Category>>,
+    /// When the notification was created.
+    pub timestamp: Property<DateTime<Utc>>,
+    /// Path to an image file from hints.
+    pub image_path: Property<Option<String>>,
+    /// Desktop entry name of the application.
+    pub desktop_entry: Property<Option<String>>,
+    /// Whether the notification should be transient (not persisted).
+    pub is_transient: Property<bool>,
+    /// Whether the notification stays after action invocation.
+    pub is_resident: Property<bool>,
+    /// Path to a sound file to play when the notification pops up.
+    pub sound_file: Property<Option<String>>,
+    /// A themeable named sound to play when the notification pops up.
+    pub sound_name: Property<Option<String>>,
+    /// Whether to suppress playing sounds for this notification.
+    pub suppress_sound: Property<bool>,
+    /// X position hint for notification placement.
+    pub x: Property<Option<i32>>,
+    /// Y position hint for notification placement.
+    pub y: Property<Option<i32>>,
+    /// Whether action IDs should be interpreted as icon names.
+    pub action_icons: Property<bool>,
 }
 
 impl PartialEq for Notification {
@@ -90,6 +113,7 @@ impl Notification {
     ///
     /// # Errors
     /// Returns error if the D-Bus signal emission fails.
+    #[instrument(skip(self), fields(notification_id = %self.id), err)]
     pub async fn dismiss(&self) -> Result<(), Error> {
         NotificationControls::dismiss(&self.zbus_connection, &self.id).await
     }
@@ -98,10 +122,12 @@ impl Notification {
     ///
     /// # Errors
     /// Returns error if the D-Bus signal emission fails.
+    #[instrument(skip(self), fields(notification_id = %self.id, action = %action_key), err)]
     pub async fn invoke(&self, action_key: &str) -> Result<(), Error> {
         NotificationControls::invoke(&self.zbus_connection, &self.id, action_key).await
     }
 
+    #[allow(clippy::too_many_lines)]
     fn from_props(props: NotificationProps, connection: Connection) -> Notification {
         let app_name = if !props.app_name.is_empty() {
             Some(props.app_name)
@@ -139,6 +165,63 @@ impl Notification {
             .and_then(|v| v.downcast_ref::<String>().ok())
             .and_then(|s| s.parse().ok());
 
+        let image_path = props
+            .hints
+            .get("image-path")
+            .and_then(|v| v.downcast_ref::<String>().ok());
+
+        let desktop_entry = props
+            .hints
+            .get("desktop-entry")
+            .and_then(|v| v.downcast_ref::<String>().ok());
+
+        let is_transient = props
+            .hints
+            .get("transient")
+            .and_then(|v| v.downcast_ref::<bool>().ok())
+            .unwrap_or(false);
+
+        let is_resident = props
+            .hints
+            .get("resident")
+            .and_then(|v| v.downcast_ref::<bool>().ok())
+            .unwrap_or(false);
+
+        let sound_file = props
+            .hints
+            .get("sound-file")
+            .and_then(|v| v.downcast_ref::<String>().ok());
+
+        let sound_name = props
+            .hints
+            .get("sound-name")
+            .and_then(|v| v.downcast_ref::<String>().ok());
+
+        let suppress_sound = props
+            .hints
+            .get("suppress-sound")
+            .and_then(|v| v.downcast_ref::<bool>().ok())
+            .unwrap_or(false);
+
+        let x = props
+            .hints
+            .get("x")
+            .and_then(|v| v.downcast_ref::<i32>().ok());
+
+        let y = props
+            .hints
+            .get("y")
+            .and_then(|v| v.downcast_ref::<i32>().ok());
+
+        let action_icons = props
+            .hints
+            .get("action-icons")
+            .and_then(|v| v.downcast_ref::<bool>().ok())
+            .unwrap_or(false);
+
+        let parsed_actions = Action::parse_dbus_actions(&props.actions);
+        let default_action = parsed_actions.iter().find(|a| a.id == "default").cloned();
+
         let hints = if !props.hints.is_empty() {
             Some(props.hints)
         } else {
@@ -151,11 +234,7 @@ impl Notification {
             None
         };
 
-        let id = if props.replaces_id > 0 {
-            props.replaces_id
-        } else {
-            rand::random::<u32>().max(1)
-        };
+        let id = props.id;
 
         Self {
             zbus_connection: connection.clone(),
@@ -164,12 +243,24 @@ impl Notification {
             app_icon: Property::new(app_icon),
             replaces_id: Property::new(replaces_id),
             summary: Property::new(props.summary),
-            actions: Property::new(props.actions),
+            actions: Property::new(parsed_actions),
+            default_action: Property::new(default_action),
             body: Property::new(body),
             hints: Property::new(hints),
             expire_timeout: Property::new(expire_timeout),
             urgency: Property::new(*urgency),
             category: Property::new(category),
+            timestamp: Property::new(props.timestamp),
+            image_path: Property::new(image_path),
+            desktop_entry: Property::new(desktop_entry),
+            is_transient: Property::new(is_transient),
+            is_resident: Property::new(is_resident),
+            sound_file: Property::new(sound_file),
+            sound_name: Property::new(sound_name),
+            suppress_sound: Property::new(suppress_sound),
+            x: Property::new(x),
+            y: Property::new(y),
+            action_icons: Property::new(action_icons),
         }
     }
 }

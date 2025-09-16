@@ -1,7 +1,12 @@
-use std::{collections::HashMap, time::Duration};
+use std::{
+    collections::HashMap,
+    sync::atomic::{AtomicU32, Ordering},
+    time::Duration,
+};
 
+use chrono::Utc;
 use tokio::sync::broadcast;
-use tracing::warn;
+use tracing::{instrument, warn};
 use zbus::{Connection, fdo, zvariant::OwnedValue};
 
 use super::{
@@ -13,8 +18,8 @@ use super::{
     },
 };
 
-#[derive(Clone)]
 pub(crate) struct NotificationDaemon {
+    pub counter: AtomicU32,
     pub zbus_connection: Connection,
     pub notif_tx: broadcast::Sender<NotificationEvent>,
 }
@@ -22,6 +27,14 @@ pub(crate) struct NotificationDaemon {
 #[zbus::interface(name = "org.freedesktop.Notifications")]
 impl NotificationDaemon {
     #[allow(clippy::too_many_arguments)]
+    #[instrument(
+        skip(self, actions, hints),
+        fields(
+            app = %app_name,
+            replaces = %replaces_id,
+            timeout = %expire_timeout
+        )
+    )]
     pub async fn notify(
         &self,
         app_name: String,
@@ -33,8 +46,15 @@ impl NotificationDaemon {
         hints: HashMap<String, OwnedValue>,
         expire_timeout: i32,
     ) -> fdo::Result<u32> {
+        let id = if replaces_id > 0 {
+            replaces_id
+        } else {
+            self.counter.fetch_add(1, Ordering::Relaxed)
+        };
+
         let notif = Notification::new(
             NotificationProps {
+                id,
                 app_name,
                 replaces_id,
                 app_icon,
@@ -43,6 +63,7 @@ impl NotificationDaemon {
                 actions,
                 hints,
                 expire_timeout,
+                timestamp: Utc::now(),
             },
             self.zbus_connection.clone(),
         );
@@ -53,6 +74,7 @@ impl NotificationDaemon {
         if expire_timeout > 0 {
             let tx = self.notif_tx.clone();
             let connection = self.zbus_connection.clone();
+
             tokio::spawn(async move {
                 tokio::time::sleep(Duration::from_millis(expire_timeout as u64)).await;
                 let _ = tx.send(NotificationEvent::Remove(notif_id));
@@ -78,6 +100,7 @@ impl NotificationDaemon {
         Ok(notif_id)
     }
 
+    #[instrument(skip(self), fields(notification_id = %id))]
     pub async fn close_notification(&self, id: u32) -> fdo::Result<()> {
         let _ = self.notif_tx.send(NotificationEvent::Remove(id));
 
@@ -101,6 +124,7 @@ impl NotificationDaemon {
         Ok(())
     }
 
+    #[instrument(skip(self))]
     pub async fn get_capabilities(&self) -> Vec<String> {
         use super::types::Capabilities;
 
@@ -113,6 +137,7 @@ impl NotificationDaemon {
         ]
     }
 
+    #[instrument(skip(self))]
     pub async fn get_server_information(&self) -> (Name, Vendor, Version, SpecVersion) {
         let name = String::from("wayle");
         let vendor = String::from("jaskir");
