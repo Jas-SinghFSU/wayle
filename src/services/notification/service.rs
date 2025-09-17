@@ -1,6 +1,7 @@
 use std::sync::{Arc, atomic::AtomicU32};
 
 use chrono::{DateTime, Utc};
+use derive_more::Debug;
 use tokio::sync::broadcast;
 use tokio_util::sync::CancellationToken;
 use tracing::{error, info, instrument, warn};
@@ -17,9 +18,13 @@ use super::{
 use crate::services::{common::Property, traits::ServiceMonitoring};
 
 /// Service for handling desktop notifications.
+#[derive(Debug)]
 pub struct NotificationService {
+    #[debug(skip)]
     pub(crate) cancellation_token: CancellationToken,
+    #[debug(skip)]
     pub(crate) notif_tx: broadcast::Sender<NotificationEvent>,
+    #[debug(skip)]
     pub(crate) store: Option<NotificationStore>,
 
     /// The list of all notifications that have been received.
@@ -30,6 +35,8 @@ pub struct NotificationService {
     pub popup_duration: Property<u32>,
     /// Do Not Disturb mode - when enabled, popups are suppressed.
     pub dnd: Property<bool>,
+    /// Whether to automatically remove expired notifications
+    pub remove_expired: Property<bool>,
 }
 
 impl NotificationService {
@@ -39,6 +46,111 @@ impl NotificationService {
     /// Returns error if D-Bus connection fails or service registration fails.
     #[instrument(name = "NotificationService::new", err)]
     pub async fn new() -> Result<Self, Error> {
+        Self::builder().build().await
+    }
+
+    /// Creates a builder for configuring a NotificationService.
+    pub fn builder() -> NotificationServiceBuilder {
+        NotificationServiceBuilder::new()
+    }
+
+    /// Dismisses all notifications currently in the service.
+    ///
+    /// This sends a remove event for each notification, which will trigger
+    /// the NotificationClosed signal with DismissedByUser reason for each.
+    ///
+    /// # Errors
+    /// Returns error if the event channel is closed.
+    #[instrument(skip(self), err)]
+    pub async fn dismiss_all(&self) -> Result<(), Error> {
+        let notifications = self.notifications.get();
+
+        for notif in notifications.iter() {
+            if let Err(e) = self.notif_tx.send(NotificationEvent::Remove(notif.id)) {
+                warn!(
+                    "Failed to dismiss notification with id '{}': {}",
+                    notif.id, e
+                );
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Sets the Do Not Disturb mode.
+    ///
+    /// When enabled, new notifications will not appear as popups but will
+    /// still be added to the notification list.
+    #[instrument(skip(self), fields(dnd = %dnd))]
+    pub async fn set_dnd(&self, dnd: bool) {
+        self.dnd.set(dnd)
+    }
+
+    /// Sets the duration for how long popup notifications are displayed.
+    ///
+    /// The duration is specified in milliseconds.
+    #[instrument(skip(self), fields(duration_ms = %duration))]
+    pub async fn set_popup_duration(&self, duration: u32) {
+        self.popup_duration.set(duration)
+    }
+}
+
+/// Builder for configuring and creating a NotificationService instance.
+///
+/// Allows customization of popup duration, do-not-disturb mode, and
+/// automatic removal of expired notifications.
+#[derive(Debug)]
+pub struct NotificationServiceBuilder {
+    popup_duration: Property<u32>,
+    dnd: Property<bool>,
+    remove_expired: Property<bool>,
+}
+
+impl Default for NotificationServiceBuilder {
+    fn default() -> Self {
+        Self {
+            popup_duration: Property::new(5000),
+            dnd: Property::new(false),
+            remove_expired: Property::new(true),
+        }
+    }
+}
+
+impl NotificationServiceBuilder {
+    /// Creates a new NotificationServiceBuilder with default values.
+    pub fn new() -> Self {
+        Self::default()
+    }
+    /// Sets the duration in milliseconds for how long popups should be displayed.
+    pub fn popup_duration(self, duration: u32) -> Self {
+        self.popup_duration.set(duration);
+        self
+    }
+
+    /// Configures the Do Not Disturb mode.
+    ///
+    /// When enabled, new notifications won't appear as popups but will still
+    /// be added to the notification list.
+    pub fn dnd(self, dnd: bool) -> Self {
+        self.dnd.set(dnd);
+        self
+    }
+
+    /// Sets whether to automatically remove expired notifications.
+    pub fn remove_expired(self, remove: bool) -> Self {
+        self.remove_expired.set(remove);
+        self
+    }
+
+    /// Builds and initializes the NotificationService.
+    ///
+    /// This will establish a D-Bus connection, register the notification daemon,
+    /// restore persisted notifications, and start monitoring for events.
+    ///
+    /// # Errors
+    /// Returns error if D-Bus connection fails, service registration fails,
+    /// or monitoring cannot be started.
+    pub async fn build(self) -> Result<NotificationService, Error> {
         let connection = Connection::session().await.map_err(|err| {
             Error::ServiceInitializationFailed(format!("D-Bus connection failed: {err}"))
         })?;
@@ -59,7 +171,7 @@ impl NotificationService {
 
         let stored_notifications: Vec<Arc<Notification>> = store
             .as_ref()
-            .and_then(|s| s.load_all().ok())
+            .and_then(|s| s.load_all(self.remove_expired.get()).ok())
             .map(|stored| {
                 stored
                     .into_iter()
@@ -105,59 +217,20 @@ impl NotificationService {
             Error::ServiceInitializationFailed(format!("Failed to acquire name: {err}"))
         })?;
 
-        let service = Self {
+        let service = NotificationService {
             cancellation_token,
             notif_tx,
             store,
             notifications: Property::new(stored_notifications),
             popups: Property::new(vec![]),
-            popup_duration: Property::new(5000),
-            dnd: Property::new(false),
+            popup_duration: self.popup_duration,
+            dnd: self.dnd,
+            remove_expired: self.remove_expired,
         };
 
         service.start_monitoring().await?;
 
         Ok(service)
-    }
-
-    /// Dismisses all notifications currently in the service.
-    ///
-    /// This sends a remove event for each notification, which will trigger
-    /// the NotificationClosed signal with DismissedByUser reason for each.
-    ///
-    /// # Errors
-    /// Returns error if the event channel is closed.
-    #[instrument(skip(self), err)]
-    pub async fn dismiss_all(&self) -> Result<(), Error> {
-        let notifications = self.notifications.get();
-
-        for notif in notifications.iter() {
-            if let Err(e) = self.notif_tx.send(NotificationEvent::Remove(notif.id)) {
-                warn!(
-                    "Failed to dismiss notification with id '{}': {}",
-                    notif.id, e
-                );
-            }
-        }
-
-        Ok(())
-    }
-
-    /// Sets the Do Not Disturb mode.
-    ///
-    /// When enabled, new notifications will not appear as popups but will
-    /// still be added to the notification list.
-    #[instrument(skip(self), fields(dnd = %dnd))]
-    pub async fn set_dnd(&self, dnd: bool) {
-        self.dnd.set(dnd)
-    }
-
-    /// Sets the duration for how long popup notifications are displayed.
-    ///
-    /// The duration is specified in milliseconds.
-    #[instrument(skip(self), fields(duration_ms = %duration))]
-    pub async fn set_popup_duration(&self, duration: u32) {
-        self.popup_duration.set(duration)
     }
 }
 

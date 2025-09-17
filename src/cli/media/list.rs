@@ -1,9 +1,6 @@
 use crate::{
     cli::CliAction,
-    services::media::{
-        MediaService,
-        types::{Config, PlaybackState},
-    },
+    services::media::{MediaService, types::PlaybackState},
 };
 
 /// Execute the command
@@ -11,11 +8,9 @@ use crate::{
 /// # Errors
 /// Returns error if service communication fails.
 pub async fn execute() -> CliAction {
-    let service = MediaService::new(Config {
-        ignored_players: vec![],
-    })
-    .await
-    .map_err(|e| format!("Failed to start media service: {e}"))?;
+    let service = MediaService::new()
+        .await
+        .map_err(|e| format!("Failed to start media service: {e}"))?;
 
     let players = service.players();
 

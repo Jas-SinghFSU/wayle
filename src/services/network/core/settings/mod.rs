@@ -5,6 +5,7 @@ mod types;
 use std::{collections::HashMap, sync::Arc};
 
 use controls::SettingsController;
+use derive_more::Debug;
 use futures::{Stream, StreamExt, future::join_all};
 use tokio_util::sync::CancellationToken;
 pub(crate) use types::{LiveSettingsParams, SettingsParams};
@@ -35,7 +36,9 @@ use crate::{
 /// the connections stored and used by NetworkManager.
 #[derive(Debug, Clone)]
 pub struct Settings {
+    #[debug(skip)]
     pub(crate) zbus_connection: Connection,
+    #[debug(skip)]
     pub(crate) cancellation_token: Option<CancellationToken>,
     /// List of object paths of available network connection profiles.
     pub connections: Property<Vec<ConnectionSettings>>,

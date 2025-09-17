@@ -5,6 +5,7 @@ mod types;
 use std::{collections::HashMap, sync::Arc};
 
 use controls::ConnectionSettingsControls;
+use derive_more::Debug;
 use tokio_util::sync::CancellationToken;
 pub(crate) use types::{ConnectionSettingsParams, LiveConnectionSettingsParams};
 use zbus::{
@@ -30,7 +31,9 @@ use crate::{
 /// Represents a single network connection configuration.
 #[derive(Debug, Clone)]
 pub struct ConnectionSettings {
+    #[debug(skip)]
     pub(crate) connection: Connection,
+    #[debug(skip)]
     pub(crate) cancellation_token: Option<CancellationToken>,
     /// D-Bus object path for this settings connection
     pub object_path: OwnedObjectPath,

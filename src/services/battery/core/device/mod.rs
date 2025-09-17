@@ -6,6 +6,7 @@ pub mod types;
 use std::sync::Arc;
 
 use controls::DeviceController;
+use derive_more::Debug;
 use tokio_util::sync::CancellationToken;
 use types::{DeviceParams, DeviceProps, LiveDeviceParams};
 use zbus::{Connection, zvariant::OwnedObjectPath};
@@ -29,8 +30,11 @@ use crate::{
 /// that automatically update when the underlying device state changes.
 #[derive(Debug, Clone)]
 pub struct Device {
+    #[debug(skip)]
     cancellation_token: Option<CancellationToken>,
+    #[debug(skip)]
     zbus_connection: Connection,
+    #[debug(skip)]
     device_path: OwnedObjectPath,
 
     /// OS specific native path of the power source.

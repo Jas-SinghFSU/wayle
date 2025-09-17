@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use derive_more::Debug;
 use tokio_util::sync::CancellationToken;
 use zbus::{Connection, zvariant::OwnedObjectPath};
 
@@ -32,8 +33,11 @@ pub(crate) mod types;
 /// Access points are discovered and monitored through the WiFi device interface.
 #[derive(Debug, Clone)]
 pub struct AccessPoint {
+    #[debug(skip)]
     pub(crate) connection: Connection,
+    #[debug(skip)]
     pub(crate) object_path: OwnedObjectPath,
+    #[debug(skip)]
     pub(crate) cancellation_token: Option<CancellationToken>,
     /// Flags describing the capabilities of the access point. See NM80211ApFlags.
     pub flags: Property<NM80211ApFlags>,

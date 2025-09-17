@@ -1,7 +1,6 @@
 use std::{sync::Arc, time::Duration};
 
-use tokio::sync::broadcast;
-use tokio_util::sync::CancellationToken;
+use chrono::Utc;
 use tracing::{info, instrument};
 
 use super::{
@@ -14,38 +13,21 @@ impl ServiceMonitoring for NotificationService {
     type Error = Error;
     #[instrument(skip_all, err)]
     async fn start_monitoring(&self) -> Result<(), Self::Error> {
-        handle_notifications(
-            &self.notif_tx,
-            &self.notifications,
-            &self.popups,
-            &self.popup_duration,
-            &self.dnd,
-            &self.store,
-            &self.cancellation_token,
-        )
-        .await?;
-
+        handle_notifications(self).await?;
         Ok(())
     }
 }
 
 #[instrument(skip_all)]
-async fn handle_notifications(
-    notif_tx: &broadcast::Sender<NotificationEvent>,
-    notifications: &Property<Vec<Arc<Notification>>>,
-    popups: &Property<Vec<Arc<Notification>>>,
-    popup_duration: &Property<u32>,
-    dnd: &Property<bool>,
-    store: &Option<NotificationStore>,
-    cancellation_token: &CancellationToken,
-) -> Result<(), Error> {
-    let mut event_receiver = notif_tx.subscribe();
-    let notification_list = notifications.clone();
-    let popup_list = popups.clone();
-    let popup_dur = popup_duration.clone();
-    let dnd = dnd.clone();
-    let store = store.clone();
-    let cancellation_token = cancellation_token.clone();
+async fn handle_notifications(service: &NotificationService) -> Result<(), Error> {
+    let mut event_receiver = service.notif_tx.subscribe();
+    let notification_list = service.notifications.clone();
+    let popup_list = service.popups.clone();
+    let popup_dur = service.popup_duration.clone();
+    let dnd = service.dnd.clone();
+    let store = service.store.clone();
+    let cancellation_token = service.cancellation_token.clone();
+    let remove_expired = service.remove_expired.clone();
 
     tokio::spawn(async move {
         loop {
@@ -57,7 +39,7 @@ async fn handle_notifications(
                 Ok(event) = event_receiver.recv() => {
                     match event {
                         NotificationEvent::Add(notif) => {
-                            handle_notification_added(&notif, &notification_list, &store);
+                            handle_notification_added(&notif, &notification_list, &store, &remove_expired);
                             handle_popup_added(&notif, &popup_list, &popup_dur, dnd.clone());
                         }
                         NotificationEvent::Remove(id) => {
@@ -105,17 +87,56 @@ fn handle_notification_added(
     incoming_notif: &Notification,
     notifications: &Property<Vec<Arc<Notification>>>,
     store: &Option<NotificationStore>,
+    remove_expired: &Property<bool>,
 ) {
-    let inc_notif_arc = Arc::new(incoming_notif.clone());
+    if incoming_notif.is_transient.get() {
+        return;
+    }
+
+    let notif_arc = Arc::new(incoming_notif.clone());
     let mut list = notifications.get();
-    list.retain(|notif| notif != &inc_notif_arc);
-    list.insert(0, inc_notif_arc);
+    list.retain(|notif| notif.id != notif_arc.id);
+    list.insert(0, notif_arc.clone());
 
     notifications.set(list);
 
     if let Some(store) = store.as_ref() {
         let _ = store.add(incoming_notif);
     };
+
+    if !remove_expired.get() {
+        return;
+    }
+
+    let Some(ttl) = notif_arc.expire_timeout.get() else {
+        return;
+    };
+
+    let expiration_time = notif_arc.timestamp.get() + Duration::from_millis(ttl as u64);
+    let now = Utc::now();
+
+    if expiration_time <= now {
+        let mut list = notifications.get();
+        list.retain(|notif| notif.id != notif_arc.id);
+        notifications.set(list);
+        return;
+    }
+
+    let time_until_expiration = (expiration_time - now).to_std().unwrap_or(Duration::ZERO);
+    let id = notif_arc.id;
+    let notifications = notifications.clone();
+    let store = store.clone();
+
+    tokio::spawn(async move {
+        tokio::time::sleep(time_until_expiration).await;
+        let mut list = notifications.get();
+        list.retain(|notif| notif.id != id);
+        notifications.set(list);
+
+        if let Some(store) = store.as_ref() {
+            let _ = store.remove(id);
+        }
+    });
 }
 
 fn handle_notification_removed(

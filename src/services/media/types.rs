@@ -1,12 +1,5 @@
 use std::{fmt, ops::Deref};
 
-/// Configuration for the MPRIS service
-#[derive(Default)]
-pub struct Config {
-    /// Patterns to ignore when discovering players
-    pub ignored_players: Vec<String>,
-}
-
 /// Unique identifier for a media player
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct PlayerId(String);

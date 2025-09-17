@@ -6,7 +6,7 @@ use std::{
 };
 
 use toml::Value;
-use tracing::{debug, info, instrument, warn};
+use tracing::{debug, error, info, instrument, warn};
 
 /// Storage for configuration
 pub type ConfigData = Arc<RwLock<Config>>;
@@ -231,7 +231,7 @@ impl ConfigRuntime {
         let broadcast_service = self.broadcast_service.clone();
         tokio::spawn(async move {
             if let Err(e) = broadcast_service.broadcast(change).await {
-                eprintln!("Warning: Failed to broadcast config change: {e}");
+                error!("Warning: Failed to broadcast config change: {e}");
             }
         });
     }

@@ -15,6 +15,7 @@ use crate::services::traits::Reactive;
 /// Provides a high-level interface to the system's power profile daemon,
 /// allowing access to available profiles, current active profile, and reactive
 /// monitoring of profile changes through the D-Bus interface.
+#[derive(Debug)]
 pub struct PowerProfilesService {
     /// The power profiles D-Bus proxy for system power management operations.
     pub power_profiles: Arc<PowerProfiles>,

@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use derive_more::Debug;
 use tokio::sync::{broadcast, mpsc};
 use tokio_util::sync::CancellationToken;
 use tracing::instrument;
@@ -32,9 +33,13 @@ use crate::services::{
 ///
 /// Provides access to audio devices and streams through reactive Property fields
 /// that automatically update when the underlying PulseAudio state changes.
+#[derive(Debug)]
 pub struct AudioService {
+    #[debug(skip)]
     pub(crate) command_tx: CommandSender,
+    #[debug(skip)]
     pub(crate) event_tx: EventSender,
+    #[debug(skip)]
     pub(crate) cancellation_token: CancellationToken,
 
     /// Output devices (speakers, headphones)

@@ -5,6 +5,7 @@
 
 use std::{error::Error, process};
 
+use ::tracing::error;
 use clap::Parser;
 use wayle::{
     cli::{Cli, Commands},
@@ -25,7 +26,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     };
 
     if let Err(e) = result {
-        eprintln!("Error: {e}");
+        error!("Error: {e}");
         process::exit(1);
     }
 

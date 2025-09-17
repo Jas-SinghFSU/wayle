@@ -2,10 +2,14 @@ use std::{
     collections::HashMap,
     env, fs,
     sync::{Arc, Mutex},
+    time::Duration,
 };
 
+use chrono::{DateTime, Utc};
+use derive_more::Debug;
 use rusqlite::{Connection, params};
 use serde_json;
+use tracing::{debug, instrument, warn};
 use zbus::zvariant::OwnedValue;
 
 use super::{
@@ -46,10 +50,12 @@ impl From<&Notification> for StoredNotification {
 
 #[derive(Debug, Clone)]
 pub(crate) struct NotificationStore {
+    #[debug(skip)]
     connection: Arc<Mutex<Connection>>,
 }
 
 impl NotificationStore {
+    #[instrument(err)]
     pub fn new() -> Result<Self, Error> {
         let home = env::var("HOME")
             .map_err(|_| Error::DatabaseError(String::from("HOME environment variable not set")))?;
@@ -59,6 +65,7 @@ impl NotificationStore {
             .map_err(|e| Error::DatabaseError(format!("Failed to create data directory: {e}")))?;
 
         let db_path = format!("{data_dir}/notifications.db");
+        debug!("Database path: {db_path}");
         let connection = Connection::open(db_path)
             .map_err(|e| Error::DatabaseError(format!("Failed to open database: {e}")))?;
 
@@ -74,8 +81,6 @@ impl NotificationStore {
                     actions TEXT NOT NULL,
                     hints TEXT NOT NULL,
                     expire_timeout INTEGER,
-                    urgency INTEGER NOT NULL,
-                    category TEXT,
                     timestamp INTEGER NOT NULL
                 )",
                 [],
@@ -94,6 +99,7 @@ impl NotificationStore {
         })
     }
 
+    #[instrument(skip(self, notification), fields(id = notification.id, summary = %notification.summary.get()), err)]
     pub fn add(&self, notification: &Notification) -> Result<(), Error> {
         let stored = StoredNotification::from(notification);
 
@@ -128,6 +134,7 @@ impl NotificationStore {
         Ok(())
     }
 
+    #[instrument(skip(self), fields(notification_id = id), err)]
     pub fn remove(&self, id: u32) -> Result<(), Error> {
         self.connection
             .lock()
@@ -138,7 +145,8 @@ impl NotificationStore {
         Ok(())
     }
 
-    pub fn load_all(&self) -> Result<Vec<StoredNotification>, Error> {
+    #[instrument(skip(self), err)]
+    pub fn load_all(&self, remove_expired: bool) -> Result<Vec<StoredNotification>, Error> {
         let conn = self
             .connection
             .lock()
@@ -146,7 +154,7 @@ impl NotificationStore {
         let mut stmt = conn
             .prepare(
                 "SELECT id, app_name, replaces_id, app_icon, summary, body,
-                 actions, hints, expire_timeout
+                 actions, hints, expire_timeout, timestamp
                  FROM notifications
                  ORDER BY timestamp DESC",
             )
@@ -157,9 +165,16 @@ impl NotificationStore {
                 let actions_json: String = row.get(6)?;
                 let hints_json: String = row.get(7)?;
 
-                let actions: Vec<String> = serde_json::from_str(&actions_json).unwrap_or_default();
+                let actions: Vec<String> =
+                    serde_json::from_str(&actions_json).unwrap_or_else(|e| {
+                        warn!("Failed to deserialize actions: {}", e);
+                        Vec::new()
+                    });
                 let hints_json_map: HashMap<String, serde_json::Value> =
-                    serde_json::from_str(&hints_json).unwrap_or_default();
+                    serde_json::from_str(&hints_json).unwrap_or_else(|e| {
+                        warn!("Failed to deserialize hints: {}", e);
+                        HashMap::new()
+                    });
                 let hints: HashMap<String, OwnedValue> = hints_json_map
                     .into_iter()
                     .filter_map(|(key, value)| {
@@ -186,6 +201,29 @@ impl NotificationStore {
             .collect::<Result<Vec<_>, _>>()
             .map_err(|e| Error::DatabaseError(format!("Failed to parse notifications: {e}")))?;
 
+        if !remove_expired {
+            debug!("Loaded {} stored notifications", notifications.len());
+            return Ok(notifications);
+        }
+
+        let now = Utc::now();
+        let notifications: Vec<StoredNotification> = notifications
+            .into_iter()
+            .filter(|n| {
+                let Some(timeout) = n.expire_timeout else {
+                    return true;
+                };
+                let Some(timestamp) = DateTime::<Utc>::from_timestamp_millis(n.timestamp) else {
+                    return false;
+                };
+                timestamp + Duration::from_millis(timeout as u64) > now
+            })
+            .collect();
+
+        debug!(
+            "Loaded {} stored notifications (after filtering expired)",
+            notifications.len()
+        );
         Ok(notifications)
     }
 }

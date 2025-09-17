@@ -5,6 +5,7 @@ use std::{
 };
 
 use chrono::Utc;
+use derive_more::Debug;
 use tokio::sync::broadcast;
 use tracing::{instrument, warn};
 use zbus::{Connection, fdo, zvariant::OwnedValue};
@@ -18,9 +19,12 @@ use super::{
     },
 };
 
+#[derive(Debug)]
 pub(crate) struct NotificationDaemon {
     pub counter: AtomicU32,
+    #[debug(skip)]
     pub zbus_connection: Connection,
+    #[debug(skip)]
     pub notif_tx: broadcast::Sender<NotificationEvent>,
 }
 

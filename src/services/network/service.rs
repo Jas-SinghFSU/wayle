@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use derive_more::Debug;
 use tokio_util::sync::CancellationToken;
 use tracing::{instrument, warn};
 use zbus::{Connection, zvariant::OwnedObjectPath};
@@ -46,8 +47,11 @@ use crate::services::{
 /// tracking their state and managing connections. The service monitors
 /// the primary connection type and exposes reactive properties for
 /// network status changes.
+#[derive(Debug)]
 pub struct NetworkService {
+    #[debug(skip)]
     pub(crate) zbus_connection: Connection,
+    #[debug(skip)]
     pub(crate) cancellation_token: CancellationToken,
     /// NetworkManager Settings interface for managing connection profiles.
     pub settings: Arc<Settings>,

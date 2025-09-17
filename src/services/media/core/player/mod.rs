@@ -3,6 +3,7 @@ mod types;
 
 use std::{sync::Arc, time::Duration};
 
+use derive_more::Debug;
 use futures::Stream;
 use tokio_util::sync::CancellationToken;
 pub(crate) use types::{LivePlayerParams, PlayerParams};
@@ -34,7 +35,9 @@ use crate::{
 #[derive(Clone, Debug)]
 pub struct Player {
     /// D-Bus proxy for controlling this player
+    #[debug(skip)]
     pub(crate) proxy: MediaPlayer2PlayerProxy<'static>,
+    #[debug(skip)]
     pub(crate) cancellation_token: Option<CancellationToken>,
 
     /// Unique identifier for this player instance

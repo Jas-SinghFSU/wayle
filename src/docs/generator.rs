@@ -4,6 +4,7 @@ use std::{
 };
 
 use thiserror::Error;
+use tracing::info;
 
 use super::{module::ModuleInfo, registry::ModuleRegistry};
 use crate::docs::markdown::generate_module_page;
@@ -56,7 +57,7 @@ impl DocsGenerator {
             self.generate_single_module(module)?;
         }
 
-        println!("Generated documentation for {} modules", modules.len());
+        info!("Generated documentation for {} modules", modules.len());
         Ok(())
     }
 
@@ -90,7 +91,7 @@ impl DocsGenerator {
             details: err.to_string(),
         })?;
 
-        println!("Generated {}", filepath.display());
+        info!("Generated {}", filepath.display());
         Ok(())
     }
 }

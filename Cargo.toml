@@ -10,6 +10,7 @@ async-trait = "0.1"
 bitflags = "2"
 chrono = { version = "0.4", features = ["clock"] }
 clap = { version = "4.5", features = ["derive", "color"] }
+derive_more = { version = "2.0", default-features = false, features = ["debug"] }
 futures = "0"
 libpulse-binding = "2.28"
 libc = "0.2"

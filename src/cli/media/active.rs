@@ -2,10 +2,7 @@ use super::utils::find_player_by_identifier;
 use crate::{
     cli::CliAction,
     core::state::RuntimeState,
-    services::media::{
-        MediaService,
-        types::{Config, PlaybackState},
-    },
+    services::media::{MediaService, types::PlaybackState},
 };
 
 /// Execute the command
@@ -13,11 +10,9 @@ use crate::{
 /// # Errors
 /// Returns error if service communication fails or player is not found.
 pub async fn execute(player: Option<String>) -> CliAction {
-    let service = MediaService::new(Config {
-        ignored_players: vec![],
-    })
-    .await
-    .map_err(|e| format!("Failed to start media service: {e}"))?;
+    let service = MediaService::new()
+        .await
+        .map_err(|e| format!("Failed to start media service: {e}"))?;
 
     if let Some(identifier) = player {
         let player_id = find_player_by_identifier(&service, &identifier)?;

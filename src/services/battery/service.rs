@@ -15,6 +15,7 @@ use crate::services::traits::Reactive;
 /// Provides a high-level interface to UPower's battery monitoring,
 /// allowing access to battery state, capacity, charge status, and reactive
 /// monitoring of changes through the D-Bus interface.
+#[derive(Debug)]
 pub struct BatteryService {
     /// The UPower battery device proxy for power metrics and charging state.
     pub device: Arc<Device>,

@@ -5,6 +5,7 @@ pub(crate) mod types;
 use std::{collections::HashMap, sync::Arc};
 
 use controls::AudioStreamController;
+use derive_more::Debug;
 use tokio::sync::oneshot;
 use tokio_util::sync::CancellationToken;
 pub(crate) use types::{AudioStreamParams, LiveAudioStreamParams};
@@ -31,15 +32,18 @@ use crate::services::{
 ///
 /// Provides access to stream state, volume, mute status, and media information
 /// that automatically update when the underlying PulseAudio stream changes.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct AudioStream {
     /// Command sender for backend operations
+    #[debug(skip)]
     command_tx: CommandSender,
 
     /// Event sender for monitoring (only for live instances)
+    #[debug(skip)]
     event_tx: Option<EventSender>,
 
     /// Cancellation token for monitoring (only for live instances)
+    #[debug(skip)]
     pub(crate) cancellation_token: Option<CancellationToken>,
 
     /// Stream key for identification

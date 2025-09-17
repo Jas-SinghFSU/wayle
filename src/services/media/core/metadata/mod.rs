@@ -4,6 +4,7 @@ pub mod types;
 
 use std::{collections::HashMap, sync::Arc, time::Duration};
 
+use derive_more::Debug;
 use futures::stream::Stream;
 use tokio_util::sync::CancellationToken;
 pub(crate) use types::{LiveTrackMetadataParams, TrackMetadataParams, TrackProperties};
@@ -24,7 +25,9 @@ pub const UNKNOWN_METADATA: &str = "Unknown";
 /// Metadata for a media track with reactive properties
 #[derive(Debug, Clone)]
 pub struct TrackMetadata {
+    #[debug(skip)]
     pub(crate) proxy: Option<MediaPlayer2PlayerProxy<'static>>,
+    #[debug(skip)]
     pub(crate) cancellation_token: Option<CancellationToken>,
     /// Track title
     pub title: Property<String>,

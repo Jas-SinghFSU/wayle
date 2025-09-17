@@ -5,6 +5,7 @@ pub(crate) mod types;
 use std::{collections::HashMap, sync::Arc};
 
 use controls::AdapterControls;
+use derive_more::Debug;
 use tokio_util::sync::CancellationToken;
 use types::AdapterProperties;
 pub(crate) use types::{AdapterParams, LiveAdapterParams};
@@ -32,7 +33,9 @@ use crate::{
 /// Bluetooth adapter representation with reactive properties.
 #[derive(Debug, Clone)]
 pub struct Adapter {
+    #[debug(skip)]
     pub(crate) zbus_connection: Connection,
+    #[debug(skip)]
     pub(crate) cancellation_token: Option<CancellationToken>,
 
     /// D-Bus object path for this device.

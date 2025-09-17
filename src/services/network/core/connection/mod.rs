@@ -3,6 +3,7 @@ mod types;
 
 use std::sync::Arc;
 
+use derive_more::Debug;
 use tokio_util::sync::CancellationToken;
 use tracing::warn;
 pub(crate) use types::{ActiveConnectionParams, LiveActiveConnectionParams};
@@ -28,9 +29,11 @@ use crate::{
 /// Properties update reactively as connection state changes.
 #[derive(Debug, Clone)]
 pub struct ActiveConnection {
+    #[debug(skip)]
     pub(crate) zbus_connection: Connection,
 
     /// Token for cancelling monitoring
+    #[debug(skip)]
     pub(crate) cancellation_token: Option<CancellationToken>,
 
     /// Object path for this connection

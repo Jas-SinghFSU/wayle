@@ -1,6 +1,7 @@
 use std::cmp::PartialEq;
 
 use chrono::{DateTime, Utc};
+use derive_more::Debug;
 use tracing::instrument;
 use zbus::Connection;
 
@@ -23,6 +24,7 @@ use crate::services::{
 /// recycled unless the capacity of a uint32 is exceeded.
 #[derive(Clone, Debug)]
 pub struct Notification {
+    #[debug(skip)]
     zbus_connection: Connection,
 
     /// The ID of the notification

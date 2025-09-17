@@ -5,6 +5,7 @@ pub(crate) mod types;
 use std::{collections::HashMap, sync::Arc};
 
 use controls::InputDeviceController;
+use derive_more::Debug;
 use libpulse_binding::time::MicroSeconds;
 use tokio::sync::oneshot;
 use tokio_util::sync::CancellationToken;
@@ -28,15 +29,18 @@ use crate::services::{
 };
 
 /// Input device (source) representation with reactive properties.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct InputDevice {
     /// Command sender for backend operations
+    #[debug(skip)]
     command_tx: CommandSender,
 
     /// Event sender for monitoring (only for live instances)
+    #[debug(skip)]
     event_tx: Option<EventSender>,
 
     /// Cancellation token for monitoring (only for live instances)
+    #[debug(skip)]
     cancellation_token: Option<CancellationToken>,
 
     /// Device key for identification

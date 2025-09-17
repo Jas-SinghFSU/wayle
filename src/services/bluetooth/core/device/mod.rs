@@ -5,6 +5,7 @@ pub(crate) mod types;
 use std::sync::Arc;
 
 use controls::DeviceControls;
+use derive_more::Debug;
 use tokio::sync::broadcast;
 use tokio_util::sync::CancellationToken;
 use types::{AdvertisingData, DeviceProperties, DeviceSet, ManufacturerData, ServiceData};
@@ -27,8 +28,11 @@ use crate::{
 /// Represents a Bluetooth device with its properties and pairing state.
 #[derive(Debug, Clone)]
 pub struct Device {
+    #[debug(skip)]
     pub(crate) zbus_connection: Connection,
+    #[debug(skip)]
     pub(crate) cancellation_token: Option<CancellationToken>,
+    #[debug(skip)]
     pub(crate) notifier_tx: broadcast::Sender<ServiceNotification>,
 
     /// D-Bus object path for this device.

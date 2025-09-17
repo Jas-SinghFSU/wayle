@@ -1,5 +1,6 @@
 use std::{sync::Arc, time::Duration};
 
+use derive_more::Debug;
 use tokio::{
     sync::{Mutex, broadcast, mpsc},
     time::sleep,
@@ -35,10 +36,15 @@ use crate::services::{
 /// Provides a high-level API for Bluetooth operations including device discovery,
 /// pairing, and connection management. Automatically tracks adapter state and
 /// maintains reactive properties for UI consumption.
+#[derive(Debug)]
 pub struct BluetoothService {
+    #[debug(skip)]
     pub(crate) zbus_connection: Connection,
+    #[debug(skip)]
     pub(crate) cancellation_token: CancellationToken,
+    #[debug(skip)]
     pub(crate) notifier_tx: broadcast::Sender<ServiceNotification>,
+    #[debug(skip)]
     pub(crate) pairing_responder: Arc<Mutex<Option<PairingResponder>>>,
 
     /// All available Bluetooth adapters on the system.

@@ -11,6 +11,7 @@ pub mod wired;
 use std::{collections::HashMap, sync::Arc};
 
 use controls::DeviceControls;
+use derive_more::Debug;
 use tokio_util::sync::CancellationToken;
 use types::DeviceProperties;
 pub(crate) use types::{DeviceParams, LiveDeviceParams};
@@ -43,7 +44,9 @@ use crate::{
 /// Contains hardware information, state, configuration, and statistics.
 #[derive(Debug, Clone)]
 pub struct Device {
+    #[debug(skip)]
     pub(crate) connection: Connection,
+    #[debug(skip)]
     pub(crate) cancellation_token: Option<CancellationToken>,
 
     /// D-Bus object path for this device.

@@ -6,6 +6,7 @@ pub mod types;
 use std::sync::Arc;
 
 use controls::PowerProfilesController;
+use derive_more::Debug;
 use tokio_util::sync::CancellationToken;
 use types::{LivePowerProfilesParams, PowerProfilesParams, PowerProfilesProps};
 use zbus::Connection;
@@ -31,7 +32,9 @@ use crate::{
 /// that automatically update when the underlying power-profiles-daemon state changes.
 #[derive(Debug, Clone)]
 pub struct PowerProfiles {
+    #[debug(skip)]
     cancellation_token: Option<CancellationToken>,
+    #[debug(skip)]
     zbus_connection: Connection,
     /// The type of the currently active profile.
     pub active_profile: Property<PowerProfile>,
