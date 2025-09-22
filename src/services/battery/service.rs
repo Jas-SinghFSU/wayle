@@ -22,36 +22,68 @@ pub struct BatteryService {
 }
 
 impl BatteryService {
-    /// Creates a new battery service instance for the display device.
+    /// Creates a new battery service for the default DisplayDevice.
     ///
-    /// The display device is UPower's composite device that represents the overall
+    /// The DisplayDevice is UPower's composite device that represents the overall
     /// battery status, automatically handling multiple batteries if present.
     /// This is the recommended way to monitor battery status for most applications.
     ///
     /// # Errors
     ///
     /// Returns `Error::ServiceInitializationFailed` if service initialization fails.
-    #[instrument]
     pub async fn new() -> Result<Self, Error> {
-        let device_path =
-            OwnedObjectPath::try_from("/org/freedesktop/UPower/devices/DisplayDevice")
-                .map_err(|e| Error::ServiceInitializationFailed(format!("Invalid path: {e}")))?;
-
-        Self::with_device(device_path).await
+        Self::builder().build().await
     }
 
-    /// Creates a battery service for a specific UPower device.
+    /// Creates a builder for configuring a BatteryService.
     ///
-    /// Use this when you need to monitor a specific battery or power device
-    /// rather than the aggregated display device.
+    /// Use this when you need to monitor a specific battery device
+    /// rather than the default aggregated DisplayDevice.
+    pub fn builder() -> BatteryServiceBuilder {
+        BatteryServiceBuilder::new()
+    }
+}
+
+/// Builder for configuring a BatteryService.
+pub struct BatteryServiceBuilder {
+    device_path: Option<OwnedObjectPath>,
+}
+
+impl BatteryServiceBuilder {
+    /// Creates a new builder with default configuration.
+    pub fn new() -> Self {
+        Self { device_path: None }
+    }
+
+    /// Sets a specific UPower device path.
+    ///
+    /// If not set, defaults to the DisplayDevice which aggregates all batteries.
     ///
     /// # Arguments
-    /// * `device_path` - D-Bus path to the UPower device (e.g., "/org/freedesktop/UPower/devices/battery_BAT0")
+    /// * `path` - D-Bus path to the UPower device (e.g., "/org/freedesktop/UPower/devices/battery_BAT0")
+    pub fn device_path(mut self, path: impl Into<OwnedObjectPath>) -> Self {
+        self.device_path = Some(path.into());
+        self
+    }
+
+    /// Builds the BatteryService.
+    ///
+    /// Uses the DisplayDevice if no specific device path was set.
+    /// The DisplayDevice is UPower's composite device that represents the overall
+    /// battery status, automatically handling multiple batteries if present.
     ///
     /// # Errors
     ///
     /// Returns `Error::ServiceInitializationFailed` if service initialization fails.
-    pub async fn with_device(device_path: OwnedObjectPath) -> Result<Self, Error> {
+    #[instrument(skip_all)]
+    pub async fn build(self) -> Result<BatteryService, Error> {
+        let device_path = if let Some(path) = self.device_path {
+            path
+        } else {
+            OwnedObjectPath::try_from("/org/freedesktop/UPower/devices/DisplayDevice")
+                .map_err(|e| Error::ServiceInitializationFailed(format!("Invalid path: {e}")))?
+        };
+
         let connection = Connection::system().await.map_err(|err| {
             Error::ServiceInitializationFailed(format!("D-Bus connection failed: {err}"))
         })?;
@@ -65,6 +97,12 @@ impl BatteryService {
         })
         .await?;
 
-        Ok(Self { device })
+        Ok(BatteryService { device })
+    }
+}
+
+impl Default for BatteryServiceBuilder {
+    fn default() -> Self {
+        Self::new()
     }
 }

@@ -18,12 +18,12 @@ A fast, configurable desktop environment shell for Wayland compositors. Built in
 - [x] **PulseAudio**
 - [x] **Network**
 - [x] **Bluetooth**
-- [ ] **Hyprland**
 - [x] **Battery**
-- [ ] **Cava**
 - [x] **Notification Daemon**
 - [x] **Power Profiles**
 - [ ] **System Tray (WIP)**
+- [ ] **Hyprland**
+- [ ] **Cava**
 
 ### UI Components
 

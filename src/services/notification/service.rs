@@ -13,7 +13,10 @@ use super::{
     error::Error,
     events::NotificationEvent,
     persistence::NotificationStore,
-    types::dbus::{SERVICE_NAME, SERVICE_PATH},
+    types::{
+        ClosedReason,
+        dbus::{SERVICE_NAME, SERVICE_PATH},
+    },
 };
 use crate::services::{common::Property, traits::ServiceMonitoring};
 
@@ -26,6 +29,8 @@ pub struct NotificationService {
     pub(crate) notif_tx: broadcast::Sender<NotificationEvent>,
     #[debug(skip)]
     pub(crate) store: Option<NotificationStore>,
+    #[debug(skip)]
+    pub(crate) connection: Connection,
 
     /// The list of all notifications that have been received.
     pub notifications: Property<Vec<Arc<Notification>>>,
@@ -56,8 +61,9 @@ impl NotificationService {
 
     /// Dismisses all notifications currently in the service.
     ///
-    /// This sends a remove event for each notification, which will trigger
-    /// the NotificationClosed signal with DismissedByUser reason for each.
+    /// This sends Remove events for each notification. The monitoring task
+    /// handles the actual removal from memory, database, and emits the
+    /// NotificationClosed signals.
     ///
     /// # Errors
     /// Returns error if the event channel is closed.
@@ -66,7 +72,10 @@ impl NotificationService {
         let notifications = self.notifications.get();
 
         for notif in notifications.iter() {
-            if let Err(e) = self.notif_tx.send(NotificationEvent::Remove(notif.id)) {
+            if let Err(e) = self.notif_tx.send(NotificationEvent::Remove(
+                notif.id,
+                ClosedReason::DismissedByUser,
+            )) {
                 warn!(
                     "Failed to dismiss notification with id '{}': {}",
                     notif.id, e
@@ -104,6 +113,7 @@ pub struct NotificationServiceBuilder {
     popup_duration: Property<u32>,
     dnd: Property<bool>,
     remove_expired: Property<bool>,
+    register_daemon: bool,
 }
 
 impl Default for NotificationServiceBuilder {
@@ -112,6 +122,7 @@ impl Default for NotificationServiceBuilder {
             popup_duration: Property::new(5000),
             dnd: Property::new(false),
             remove_expired: Property::new(true),
+            register_daemon: true,
         }
     }
 }
@@ -142,6 +153,13 @@ impl NotificationServiceBuilder {
         self
     }
 
+    /// Sets whether to register as the D-Bus notification daemon.
+    /// Set to false when creating a client that shouldn't own the service name.
+    pub fn register_daemon(mut self, register: bool) -> Self {
+        self.register_daemon = register;
+        self
+    }
+
     /// Builds and initializes the NotificationService.
     ///
     /// This will establish a D-Bus connection, register the notification daemon,
@@ -154,7 +172,7 @@ impl NotificationServiceBuilder {
         let connection = Connection::session().await.map_err(|err| {
             Error::ServiceInitializationFailed(format!("D-Bus connection failed: {err}"))
         })?;
-        let (notif_tx, _) = broadcast::channel(100);
+        let (notif_tx, _) = broadcast::channel(10000);
         let cancellation_token = CancellationToken::new();
 
         let store = match NotificationStore::new() {
@@ -205,22 +223,25 @@ impl NotificationServiceBuilder {
             notif_tx: notif_tx.clone(),
         };
 
-        connection
-            .object_server()
-            .at(SERVICE_PATH, daemon)
-            .await
-            .map_err(|err| {
-                Error::ServiceInitializationFailed(format!("Failed to register daemon: {err}"))
-            })?;
+        if self.register_daemon {
+            connection
+                .object_server()
+                .at(SERVICE_PATH, daemon)
+                .await
+                .map_err(|err| {
+                    Error::ServiceInitializationFailed(format!("Failed to register daemon: {err}"))
+                })?;
 
-        connection.request_name(SERVICE_NAME).await.map_err(|err| {
-            Error::ServiceInitializationFailed(format!("Failed to acquire name: {err}"))
-        })?;
+            connection.request_name(SERVICE_NAME).await.map_err(|err| {
+                Error::ServiceInitializationFailed(format!("Failed to acquire name: {err}"))
+            })?;
+        }
 
         let service = NotificationService {
             cancellation_token,
             notif_tx,
             store,
+            connection,
             notifications: Property::new(stored_notifications),
             popups: Property::new(vec![]),
             popup_duration: self.popup_duration,

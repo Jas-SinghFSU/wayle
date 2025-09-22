@@ -7,17 +7,15 @@ use std::{
 use chrono::Utc;
 use derive_more::Debug;
 use tokio::sync::broadcast;
-use tracing::{instrument, warn};
+use tracing::instrument;
 use zbus::{Connection, fdo, zvariant::OwnedValue};
 
 use super::{
     core::{notification::Notification, types::NotificationProps},
     events::NotificationEvent,
-    types::{
-        ClosedReason, Name, Signal, SpecVersion, Vendor, Version,
-        dbus::{SERVICE_INTERFACE, SERVICE_PATH},
-    },
+    types::{ClosedReason, Name, SpecVersion, Vendor, Version},
 };
+use crate::services::notification::types::Capabilities;
 
 #[derive(Debug)]
 pub(crate) struct NotificationDaemon {
@@ -77,27 +75,10 @@ impl NotificationDaemon {
 
         if expire_timeout > 0 {
             let tx = self.notif_tx.clone();
-            let connection = self.zbus_connection.clone();
 
             tokio::spawn(async move {
                 tokio::time::sleep(Duration::from_millis(expire_timeout as u64)).await;
-                let _ = tx.send(NotificationEvent::Remove(notif_id));
-
-                if let Err(e) = connection
-                    .emit_signal(
-                        None::<()>,
-                        SERVICE_PATH,
-                        SERVICE_INTERFACE,
-                        Signal::NotificationClosed.as_str(),
-                        &(notif_id, ClosedReason::Expired as u32),
-                    )
-                    .await
-                {
-                    warn!(
-                        "Failed to emit NotificationClosed signal for expired notification {}: {}",
-                        notif_id, e
-                    );
-                }
+                let _ = tx.send(NotificationEvent::Remove(notif_id, ClosedReason::Expired));
             });
         }
 
@@ -106,32 +87,14 @@ impl NotificationDaemon {
 
     #[instrument(skip(self), fields(notification_id = %id))]
     pub async fn close_notification(&self, id: u32) -> fdo::Result<()> {
-        let _ = self.notif_tx.send(NotificationEvent::Remove(id));
-
-        if let Err(e) = self
-            .zbus_connection
-            .emit_signal(
-                None::<()>,
-                SERVICE_PATH,
-                SERVICE_INTERFACE,
-                Signal::NotificationClosed.as_str(),
-                &(id, ClosedReason::Closed as u32),
-            )
-            .await
-        {
-            warn!(
-                "Failed to emit NotificationClosed signal for CloseNotification({}): {}",
-                id, e
-            );
-        }
-
+        let _ = self
+            .notif_tx
+            .send(NotificationEvent::Remove(id, ClosedReason::Closed));
         Ok(())
     }
 
     #[instrument(skip(self))]
     pub async fn get_capabilities(&self) -> Vec<String> {
-        use super::types::Capabilities;
-
         vec![
             Capabilities::Body.to_string(),
             Capabilities::BodyMarkup.to_string(),

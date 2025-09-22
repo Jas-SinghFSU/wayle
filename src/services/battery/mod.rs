@@ -7,4 +7,4 @@ mod service;
 pub mod types;
 
 pub use error::Error;
-pub use service::BatteryService;
+pub use service::{BatteryService, BatteryServiceBuilder};
