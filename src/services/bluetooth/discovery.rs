@@ -19,6 +19,7 @@ use super::{
     types::{ADAPTER_INTERFACE, BLUEZ_SERVICE, DEVICE_INTERFACE, ServiceNotification},
 };
 use crate::services::{common::ROOT_PATH, traits::Reactive};
+
 pub(crate) struct BluetoothDiscovery {
     pub adapters: Vec<Arc<Adapter>>,
     pub primary_adapter: Option<Arc<Adapter>>,

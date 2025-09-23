@@ -14,5 +14,7 @@ pub mod network;
 pub mod notification;
 /// Power profiles management service
 pub mod power_profiles;
+/// System tray control service
+pub mod systray;
 /// Service traits for uniform interfaces
 pub mod traits;
