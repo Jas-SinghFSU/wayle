@@ -32,7 +32,13 @@ pub struct SystemTrayService {
     pub(crate) event_tx: broadcast::Sender<TrayEvent>,
     #[debug(skip)]
     pub(crate) connection: Connection,
-    pub(crate) is_watcher: bool,
+
+    /// Whether this service is operating as a StatusNotifierWatcher (registry).
+    ///
+    /// When `true`, the service acts as the central registry receiving registrations
+    /// from tray items. When `false`, the service acts as a host consuming items from
+    /// an existing watcher.
+    pub is_watcher: bool,
 
     /// All discovered tray items.
     pub items: Property<Vec<Arc<TrayItem>>>,
@@ -257,5 +263,11 @@ impl SystemTrayServiceBuilder {
 impl Default for SystemTrayServiceBuilder {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl Drop for SystemTrayService {
+    fn drop(&mut self) {
+        self.cancellation_token.cancel();
     }
 }

@@ -1,7 +1,9 @@
-use zbus::Connection;
+use zbus::{Connection, zvariant::OwnedValue};
 
 use crate::services::systray::{
-    error::Error, proxy::status_notifier_item::StatusNotifierItemProxy,
+    error::Error,
+    proxy::{dbusmenu::DBusMenuProxy, status_notifier_item::StatusNotifierItemProxy},
+    types::menu::RawMenuItemsPropsList,
 };
 
 pub(super) struct TrayItemController;
@@ -71,6 +73,113 @@ impl TrayItemController {
             .await
             .map_err(|err| Error::OperationFailed {
                 operation: "scroll",
+                reason: err.to_string(),
+            })
+    }
+
+    pub async fn menu_about_to_show(
+        connection: &Connection,
+        bus_name: &str,
+        menu_path: &str,
+        id: i32,
+    ) -> Result<bool, Error> {
+        let proxy = DBusMenuProxy::new(connection, bus_name, menu_path).await?;
+
+        proxy
+            .about_to_show(id)
+            .await
+            .map_err(|err| Error::OperationFailed {
+                operation: "menu_about_to_show",
+                reason: err.to_string(),
+            })
+    }
+
+    pub async fn menu_event(
+        connection: &Connection,
+        bus_name: &str,
+        menu_path: &str,
+        id: i32,
+        event_id: &str,
+        data: OwnedValue,
+        timestamp: u32,
+    ) -> Result<(), Error> {
+        let proxy = DBusMenuProxy::new(connection, bus_name, menu_path).await?;
+
+        proxy
+            .event(id, event_id, data, timestamp)
+            .await
+            .map_err(|err| Error::OperationFailed {
+                operation: "menu_event",
+                reason: err.to_string(),
+            })
+    }
+
+    pub async fn menu_about_to_show_group(
+        connection: &Connection,
+        bus_name: &str,
+        menu_path: &str,
+        ids: Vec<i32>,
+    ) -> Result<(Vec<i32>, Vec<i32>), Error> {
+        let proxy = DBusMenuProxy::new(connection, bus_name, menu_path).await?;
+
+        proxy
+            .about_to_show_group(ids)
+            .await
+            .map_err(|err| Error::OperationFailed {
+                operation: "menu_about_to_show_group",
+                reason: err.to_string(),
+            })
+    }
+
+    pub async fn menu_event_group(
+        connection: &Connection,
+        bus_name: &str,
+        menu_path: &str,
+        events: Vec<(i32, String, OwnedValue, u32)>,
+    ) -> Result<Vec<i32>, Error> {
+        let proxy = DBusMenuProxy::new(connection, bus_name, menu_path).await?;
+
+        proxy
+            .event_group(events)
+            .await
+            .map_err(|err| Error::OperationFailed {
+                operation: "menu_event_group",
+                reason: err.to_string(),
+            })
+    }
+
+    pub async fn menu_get_property(
+        connection: &Connection,
+        bus_name: &str,
+        menu_path: &str,
+        id: i32,
+        property: &str,
+    ) -> Result<OwnedValue, Error> {
+        let proxy = DBusMenuProxy::new(connection, bus_name, menu_path).await?;
+
+        proxy
+            .get_property(id, property)
+            .await
+            .map_err(|err| Error::OperationFailed {
+                operation: "menu_get_property",
+                reason: err.to_string(),
+            })
+    }
+
+    pub async fn menu_get_group_properties(
+        connection: &Connection,
+        bus_name: &str,
+        menu_path: &str,
+        ids: Vec<i32>,
+        property_names: Vec<String>,
+    ) -> Result<RawMenuItemsPropsList, Error> {
+        let proxy = DBusMenuProxy::new(connection, bus_name, menu_path).await?;
+
+        proxy
+            .get_group_properties(ids, property_names)
+            .await
+            .map_err(|err| Error::OperationFailed {
+                operation: "menu_get_group_properties",
                 reason: err.to_string(),
             })
     }

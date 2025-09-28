@@ -2,14 +2,18 @@ use std::sync::{Arc, Weak};
 
 use tokio_stream::StreamExt;
 use tokio_util::sync::CancellationToken;
-use tracing::debug;
+use tracing::{debug, error};
+use zbus::proxy::CacheProperties;
 
 use super::TrayItem;
 use crate::services::{
     systray::{
         error::Error,
-        proxy::status_notifier_item::StatusNotifierItemProxy,
-        types::item::{Category, IconPixmap, Status, Tooltip},
+        proxy::{dbusmenu::DBusMenuProxy, status_notifier_item::StatusNotifierItemProxy},
+        types::{
+            item::{Category, IconPixmap, Status, Tooltip},
+            menu::MenuItem,
+        },
     },
     traits::ModelMonitoring,
 };
@@ -25,14 +29,32 @@ impl ModelMonitoring for TrayItem {
         };
 
         let bus_name = self.bus_name.get();
-        let proxy = StatusNotifierItemProxy::new(&self.zbus_connection, bus_name.clone()).await?;
+        let (service, path) = Self::parse_service_identifier(&bus_name);
+        let service = service.to_string();
+        let path = path.to_string();
+
+        let item_proxy = StatusNotifierItemProxy::builder(&self.zbus_connection)
+            .destination(service.clone())?
+            .path(path)?
+            .cache_properties(CacheProperties::No)
+            .build()
+            .await?;
+
+        let menu_path = self.menu_path.get().as_str().to_string();
+        let menu_proxy = DBusMenuProxy::builder(&self.zbus_connection)
+            .destination(service)?
+            .path(menu_path)?
+            .cache_properties(CacheProperties::No)
+            .build()
+            .await?;
+
         let cancel_token = cancellation_token.clone();
         let weak_self = Arc::downgrade(&self);
 
         debug!("Starting property monitoring for tray item: {bus_name}");
 
         tokio::spawn(async move {
-            monitor_properties(&bus_name, weak_self, proxy, cancel_token).await;
+            monitor_properties(&bus_name, weak_self, item_proxy, menu_proxy, cancel_token).await;
         });
 
         Ok(())
@@ -44,25 +66,35 @@ impl ModelMonitoring for TrayItem {
 async fn monitor_properties(
     bus_name: &str,
     weak_item: Weak<TrayItem>,
-    proxy: StatusNotifierItemProxy<'static>,
+    item_proxy: StatusNotifierItemProxy<'static>,
+    menu_proxy: DBusMenuProxy<'static>,
     cancellation_token: CancellationToken,
 ) {
-    let mut category_changed = proxy.receive_category_changed().await;
-    let mut id_changed = proxy.receive_id_changed().await;
-    let mut title_changed = proxy.receive_title_changed().await;
-    let mut status_changed = proxy.receive_status_changed().await;
-    let mut window_id_changed = proxy.receive_window_id_changed().await;
-    let mut icon_name_changed = proxy.receive_icon_name_changed().await;
-    let mut icon_pixmap_changed = proxy.receive_icon_pixmap_changed().await;
-    let mut overlay_icon_name_changed = proxy.receive_overlay_icon_name_changed().await;
-    let mut overlay_icon_pixmap_changed = proxy.receive_overlay_icon_pixmap_changed().await;
-    let mut attention_icon_name_changed = proxy.receive_attention_icon_name_changed().await;
-    let mut attention_icon_pixmap_changed = proxy.receive_attention_icon_pixmap_changed().await;
-    let mut attention_movie_name_changed = proxy.receive_attention_movie_name_changed().await;
-    let mut tooltip_changed = proxy.receive_tool_tip_changed().await;
-    let mut item_is_menu_changed = proxy.receive_item_is_menu_changed().await;
-    let mut menu_changed = proxy.receive_menu_changed().await;
-    let mut icon_theme_path_changed = proxy.receive_icon_theme_path_changed().await;
+    let mut category_changed = item_proxy.receive_category_changed().await;
+    let mut id_changed = item_proxy.receive_id_changed().await;
+    let mut title_changed = item_proxy.receive_title_changed().await;
+    let mut status_changed = item_proxy.receive_status_changed().await;
+    let mut window_id_changed = item_proxy.receive_window_id_changed().await;
+    let mut icon_name_changed = item_proxy.receive_icon_name_changed().await;
+    let mut icon_pixmap_changed = item_proxy.receive_icon_pixmap_changed().await;
+    let mut overlay_icon_name_changed = item_proxy.receive_overlay_icon_name_changed().await;
+    let mut overlay_icon_pixmap_changed = item_proxy.receive_overlay_icon_pixmap_changed().await;
+    let mut attention_icon_name_changed = item_proxy.receive_attention_icon_name_changed().await;
+    let mut attention_icon_pixmap_changed =
+        item_proxy.receive_attention_icon_pixmap_changed().await;
+    let mut attention_movie_name_changed = item_proxy.receive_attention_movie_name_changed().await;
+    let mut tooltip_changed = item_proxy.receive_tool_tip_changed().await;
+    let mut item_is_menu_changed = item_proxy.receive_item_is_menu_changed().await;
+    let mut menu_changed = item_proxy.receive_menu_changed().await;
+    let mut icon_theme_path_changed = item_proxy.receive_icon_theme_path_changed().await;
+
+    let mut layout_updated = match menu_proxy.receive_layout_updated().await {
+        Ok(layout) => layout,
+        Err(e) => {
+            error!("Failed to subscribe to menu layout updates for {bus_name}: {e}");
+            return;
+        }
+    };
 
     loop {
         let Some(tray_item) = weak_item.upgrade() else {
@@ -199,6 +231,19 @@ async fn monitor_properties(
                         Some(new_icon_theme_path)
                     };
                     tray_item.icon_theme_path.set(icon_theme_path);
+                }
+            }
+
+            Some(_) = layout_updated.next() => {
+                 match menu_proxy.get_layout(0, -1, vec![]).await {
+                    Ok(layout) => {
+                        let menu_item = MenuItem::from(layout);
+                        tray_item.menu.set(Some(menu_item));
+                    }
+                    Err(e) => {
+                        tray_item.menu.set(None);
+                        error!("Failed to update menu layout for {bus_name}: {e}");
+                    }
                 }
             }
 

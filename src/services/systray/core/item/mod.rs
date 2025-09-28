@@ -1,13 +1,16 @@
 mod controls;
 mod monitoring;
+mod types;
 
 use std::sync::Arc;
 
 use controls::TrayItemController;
 use tokio_util::sync::CancellationToken;
+use types::TrayItemProperties;
 use zbus::{
     Connection,
-    zvariant::{ObjectPath, OwnedObjectPath},
+    proxy::CacheProperties,
+    zvariant::{ObjectPath, OwnedObjectPath, OwnedValue},
 };
 
 use crate::{
@@ -15,10 +18,10 @@ use crate::{
         common::Property,
         systray::{
             error::Error,
-            proxy::status_notifier_item::StatusNotifierItemProxy,
+            proxy::{dbusmenu::DBusMenuProxy, status_notifier_item::StatusNotifierItemProxy},
             types::{
                 item::{Category, IconPixmap, Status, Tooltip},
-                menu::MenuItem,
+                menu::{MenuItem, RawMenuItemsPropsList},
             },
         },
         traits::{ModelMonitoring, Reactive},
@@ -92,7 +95,7 @@ pub struct TrayItem {
     pub tooltip: Property<Tooltip>,
 
     /// Hierarchical menu structure from DBusMenu interface.
-    pub menu: Property<MenuItem>,
+    pub menu: Property<Option<MenuItem>>,
 
     /// DBus path to an object which should implement the com.canonical.dbusmenu interface.
     pub menu_path: Property<OwnedObjectPath>,
@@ -145,25 +148,6 @@ impl Reactive for TrayItem {
 
         Ok(item)
     }
-}
-
-struct TrayItemProperties {
-    id: String,
-    title: String,
-    category: Category,
-    status: Status,
-    window_id: u32,
-    item_is_menu: bool,
-    icon_name: Option<String>,
-    icon_pixmap: Vec<IconPixmap>,
-    overlay_icon_name: Option<String>,
-    overlay_icon_pixmap: Vec<IconPixmap>,
-    attention_icon_name: Option<String>,
-    attention_icon_pixmap: Vec<IconPixmap>,
-    attention_movie_name: Option<String>,
-    icon_theme_path: Option<String>,
-    tooltip: Tooltip,
-    menu_path: OwnedObjectPath,
 }
 
 impl TrayItem {
@@ -230,6 +214,205 @@ impl TrayItem {
         .await
     }
 
+    /// Refreshes the root menu by calling AboutToShow on the menu root.
+    ///
+    /// This should be called before displaying a menu to ensure applications
+    /// can populate dynamic content. Part of the DBusMenu protocol for lazy menu population.
+    ///
+    /// # Errors
+    ///
+    /// Returns error if the D-Bus call fails or the menu is unreachable.
+    pub async fn refresh_menu(&self) -> Result<bool, Error> {
+        TrayItemController::menu_about_to_show(
+            &self.zbus_connection,
+            &self.bus_name.get(),
+            self.menu_path.get().as_str(),
+            0,
+        )
+        .await
+    }
+
+    /// Notifies the application that a menu or submenu is about to be shown.
+    ///
+    /// This allows applications to populate menus on-demand rather than keeping
+    /// all menu content in memory. Called automatically by menu rendering adapters.
+    ///
+    /// # Arguments
+    /// * `id` - Menu item ID representing the parent of the item about to be shown (0 for root)
+    ///
+    /// # Returns
+    /// * `true` if the menu needs to be updated, `false` otherwise
+    ///
+    /// # Errors
+    ///
+    /// Returns error if the D-Bus call fails or the menu is unreachable.
+    pub async fn menu_about_to_show(&self, id: i32) -> Result<bool, Error> {
+        TrayItemController::menu_about_to_show(
+            &self.zbus_connection,
+            &self.bus_name.get(),
+            self.menu_path.get().as_str(),
+            id,
+        )
+        .await
+    }
+
+    /// Sends a menu event to the application.
+    ///
+    /// Event types:
+    /// - "clicked" - Menu item was clicked
+    /// - "hovered" - Mouse hovered over item
+    /// - "opened" - Submenu was opened
+    /// - "closed" - Submenu was closed
+    ///
+    /// # Arguments
+    /// * `id` - Menu item ID that received the event
+    /// * `event_id` - Type of event
+    /// * `data` - Event-specific data
+    /// * `timestamp` - Event timestamp
+    ///
+    /// # Errors
+    ///
+    /// Returns error if the D-Bus call fails or the menu is unreachable.
+    pub async fn menu_event(
+        &self,
+        id: i32,
+        event_id: &str,
+        data: OwnedValue,
+        timestamp: u32,
+    ) -> Result<(), Error> {
+        TrayItemController::menu_event(
+            &self.zbus_connection,
+            &self.bus_name.get(),
+            self.menu_path.get().as_str(),
+            id,
+            event_id,
+            data,
+            timestamp,
+        )
+        .await
+    }
+
+    /// Notifies the application that multiple menus are about to be shown.
+    ///
+    /// Batch version of `menu_about_to_show` for programmatic use.
+    ///
+    /// # Arguments
+    /// * `ids` - Menu item IDs whose submenus are being shown
+    ///
+    /// # Returns
+    /// * `(updates_needed, id_errors)` - IDs needing updates and IDs not found
+    ///
+    /// # Errors
+    ///
+    /// Returns error if the D-Bus call fails or the menu is unreachable.
+    pub async fn menu_about_to_show_group(
+        &self,
+        ids: Vec<i32>,
+    ) -> Result<(Vec<i32>, Vec<i32>), Error> {
+        TrayItemController::menu_about_to_show_group(
+            &self.zbus_connection,
+            &self.bus_name.get(),
+            self.menu_path.get().as_str(),
+            ids,
+        )
+        .await
+    }
+
+    /// Sends multiple menu events to the application.
+    ///
+    /// Batch version of `menu_event` to optimize D-Bus traffic.
+    ///
+    /// # Arguments
+    /// * `events` - Array of (id, event_id, data, timestamp) tuples
+    ///
+    /// # Returns
+    /// * List of menu item IDs that couldn't be found
+    ///
+    /// # Errors
+    ///
+    /// Returns error if the D-Bus call fails or the menu is unreachable.
+    pub async fn menu_event_group(
+        &self,
+        events: Vec<(i32, String, OwnedValue, u32)>,
+    ) -> Result<Vec<i32>, Error> {
+        TrayItemController::menu_event_group(
+            &self.zbus_connection,
+            &self.bus_name.get(),
+            self.menu_path.get().as_str(),
+            events,
+        )
+        .await
+    }
+
+    /// Gets a single property from a single menu item.
+    ///
+    /// Primarily useful for debugging. For production use, prefer getting
+    /// properties from the MenuItem structure.
+    ///
+    /// # Arguments
+    /// * `id` - Menu item ID
+    /// * `property` - Property name
+    ///
+    /// # Returns
+    /// * Property value
+    ///
+    /// # Errors
+    ///
+    /// Returns error if the D-Bus call fails or the menu is unreachable.
+    pub async fn menu_get_property(&self, id: i32, property: &str) -> Result<OwnedValue, Error> {
+        TrayItemController::menu_get_property(
+            &self.zbus_connection,
+            &self.bus_name.get(),
+            self.menu_path.get().as_str(),
+            id,
+            property,
+        )
+        .await
+    }
+
+    /// Gets properties for multiple menu items.
+    ///
+    /// # Arguments
+    /// * `ids` - Menu item IDs to query (empty = all items)
+    /// * `property_names` - Property names to retrieve (empty = all properties)
+    ///
+    /// # Returns
+    /// * Array of (id, properties) tuples
+    ///
+    /// # Errors
+    ///
+    /// Returns error if the D-Bus call fails or the menu is unreachable.
+    pub async fn menu_get_group_properties(
+        &self,
+        ids: Vec<i32>,
+        property_names: Vec<String>,
+    ) -> Result<RawMenuItemsPropsList, Error> {
+        TrayItemController::menu_get_group_properties(
+            &self.zbus_connection,
+            &self.bus_name.get(),
+            self.menu_path.get().as_str(),
+            ids,
+            property_names,
+        )
+        .await
+    }
+
+    /// Parse a service identifier into service name and object path.
+    ///
+    /// Handles two formats:
+    /// - Bus name only: "org.kde.StatusNotifierItem-4077-1" -> uses default path
+    /// - Bus name with path: ":1.234/StatusNotifierItem" -> splits at /
+    fn parse_service_identifier(bus_name: &str) -> (&str, &str) {
+        if let Some(slash_pos) = bus_name.find('/') {
+            let service_part = &bus_name[..slash_pos];
+            let path_part = &bus_name[slash_pos..];
+
+            (service_part, path_part)
+        } else {
+            (bus_name, "/StatusNotifierItem")
+        }
+    }
+
     async fn fetch_properties(
         connection: &Connection,
         bus_name: &str,
@@ -237,28 +420,39 @@ impl TrayItem {
         let (service, path) = Self::parse_service_identifier(bus_name);
         let path = ObjectPath::try_from(path)?;
 
-        let proxy = StatusNotifierItemProxy::builder(connection)
+        let item_proxy = StatusNotifierItemProxy::builder(connection)
             .destination(service)?
             .path(path)?
             .build()
             .await?;
 
-        let id = proxy.id().await;
-        let title = proxy.title().await;
-        let category = proxy.category().await.unwrap_or_default();
-        let status = proxy.status().await.unwrap_or_default();
-        let window_id = proxy.window_id().await;
-        let item_is_menu = proxy.item_is_menu().await;
-        let icon_name = proxy.icon_name().await.ok();
-        let icon_pixmap = proxy.icon_pixmap().await;
-        let overlay_icon_name = proxy.overlay_icon_name().await.ok();
-        let overlay_icon_pixmap = proxy.overlay_icon_pixmap().await;
-        let attention_icon_name = proxy.attention_icon_name().await.ok();
-        let attention_icon_pixmap = proxy.attention_icon_pixmap().await;
-        let attention_movie_name = proxy.attention_movie_name().await.ok();
-        let icon_theme_path = proxy.icon_theme_path().await.ok();
-        let tooltip = proxy.tool_tip().await;
-        let menu_path = proxy.menu().await;
+        let id = item_proxy.id().await;
+        let title = item_proxy.title().await;
+        let category = item_proxy.category().await.unwrap_or_default();
+        let status = item_proxy.status().await.unwrap_or_default();
+        let window_id = item_proxy.window_id().await;
+        let item_is_menu = item_proxy.item_is_menu().await;
+        let icon_name = item_proxy.icon_name().await.ok();
+        let icon_pixmap = item_proxy.icon_pixmap().await;
+        let overlay_icon_name = item_proxy.overlay_icon_name().await.ok();
+        let overlay_icon_pixmap = item_proxy.overlay_icon_pixmap().await;
+        let attention_icon_name = item_proxy.attention_icon_name().await.ok();
+        let attention_icon_pixmap = item_proxy.attention_icon_pixmap().await;
+        let attention_movie_name = item_proxy.attention_movie_name().await.ok();
+        let icon_theme_path = item_proxy.icon_theme_path().await.ok();
+        let tooltip = item_proxy.tool_tip().await;
+        let menu_path = item_proxy.menu().await.unwrap_or_default();
+
+        let (service, _) = Self::parse_service_identifier(bus_name);
+        let service = service.to_string();
+        let menu_proxy = DBusMenuProxy::builder(connection)
+            .destination(service)?
+            .path(menu_path.clone())?
+            .cache_properties(CacheProperties::No)
+            .build()
+            .await?;
+
+        let menu_item = menu_proxy.get_layout(0, -1, vec![]).await.ok();
 
         Ok(TrayItemProperties {
             id: unwrap_string!(id),
@@ -288,7 +482,8 @@ impl TrayItem {
             attention_movie_name,
             icon_theme_path,
             tooltip: tooltip.map(Tooltip::from).unwrap_or_default(),
-            menu_path: menu_path.unwrap_or_default(),
+            menu_path,
+            menu: menu_item,
         })
     }
 
@@ -298,6 +493,8 @@ impl TrayItem {
         service: String,
         cancellation_token: Option<CancellationToken>,
     ) -> Self {
+        let menu = props.menu.map(MenuItem::from);
+
         Self {
             zbus_connection: connection,
             cancellation_token,
@@ -317,24 +514,8 @@ impl TrayItem {
             attention_movie_name: Property::new(props.attention_movie_name),
             icon_theme_path: Property::new(props.icon_theme_path),
             tooltip: Property::new(props.tooltip),
-            menu: Property::new(MenuItem::new(0)),
+            menu: Property::new(menu),
             menu_path: Property::new(props.menu_path),
-        }
-    }
-
-    /// Parse a service identifier into service name and object path.
-    ///
-    /// Handles two formats:
-    /// - Bus name only: "org.kde.StatusNotifierItem-4077-1" -> uses default path
-    /// - Bus name with path: ":1.234/StatusNotifierItem" -> splits at /
-    fn parse_service_identifier(bus_name: &str) -> (&str, &str) {
-        if let Some(slash_pos) = bus_name.find('/') {
-            let service_part = &bus_name[..slash_pos];
-            let path_part = &bus_name[slash_pos..];
-
-            (service_part, path_part)
-        } else {
-            (bus_name, "/StatusNotifierItem")
         }
     }
 }

@@ -165,6 +165,12 @@ pub enum ChildrenDisplay {
     Submenu,
 }
 
+impl Default for ChildrenDisplay {
+    fn default() -> Self {
+        Self::Submenu
+    }
+}
+
 impl From<&str> for ChildrenDisplay {
     fn from(s: &str) -> Self {
         match s {
@@ -315,34 +321,17 @@ pub struct MenuItem {
     pub children: Vec<MenuItem>,
 }
 
+impl From<RawMenuLayout> for MenuItem {
+    fn from(value: RawMenuLayout) -> Self {
+        let root_menu = value.1;
+        let root_menu_props = root_menu.1;
+        let root_menu_children = root_menu.2;
+
+        Self::from_props(root_menu.0, root_menu_props, root_menu_children)
+    }
+}
+
 impl MenuItem {
-    /// Create a new menu item with default values.
-    pub fn new(id: i32) -> Self {
-        Self {
-            id,
-            label: None,
-            enabled: true,
-            visible: true,
-            item_type: MenuItemType::Standard,
-            toggle_type: ToggleType::None,
-            toggle_state: ToggleState::Unchecked,
-            icon_name: None,
-            icon_data: None,
-            accessible_desc: None,
-            shortcut: None,
-            disposition: Disposition::Normal,
-            children_display: ChildrenDisplay::Submenu,
-            children: Vec::new(),
-        }
-    }
-
-    /// Create a new menu item with a label.
-    pub fn with_label(id: i32, label: impl Into<String>) -> Self {
-        let mut item = Self::new(id);
-        item.label = Some(label.into());
-        item
-    }
-
     /// Check if this is a separator item.
     pub fn is_separator(&self) -> bool {
         self.item_type == MenuItemType::Separator
@@ -361,6 +350,98 @@ impl MenuItem {
     /// Check if this item is checkable.
     pub fn is_checkable(&self) -> bool {
         matches!(self.toggle_type, ToggleType::Checkmark | ToggleType::Radio)
+    }
+
+    fn from_props(
+        id: i32,
+        root_menu_props: HashMap<String, OwnedValue>,
+        children: Vec<OwnedValue>,
+    ) -> Self {
+        let label = root_menu_props
+            .get("label")
+            .and_then(|v| String::try_from(v.clone()).ok());
+
+        let enabled = root_menu_props
+            .get("enabled")
+            .and_then(|v| bool::try_from(v).ok())
+            .unwrap_or(true);
+
+        let visible = root_menu_props
+            .get("visible")
+            .and_then(|v| bool::try_from(v).ok())
+            .unwrap_or(true);
+
+        let item_type = root_menu_props
+            .get("type")
+            .and_then(|v| <&str>::try_from(v).ok())
+            .map(MenuItemType::from)
+            .unwrap_or_default();
+
+        let toggle_type = root_menu_props
+            .get("toggle-type")
+            .and_then(|v| <&str>::try_from(v).ok())
+            .map(ToggleType::from)
+            .unwrap_or_default();
+
+        let toggle_state = root_menu_props
+            .get("toggle-state")
+            .and_then(|v| <i32>::try_from(v).ok())
+            .map(ToggleState::from)
+            .unwrap_or_default();
+
+        let icon_name = root_menu_props
+            .get("icon-name")
+            .and_then(|v| String::try_from(v.clone()).ok());
+
+        let icon_data = root_menu_props
+            .get("icon-data")
+            .and_then(|v| Vec::<u8>::try_from(v.clone()).ok());
+
+        let accessible_desc = root_menu_props
+            .get("accessible-desc")
+            .and_then(|v| String::try_from(v.clone()).ok());
+
+        let shortcut = root_menu_props
+            .get("shortcut")
+            .and_then(|v| Vec::<Vec<String>>::try_from(v.clone()).ok());
+
+        let disposition = root_menu_props
+            .get("disposition")
+            .and_then(|v| <&str>::try_from(v).ok())
+            .map(Disposition::from)
+            .unwrap_or_default();
+
+        let children_display = root_menu_props
+            .get("children-display")
+            .and_then(|v| <&str>::try_from(v).ok())
+            .map(ChildrenDisplay::from)
+            .unwrap_or_default();
+
+        let children = children
+            .into_iter()
+            .filter_map(|child| {
+                let (child_id, child_props, child_children) =
+                    <(i32, HashMap<String, OwnedValue>, Vec<OwnedValue>)>::try_from(child).ok()?;
+                Some(Self::from_props(child_id, child_props, child_children))
+            })
+            .collect();
+
+        Self {
+            id,
+            label,
+            enabled,
+            visible,
+            item_type,
+            toggle_type,
+            toggle_state,
+            icon_name,
+            icon_data,
+            accessible_desc,
+            shortcut,
+            disposition,
+            children_display,
+            children,
+        }
     }
 }
 

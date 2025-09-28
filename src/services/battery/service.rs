@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use derive_more::Debug;
 use tokio_util::sync::CancellationToken;
 use tracing::instrument;
 use zbus::{Connection, zvariant::OwnedObjectPath};
@@ -17,6 +18,9 @@ use crate::services::traits::Reactive;
 /// monitoring of changes through the D-Bus interface.
 #[derive(Debug)]
 pub struct BatteryService {
+    #[debug(skip)]
+    pub(crate) cancellation_token: CancellationToken,
+
     /// The UPower battery device proxy for power metrics and charging state.
     pub device: Arc<Device>,
 }
@@ -97,12 +101,21 @@ impl BatteryServiceBuilder {
         })
         .await?;
 
-        Ok(BatteryService { device })
+        Ok(BatteryService {
+            device,
+            cancellation_token,
+        })
     }
 }
 
 impl Default for BatteryServiceBuilder {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl Drop for BatteryService {
+    fn drop(&mut self) {
+        self.cancellation_token.cancel();
     }
 }

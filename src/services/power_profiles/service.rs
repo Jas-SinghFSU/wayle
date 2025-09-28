@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use derive_more::Debug;
 use tokio_util::sync::CancellationToken;
 use tracing::instrument;
 use zbus::Connection;
@@ -17,6 +18,9 @@ use crate::services::traits::Reactive;
 /// monitoring of profile changes through the D-Bus interface.
 #[derive(Debug)]
 pub struct PowerProfilesService {
+    #[debug(skip)]
+    pub(crate) cancellation_token: CancellationToken,
+
     /// The power profiles D-Bus proxy for system power management operations.
     pub power_profiles: Arc<PowerProfiles>,
 }
@@ -46,6 +50,15 @@ impl PowerProfilesService {
         })
         .await?;
 
-        Ok(Self { power_profiles })
+        Ok(Self {
+            power_profiles,
+            cancellation_token,
+        })
+    }
+}
+
+impl Drop for PowerProfilesService {
+    fn drop(&mut self) {
+        self.cancellation_token.cancel();
     }
 }
