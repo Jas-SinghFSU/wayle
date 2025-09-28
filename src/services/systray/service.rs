@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use derive_more::Debug;
+use futures::{Stream, StreamExt};
 use tokio::sync::broadcast;
 use tokio_util::sync::CancellationToken;
 use tracing::{info, instrument};
@@ -141,6 +142,72 @@ impl SystemTrayService {
     pub async fn shutdown(&self) {
         self.cancellation_token.cancel();
     }
+
+    /// A new StatusNotifierItem has been registered, the argument of the signal is the session
+    /// bus name of the instance.
+    ///
+    /// StatusNotifierHost instances should react to this signal by refreshing their
+    /// representation of the item list.
+    ///
+    /// # Errors
+    /// Returns error if D-Bus proxy creation fails.
+    pub async fn status_notifier_item_registered_signal(
+        &self,
+    ) -> Result<impl Stream<Item = String>, Error> {
+        let proxy = StatusNotifierWatcherProxy::new(&self.connection).await?;
+        let stream = proxy.receive_status_notifier_item_registered().await?;
+
+        Ok(stream.filter_map(|signal| async move { signal.args().ok().map(|args| args.service) }))
+    }
+
+    /// A StatusNotifierItem instance has disappeared from the bus, the argument of the signal is
+    /// the session bus name of the instance.
+    ///
+    /// StatusNotifierHost instances should react to this signal by refreshing their
+    /// representation of the item list.
+    ///
+    /// # Errors
+    /// Returns error if D-Bus proxy creation fails.
+    pub async fn status_notifier_item_unregistered_signal(
+        &self,
+    ) -> Result<impl Stream<Item = String>, Error> {
+        let proxy = StatusNotifierWatcherProxy::new(&self.connection).await?;
+        let stream = proxy.receive_status_notifier_item_unregistered().await?;
+
+        Ok(stream.filter_map(|signal| async move { signal.args().ok().map(|args| args.service) }))
+    }
+
+    /// A new StatusNotifierHost has been registered.
+    ///
+    /// StatusNotifierItem instances that previously did not register if no hosts were available
+    /// may now reconsider to register.
+    ///
+    /// # Errors
+    /// Returns error if D-Bus proxy creation fails.
+    pub async fn status_notifier_host_registered_signal(
+        &self,
+    ) -> Result<impl Stream<Item = ()>, Error> {
+        let proxy = StatusNotifierWatcherProxy::new(&self.connection).await?;
+        let stream = proxy.receive_status_notifier_host_registered().await?;
+
+        Ok(stream.filter_map(|_signal| async move { Some(()) }))
+    }
+
+    /// There are no more StatusNotifierHost instances running.
+    ///
+    /// StatusNotifierItem instances may choose to skip registration if there are no hosts
+    /// available.
+    ///
+    /// # Errors
+    /// Returns error if D-Bus proxy creation fails.
+    pub async fn status_notifier_host_unregistered_signal(
+        &self,
+    ) -> Result<impl Stream<Item = ()>, Error> {
+        let proxy = StatusNotifierWatcherProxy::new(&self.connection).await?;
+        let stream = proxy.receive_status_notifier_host_unregistered().await?;
+
+        Ok(stream.filter_map(|_signal| async move { Some(()) }))
+    }
 }
 
 /// Builder for configuring a SystemTrayService.
@@ -188,38 +255,48 @@ impl SystemTrayServiceBuilder {
             TrayMode::Auto => Self::try_become_watcher(&connection).await?,
         };
 
-        let items = if is_watcher {
-            let watcher =
-                StatusNotifierWatcher::new(event_tx.clone(), &connection, &cancellation_token)
-                    .await?;
+        let service = SystemTrayService {
+            cancellation_token,
+            event_tx,
+            connection,
+            is_watcher,
+            items: Property::new(Vec::new()),
+        };
 
-            connection
+        if is_watcher {
+            let watcher = StatusNotifierWatcher::new(
+                service.event_tx.clone(),
+                &service.connection,
+                &service.cancellation_token,
+            )
+            .await?;
+
+            service
+                .connection
                 .object_server()
                 .at(WATCHER_OBJECT_PATH, watcher)
                 .await?;
-
-            Vec::new()
         } else {
-            let unique_name = connection
+            let unique_name = service
+                .connection
                 .unique_name()
                 .ok_or_else(|| {
                     Error::ServiceInitializationFailed("Failed to get unique name".to_string())
                 })?
                 .to_string();
 
-            SystemTrayServiceDiscovery::register_as_host(&connection, &unique_name).await?;
-            SystemTrayServiceDiscovery::discover_items(&connection, &cancellation_token).await?
-        };
-
-        let service = SystemTrayService {
-            cancellation_token,
-            event_tx,
-            connection,
-            is_watcher,
-            items: Property::new(items),
-        };
+            SystemTrayServiceDiscovery::register_as_host(&service.connection, &unique_name).await?;
+        }
 
         service.start_monitoring().await?;
+
+        let items = SystemTrayServiceDiscovery::discover_items(
+            &service.connection,
+            &service.cancellation_token,
+        )
+        .await?;
+        service.items.set(items);
+
         Ok(service)
     }
 

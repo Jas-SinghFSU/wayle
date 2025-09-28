@@ -7,6 +7,7 @@ use std::sync::Arc;
 
 use controls::PowerProfilesController;
 use derive_more::Debug;
+use futures::{Stream, StreamExt};
 use tokio_util::sync::CancellationToken;
 use types::{LivePowerProfilesParams, PowerProfilesParams, PowerProfilesProps};
 use zbus::Connection;
@@ -102,6 +103,18 @@ impl PowerProfiles {
     /// Returns error if hold release fails or cookie is invalid.
     pub async fn release_profile(&self, hold_cookie: HoldCookie) -> Result<(), Error> {
         PowerProfilesController::release_profile(&self.zbus_connection, hold_cookie).await
+    }
+
+    /// This signal will be emitted if the profile is released because the
+    /// "ActiveProfile" was manually changed.
+    ///
+    /// # Errors
+    /// Returns error if D-Bus proxy creation fails.
+    pub async fn profile_released_signal(&self) -> Result<impl Stream<Item = HoldCookie>, Error> {
+        let proxy = PowerProfilesProxy::new(&self.zbus_connection).await?;
+        let stream = proxy.receive_profile_released().await?;
+
+        Ok(stream.filter_map(|signal| async move { signal.args().ok().map(|args| args.cookie) }))
     }
 
     async fn from_connection(connection: &Connection) -> Result<PowerProfilesProps, Error> {

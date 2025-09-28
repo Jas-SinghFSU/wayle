@@ -6,6 +6,7 @@ use std::{collections::HashMap, sync::Arc};
 
 use controls::ConnectionSettingsControls;
 use derive_more::Debug;
+use futures::{Stream, StreamExt};
 use tokio_util::sync::CancellationToken;
 pub(crate) use types::{ConnectionSettingsParams, LiveConnectionSettingsParams};
 use zbus::{
@@ -288,6 +289,42 @@ impl ConnectionSettings {
             flags: Property::new(NMConnectionSettingsFlags::from_bits_truncate(props.flags)),
             filename: Property::new(props.filename),
         }
+    }
+
+    /// Emitted when any property of any settings object within this Connection has changed.
+    ///
+    /// # Errors
+    /// Returns error if D-Bus proxy creation fails.
+    pub async fn properties_changed_signal(
+        &self,
+    ) -> Result<impl Stream<Item = HashMap<String, OwnedValue>>, Error> {
+        let proxy = SettingsConnectionProxy::new(&self.connection, &self.object_path).await?;
+        let stream = proxy.receive_properties_changed().await?;
+
+        Ok(stream
+            .filter_map(|signal| async move { signal.args().ok().map(|args| args.properties) }))
+    }
+
+    /// Emitted when the connection is updated.
+    ///
+    /// # Errors
+    /// Returns error if D-Bus proxy creation fails.
+    pub async fn updated_signal(&self) -> Result<impl Stream<Item = ()>, Error> {
+        let proxy = SettingsConnectionProxy::new(&self.connection, &self.object_path).await?;
+        let stream = proxy.receive_updated().await?;
+
+        Ok(stream.filter_map(|_signal| async move { Some(()) }))
+    }
+
+    /// Emitted when the connection is removed.
+    ///
+    /// # Errors
+    /// Returns error if D-Bus proxy creation fails.
+    pub async fn removed_signal(&self) -> Result<impl Stream<Item = ()>, Error> {
+        let proxy = SettingsConnectionProxy::new(&self.connection, &self.object_path).await?;
+        let stream = proxy.receive_removed().await?;
+
+        Ok(stream.filter_map(|_signal| async move { Some(()) }))
     }
 }
 

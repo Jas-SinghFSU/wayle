@@ -9,6 +9,14 @@ use zbus::{
 
 use crate::services::bluetooth::types::ServiceNotification;
 
+/// Event emitted when a device is disconnected.
+pub struct DisconnectedEvent {
+    /// Reason code for the disconnection.
+    pub reason: u8,
+    /// Human-readable message describing the disconnection.
+    pub message: String,
+}
+
 /// Manufacturer-specific advertisement data keyed by company ID.
 pub type ManufacturerData = HashMap<u16, Vec<u8>>;
 /// Advertisement data keyed by AD type.

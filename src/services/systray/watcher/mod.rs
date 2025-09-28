@@ -9,7 +9,7 @@ use tokio_util::sync::CancellationToken;
 use tracing::{info, instrument};
 use zbus::{Connection, fdo, object_server::SignalEmitter};
 
-use super::{error::Error, events::TrayEvent};
+use super::{error::Error, events::TrayEvent, types::PROTOCOL_VERSION};
 use crate::services::traits::ServiceMonitoring;
 
 /// StatusNotifierWatcher D-Bus interface implementation.
@@ -95,7 +95,7 @@ impl StatusNotifierWatcher {
     /// Protocol version (always 0 for this specification).
     #[zbus(property)]
     fn protocol_version(&self) -> i32 {
-        0
+        PROTOCOL_VERSION
     }
 
     /// Signal: A new StatusNotifierItem has been registered.

@@ -327,4 +327,32 @@ impl Settings {
             version_id: Property::new(unwrap_u64!(version_id)),
         })
     }
+
+    /// Emitted when a new connection has been added.
+    ///
+    /// # Errors
+    /// Returns error if D-Bus proxy creation fails.
+    pub async fn new_connection_signal(
+        &self,
+    ) -> Result<impl Stream<Item = OwnedObjectPath>, Error> {
+        let proxy = SettingsProxy::new(&self.zbus_connection).await?;
+        let stream = proxy.receive_new_connection().await?;
+
+        Ok(stream
+            .filter_map(|signal| async move { signal.args().ok().map(|args| args.connection) }))
+    }
+
+    /// Emitted when a connection is no longer available.
+    ///
+    /// # Errors
+    /// Returns error if D-Bus proxy creation fails.
+    pub async fn connection_removed_signal(
+        &self,
+    ) -> Result<impl Stream<Item = OwnedObjectPath>, Error> {
+        let proxy = SettingsProxy::new(&self.zbus_connection).await?;
+        let stream = proxy.receive_connection_removed().await?;
+
+        Ok(stream
+            .filter_map(|signal| async move { signal.args().ok().map(|args| args.connection) }))
+    }
 }

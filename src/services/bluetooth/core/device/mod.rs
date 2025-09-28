@@ -6,8 +6,10 @@ use std::sync::Arc;
 
 use controls::DeviceControls;
 use derive_more::Debug;
+use futures::{Stream, StreamExt};
 use tokio::sync::broadcast;
 use tokio_util::sync::CancellationToken;
+pub use types::DisconnectedEvent;
 use types::{AdvertisingData, DeviceProperties, DeviceSet, ManufacturerData, ServiceData};
 pub(crate) use types::{DeviceParams, LiveDeviceParams};
 use zbus::{Connection, zvariant::OwnedObjectPath};
@@ -437,6 +439,29 @@ impl Device {
             &self.object_path,
         )
         .await
+    }
+
+    /// This signal is launched when a device is disconnected, with the reason of the
+    /// disconnection.
+    ///
+    /// This could be used by client application, depending on internal policy, to try
+    /// to reconnect to the device in case of timeout or unknown disconnection, or to
+    /// try to connect to another device.
+    ///
+    /// # Errors
+    /// Returns error if D-Bus proxy creation fails.
+    pub async fn disconnected_signal(
+        &self,
+    ) -> Result<impl Stream<Item = DisconnectedEvent>, Error> {
+        let proxy = Device1Proxy::new(&self.zbus_connection, &self.object_path).await?;
+        let stream = proxy.receive_disconnected().await?;
+
+        Ok(stream.filter_map(|signal| async move {
+            signal.args().ok().map(|args| DisconnectedEvent {
+                reason: args.reason,
+                message: args.message,
+            })
+        }))
     }
 
     #[allow(clippy::too_many_lines)]

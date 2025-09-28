@@ -4,9 +4,11 @@ mod types;
 use std::sync::Arc;
 
 use derive_more::Debug;
+use futures::{Stream, StreamExt};
 use tokio_util::sync::CancellationToken;
 use tracing::warn;
 pub(crate) use types::{ActiveConnectionParams, LiveActiveConnectionParams};
+pub use types::{ActiveConnectionStateChangedEvent, VpnConnectionStateChangedEvent};
 use zbus::{Connection, zvariant::OwnedObjectPath};
 
 use crate::{
@@ -14,8 +16,14 @@ use crate::{
         common::Property,
         network::{
             error::Error,
-            proxy::active_connection::ConnectionActiveProxy,
-            types::{flags::NMActivationStateFlags, states::NMActiveConnectionState},
+            proxy::active_connection::{ConnectionActiveProxy, vpn::VPNConnectionProxy},
+            types::{
+                flags::NMActivationStateFlags,
+                states::{
+                    NMActiveConnectionState, NMActiveConnectionStateReason, NMVpnConnectionState,
+                    NMVpnConnectionStateReason,
+                },
+            },
         },
         traits::{ModelMonitoring, Reactive},
     },
@@ -216,5 +224,47 @@ impl ActiveConnection {
             object_path: path,
             cancellation_token,
         })
+    }
+
+    /// Emitted when the active connection changes state.
+    ///
+    /// # Errors
+    /// Returns error if D-Bus proxy creation fails.
+    pub async fn active_connection_state_changed_signal(
+        &self,
+    ) -> Result<impl Stream<Item = ActiveConnectionStateChangedEvent>, Error> {
+        let proxy = ConnectionActiveProxy::new(&self.zbus_connection, &self.object_path).await?;
+        let stream = proxy.receive_active_connection_state_changed().await?;
+
+        Ok(stream.filter_map(|signal| async move {
+            signal
+                .args()
+                .ok()
+                .map(|args| ActiveConnectionStateChangedEvent {
+                    state: NMActiveConnectionState::from_u32(args.state),
+                    reason: NMActiveConnectionStateReason::from_u32(args.reason),
+                })
+        }))
+    }
+
+    /// Emitted when the state of the VPN connection has changed.
+    ///
+    /// # Errors
+    /// Returns error if D-Bus proxy creation fails.
+    pub async fn vpn_connection_state_changed_signal(
+        &self,
+    ) -> Result<impl Stream<Item = VpnConnectionStateChangedEvent>, Error> {
+        let proxy = VPNConnectionProxy::new(&self.zbus_connection, &self.object_path).await?;
+        let stream = proxy.receive_vpn_connection_state_changed().await?;
+
+        Ok(stream.filter_map(|signal| async move {
+            signal
+                .args()
+                .ok()
+                .map(|args| VpnConnectionStateChangedEvent {
+                    state: NMVpnConnectionState::from_u32(args.state),
+                    reason: NMVpnConnectionStateReason::from_u32(args.reason),
+                })
+        }))
     }
 }

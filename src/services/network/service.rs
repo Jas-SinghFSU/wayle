@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use derive_more::Debug;
+use futures::{Stream, StreamExt};
 use tokio_util::sync::CancellationToken;
 use tracing::{instrument, warn};
 use zbus::{Connection, zvariant::OwnedObjectPath};
@@ -35,6 +36,8 @@ use crate::services::{
             },
         },
         discovery::NetworkServiceDiscovery,
+        proxy::manager::NetworkManagerProxy,
+        types::states::NMState,
         wifi::LiveWifiParams,
         wired::LiveWiredParams,
     },
@@ -401,6 +404,56 @@ impl NetworkService {
             path,
         })
         .await
+    }
+
+    /// Emitted when system authorization details change.
+    ///
+    /// # Errors
+    /// Returns error if D-Bus proxy creation fails.
+    pub async fn check_permissions_signal(&self) -> Result<impl Stream<Item = ()>, Error> {
+        let proxy = NetworkManagerProxy::new(&self.zbus_connection).await?;
+        let stream = proxy.receive_check_permissions().await?;
+
+        Ok(stream.filter_map(|_signal| async move { Some(()) }))
+    }
+
+    /// NetworkManager's state changed.
+    ///
+    /// # Errors
+    /// Returns error if D-Bus proxy creation fails.
+    pub async fn state_changed_signal(&self) -> Result<impl Stream<Item = NMState>, Error> {
+        let proxy = NetworkManagerProxy::new(&self.zbus_connection).await?;
+        let stream = proxy.receive_state_changed().await?;
+
+        Ok(stream.filter_map(|signal| async move {
+            signal.args().ok().map(|args| NMState::from_u32(args.state))
+        }))
+    }
+
+    /// A device was added to the system.
+    ///
+    /// # Errors
+    /// Returns error if D-Bus proxy creation fails.
+    pub async fn device_added_signal(&self) -> Result<impl Stream<Item = OwnedObjectPath>, Error> {
+        let proxy = NetworkManagerProxy::new(&self.zbus_connection).await?;
+        let stream = proxy.receive_device_added().await?;
+
+        Ok(stream
+            .filter_map(|signal| async move { signal.args().ok().map(|args| args.device_path) }))
+    }
+
+    /// A device was removed from the system.
+    ///
+    /// # Errors
+    /// Returns error if D-Bus proxy creation fails.
+    pub async fn device_removed_signal(
+        &self,
+    ) -> Result<impl Stream<Item = OwnedObjectPath>, Error> {
+        let proxy = NetworkManagerProxy::new(&self.zbus_connection).await?;
+        let stream = proxy.receive_device_removed().await?;
+
+        Ok(stream
+            .filter_map(|signal| async move { signal.args().ok().map(|args| args.device_path) }))
     }
 }
 

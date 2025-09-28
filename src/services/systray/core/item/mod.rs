@@ -5,6 +5,7 @@ mod types;
 use std::sync::Arc;
 
 use controls::TrayItemController;
+use futures::{Stream, StreamExt};
 use tokio_util::sync::CancellationToken;
 use types::TrayItemProperties;
 use zbus::{
@@ -223,11 +224,12 @@ impl TrayItem {
     ///
     /// Returns error if the D-Bus call fails or the menu is unreachable.
     pub async fn refresh_menu(&self) -> Result<bool, Error> {
+        const MENU_ID: i32 = 0;
         TrayItemController::menu_about_to_show(
             &self.zbus_connection,
             &self.bus_name.get(),
             self.menu_path.get().as_str(),
-            0,
+            MENU_ID,
         )
         .await
     }
@@ -397,6 +399,115 @@ impl TrayItem {
         .await
     }
 
+    /// The item has a new title: the graphical representation should read it again immediately.
+    ///
+    /// # Errors
+    /// Returns error if D-Bus proxy creation fails.
+    pub async fn new_title_signal(&self) -> Result<impl Stream<Item = ()>, Error> {
+        let bus_name = &self.bus_name.get();
+        let (service, path) = Self::parse_service_identifier(bus_name);
+        let proxy = StatusNotifierItemProxy::builder(&self.zbus_connection)
+            .destination(service)?
+            .path(path)?
+            .build()
+            .await?;
+        let stream = proxy.receive_new_title().await?;
+
+        Ok(stream.filter_map(|_signal| async move { Some(()) }))
+    }
+
+    /// The item has a new icon: the graphical representation should read it again immediately.
+    ///
+    /// # Errors
+    /// Returns error if D-Bus proxy creation fails.
+    pub async fn new_icon_signal(&self) -> Result<impl Stream<Item = ()>, Error> {
+        let bus_name = &self.bus_name.get();
+        let (service, path) = Self::parse_service_identifier(bus_name);
+        let proxy = StatusNotifierItemProxy::builder(&self.zbus_connection)
+            .destination(service)?
+            .path(path)?
+            .build()
+            .await?;
+        let stream = proxy.receive_new_icon().await?;
+
+        Ok(stream.filter_map(|_signal| async move { Some(()) }))
+    }
+
+    /// The item has a new attention icon: the graphical representation should read it again
+    /// immediately.
+    ///
+    /// # Errors
+    /// Returns error if D-Bus proxy creation fails.
+    pub async fn new_attention_icon_signal(&self) -> Result<impl Stream<Item = ()>, Error> {
+        let bus_name = &self.bus_name.get();
+        let (service, path) = Self::parse_service_identifier(bus_name);
+        let proxy = StatusNotifierItemProxy::builder(&self.zbus_connection)
+            .destination(service)?
+            .path(path)?
+            .build()
+            .await?;
+        let stream = proxy.receive_new_attention_icon().await?;
+
+        Ok(stream.filter_map(|_signal| async move { Some(()) }))
+    }
+
+    /// The item has a new overlay icon: the graphical representation should read it again
+    /// immediately.
+    ///
+    /// # Errors
+    /// Returns error if D-Bus proxy creation fails.
+    pub async fn new_overlay_icon_signal(&self) -> Result<impl Stream<Item = ()>, Error> {
+        let bus_name = &self.bus_name.get();
+        let (service, path) = Self::parse_service_identifier(bus_name);
+        let proxy = StatusNotifierItemProxy::builder(&self.zbus_connection)
+            .destination(service)?
+            .path(path)?
+            .build()
+            .await?;
+        let stream = proxy.receive_new_overlay_icon().await?;
+
+        Ok(stream.filter_map(|_signal| async move { Some(()) }))
+    }
+
+    /// The item has a new tooltip: the graphical representation should read it again immediately.
+    ///
+    /// # Errors
+    /// Returns error if D-Bus proxy creation fails.
+    pub async fn new_tool_tip_signal(&self) -> Result<impl Stream<Item = ()>, Error> {
+        let bus_name = &self.bus_name.get();
+        let (service, path) = Self::parse_service_identifier(bus_name);
+        let proxy = StatusNotifierItemProxy::builder(&self.zbus_connection)
+            .destination(service)?
+            .path(path)?
+            .build()
+            .await?;
+        let stream = proxy.receive_new_tool_tip().await?;
+
+        Ok(stream.filter_map(|_signal| async move { Some(()) }))
+    }
+
+    /// The item has a new status, that is passed as an argument of the signal.
+    ///
+    /// # Errors
+    /// Returns error if D-Bus proxy creation fails.
+    pub async fn new_status_signal(&self) -> Result<impl Stream<Item = Status>, Error> {
+        let bus_name = &self.bus_name.get();
+        let (service, path) = Self::parse_service_identifier(bus_name);
+        let proxy = StatusNotifierItemProxy::builder(&self.zbus_connection)
+            .destination(service)?
+            .path(path)?
+            .build()
+            .await?;
+        let stream = proxy.receive_new_status().await?;
+
+        Ok(stream.filter_map(|signal| async move {
+            signal
+                .args()
+                .ok()
+                .map(|args| Status::from(args.status.as_str()))
+        }))
+    }
+
     /// Parse a service identifier into service name and object path.
     ///
     /// Handles two formats:
@@ -452,7 +563,12 @@ impl TrayItem {
             .build()
             .await?;
 
-        let menu_item = menu_proxy.get_layout(0, -1, vec![]).await.ok();
+        const PARENT_ID: i32 = 0;
+        const RECURSION_DEPTH: i32 = -1;
+        let menu_item = menu_proxy
+            .get_layout(PARENT_ID, RECURSION_DEPTH, vec![])
+            .await
+            .ok();
 
         Ok(TrayItemProperties {
             id: unwrap_string!(id),

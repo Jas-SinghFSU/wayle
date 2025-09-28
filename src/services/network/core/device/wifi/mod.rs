@@ -6,6 +6,7 @@ pub mod types;
 use std::{collections::HashMap, sync::Arc};
 
 use controls::DeviceWifiControls;
+use futures::{Stream, StreamExt};
 use tracing::warn;
 use types::{BitrateKbps, BootTimeMs, WifiProperties, WirelessCapabilities};
 pub(crate) use types::{DeviceWifiParams, LiveDeviceWifiParams};
@@ -258,5 +259,33 @@ impl DeviceWifi {
         };
 
         Ok(device)
+    }
+
+    /// Emitted when a new access point is found by the device.
+    ///
+    /// # Errors
+    /// Returns error if D-Bus proxy creation fails.
+    pub async fn access_point_added_signal(
+        &self,
+    ) -> Result<impl Stream<Item = OwnedObjectPath>, Error> {
+        let proxy = DeviceWirelessProxy::new(&self.core.connection, &self.core.object_path).await?;
+        let stream = proxy.receive_access_point_added().await?;
+
+        Ok(stream
+            .filter_map(|signal| async move { signal.args().ok().map(|args| args.access_point) }))
+    }
+
+    /// Emitted when an access point disappears from view of the device.
+    ///
+    /// # Errors
+    /// Returns error if D-Bus proxy creation fails.
+    pub async fn access_point_removed_signal(
+        &self,
+    ) -> Result<impl Stream<Item = OwnedObjectPath>, Error> {
+        let proxy = DeviceWirelessProxy::new(&self.core.connection, &self.core.object_path).await?;
+        let stream = proxy.receive_access_point_removed().await?;
+
+        Ok(stream
+            .filter_map(|signal| async move { signal.args().ok().map(|args| args.access_point) }))
     }
 }

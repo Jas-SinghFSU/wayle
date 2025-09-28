@@ -4,7 +4,7 @@ mod types;
 use std::{sync::Arc, time::Duration};
 
 use derive_more::Debug;
-use futures::Stream;
+use futures::{Stream, StreamExt};
 use tokio_util::sync::CancellationToken;
 pub(crate) use types::{LivePlayerParams, PlayerParams};
 use zbus::{
@@ -386,6 +386,22 @@ impl Player {
                 tokio::time::sleep(interval).await;
             }
         }
+    }
+
+    /// Signal emitted when playback position changes
+    ///
+    /// # Errors
+    /// Returns error if D-Bus signal subscription fails.
+    pub async fn seeked_signal(&self) -> Result<impl Stream<Item = Duration>, Error> {
+        let stream = self.proxy.receive_seeked().await?;
+
+        Ok(stream.filter_map(|signal| async move {
+            signal
+                .args()
+                .ok()
+                .and_then(|args| u64::try_from(args.position).ok())
+                .map(Duration::from_micros)
+        }))
     }
 
     /// Set loop mode.

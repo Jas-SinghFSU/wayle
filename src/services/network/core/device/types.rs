@@ -6,6 +6,8 @@ use zbus::{
     zvariant::{OwnedObjectPath, OwnedValue},
 };
 
+use crate::services::network::types::states::{NMDeviceState, NMDeviceStateReason};
+
 pub(crate) struct DeviceParams<'a> {
     pub connection: &'a Connection,
     pub object_path: OwnedObjectPath,
@@ -52,3 +54,13 @@ pub(crate) struct DeviceProperties {
 }
 
 pub type AppliedConnection = (HashMap<String, HashMap<String, OwnedValue>>, u64);
+
+/// Event emitted when a device's state changes.
+pub struct DeviceStateChangedEvent {
+    /// The new device state.
+    pub new_state: NMDeviceState,
+    /// The old device state.
+    pub old_state: NMDeviceState,
+    /// The reason for the state change.
+    pub reason: NMDeviceStateReason,
+}

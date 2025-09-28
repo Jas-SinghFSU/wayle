@@ -12,8 +12,10 @@ use std::{collections::HashMap, sync::Arc};
 
 use controls::DeviceControls;
 use derive_more::Debug;
+use futures::{Stream, StreamExt};
 use tokio_util::sync::CancellationToken;
 use types::DeviceProperties;
+pub use types::DeviceStateChangedEvent;
 pub(crate) use types::{DeviceParams, LiveDeviceParams};
 use zbus::{
     Connection,
@@ -472,5 +474,24 @@ impl Device {
     /// Returns error if the delete operation fails.
     pub async fn delete(&self) -> Result<(), Error> {
         DeviceControls::delete(&self.connection, &self.object_path).await
+    }
+
+    /// Emitted when the device's state changes.
+    ///
+    /// # Errors
+    /// Returns error if D-Bus proxy creation fails.
+    pub async fn device_state_changed_signal(
+        &self,
+    ) -> Result<impl Stream<Item = DeviceStateChangedEvent>, Error> {
+        let proxy = DeviceProxy::new(&self.connection, &self.object_path).await?;
+        let stream = proxy.receive_device_state_changed().await?;
+
+        Ok(stream.filter_map(|signal| async move {
+            signal.args().ok().map(|args| DeviceStateChangedEvent {
+                new_state: NMDeviceState::from_u32(args.new_state),
+                old_state: NMDeviceState::from_u32(args.old_state),
+                reason: NMDeviceStateReason::from_u32(args.reason),
+            })
+        }))
     }
 }
