@@ -171,9 +171,11 @@ impl TrayItem {
         err
     )]
     pub async fn context_menu(&self, coords: Coordinates) -> Result<(), Error> {
+        let bus_name = self.bus_name.get();
+        let (service, _) = Self::parse_service_identifier(&bus_name);
         TrayItemController::context_menu(
             &self.zbus_connection,
-            &self.bus_name.get(),
+            service,
             coords.x,
             coords.y,
         )
@@ -196,9 +198,11 @@ impl TrayItem {
         err
     )]
     pub async fn activate(&self, coords: Coordinates) -> Result<(), Error> {
+        let bus_name = self.bus_name.get();
+        let (service, _) = Self::parse_service_identifier(&bus_name);
         TrayItemController::activate(
             &self.zbus_connection,
-            &self.bus_name.get(),
+            service,
             coords.x,
             coords.y,
         )
@@ -222,9 +226,11 @@ impl TrayItem {
         err
     )]
     pub async fn secondary_activate(&self, coords: Coordinates) -> Result<(), Error> {
+        let bus_name = self.bus_name.get();
+        let (service, _) = Self::parse_service_identifier(&bus_name);
         TrayItemController::secondary_activate(
             &self.zbus_connection,
-            &self.bus_name.get(),
+            service,
             coords.x,
             coords.y,
         )
@@ -247,9 +253,11 @@ impl TrayItem {
         err
     )]
     pub async fn scroll(&self, delta: i32, orientation: &str) -> Result<(), Error> {
+        let bus_name = self.bus_name.get();
+        let (service, _) = Self::parse_service_identifier(&bus_name);
         TrayItemController::scroll(
             &self.zbus_connection,
-            &self.bus_name.get(),
+            service,
             delta,
             orientation,
         )
@@ -267,9 +275,11 @@ impl TrayItem {
     #[instrument(skip(self), fields(bus_name = %self.bus_name.get()), err)]
     pub async fn refresh_menu(&self) -> Result<bool, Error> {
         const MENU_ID: i32 = 0;
+        let bus_name = self.bus_name.get();
+        let (service, _) = Self::parse_service_identifier(&bus_name);
         TrayItemController::menu_about_to_show(
             &self.zbus_connection,
-            &self.bus_name.get(),
+            service,
             self.menu_path.get().as_str(),
             MENU_ID,
         )
@@ -292,9 +302,11 @@ impl TrayItem {
     /// Returns error if the D-Bus call fails or the menu is unreachable.
     #[instrument(skip(self), fields(bus_name = %self.bus_name.get(), id), err)]
     pub async fn menu_about_to_show(&self, id: i32) -> Result<bool, Error> {
+        let bus_name = self.bus_name.get();
+        let (service, _) = Self::parse_service_identifier(&bus_name);
         TrayItemController::menu_about_to_show(
             &self.zbus_connection,
-            &self.bus_name.get(),
+            service,
             self.menu_path.get().as_str(),
             id,
         )
@@ -317,9 +329,11 @@ impl TrayItem {
         err
     )]
     pub async fn menu_event(&self, id: i32, event: MenuEvent, timestamp: u32) -> Result<(), Error> {
+        let bus_name = self.bus_name.get();
+        let (service, _) = Self::parse_service_identifier(&bus_name);
         TrayItemController::menu_event(
             &self.zbus_connection,
-            &self.bus_name.get(),
+            service,
             self.menu_path.get().as_str(),
             id,
             &event.to_string(),
