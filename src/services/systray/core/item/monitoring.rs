@@ -2,7 +2,7 @@ use std::sync::{Arc, Weak};
 
 use tokio_stream::StreamExt;
 use tokio_util::sync::CancellationToken;
-use tracing::{debug, error};
+use tracing::{debug, error, instrument};
 use zbus::proxy::CacheProperties;
 
 use super::TrayItem;
@@ -21,6 +21,7 @@ use crate::services::{
 impl ModelMonitoring for TrayItem {
     type Error = Error;
 
+    #[instrument(skip(self), fields(bus_name = %self.bus_name.get()), err)]
     async fn start_monitoring(self: Arc<Self>) -> Result<(), Self::Error> {
         let Some(ref cancellation_token) = self.cancellation_token else {
             return Err(Error::ServiceInitializationFailed(String::from(
@@ -51,8 +52,6 @@ impl ModelMonitoring for TrayItem {
         let cancel_token = cancellation_token.clone();
         let weak_self = Arc::downgrade(&self);
 
-        debug!("Starting property monitoring for tray item: {bus_name}");
-
         tokio::spawn(async move {
             monitor_properties(&bus_name, weak_self, item_proxy, menu_proxy, cancel_token).await;
         });
@@ -63,6 +62,7 @@ impl ModelMonitoring for TrayItem {
 
 #[allow(clippy::cognitive_complexity)]
 #[allow(clippy::too_many_lines)]
+#[instrument(skip_all, fields(bus_name = %bus_name))]
 async fn monitor_properties(
     bus_name: &str,
     weak_item: Weak<TrayItem>,

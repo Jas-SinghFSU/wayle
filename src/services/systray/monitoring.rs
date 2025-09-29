@@ -118,6 +118,11 @@ async fn handle_host_mode(service: &SystemTrayService) -> Result<(), Error> {
     Ok(())
 }
 
+#[instrument(
+    skip(connection, items, cancellation_token),
+    fields(bus_name = %bus_name),
+    err
+)]
 async fn handle_item_registered(
     bus_name: &str,
     items: &Property<Vec<Arc<TrayItem>>>,
@@ -140,6 +145,7 @@ async fn handle_item_registered(
     Ok(())
 }
 
+#[instrument(skip(items), fields(bus_name = %bus_name))]
 fn handle_item_unregistered(bus_name: &str, items: &Property<Vec<Arc<TrayItem>>>) {
     let mut list = items.get();
     list.retain(|item| {
@@ -156,6 +162,7 @@ fn handle_item_unregistered(bus_name: &str, items: &Property<Vec<Arc<TrayItem>>>
     debug!("Item unregistered: {}", bus_name);
 }
 
+#[instrument(skip(service), err)]
 async fn monitor_name_owner_changes(service: &SystemTrayService) -> Result<(), Error> {
     let Ok(dbus_proxy) = DBusProxy::new(&service.connection).await else {
         warn!("Failed to create DBus proxy for name monitoring");

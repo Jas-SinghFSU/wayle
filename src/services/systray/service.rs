@@ -237,6 +237,7 @@ impl SystemTrayServiceBuilder {
     ///
     /// # Errors
     /// Returns error if service initialization fails.
+    #[instrument(skip(self), fields(mode = ?self.mode), err)]
     pub async fn build(self) -> Result<SystemTrayService, Error> {
         let connection = Connection::session().await?;
 
@@ -300,6 +301,7 @@ impl SystemTrayServiceBuilder {
         Ok(service)
     }
 
+    #[instrument(skip(connection), err)]
     async fn try_become_watcher(connection: &Connection) -> Result<bool, Error> {
         match connection.request_name(WATCHER_BUS_NAME).await {
             Ok(_) => {
@@ -313,6 +315,7 @@ impl SystemTrayServiceBuilder {
         }
     }
 
+    #[instrument(skip(connection), err)]
     async fn become_watcher(connection: &Connection) -> Result<(), Error> {
         connection
             .request_name(WATCHER_BUS_NAME)
@@ -323,6 +326,7 @@ impl SystemTrayServiceBuilder {
         Ok(())
     }
 
+    #[instrument(skip(connection), err)]
     async fn verify_watcher_exists(connection: &Connection) -> Result<(), Error> {
         StatusNotifierWatcherProxy::new(connection)
             .await

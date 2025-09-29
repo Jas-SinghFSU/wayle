@@ -1,3 +1,4 @@
+use tracing::instrument;
 use zbus::{Connection, zvariant::OwnedValue};
 
 use crate::services::systray::{
@@ -9,6 +10,7 @@ use crate::services::systray::{
 pub(super) struct TrayItemController;
 
 impl TrayItemController {
+    #[instrument(skip(connection), fields(bus_name = %bus_name, x, y), err)]
     pub async fn context_menu(
         connection: &Connection,
         bus_name: &str,
@@ -26,6 +28,7 @@ impl TrayItemController {
             })
     }
 
+    #[instrument(skip(connection), fields(bus_name = %bus_name, x, y), err)]
     pub async fn activate(
         connection: &Connection,
         bus_name: &str,
@@ -43,6 +46,7 @@ impl TrayItemController {
             })
     }
 
+    #[instrument(skip(connection), fields(bus_name = %bus_name, x, y), err)]
     pub async fn secondary_activate(
         connection: &Connection,
         bus_name: &str,
@@ -60,6 +64,11 @@ impl TrayItemController {
             })
     }
 
+    #[instrument(
+        skip(connection),
+        fields(bus_name = %bus_name, delta, orientation = %orientation),
+        err
+    )]
     pub async fn scroll(
         connection: &Connection,
         bus_name: &str,
@@ -77,6 +86,11 @@ impl TrayItemController {
             })
     }
 
+    #[instrument(
+        skip(connection),
+        fields(bus_name = %bus_name, menu_path = %menu_path, id),
+        err
+    )]
     pub async fn menu_about_to_show(
         connection: &Connection,
         bus_name: &str,
@@ -94,6 +108,11 @@ impl TrayItemController {
             })
     }
 
+    #[instrument(
+        skip(connection, data),
+        fields(bus_name = %bus_name, menu_path = %menu_path, id, event_id = %event_id, timestamp),
+        err
+    )]
     pub async fn menu_event(
         connection: &Connection,
         bus_name: &str,
@@ -114,6 +133,11 @@ impl TrayItemController {
             })
     }
 
+    #[instrument(
+        skip(connection),
+        fields(bus_name = %bus_name, menu_path = %menu_path, ids = ?ids),
+        err
+    )]
     pub async fn menu_about_to_show_group(
         connection: &Connection,
         bus_name: &str,
@@ -131,6 +155,11 @@ impl TrayItemController {
             })
     }
 
+    #[instrument(
+        skip(connection, events),
+        fields(bus_name = %bus_name, menu_path = %menu_path, events_count = events.len()),
+        err
+    )]
     pub async fn menu_event_group(
         connection: &Connection,
         bus_name: &str,
@@ -148,6 +177,11 @@ impl TrayItemController {
             })
     }
 
+    #[instrument(
+        skip(connection),
+        fields(bus_name = %bus_name, menu_path = %menu_path, id, property = %property),
+        err
+    )]
     pub async fn menu_get_property(
         connection: &Connection,
         bus_name: &str,
@@ -166,6 +200,16 @@ impl TrayItemController {
             })
     }
 
+    #[instrument(
+        skip(connection),
+        fields(
+            bus_name = %bus_name,
+            menu_path = %menu_path,
+            ids = ?ids,
+            props_count = property_names.len()
+        ),
+        err
+    )]
     pub async fn menu_get_group_properties(
         connection: &Connection,
         bus_name: &str,

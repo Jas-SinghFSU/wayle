@@ -7,6 +7,7 @@ use std::sync::Arc;
 use controls::TrayItemController;
 use futures::{Stream, StreamExt};
 use tokio_util::sync::CancellationToken;
+use tracing::instrument;
 use types::TrayItemProperties;
 use zbus::{
     Connection,
@@ -125,6 +126,7 @@ impl Reactive for TrayItem {
     type Context<'a> = TrayItemParams<'a>;
     type LiveContext<'a> = LiveTrayItemParams<'a>;
 
+    #[instrument(skip(context), fields(service = %context.service), err)]
     async fn get(context: Self::Context<'_>) -> Result<Self, Self::Error> {
         let props = Self::fetch_properties(context.connection, &context.service).await?;
         Ok(Self::from_properties(
@@ -135,6 +137,7 @@ impl Reactive for TrayItem {
         ))
     }
 
+    #[instrument(skip(context), fields(service = %context.service), err)]
     async fn get_live(context: Self::LiveContext<'_>) -> Result<Arc<Self>, Self::Error> {
         let props = Self::fetch_properties(context.connection, &context.service).await?;
         let item = Self::from_properties(
@@ -162,6 +165,11 @@ impl TrayItem {
     /// # Errors
     ///
     /// Returns error if the D-Bus call fails or the item is unreachable.
+    #[instrument(
+        skip(self),
+        fields(bus_name = %self.bus_name.get(), x = coords.x, y = coords.y),
+        err
+    )]
     pub async fn context_menu(&self, coords: Coordinates) -> Result<(), Error> {
         TrayItemController::context_menu(
             &self.zbus_connection,
@@ -182,6 +190,11 @@ impl TrayItem {
     /// # Errors
     ///
     /// Returns error if the D-Bus call fails or the item is unreachable.
+    #[instrument(
+        skip(self),
+        fields(bus_name = %self.bus_name.get(), x = coords.x, y = coords.y),
+        err
+    )]
     pub async fn activate(&self, coords: Coordinates) -> Result<(), Error> {
         TrayItemController::activate(
             &self.zbus_connection,
@@ -203,6 +216,11 @@ impl TrayItem {
     /// # Errors
     ///
     /// Returns error if the D-Bus call fails or the item is unreachable.
+    #[instrument(
+        skip(self),
+        fields(bus_name = %self.bus_name.get(), x = coords.x, y = coords.y),
+        err
+    )]
     pub async fn secondary_activate(&self, coords: Coordinates) -> Result<(), Error> {
         TrayItemController::secondary_activate(
             &self.zbus_connection,
@@ -223,6 +241,11 @@ impl TrayItem {
     /// # Errors
     ///
     /// Returns error if the D-Bus call fails or the item is unreachable.
+    #[instrument(
+        skip(self),
+        fields(bus_name = %self.bus_name.get(), delta, orientation = %orientation),
+        err
+    )]
     pub async fn scroll(&self, delta: i32, orientation: &str) -> Result<(), Error> {
         TrayItemController::scroll(
             &self.zbus_connection,
@@ -241,6 +264,7 @@ impl TrayItem {
     /// # Errors
     ///
     /// Returns error if the D-Bus call fails or the menu is unreachable.
+    #[instrument(skip(self), fields(bus_name = %self.bus_name.get()), err)]
     pub async fn refresh_menu(&self) -> Result<bool, Error> {
         const MENU_ID: i32 = 0;
         TrayItemController::menu_about_to_show(
@@ -266,6 +290,7 @@ impl TrayItem {
     /// # Errors
     ///
     /// Returns error if the D-Bus call fails or the menu is unreachable.
+    #[instrument(skip(self), fields(bus_name = %self.bus_name.get(), id), err)]
     pub async fn menu_about_to_show(&self, id: i32) -> Result<bool, Error> {
         TrayItemController::menu_about_to_show(
             &self.zbus_connection,
@@ -286,6 +311,11 @@ impl TrayItem {
     /// # Errors
     ///
     /// Returns error if the D-Bus call fails or the menu is unreachable.
+    #[instrument(
+        skip(self),
+        fields(bus_name = %self.bus_name.get(), id, event = ?event, timestamp),
+        err
+    )]
     pub async fn menu_event(&self, id: i32, event: MenuEvent, timestamp: u32) -> Result<(), Error> {
         TrayItemController::menu_event(
             &self.zbus_connection,
@@ -536,6 +566,7 @@ impl TrayItem {
         }
     }
 
+    #[instrument(skip(connection), fields(bus_name = %bus_name), err)]
     async fn fetch_properties(
         connection: &Connection,
         bus_name: &str,
