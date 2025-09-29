@@ -106,6 +106,7 @@ impl DeviceControls {
         proxy
             .get_applied_connection(flags)
             .await
+            .map(AppliedConnection::from)
             .map_err(|e| Error::OperationFailed {
                 operation: "get_applied_connection",
                 reason: e.to_string(),

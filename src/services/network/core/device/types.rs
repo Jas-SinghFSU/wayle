@@ -53,7 +53,60 @@ pub(crate) struct DeviceProperties {
     pub ports: Vec<OwnedObjectPath>,
 }
 
-pub type AppliedConnection = (HashMap<String, HashMap<String, OwnedValue>>, u64);
+/// Connection configuration currently applied to a network device.
+///
+/// Contains the settings that are actively being used by the device,
+/// which may differ from the saved connection profile if it was
+/// modified after activation or changed via Reapply.
+#[derive(Debug, Clone)]
+pub struct AppliedConnection {
+    /// Connection settings organized by group (e.g., "ipv4", "connection", "802-11-wireless").
+    ///
+    /// Each group contains its configuration parameters as key-value pairs.
+    /// This is kept as raw data due to the complexity and variety of NetworkManager
+    /// connection types (Ethernet, WiFi, VPN, Bridge, etc.), each with different settings.
+    pub settings: HashMap<String, HashMap<String, OwnedValue>>,
+
+    /// Version identifier for this applied connection.
+    ///
+    /// Used to detect concurrent modifications when calling Reapply.
+    pub version_id: u64,
+}
+
+impl AppliedConnection {
+    /// Gets the connection UUID if present.
+    pub fn uuid(&self) -> Option<String> {
+        self.settings
+            .get("connection")
+            .and_then(|conn| conn.get("uuid"))
+            .and_then(|v| String::try_from(v.clone()).ok())
+    }
+
+    /// Gets the connection ID (human-readable name) if present.
+    pub fn id(&self) -> Option<String> {
+        self.settings
+            .get("connection")
+            .and_then(|conn| conn.get("id"))
+            .and_then(|v| String::try_from(v.clone()).ok())
+    }
+
+    /// Gets the connection type (e.g., "802-3-ethernet", "802-11-wireless").
+    pub fn connection_type(&self) -> Option<String> {
+        self.settings
+            .get("connection")
+            .and_then(|conn| conn.get("type"))
+            .and_then(|v| String::try_from(v.clone()).ok())
+    }
+}
+
+impl From<(HashMap<String, HashMap<String, OwnedValue>>, u64)> for AppliedConnection {
+    fn from((settings, version_id): (HashMap<String, HashMap<String, OwnedValue>>, u64)) -> Self {
+        Self {
+            settings,
+            version_id,
+        }
+    }
+}
 
 /// Event emitted when a device's state changes.
 pub struct DeviceStateChangedEvent {

@@ -23,8 +23,53 @@ pub type ManufacturerData = HashMap<u16, Vec<u8>>;
 pub type AdvertisingData = HashMap<u8, Vec<u8>>;
 /// Service-specific advertisement data keyed by UUID.
 pub type ServiceData = HashMap<String, Vec<u8>>;
-/// Device set membership with object path and properties.
-pub type DeviceSet = (OwnedObjectPath, HashMap<String, OwnedValue>);
+/// Device set membership information.
+///
+/// Represents a Bluetooth Coordinated Set that this device belongs to.
+#[derive(Debug, Clone)]
+pub struct DeviceSet {
+    /// Object path of the device set.
+    pub path: OwnedObjectPath,
+    /// The adapter this set belongs to.
+    pub adapter: Option<OwnedObjectPath>,
+    /// Whether devices in the set should auto-connect together.
+    pub auto_connect: bool,
+    /// List of device paths that are members of this set.
+    pub devices: Vec<OwnedObjectPath>,
+    /// Number of members in the set.
+    pub size: u8,
+}
+
+impl DeviceSet {
+    pub(crate) fn from_dbus(path: OwnedObjectPath, props: HashMap<String, OwnedValue>) -> Self {
+        let adapter = props
+            .get("Adapter")
+            .and_then(|v| OwnedObjectPath::try_from(v.clone()).ok());
+
+        let auto_connect = props
+            .get("AutoConnect")
+            .and_then(|v| bool::try_from(v).ok())
+            .unwrap_or(false);
+
+        let devices = props
+            .get("Devices")
+            .and_then(|v| Vec::<OwnedObjectPath>::try_from(v.clone()).ok())
+            .unwrap_or_default();
+
+        let size = props
+            .get("Size")
+            .and_then(|v| u8::try_from(v).ok())
+            .unwrap_or(0);
+
+        Self {
+            path,
+            adapter,
+            auto_connect,
+            devices,
+            size,
+        }
+    }
+}
 
 /// Context for static device operations
 pub(crate) struct DeviceParams<'a> {

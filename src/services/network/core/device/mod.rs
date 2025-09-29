@@ -14,8 +14,8 @@ use controls::DeviceControls;
 use derive_more::Debug;
 use futures::{Stream, StreamExt};
 use tokio_util::sync::CancellationToken;
-use types::DeviceProperties;
 pub use types::DeviceStateChangedEvent;
+use types::{AppliedConnection, DeviceProperties};
 pub(crate) use types::{DeviceParams, LiveDeviceParams};
 use zbus::{
     Connection,
@@ -453,10 +453,7 @@ impl Device {
     ///
     /// # Errors
     /// Returns error if getting the applied connection fails.
-    pub async fn get_applied_connection(
-        &self,
-        flags: u32,
-    ) -> Result<(HashMap<String, HashMap<String, OwnedValue>>, u64), Error> {
+    pub async fn get_applied_connection(&self, flags: u32) -> Result<AppliedConnection, Error> {
         DeviceControls::get_applied_connection(&self.connection, &self.object_path, flags).await
     }
 

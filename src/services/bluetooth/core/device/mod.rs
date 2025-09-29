@@ -556,7 +556,11 @@ impl Device {
             services_resolved: unwrap_bool!(services_resolved),
             advertising_flags: advertising_flags.unwrap_or_default(),
             advertising_data: advertising_data.unwrap_or_default(),
-            sets: sets.unwrap_or_default(),
+            sets: sets
+                .unwrap_or_default()
+                .into_iter()
+                .map(|(path, props)| DeviceSet::from_dbus(path, props))
+                .collect(),
             preferred_bearer: preferred_bearer.ok(),
         })
     }
