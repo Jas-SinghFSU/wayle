@@ -21,8 +21,9 @@ use crate::{
             error::Error,
             proxy::{dbusmenu::DBusMenuProxy, status_notifier_item::StatusNotifierItemProxy},
             types::{
+                Coordinates,
                 item::{Category, IconPixmap, Status, Tooltip},
-                menu::{MenuItem, RawMenuItemsPropsList},
+                menu::{MenuEvent, MenuItem, RawMenuItemsPropsList},
             },
         },
         traits::{ModelMonitoring, Reactive},
@@ -161,8 +162,14 @@ impl TrayItem {
     /// # Errors
     ///
     /// Returns error if the D-Bus call fails or the item is unreachable.
-    pub async fn context_menu(&self, x: i32, y: i32) -> Result<(), Error> {
-        TrayItemController::context_menu(&self.zbus_connection, &self.bus_name.get(), x, y).await
+    pub async fn context_menu(&self, coords: Coordinates) -> Result<(), Error> {
+        TrayItemController::context_menu(
+            &self.zbus_connection,
+            &self.bus_name.get(),
+            coords.x,
+            coords.y,
+        )
+        .await
     }
 
     /// Asks the status notifier item for activation, this is typically a consequence of user
@@ -175,8 +182,14 @@ impl TrayItem {
     /// # Errors
     ///
     /// Returns error if the D-Bus call fails or the item is unreachable.
-    pub async fn activate(&self, x: i32, y: i32) -> Result<(), Error> {
-        TrayItemController::activate(&self.zbus_connection, &self.bus_name.get(), x, y).await
+    pub async fn activate(&self, coords: Coordinates) -> Result<(), Error> {
+        TrayItemController::activate(
+            &self.zbus_connection,
+            &self.bus_name.get(),
+            coords.x,
+            coords.y,
+        )
+        .await
     }
 
     /// Is to be considered a secondary and less important form of activation compared to
@@ -190,9 +203,14 @@ impl TrayItem {
     /// # Errors
     ///
     /// Returns error if the D-Bus call fails or the item is unreachable.
-    pub async fn secondary_activate(&self, x: i32, y: i32) -> Result<(), Error> {
-        TrayItemController::secondary_activate(&self.zbus_connection, &self.bus_name.get(), x, y)
-            .await
+    pub async fn secondary_activate(&self, coords: Coordinates) -> Result<(), Error> {
+        TrayItemController::secondary_activate(
+            &self.zbus_connection,
+            &self.bus_name.get(),
+            coords.x,
+            coords.y,
+        )
+        .await
     }
 
     /// The user asked for a scroll action. This is caused from input such as mouse wheel over
@@ -260,35 +278,22 @@ impl TrayItem {
 
     /// Sends a menu event to the application.
     ///
-    /// Event types:
-    /// - "clicked" - Menu item was clicked
-    /// - "hovered" - Mouse hovered over item
-    /// - "opened" - Submenu was opened
-    /// - "closed" - Submenu was closed
-    ///
     /// # Arguments
     /// * `id` - Menu item ID that received the event
-    /// * `event_id` - Type of event
-    /// * `data` - Event-specific data
-    /// * `timestamp` - Event timestamp
+    /// * `event` - Type of event
+    /// * `timestamp` - Unix timestamp in seconds
     ///
     /// # Errors
     ///
     /// Returns error if the D-Bus call fails or the menu is unreachable.
-    pub async fn menu_event(
-        &self,
-        id: i32,
-        event_id: &str,
-        data: OwnedValue,
-        timestamp: u32,
-    ) -> Result<(), Error> {
+    pub async fn menu_event(&self, id: i32, event: MenuEvent, timestamp: u32) -> Result<(), Error> {
         TrayItemController::menu_event(
             &self.zbus_connection,
             &self.bus_name.get(),
             self.menu_path.get().as_str(),
             id,
-            event_id,
-            data,
+            &event.to_string(),
+            OwnedValue::from(0i32),
             timestamp,
         )
         .await
@@ -325,7 +330,7 @@ impl TrayItem {
     /// Batch version of `menu_event` to optimize D-Bus traffic.
     ///
     /// # Arguments
-    /// * `events` - Array of (id, event_id, data, timestamp) tuples
+    /// * `events` - Array of (id, event, timestamp) tuples
     ///
     /// # Returns
     /// * List of menu item IDs that couldn't be found
@@ -335,13 +340,20 @@ impl TrayItem {
     /// Returns error if the D-Bus call fails or the menu is unreachable.
     pub async fn menu_event_group(
         &self,
-        events: Vec<(i32, String, OwnedValue, u32)>,
+        events: Vec<(i32, MenuEvent, u32)>,
     ) -> Result<Vec<i32>, Error> {
+        let dbus_events = events
+            .into_iter()
+            .map(|(id, event, timestamp)| {
+                (id, event.to_string(), OwnedValue::from(0i32), timestamp)
+            })
+            .collect();
+
         TrayItemController::menu_event_group(
             &self.zbus_connection,
             &self.bus_name.get(),
             self.menu_path.get().as_str(),
-            events,
+            dbus_events,
         )
         .await
     }

@@ -1,6 +1,6 @@
 use std::{
     collections::HashMap,
-    fmt::{Display, Formatter, Result},
+    fmt::{self, Debug, Display, Formatter},
 };
 
 use serde::{Deserialize, Serialize};
@@ -51,7 +51,7 @@ impl From<&str> for MenuItemType {
 }
 
 impl Display for MenuItemType {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
             Self::Standard => write!(f, "standard"),
             Self::Separator => write!(f, "separator"),
@@ -90,7 +90,7 @@ impl From<&str> for ToggleType {
 }
 
 impl Display for ToggleType {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
             Self::None => write!(f, ""),
             Self::Checkmark => write!(f, "checkmark"),
@@ -181,7 +181,7 @@ impl From<&str> for ChildrenDisplay {
 }
 
 impl Display for ChildrenDisplay {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "submenu")
     }
 }
@@ -204,7 +204,7 @@ impl From<&str> for Disposition {
 }
 
 impl Display for Disposition {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
             Self::Normal => write!(f, "normal"),
             Self::Informative => write!(f, "informative"),
@@ -244,7 +244,7 @@ impl From<&str> for MenuEvent {
 }
 
 impl Display for MenuEvent {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
             Self::Clicked => write!(f, "clicked"),
             Self::Hovered => write!(f, "hovered"),
@@ -258,7 +258,7 @@ impl Display for MenuEvent {
 ///
 /// Contains all official properties from the DBusMenu specification.
 /// Properties map from com.canonical.dbusmenu as defined in libdbusmenu.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Serialize, Deserialize)]
 pub struct MenuItem {
     /// Menu item ID (always present).
     pub id: i32,
@@ -442,6 +442,64 @@ impl MenuItem {
             children_display,
             children,
         }
+    }
+}
+
+impl Debug for MenuItem {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        let mut debug = f.debug_struct("MenuItem");
+        debug.field("id", &self.id);
+
+        if let Some(label) = &self.label {
+            debug.field("label", label);
+        }
+
+        if !self.enabled {
+            debug.field("enabled", &self.enabled);
+        }
+
+        if !self.visible {
+            debug.field("visible", &self.visible);
+        }
+
+        if self.item_type != MenuItemType::Standard {
+            debug.field("item_type", &self.item_type);
+        }
+
+        if self.toggle_type != ToggleType::None {
+            debug.field("toggle_type", &self.toggle_type);
+            debug.field("toggle_state", &self.toggle_state);
+        }
+
+        if let Some(icon_name) = &self.icon_name {
+            debug.field("icon_name", icon_name);
+        }
+
+        if let Some(icon_data) = &self.icon_data {
+            debug.field("icon_data", &format!("<{} bytes>", icon_data.len()));
+        }
+
+        if let Some(desc) = &self.accessible_desc {
+            debug.field("accessible_desc", desc);
+        }
+
+        if let Some(shortcut) = &self.shortcut {
+            debug.field("shortcut", shortcut);
+        }
+
+        if self.disposition != Disposition::Normal {
+            debug.field("disposition", &self.disposition);
+        }
+
+        if self.children_display != ChildrenDisplay::Submenu {
+            debug.field("children_display", &self.children_display);
+        }
+
+        if !self.children.is_empty() {
+            debug.field("children", &self.children);
+        }
+
+        debug.finish()
     }
 }
 
