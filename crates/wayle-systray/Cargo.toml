@@ -1,0 +1,45 @@
+[package]
+name = "wayle-systray"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+description = "System tray service for Wayland"
+keywords = ["wayland", "systray", "statusnotifier", "dbus"]
+categories = ["gui", "api-bindings"]
+
+[features]
+default = []
+adapter-gtk = ["dep:gtk4", "dep:gdk-pixbuf", "dep:glib"]
+
+[dependencies]
+async-stream.workspace = true
+async-trait.workspace = true
+chrono.workspace = true
+derive_more.workspace = true
+futures.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tokio-stream.workspace = true
+tokio-util.workspace = true
+tracing.workspace = true
+zbus.workspace = true
+wayle-common.workspace = true
+wayle-traits.workspace = true
+
+# Optional GTK adapter dependencies
+gtk4 = { workspace = true, optional = true }
+gdk-pixbuf = { workspace = true, optional = true }
+glib = { workspace = true, optional = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["full", "test-util"] }
+tempfile = "3"
+
+[lints]
+workspace = true
+

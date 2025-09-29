@@ -1,16 +1,37 @@
-[package]
-name = "wayle"
-version = "0.1.0"
-edition = "2024"
-license = "GPL-3.0-only"
+[workspace]
+resolver = "2"
+members = [
+    "crates/wayle-audio",
+    "crates/wayle-battery",
+    "crates/wayle-bluetooth",
+    "crates/wayle-common",
+    "crates/wayle-media",
+    "crates/wayle-network",
+    "crates/wayle-notification",
+    "crates/wayle-power-profiles",
+    "crates/wayle-systray",
+    "crates/wayle-traits",
+    "wayle",
+]
 
-[dependencies]
+[workspace.package]
+edition = "2024"
+version = "0.1.0"
+license = "GPL-3.0-only"
+authors = ["Jas Singh"]
+repository = "https://github.com/Jas-SinghFSU/wayle"
+rust-version = "1.85"
+
+[workspace.dependencies]
+# Core dependencies used by multiple crates
 async-stream = "0.3"
 async-trait = "0.1"
 bitflags = "2"
 chrono = { version = "0.4", features = ["clock"] }
 clap = { version = "4.5", features = ["derive", "color"] }
-derive_more = { version = "2.0", default-features = false, features = ["debug"] }
+derive_more = { version = "2.0", default-features = false, features = [
+    "debug",
+] }
 futures = "0"
 libpulse-binding = "2.28"
 libc = "0.2"
@@ -33,14 +54,26 @@ tracing-appender = "0.2"
 zbus = "5"
 rusqlite = { version = "0.37.0", features = ["bundled"] }
 
-[dev-dependencies]
-tempfile = "3"
+gtk4 = { version = "0.10.1" }
+gdk-pixbuf = { version = "0.21.2" }
+glib = { version = "0.21.3" }
 
-[lints.rust]
+wayle-audio = { path = "crates/wayle-audio" }
+wayle-battery = { path = "crates/wayle-battery" }
+wayle-bluetooth = { path = "crates/wayle-bluetooth" }
+wayle-common = { path = "crates/wayle-common" }
+wayle-media = { path = "crates/wayle-media" }
+wayle-network = { path = "crates/wayle-network" }
+wayle-notification = { path = "crates/wayle-notification" }
+wayle-power-profiles = { path = "crates/wayle-power-profiles" }
+wayle-systray = { path = "crates/wayle-systray" }
+wayle-traits = { path = "crates/wayle-traits" }
+
+[workspace.lints.rust]
 unsafe_code = "deny"
 missing_docs = "warn"
 
-[lints.clippy]
+[workspace.lints.clippy]
 inefficient_to_string = "warn"
 large_types_passed_by_value = "warn"
 manual_ok_or = "warn"
