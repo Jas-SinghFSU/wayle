@@ -22,6 +22,7 @@ A fast, configurable desktop environment shell for Wayland compositors. Built in
 - [x] **Notification Daemon**
 - [x] **Power Profiles**
 - [x] **System Tray**
+  - [x] GTK4 Adapter
 - [ ] **Hyprland**
 - [ ] **Cava (WIP)**
 

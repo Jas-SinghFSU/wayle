@@ -1,7 +1,5 @@
-/// UI framework adapters for the systray service.
-///
-/// These adapters enable integration with various GUI toolkits,
-/// allowing systray menus to be displayed natively in different frameworks.
+//! UI framework adapters implementation.
 
+/// The GTK adapter for the wayle-systray service
 #[cfg(feature = "adapter-gtk")]
-pub mod gtk;
+pub mod gtk4;

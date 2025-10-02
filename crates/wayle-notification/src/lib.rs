@@ -18,3 +18,6 @@ pub(crate) mod proxy;
 pub mod service;
 /// Type definitions for notifications.
 pub mod types;
+
+pub use error::Error;
+pub use service::NotificationService;

@@ -5,6 +5,11 @@
 //! items, handles menu interactions, and provides reactive streams for tray
 //! item events and state changes.
 
+/// UI framework adapters for the systray service.
+///
+/// These adapters enable integration with various GUI toolkits,
+/// allowing systray menus to be displayed natively in different frameworks.
+pub mod adapters;
 /// Core types and functionality for system tray items
 pub mod core;
 mod discovery;

@@ -39,7 +39,8 @@ glib = { workspace = true, optional = true }
 [dev-dependencies]
 tokio = { workspace = true, features = ["full", "test-util"] }
 tempfile = "3"
+gtk4.workspace = true
+glib.workspace = true
 
 [lints]
 workspace = true
-

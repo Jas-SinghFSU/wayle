@@ -4,5 +4,6 @@ test-unit = "test --lib"
 test-all = "test -- --test-threads=1"
 fmt-check = "fmt --all -- --check"
 format = "fmt --all"
-fix-all = "clippy --fix --allow-dirty --allow-staged -- -W clippy::all"
-
+fix-all = "clippy --fix --allow-dirty --allow-staged --workspace --all-features -- -W clippy::all"
+check-all = "check --workspace --all-features"
+clippy-all = "clippy --workspace --all-features"
