@@ -4,6 +4,7 @@ members = [
     "crates/wayle-audio",
     "crates/wayle-battery",
     "crates/wayle-bluetooth",
+    "crates/wayle-cava",
     "crates/wayle-common",
     "crates/wayle-media",
     "crates/wayle-network",

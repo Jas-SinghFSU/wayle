@@ -2298,6 +2298,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "wayle-cava"
+version = "0.1.0"
+dependencies = [
+ "derive_more",
+ "futures",
+ "libc",
+ "pkg-config",
+ "thiserror 2.0.17",
+ "tokio",
+ "tokio-util",
+ "tracing",
+ "wayle-common",
+ "wayle-traits",
+]
+
+[[package]]
 name = "wayle-common"
 version = "0.1.0"
 dependencies = [
