@@ -6,6 +6,7 @@ members = [
     "crates/wayle-bluetooth",
     "crates/wayle-cava",
     "crates/wayle-common",
+    "crates/wayle-hyprland",
     "crates/wayle-media",
     "crates/wayle-network",
     "crates/wayle-notification",

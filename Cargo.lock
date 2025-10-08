@@ -2325,6 +2325,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "wayle-hyprland"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "derive_more",
+ "futures",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.17",
+ "tokio",
+ "tokio-stream",
+ "tokio-util",
+ "tracing",
+ "wayle-common",
+ "wayle-traits",
+]
+
+[[package]]
 name = "wayle-media"
 version = "0.1.0"
 dependencies = [
