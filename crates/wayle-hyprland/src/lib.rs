@@ -15,10 +15,12 @@
 //! ```
 
 mod core;
+mod error;
 mod events;
 mod service;
 mod types;
 
+pub use error::{Error, Result};
 pub use events::types::{HyprlandEvent, ServiceNotification};
 pub use service::HyprlandService;
 pub use types::*;

@@ -10,6 +10,8 @@ pub use monitor::*;
 use serde::{Deserialize, Deserializer};
 pub use window::*;
 
+use crate::Error;
+
 pub type MonitorId = i64;
 pub type WorkspaceId = i64;
 pub type ProcessId = i32;
@@ -22,6 +24,21 @@ pub enum ScreencastOwner {
     Monitor,
     /// Window share.
     Window,
+}
+
+impl TryFrom<&str> for ScreencastOwner {
+    type Error = Error;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        match value {
+            "0" => Ok(Self::Monitor),
+            "1" => Ok(Self::Window),
+            _ => Err(Error::InvalidEnumValue {
+                type_name: "ScreencastOwner",
+                value: value.to_string(),
+            }),
+        }
+    }
 }
 
 /// Workspace information for a monitor.

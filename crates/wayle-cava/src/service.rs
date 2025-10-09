@@ -30,7 +30,6 @@ const DEFAULT_SAMPLERATE: u32 = 44100;
 pub struct CavaService {
     #[debug(skip)]
     pub(crate) cancellation_token: Mutex<CancellationToken>,
-
     #[debug(skip)]
     restart_lock: AsyncMutex<()>,
 
