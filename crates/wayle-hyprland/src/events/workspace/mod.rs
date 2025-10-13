@@ -4,12 +4,7 @@ use crate::{Error, HyprlandEvent, Result, ServiceNotification};
 
 pub mod types;
 
-pub(crate) fn handle_workspace(
-    event: &str,
-    data: &str,
-    internal_tx: Sender<ServiceNotification>,
-    hyprland_tx: Sender<HyprlandEvent>,
-) -> Result<()> {
+pub(crate) fn handle_workspace(data: &str, hyprland_tx: Sender<HyprlandEvent>) -> Result<()> {
     hyprland_tx.send(HyprlandEvent::Workspace {
         name: data.to_string(),
     })?;
@@ -20,7 +15,7 @@ pub(crate) fn handle_workspace(
 pub(crate) fn handle_workspace_v2(
     event: &str,
     data: &str,
-    _internal_tx: Sender<ServiceNotification>,
+    internal_tx: Sender<ServiceNotification>,
     hyprland_tx: Sender<HyprlandEvent>,
 ) -> Result<()> {
     let Some((id, name)) = data.split_once(',') else {
@@ -39,13 +34,15 @@ pub(crate) fn handle_workspace_v2(
         name: name.to_string(),
     })?;
 
+    internal_tx
+        .send(ServiceNotification::WorkspaceFocused(id))
+        .map_err(|e| Error::InternalEventTransmitError(e.to_string()))?;
+
     Ok(())
 }
 
 pub(crate) fn handle_create_workspace(
-    _event: &str,
     data: &str,
-    _internal_tx: Sender<ServiceNotification>,
     hyprland_tx: Sender<HyprlandEvent>,
 ) -> Result<()> {
     hyprland_tx.send(HyprlandEvent::CreateWorkspace {
@@ -58,7 +55,7 @@ pub(crate) fn handle_create_workspace(
 pub(crate) fn handle_create_workspace_v2(
     event: &str,
     data: &str,
-    _internal_tx: Sender<ServiceNotification>,
+    internal_tx: Sender<ServiceNotification>,
     hyprland_tx: Sender<HyprlandEvent>,
 ) -> Result<()> {
     let Some((id, name)) = data.split_once(',') else {
@@ -77,13 +74,15 @@ pub(crate) fn handle_create_workspace_v2(
         name: name.to_string(),
     })?;
 
+    internal_tx
+        .send(ServiceNotification::WorkspaceCreated(id))
+        .map_err(|e| Error::InternalEventTransmitError(e.to_string()))?;
+
     Ok(())
 }
 
 pub(crate) fn handle_destroy_workspace(
-    _event: &str,
     data: &str,
-    _internal_tx: Sender<ServiceNotification>,
     hyprland_tx: Sender<HyprlandEvent>,
 ) -> Result<()> {
     hyprland_tx.send(HyprlandEvent::DestroyWorkspace {
@@ -96,7 +95,7 @@ pub(crate) fn handle_destroy_workspace(
 pub(crate) fn handle_destroy_workspace_v2(
     event: &str,
     data: &str,
-    _internal_tx: Sender<ServiceNotification>,
+    internal_tx: Sender<ServiceNotification>,
     hyprland_tx: Sender<HyprlandEvent>,
 ) -> Result<()> {
     let Some((id, name)) = data.split_once(',') else {
@@ -115,13 +114,16 @@ pub(crate) fn handle_destroy_workspace_v2(
         name: name.to_string(),
     })?;
 
+    internal_tx
+        .send(ServiceNotification::WorkspaceRemoved(id))
+        .map_err(|e| Error::InternalEventTransmitError(e.to_string()))?;
+
     Ok(())
 }
 
 pub(crate) fn handle_move_workspace(
     event: &str,
     data: &str,
-    _internal_tx: Sender<ServiceNotification>,
     hyprland_tx: Sender<HyprlandEvent>,
 ) -> Result<()> {
     let Some((name, monitor)) = data.split_once(',') else {
@@ -142,7 +144,7 @@ pub(crate) fn handle_move_workspace(
 pub(crate) fn handle_move_workspace_v2(
     event: &str,
     data: &str,
-    _internal_tx: Sender<ServiceNotification>,
+    internal_tx: Sender<ServiceNotification>,
     hyprland_tx: Sender<HyprlandEvent>,
 ) -> Result<()> {
     let parts: Vec<&str> = data.split(',').collect();
@@ -163,13 +165,17 @@ pub(crate) fn handle_move_workspace_v2(
         monitor: (*monitor).to_string(),
     })?;
 
+    internal_tx
+        .send(ServiceNotification::WorkspaceMoved(id))
+        .map_err(|e| Error::InternalEventTransmitError(e.to_string()))?;
+
     Ok(())
 }
 
 pub(crate) fn handle_rename_workspace(
     event: &str,
     data: &str,
-    _internal_tx: Sender<ServiceNotification>,
+    internal_tx: Sender<ServiceNotification>,
     hyprland_tx: Sender<HyprlandEvent>,
 ) -> Result<()> {
     let Some((id, new_name)) = data.split_once(',') else {
@@ -188,13 +194,16 @@ pub(crate) fn handle_rename_workspace(
         new_name: new_name.to_string(),
     })?;
 
+    internal_tx
+        .send(ServiceNotification::WorkspaceUpdated(id))
+        .map_err(|e| Error::InternalEventTransmitError(e.to_string()))?;
+
     Ok(())
 }
 
 pub(crate) fn handle_active_special(
     event: &str,
     data: &str,
-    _internal_tx: Sender<ServiceNotification>,
     hyprland_tx: Sender<HyprlandEvent>,
 ) -> Result<()> {
     let Some((workspace, monitor)) = data.split_once(',') else {
@@ -215,7 +224,7 @@ pub(crate) fn handle_active_special(
 pub(crate) fn handle_active_special_v2(
     event: &str,
     data: &str,
-    _internal_tx: Sender<ServiceNotification>,
+    internal_tx: Sender<ServiceNotification>,
     hyprland_tx: Sender<HyprlandEvent>,
 ) -> Result<()> {
     let parts: Vec<&str> = data.split(',').collect();
@@ -235,6 +244,10 @@ pub(crate) fn handle_active_special_v2(
         workspace: (*workspace).to_string(),
         monitor: (*monitor).to_string(),
     })?;
+
+    internal_tx
+        .send(ServiceNotification::WorkspaceUpdated(id))
+        .map_err(|e| Error::InternalEventTransmitError(e.to_string()))?;
 
     Ok(())
 }

@@ -107,6 +107,7 @@ pub enum SolitaryBlocker {
 }
 
 impl SolitaryBlocker {
+    /// Parses a blocker from its string representation.
     pub fn from_str(s: &str) -> Self {
         match s {
             "NOTIFICATION" => Self::Notification,
@@ -160,6 +161,7 @@ pub enum TearingBlocker {
 }
 
 impl TearingBlocker {
+    /// Parses a blocker from its string representation.
     pub fn from_str(s: &str) -> Self {
         match s {
             "NOT_TORN" => Self::NotTorn,
@@ -217,6 +219,7 @@ pub enum DirectScanoutBlocker {
 }
 
 impl DirectScanoutBlocker {
+    /// Parses a blocker from its string representation.
     pub fn from_str(s: &str) -> Self {
         match s {
             "USER" => Self::User,

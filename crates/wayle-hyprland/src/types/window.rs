@@ -1,8 +1,11 @@
 use serde::{Deserialize, Deserializer};
 
+/// Window dimensions in pixels.
 #[derive(Debug, Deserialize, Clone, PartialEq)]
 pub struct WindowSize {
+    /// Width in pixels.
     pub width: u32,
+    /// Height in pixels.
     pub height: u32,
 }
 
@@ -15,9 +18,12 @@ where
     Ok(WindowSize { width, height })
 }
 
+/// Window position in screen coordinates.
 #[derive(Debug, Deserialize, Clone, PartialEq)]
 pub struct WindowLocation {
+    /// X coordinate in pixels.
     pub x: i32,
+    /// Y coordinate in pixels.
     pub y: i32,
 }
 
@@ -32,11 +38,15 @@ where
     Ok(WindowLocation { x, y })
 }
 
+/// Window fullscreen state.
 #[derive(Debug, Deserialize, Clone, PartialEq)]
 #[serde(from = "u8")]
 pub enum FullscreenMode {
+    /// Not fullscreen.
     None = 0,
+    /// Fullscreen mode.
     Full = 1,
+    /// Maximized mode.
     Maximize = 2,
 }
 

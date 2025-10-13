@@ -12,9 +12,13 @@ pub use window::*;
 
 use crate::Error;
 
+/// Unique identifier for a monitor.
 pub type MonitorId = i64;
+/// Unique identifier for a workspace.
 pub type WorkspaceId = i64;
+/// Process identifier.
 pub type ProcessId = i32;
+/// Focus history identifier.
 pub type FocusHistoryId = i32;
 
 /// The type of screencopy share.
@@ -50,19 +54,23 @@ pub struct WorkspaceInfo {
     pub name: String,
 }
 
+/// Window address identifier.
 #[derive(Debug, Deserialize, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 #[serde(transparent)]
 pub struct Address(String);
 
 impl Address {
+    /// Creates a new address from a string.
     pub fn new(address: String) -> Self {
         Self(address)
     }
 
+    /// Returns the address as a string slice.
     pub fn as_str(&self) -> &str {
         &self.0
     }
 
+    /// Consumes the address and returns the inner string.
     pub fn into_inner(self) -> String {
         self.0
     }

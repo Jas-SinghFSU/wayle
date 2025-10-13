@@ -7,7 +7,6 @@ pub mod types;
 pub(crate) fn handle_active_window(
     event: &str,
     data: &str,
-    internal_tx: Sender<ServiceNotification>,
     hyprland_tx: Sender<HyprlandEvent>,
 ) -> Result<()> {
     let window_data: Vec<&str> = data.split(",").collect();
@@ -27,14 +26,18 @@ pub(crate) fn handle_active_window(
 }
 
 pub(crate) fn handle_active_window_v2(
-    _event: &str,
     data: &str,
-    _internal_tx: Sender<ServiceNotification>,
+    internal_tx: Sender<ServiceNotification>,
     hyprland_tx: Sender<HyprlandEvent>,
 ) -> Result<()> {
+    let address = Address::new(data.to_string());
     hyprland_tx.send(HyprlandEvent::ActiveWindowV2 {
-        address: Address::new(data.to_string()),
+        address: address.clone(),
     })?;
+
+    internal_tx
+        .send(ServiceNotification::ActiveWindowUpdated(address))
+        .map_err(|e| Error::InternalEventTransmitError(e.to_string()))?;
 
     Ok(())
 }
@@ -42,7 +45,7 @@ pub(crate) fn handle_active_window_v2(
 pub(crate) fn handle_open_window(
     event: &str,
     data: &str,
-    _internal_tx: Sender<ServiceNotification>,
+    internal_tx: Sender<ServiceNotification>,
     hyprland_tx: Sender<HyprlandEvent>,
 ) -> Result<()> {
     let parts: Vec<&str> = data.split(',').collect();
@@ -53,25 +56,35 @@ pub(crate) fn handle_open_window(
         });
     };
 
+    let address = Address::new((*address).to_string());
+
     hyprland_tx.send(HyprlandEvent::OpenWindow {
-        address: Address::new((*address).to_string()),
+        address: address.clone(),
         workspace: (*workspace).to_string(),
         class: (*class).to_string(),
         title: (*title).to_string(),
     })?;
 
+    internal_tx
+        .send(ServiceNotification::WindowCreated(address))
+        .map_err(|e| Error::InternalEventTransmitError(e.to_string()))?;
+
     Ok(())
 }
 
 pub(crate) fn handle_close_window(
-    _event: &str,
     data: &str,
-    _internal_tx: Sender<ServiceNotification>,
+    internal_tx: Sender<ServiceNotification>,
     hyprland_tx: Sender<HyprlandEvent>,
 ) -> Result<()> {
+    let address = Address::new(data.to_string());
     hyprland_tx.send(HyprlandEvent::CloseWindow {
-        address: Address::new(data.to_string()),
+        address: address.clone(),
     })?;
+
+    internal_tx
+        .send(ServiceNotification::WindowRemoved(address))
+        .map_err(|e| Error::InternalEventTransmitError(e.to_string()))?;
 
     Ok(())
 }
@@ -79,7 +92,6 @@ pub(crate) fn handle_close_window(
 pub(crate) fn handle_move_window(
     event: &str,
     data: &str,
-    _internal_tx: Sender<ServiceNotification>,
     hyprland_tx: Sender<HyprlandEvent>,
 ) -> Result<()> {
     let Some((address, workspace)) = data.split_once(',') else {
@@ -100,7 +112,7 @@ pub(crate) fn handle_move_window(
 pub(crate) fn handle_move_window_v2(
     event: &str,
     data: &str,
-    _internal_tx: Sender<ServiceNotification>,
+    internal_tx: Sender<ServiceNotification>,
     hyprland_tx: Sender<HyprlandEvent>,
 ) -> Result<()> {
     let parts: Vec<&str> = data.split(',').collect();
@@ -116,11 +128,16 @@ pub(crate) fn handle_move_window_v2(
         reason: format!("invalid workspace ID: {workspace_id}"),
     })?;
 
+    let address = Address::new((*address).to_string());
     hyprland_tx.send(HyprlandEvent::MoveWindowV2 {
-        address: Address::new((*address).to_string()),
+        address: address.clone(),
         workspace_id,
         workspace: (*workspace).to_string(),
     })?;
+
+    internal_tx
+        .send(ServiceNotification::WindowMoved(address, workspace_id))
+        .map_err(|e| Error::InternalEventTransmitError(e.to_string()))?;
 
     Ok(())
 }
@@ -128,7 +145,7 @@ pub(crate) fn handle_move_window_v2(
 pub(crate) fn handle_change_floating_mode(
     event: &str,
     data: &str,
-    _internal_tx: Sender<ServiceNotification>,
+    internal_tx: Sender<ServiceNotification>,
     hyprland_tx: Sender<HyprlandEvent>,
 ) -> Result<()> {
     let Some((address, floating)) = data.split_once(',') else {
@@ -148,36 +165,39 @@ pub(crate) fn handle_change_floating_mode(
         }
     };
 
+    let address = Address::new(address.to_string());
     hyprland_tx.send(HyprlandEvent::ChangeFloatingMode {
-        address: Address::new(address.to_string()),
+        address: address.clone(),
         floating,
     })?;
+
+    internal_tx
+        .send(ServiceNotification::WindowUpdated(address))
+        .map_err(|e| Error::InternalEventTransmitError(e.to_string()))?;
 
     Ok(())
 }
 
-pub(crate) fn handle_urgent(
-    _event: &str,
-    data: &str,
-    _internal_tx: Sender<ServiceNotification>,
-    hyprland_tx: Sender<HyprlandEvent>,
-) -> Result<()> {
-    hyprland_tx.send(HyprlandEvent::Urgent {
-        address: Address::new(data.to_string()),
-    })?;
+pub(crate) fn handle_urgent(data: &str, hyprland_tx: Sender<HyprlandEvent>) -> Result<()> {
+    let address = Address::new(data.to_string());
+    hyprland_tx.send(HyprlandEvent::Urgent { address })?;
 
     Ok(())
 }
 
 pub(crate) fn handle_window_title(
-    _event: &str,
     data: &str,
-    _internal_tx: Sender<ServiceNotification>,
+    internal_tx: Sender<ServiceNotification>,
     hyprland_tx: Sender<HyprlandEvent>,
 ) -> Result<()> {
+    let address = Address::new(data.to_string());
     hyprland_tx.send(HyprlandEvent::WindowTitle {
-        address: Address::new(data.to_string()),
+        address: address.clone(),
     })?;
+
+    internal_tx
+        .send(ServiceNotification::WindowUpdated(address))
+        .map_err(|e| Error::InternalEventTransmitError(e.to_string()))?;
 
     Ok(())
 }
@@ -185,7 +205,7 @@ pub(crate) fn handle_window_title(
 pub(crate) fn handle_window_title_v2(
     event: &str,
     data: &str,
-    _internal_tx: Sender<ServiceNotification>,
+    internal_tx: Sender<ServiceNotification>,
     hyprland_tx: Sender<HyprlandEvent>,
 ) -> Result<()> {
     let Some((address, title)) = data.split_once(',') else {
@@ -195,10 +215,15 @@ pub(crate) fn handle_window_title_v2(
         });
     };
 
+    let address = Address::new(address.to_string());
     hyprland_tx.send(HyprlandEvent::WindowTitleV2 {
-        address: Address::new(address.to_string()),
+        address: address.clone(),
         title: title.to_string(),
     })?;
+
+    internal_tx
+        .send(ServiceNotification::WindowUpdated(address))
+        .map_err(|e| Error::InternalEventTransmitError(e.to_string()))?;
 
     Ok(())
 }
@@ -206,7 +231,7 @@ pub(crate) fn handle_window_title_v2(
 pub(crate) fn handle_toggle_group(
     event: &str,
     data: &str,
-    _internal_tx: Sender<ServiceNotification>,
+    internal_tx: Sender<ServiceNotification>,
     hyprland_tx: Sender<HyprlandEvent>,
 ) -> Result<()> {
     let Some((state, addresses_str)) = data.split_once(',') else {
@@ -230,33 +255,50 @@ pub(crate) fn handle_toggle_group(
         .map(|addr| Address::new(addr.to_string()))
         .collect();
 
-    hyprland_tx.send(HyprlandEvent::ToggleGroup { state, addresses })?;
+    hyprland_tx.send(HyprlandEvent::ToggleGroup {
+        state,
+        addresses: addresses.clone(),
+    })?;
+
+    for addr in addresses {
+        internal_tx
+            .send(ServiceNotification::WindowUpdated(addr))
+            .map_err(|e| Error::InternalEventTransmitError(e.to_string()))?;
+    }
 
     Ok(())
 }
 
 pub(crate) fn handle_move_into_group(
-    _event: &str,
     data: &str,
-    _internal_tx: Sender<ServiceNotification>,
+    internal_tx: Sender<ServiceNotification>,
     hyprland_tx: Sender<HyprlandEvent>,
 ) -> Result<()> {
+    let address = Address::new(data.to_string());
     hyprland_tx.send(HyprlandEvent::MoveIntoGroup {
-        address: Address::new(data.to_string()),
+        address: address.clone(),
     })?;
+
+    internal_tx
+        .send(ServiceNotification::WindowUpdated(address))
+        .map_err(|e| Error::InternalEventTransmitError(e.to_string()))?;
 
     Ok(())
 }
 
 pub(crate) fn handle_move_out_of_group(
-    _event: &str,
     data: &str,
-    _internal_tx: Sender<ServiceNotification>,
+    internal_tx: Sender<ServiceNotification>,
     hyprland_tx: Sender<HyprlandEvent>,
 ) -> Result<()> {
+    let address = Address::new(data.to_string());
     hyprland_tx.send(HyprlandEvent::MoveOutOfGroup {
-        address: Address::new(data.to_string()),
+        address: address.clone(),
     })?;
+
+    internal_tx
+        .send(ServiceNotification::WindowUpdated(address))
+        .map_err(|e| Error::InternalEventTransmitError(e.to_string()))?;
 
     Ok(())
 }
@@ -264,7 +306,7 @@ pub(crate) fn handle_move_out_of_group(
 pub(crate) fn handle_pin(
     event: &str,
     data: &str,
-    _internal_tx: Sender<ServiceNotification>,
+    internal_tx: Sender<ServiceNotification>,
     hyprland_tx: Sender<HyprlandEvent>,
 ) -> Result<()> {
     let Some((address, pinned)) = data.split_once(',') else {
@@ -284,10 +326,15 @@ pub(crate) fn handle_pin(
         }
     };
 
+    let address = Address::new(address.to_string());
     hyprland_tx.send(HyprlandEvent::Pin {
-        address: Address::new(address.to_string()),
+        address: address.clone(),
         pinned,
     })?;
+
+    internal_tx
+        .send(ServiceNotification::WindowUpdated(address))
+        .map_err(|e| Error::InternalEventTransmitError(e.to_string()))?;
 
     Ok(())
 }
@@ -295,7 +342,6 @@ pub(crate) fn handle_pin(
 pub(crate) fn handle_minimized(
     event: &str,
     data: &str,
-    _internal_tx: Sender<ServiceNotification>,
     hyprland_tx: Sender<HyprlandEvent>,
 ) -> Result<()> {
     let Some((address, minimized)) = data.split_once(',') else {

@@ -1,6 +1,6 @@
 use tokio::sync::broadcast::{self, Sender};
 
-use crate::{HyprlandEvent, Result, ServiceNotification, events::subscribe};
+use crate::{HyprlandEvent, Result, ServiceNotification, events};
 
 /// Hyprland compositor service providing reactive state and event streaming.
 ///
@@ -22,7 +22,7 @@ impl HyprlandService {
         let (internal_tx, _) = broadcast::channel(100);
         let (hyprland_tx, _) = broadcast::channel(100);
 
-        subscribe(internal_tx.clone(), hyprland_tx.clone()).await?;
+        events::subscribe(internal_tx.clone(), hyprland_tx.clone()).await?;
 
         let mut hyprland_rx = hyprland_tx.subscribe();
 

@@ -21,6 +21,7 @@ mod service;
 mod types;
 
 pub use error::{Error, Result};
-pub use events::types::{HyprlandEvent, ServiceNotification};
+pub use events::types::HyprlandEvent;
+pub(crate) use events::types::ServiceNotification;
 pub use service::HyprlandService;
 pub use types::*;

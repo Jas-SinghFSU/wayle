@@ -81,7 +81,11 @@ pub enum Error {
 
     /// Failed to transmit hyprland event
     #[error("Failed to transmit hyprland event: {0}")]
-    TransmitError(#[from] broadcast::error::SendError<HyprlandEvent>),
+    HyprlandEventTransmitError(#[from] broadcast::error::SendError<HyprlandEvent>),
+
+    /// Failed to transmit internal service notification
+    #[error("Failed to transmit internal service notification: {0}")]
+    InternalEventTransmitError(String),
 
     /// Invalid value for enum conversion
     #[error("Invalid value for {type_name}: {value}")]

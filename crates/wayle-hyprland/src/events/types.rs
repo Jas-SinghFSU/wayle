@@ -1,8 +1,27 @@
-use crate::{Address, MonitorId, ScreencastOwner, WorkspaceId};
+use crate::{Address, MonitorId, Namespace, ScreencastOwner, WorkspaceId};
 
 /// Internal events for our hyprland service
 #[derive(Debug, Clone)]
-pub enum ServiceNotification {}
+pub(crate) enum ServiceNotification {
+    WorkspaceCreated(WorkspaceId),
+    WorkspaceUpdated(WorkspaceId),
+    WorkspaceRemoved(WorkspaceId),
+    WorkspaceFocused(WorkspaceId),
+    WorkspaceMoved(WorkspaceId),
+
+    MonitorCreated(String),
+    MonitorUpdated(String),
+    MonitorRemoved(String),
+
+    WindowCreated(Address),
+    WindowUpdated(Address),
+    WindowRemoved(Address),
+    ActiveWindowUpdated(Address),
+    WindowMoved(Address, WorkspaceId),
+
+    LayerCreated(Namespace),
+    LayerRemoved(Namespace),
+}
 
 /// Structured events emitted by Hyprland
 #[derive(Debug, Clone)]
