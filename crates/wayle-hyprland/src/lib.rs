@@ -14,9 +14,11 @@
 //! # }
 //! ```
 
+mod commands;
 mod core;
 mod error;
 mod events;
+mod monitoring;
 mod service;
 mod types;
 

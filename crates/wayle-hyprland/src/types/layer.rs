@@ -1,4 +1,11 @@
-use std::fmt::{self, Display};
+use std::{
+    collections::HashMap,
+    fmt::{self, Display},
+};
+
+use serde::Deserialize;
+
+use crate::{Address, ProcessId};
 
 /// Layer namespace identifier.
 pub type Namespace = String;
@@ -30,6 +37,18 @@ impl From<u8> for LayerLevel {
     }
 }
 
+impl From<&str> for LayerLevel {
+    fn from(value: &str) -> Self {
+        match value {
+            "0" => Self::Background,
+            "1" => Self::Bottom,
+            "2" => Self::Top,
+            "3" => Self::Overlay,
+            _ => Self::Unknown,
+        }
+    }
+}
+
 impl Display for LayerLevel {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -40,4 +59,34 @@ impl Display for LayerLevel {
             Self::Unknown => write!(f, "unknown"),
         }
     }
+}
+
+/// Layer surface data from hyprctl.
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) struct LayerData {
+    pub address: Address,
+    pub x: i32,
+    pub y: i32,
+    pub width: u32,
+    pub height: u32,
+    pub namespace: String,
+    pub monitor: String,
+    pub level: LayerLevel,
+    pub pid: ProcessId,
+}
+
+#[derive(Debug, Deserialize)]
+pub(crate) struct MonitorLayers {
+    pub levels: HashMap<String, Vec<LayerResponse>>,
+}
+
+#[derive(Debug, Deserialize)]
+pub(crate) struct LayerResponse {
+    pub address: Address,
+    pub x: i32,
+    pub y: i32,
+    pub w: u32,
+    pub h: u32,
+    pub namespace: String,
+    pub pid: ProcessId,
 }

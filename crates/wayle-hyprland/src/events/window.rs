@@ -2,8 +2,6 @@ use tokio::sync::broadcast::Sender;
 
 use crate::{Address, Error, HyprlandEvent, Result, ServiceNotification};
 
-pub mod types;
-
 pub(crate) fn handle_active_window(
     event: &str,
     data: &str,

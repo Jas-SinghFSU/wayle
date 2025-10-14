@@ -2,8 +2,6 @@ use tokio::sync::broadcast::Sender;
 
 use crate::{Error, HyprlandEvent, Result, ServiceNotification};
 
-pub mod types;
-
 pub(crate) fn handle_workspace(data: &str, hyprland_tx: Sender<HyprlandEvent>) -> Result<()> {
     hyprland_tx.send(HyprlandEvent::Workspace {
         name: data.to_string(),

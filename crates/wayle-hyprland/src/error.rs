@@ -2,7 +2,7 @@ use std::io;
 
 use tokio::sync::broadcast;
 
-use crate::HyprlandEvent;
+use crate::{Address, HyprlandEvent, WorkspaceId};
 
 /// Hyprland service errors
 #[derive(thiserror::Error, Debug)]
@@ -48,15 +48,19 @@ pub enum Error {
 
     /// Workspace with specified ID not found
     #[error("Workspace {0} not found")]
-    WorkspaceNotFound(i64),
+    WorkspaceNotFound(WorkspaceId),
 
-    /// Monitor with specified ID not found
+    /// Monitor with specified name not found
     #[error("Monitor {0} not found")]
-    MonitorNotFound(i64),
+    MonitorNotFound(String),
 
-    /// Window with specified address not found
-    #[error("Window {0} not found")]
-    WindowNotFound(String),
+    /// Client/Window with specified address not found
+    #[error("Client {0} not found")]
+    ClientNotFound(Address),
+
+    /// Layer with specified address not found
+    #[error("Layer {0} not found")]
+    LayerNotFound(Address),
 
     /// Invalid Hyprland instance signature
     #[error("Invalid Hyprland instance signature: {0:#?}")]

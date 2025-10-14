@@ -1,14 +1,19 @@
+mod bind;
+mod client;
+mod device;
 mod layer;
 mod monitor;
-mod window;
 mod workspace;
 
 use std::fmt::{self, Display};
 
+pub use bind::*;
+pub use client::*;
+pub use device::*;
 pub use layer::*;
 pub use monitor::*;
 use serde::{Deserialize, Deserializer};
-pub use window::*;
+pub(crate) use workspace::WorkspaceData;
 
 use crate::Error;
 
@@ -116,4 +121,13 @@ where
 {
     let s: String = Deserialize::deserialize(deserializer)?;
     if s.is_empty() { Ok(None) } else { Ok(Some(s)) }
+}
+
+/// Cursor position in global layout coordinates.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct CursorPosition {
+    /// The x-coordinate of the cursor
+    pub x: i32,
+    /// The y-coordinate of the cursor
+    pub y: i32,
 }

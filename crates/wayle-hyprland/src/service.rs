@@ -24,11 +24,19 @@ impl HyprlandService {
 
         events::subscribe(internal_tx.clone(), hyprland_tx.clone()).await?;
 
+        let mut internal_rx = internal_tx.subscribe();
         let mut hyprland_rx = hyprland_tx.subscribe();
+        tokio::spawn(async move {
+            while let Ok(event) = internal_rx.recv().await {
+                println!("INTERNAL: {event:#?}");
+            }
+        });
 
-        while let Ok(event) = hyprland_rx.recv().await {
-            println!("{event:#?}");
-        }
+        tokio::spawn(async move {
+            while let Ok(event) = hyprland_rx.recv().await {
+                println!("HYPRLAND: {event:#?}");
+            }
+        });
 
         Ok(Self {
             internal_tx,

@@ -2,8 +2,6 @@ use tokio::sync::broadcast::Sender;
 
 use crate::{Error, HyprlandEvent, Result, ServiceNotification};
 
-pub mod types;
-
 pub(crate) fn handle_focused_mon(
     event: &str,
     data: &str,

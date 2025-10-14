@@ -2,8 +2,6 @@ use tokio::sync::broadcast::Sender;
 
 use crate::{Error, HyprlandEvent, Result, ServiceNotification};
 
-pub mod types;
-
 pub(crate) fn handle_open_layer(
     data: &str,
     internal_tx: Sender<ServiceNotification>,

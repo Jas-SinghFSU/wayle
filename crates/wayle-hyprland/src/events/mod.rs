@@ -13,9 +13,8 @@ use tokio::{
     sync::broadcast::Sender,
 };
 use tracing::warn;
-use types::{HyprlandEvent, ServiceNotification};
 
-use crate::{Error, Result};
+use crate::{Error, HyprlandEvent, Result, ServiceNotification};
 
 pub(crate) async fn subscribe(
     internal_tx: Sender<ServiceNotification>,
@@ -25,9 +24,9 @@ pub(crate) async fn subscribe(
     let runtime_dir = env::var("XDG_RUNTIME_DIR")
         .map_err(|_| Error::InvalidInstanceSignature("XDG_RUNTIME_DIR not set".to_string()))?;
 
-    let socket_name = format!("{runtime_dir}/hypr/{his}/.socket2.sock");
+    let socket_path = format!("{runtime_dir}/hypr/{his}/.socket2.sock");
     let event_stream =
-        UnixStream::connect(&socket_name)
+        UnixStream::connect(&socket_path)
             .await
             .map_err(|e| Error::IpcConnectionFailed {
                 socket_type: "event",

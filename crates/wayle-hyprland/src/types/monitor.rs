@@ -1,5 +1,7 @@
 use serde::{Deserialize, Deserializer};
 
+use crate::{Address, MonitorId, WorkspaceInfo, deserialize_optional_address};
+
 /// Reserved screen space on a monitor for panels, bars, etc.
 #[derive(Debug, Deserialize, Clone, PartialEq, PartialOrd)]
 pub struct Reserved {
@@ -263,4 +265,49 @@ where
     } else {
         Ok(Some(s))
     }
+}
+
+/// Monitor data from hyprctl.
+#[derive(Debug, Deserialize, Clone, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct MonitorData {
+    pub id: MonitorId,
+    pub name: String,
+    pub description: String,
+    pub make: String,
+    pub model: String,
+    pub serial: String,
+    pub width: u32,
+    pub height: u32,
+    pub physical_width: u32,
+    pub physical_height: u32,
+    pub refresh_rate: f32,
+    pub x: i32,
+    pub y: i32,
+    pub active_workspace: WorkspaceInfo,
+    pub special_workspace: WorkspaceInfo,
+    #[serde(deserialize_with = "deserialize_reserved")]
+    pub reserved: Reserved,
+    pub scale: f32,
+    #[serde(deserialize_with = "deserialize_transform")]
+    pub transform: Transform,
+    pub focused: bool,
+    pub dpms_status: bool,
+    pub vrr: bool,
+    #[serde(deserialize_with = "deserialize_optional_address")]
+    pub solitary: Option<Address>,
+    #[serde(deserialize_with = "deserialize_solitary_blocker")]
+    pub solitary_blocked_by: Vec<SolitaryBlocker>,
+    pub actively_tearing: bool,
+    #[serde(deserialize_with = "deserialize_tearing_blocker")]
+    pub tearing_blocked_by: Vec<TearingBlocker>,
+    #[serde(deserialize_with = "deserialize_optional_address")]
+    pub direct_scanout_to: Option<Address>,
+    #[serde(deserialize_with = "deserialize_direct_scanout_blocker")]
+    pub direct_scanout_blocked_by: Vec<DirectScanoutBlocker>,
+    pub disabled: bool,
+    pub current_format: String,
+    #[serde(deserialize_with = "deserialize_mirror_of")]
+    pub mirror_of: Option<String>,
+    pub available_modes: Vec<String>,
 }

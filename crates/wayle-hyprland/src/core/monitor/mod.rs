@@ -1,0 +1,40 @@
+use wayle_common::Property;
+
+use crate::{
+    Address, DirectScanoutBlocker, MonitorId, Reserved, SolitaryBlocker, TearingBlocker, Transform,
+    WorkspaceInfo,
+};
+
+pub struct Client {
+    pub id: Property<MonitorId>,
+    pub name: Property<String>,
+    pub description: Property<String>,
+    pub make: Property<String>,
+    pub model: Property<String>,
+    pub serial: Property<String>,
+    pub width: Property<u32>,
+    pub height: Property<u32>,
+    pub physical_width: Property<u32>,
+    pub physical_height: Property<u32>,
+    pub refresh_rate: Property<f32>,
+    pub x: Property<i32>,
+    pub y: Property<i32>,
+    pub active_workspace: Property<WorkspaceInfo>,
+    pub special_workspace: Property<WorkspaceInfo>,
+    pub reserved: Property<Reserved>,
+    pub scale: Property<f32>,
+    pub transform: Property<Transform>,
+    pub focused: Property<bool>,
+    pub dpms_status: Property<bool>,
+    pub vrr: Property<bool>,
+    pub solitary: Property<Option<Address>>,
+    pub solitary_blocked_by: Property<Vec<SolitaryBlocker>>,
+    pub actively_tearing: Property<bool>,
+    pub tearing_blocked_by: Property<Vec<TearingBlocker>>,
+    pub direct_scanout_to: Property<Option<Address>>,
+    pub direct_scanout_blocked_by: Property<Vec<DirectScanoutBlocker>>,
+    pub disabled: Property<bool>,
+    pub current_format: Property<String>,
+    pub mirror_of: Property<Option<String>>,
+    pub available_modes: Property<Vec<String>>,
+}
