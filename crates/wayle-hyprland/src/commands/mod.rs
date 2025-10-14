@@ -1,5 +1,6 @@
 mod command;
 mod query;
+mod types;
 
 use std::{env, path::PathBuf};
 
@@ -7,6 +8,7 @@ use tokio::{
     io::{AsyncBufReadExt, AsyncWriteExt, BufReader},
     net::UnixStream,
 };
+pub use types::*;
 
 use crate::{Error, Result};
 
