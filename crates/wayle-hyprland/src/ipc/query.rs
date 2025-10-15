@@ -65,7 +65,7 @@ impl HyprMessenger {
                 monitor_layers
                     .levels
                     .into_iter()
-                    .flat_map(move |(layer_depth, layer_list)| {
+                    .flat_map(move |(layer_level, layer_list)| {
                         let monitor_name = monitor_name.clone();
 
                         layer_list.into_iter().map(move |layer| LayerData {
@@ -76,7 +76,7 @@ impl HyprMessenger {
                             height: layer.h,
                             namespace: layer.namespace,
                             monitor: monitor_name.clone(),
-                            level: LayerLevel::from(layer_depth.as_str()),
+                            level: LayerLevel::from(layer_level.as_str()),
                             pid: layer.pid,
                         })
                     })

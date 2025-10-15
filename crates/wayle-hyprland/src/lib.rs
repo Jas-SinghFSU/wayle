@@ -15,6 +15,7 @@
 //! ```
 
 mod core;
+mod discovery;
 mod error;
 mod ipc;
 mod monitoring;

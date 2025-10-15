@@ -7,6 +7,7 @@ use wayle_common::Property;
 use crate::{
     HyprlandEvent, Result,
     core::{client::Client, layer::Layer, monitor::Monitor, workspace::Workspace},
+    discovery::HyprlandDiscovery,
     ipc::{
         HyprMessenger,
         events::{self, types::ServiceNotification},
@@ -23,12 +24,12 @@ pub struct HyprlandService {
     pub(crate) internal_tx: Sender<ServiceNotification>,
     pub(crate) hyprland_tx: Sender<HyprlandEvent>,
     pub(crate) cancellation_token: CancellationToken,
-    pub(crate) command_socket: HyprMessenger,
+    pub(crate) hypr_messenger: HyprMessenger,
 
+    pub workspaces: Property<Vec<Arc<Workspace>>>,
     pub clients: Property<Vec<Arc<Client>>>,
     pub monitors: Property<Vec<Arc<Monitor>>>,
-    pub layers: Property<Vec<Arc<Layer>>>,
-    pub workspaces: Property<Vec<Arc<Workspace>>>,
+    pub layers: Property<Vec<Layer>>,
 }
 
 impl HyprlandService {
@@ -41,7 +42,7 @@ impl HyprlandService {
         let (hyprland_tx, _) = broadcast::channel(100);
 
         let cancellation_token = CancellationToken::new();
-        let command_socket = HyprMessenger::new()?;
+        let hypr_messenger = HyprMessenger::new()?;
 
         events::subscribe(internal_tx.clone(), hyprland_tx.clone()).await?;
 
@@ -60,15 +61,22 @@ impl HyprlandService {
             }
         });
 
+        let HyprlandDiscovery {
+            workspaces,
+            clients,
+            monitors,
+            layers,
+        } = HyprlandDiscovery::new(hypr_messenger.clone(), &cancellation_token).await;
+
         Ok(Self {
             internal_tx,
             hyprland_tx,
             cancellation_token,
-            command_socket,
-            clients: Property::new(vec![]),
-            monitors: Property::new(vec![]),
-            layers: Property::new(vec![]),
-            workspaces: Property::new(vec![]),
+            hypr_messenger,
+            workspaces: Property::new(workspaces),
+            clients: Property::new(clients),
+            monitors: Property::new(monitors),
+            layers: Property::new(layers),
         })
     }
 }

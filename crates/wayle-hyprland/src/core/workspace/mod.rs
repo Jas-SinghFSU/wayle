@@ -1,7 +1,9 @@
-mod types;
+mod monitoring;
+pub(crate) mod types;
 
 use std::sync::Arc;
 
+use tokio_util::sync::CancellationToken;
 use types::{LiveWorkspaceParams, WorkspaceParams};
 use wayle_common::Property;
 use wayle_traits::Reactive;
@@ -10,6 +12,8 @@ use crate::{Address, Error, MonitorId, WorkspaceData, WorkspaceId};
 
 #[derive(Debug, Clone)]
 pub struct Workspace {
+    pub(crate) cancellation_token: Option<CancellationToken>,
+
     pub id: Property<WorkspaceId>,
     pub name: Property<String>,
     pub monitor: Property<String>,
@@ -35,12 +39,15 @@ impl Reactive for Workspace {
     async fn get(context: Self::Context<'_>) -> Result<Self, Self::Error> {
         let workspace_data = context.hypr_messenger.workspace(context.id).await?;
 
-        Ok(Self::from_props(workspace_data))
+        Ok(Self::from_props(workspace_data, None))
     }
 
     async fn get_live(context: Self::LiveContext<'_>) -> Result<Arc<Self>, Self::Error> {
         let workspace_data = context.hypr_messenger.workspace(context.id).await?;
-        let arc_workspace_data = Arc::new(Self::from_props(workspace_data));
+        let arc_workspace_data = Arc::new(Self::from_props(
+            workspace_data,
+            Some(context.cancellation_token.child_token()),
+        ));
 
         // TODO: Add monitoring
         Ok(arc_workspace_data)
@@ -48,8 +55,12 @@ impl Reactive for Workspace {
 }
 
 impl Workspace {
-    pub(crate) fn from_props(workspace_data: WorkspaceData) -> Self {
+    pub(crate) fn from_props(
+        workspace_data: WorkspaceData,
+        cancellation_token: Option<CancellationToken>,
+    ) -> Self {
         Self {
+            cancellation_token,
             id: Property::new(workspace_data.id),
             name: Property::new(workspace_data.name),
             monitor: Property::new(workspace_data.monitor),

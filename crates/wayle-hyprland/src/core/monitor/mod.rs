@@ -1,7 +1,9 @@
-mod types;
+mod monitoring;
+pub(crate) mod types;
 
 use std::sync::Arc;
 
+use tokio_util::sync::CancellationToken;
 use types::{LiveMonitorParams, MonitorParams};
 use wayle_common::Property;
 use wayle_traits::Reactive;
@@ -13,6 +15,8 @@ use crate::{
 
 #[derive(Debug, Clone)]
 pub struct Monitor {
+    pub(crate) cancellation_token: Option<CancellationToken>,
+
     pub id: Property<MonitorId>,
     pub name: Property<String>,
     pub description: Property<String>,
@@ -60,12 +64,15 @@ impl Reactive for Monitor {
     async fn get(context: Self::Context<'_>) -> Result<Self, Self::Error> {
         let monitor_data = context.hypr_messenger.monitor(context.name).await?;
 
-        Ok(Self::from_props(monitor_data))
+        Ok(Self::from_props(monitor_data, None))
     }
 
     async fn get_live(context: Self::LiveContext<'_>) -> Result<Arc<Self>, Self::Error> {
         let monitor_data = context.hypr_messenger.monitor(context.name).await?;
-        let arc_monitor_data = Arc::new(Self::from_props(monitor_data));
+        let arc_monitor_data = Arc::new(Self::from_props(
+            monitor_data,
+            Some(context.cancellation_token.child_token()),
+        ));
 
         // TODO: Add monitoring
         Ok(arc_monitor_data)
@@ -73,8 +80,12 @@ impl Reactive for Monitor {
 }
 
 impl Monitor {
-    pub(crate) fn from_props(monitor_data: MonitorData) -> Self {
+    pub(crate) fn from_props(
+        monitor_data: MonitorData,
+        cancellation_token: Option<CancellationToken>,
+    ) -> Self {
         Self {
+            cancellation_token,
             id: Property::new(monitor_data.id),
             name: Property::new(monitor_data.name),
             description: Property::new(monitor_data.description),

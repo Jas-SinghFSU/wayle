@@ -1,7 +1,9 @@
-mod types;
+mod monitoring;
+pub(crate) mod types;
 
 use std::sync::Arc;
 
+use tokio_util::sync::CancellationToken;
 use types::{ClientParams, LiveClientParams};
 use wayle_common::Property;
 use wayle_traits::Reactive;
@@ -13,6 +15,8 @@ use crate::{
 
 #[derive(Debug, Clone)]
 pub struct Client {
+    pub(crate) cancellation_token: Option<CancellationToken>,
+
     pub address: Property<Address>,
     pub mapped: Property<bool>,
     pub hidden: Property<bool>,
@@ -53,12 +57,15 @@ impl Reactive for Client {
 
     async fn get(context: Self::Context<'_>) -> Result<Self, Self::Error> {
         let client_data = context.hypr_messenger.client(context.address).await?;
-        Ok(Self::from_props(client_data))
+        Ok(Self::from_props(client_data, None))
     }
 
     async fn get_live(context: Self::LiveContext<'_>) -> Result<Arc<Self>, Self::Error> {
         let client_data = context.hypr_messenger.client(context.address).await?;
-        let arc_client_data = Arc::new(Self::from_props(client_data));
+        let arc_client_data = Arc::new(Self::from_props(
+            client_data,
+            Some(context.cancellation_token.child_token()),
+        ));
 
         //TODO: Add monitoring here
         Ok(arc_client_data)
@@ -66,8 +73,12 @@ impl Reactive for Client {
 }
 
 impl Client {
-    pub(crate) fn from_props(client_data: ClientData) -> Self {
+    pub(crate) fn from_props(
+        client_data: ClientData,
+        cancellation_token: Option<CancellationToken>,
+    ) -> Self {
         Self {
+            cancellation_token,
             address: Property::new(client_data.address),
             mapped: Property::new(client_data.mapped),
             hidden: Property::new(client_data.hidden),

@@ -1,4 +1,4 @@
-mod types;
+pub(crate) mod types;
 
 use types::LayerParams;
 use wayle_common::Property;
