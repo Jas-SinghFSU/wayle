@@ -13,8 +13,9 @@ use tokio::{
     sync::broadcast::Sender,
 };
 use tracing::warn;
+use types::ServiceNotification;
 
-use crate::{Error, HyprlandEvent, Result, ServiceNotification};
+use crate::{Error, HyprlandEvent, Result};
 
 pub(crate) async fn subscribe(
     internal_tx: Sender<ServiceNotification>,

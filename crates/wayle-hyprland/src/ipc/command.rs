@@ -1,9 +1,9 @@
 use std::time::Duration;
 
-use super::{CommandSocket, DismissProps, OutputCommand, SetErrorCommand};
+use super::{DismissProps, HyprMessenger, OutputCommand, SetErrorCommand};
 use crate::Result;
 
-impl CommandSocket {
+impl HyprMessenger {
     pub(crate) async fn dispatch(&self, command: &str) -> Result<String> {
         self.send(&format!("dispatch {command}")).await
     }

@@ -14,16 +14,14 @@
 //! # }
 //! ```
 
-mod commands;
 mod core;
 mod error;
-mod events;
+mod ipc;
 mod monitoring;
 mod service;
 mod types;
 
 pub use error::{Error, Result};
-pub use events::types::HyprlandEvent;
-pub(crate) use events::types::ServiceNotification;
+pub use ipc::events::types::HyprlandEvent;
 pub use service::HyprlandService;
 pub use types::*;

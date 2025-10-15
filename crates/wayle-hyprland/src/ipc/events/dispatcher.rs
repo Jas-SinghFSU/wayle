@@ -2,12 +2,12 @@ use tokio::sync::broadcast::Sender;
 use tracing::warn;
 
 use super::{
-    HyprlandEvent, ServiceNotification,
     layer::{handle_close_layer, handle_open_layer},
     monitor::{
         handle_focused_mon, handle_focused_mon_v2, handle_monitor_added, handle_monitor_added_v2,
         handle_monitor_removed, handle_monitor_removed_v2,
     },
+    types::{HyprlandEvent, ServiceNotification},
     window::{
         handle_active_window, handle_active_window_v2, handle_change_floating_mode,
         handle_close_window, handle_minimized, handle_move_into_group, handle_move_out_of_group,

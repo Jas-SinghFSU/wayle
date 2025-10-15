@@ -1,6 +1,7 @@
 use tokio::sync::broadcast::Sender;
 
-use crate::{Address, Error, HyprlandEvent, Result, ServiceNotification};
+use super::types::ServiceNotification;
+use crate::{Address, Error, HyprlandEvent, Result};
 
 pub(crate) fn handle_active_window(
     event: &str,
@@ -34,7 +35,7 @@ pub(crate) fn handle_active_window_v2(
     })?;
 
     internal_tx
-        .send(ServiceNotification::ActiveWindowUpdated(address))
+        .send(ServiceNotification::ActiveClientUpdated(address))
         .map_err(|e| Error::InternalEventTransmitError(e.to_string()))?;
 
     Ok(())
@@ -64,7 +65,7 @@ pub(crate) fn handle_open_window(
     })?;
 
     internal_tx
-        .send(ServiceNotification::WindowCreated(address))
+        .send(ServiceNotification::ClientCreated(address))
         .map_err(|e| Error::InternalEventTransmitError(e.to_string()))?;
 
     Ok(())
@@ -81,7 +82,7 @@ pub(crate) fn handle_close_window(
     })?;
 
     internal_tx
-        .send(ServiceNotification::WindowRemoved(address))
+        .send(ServiceNotification::ClientRemoved(address))
         .map_err(|e| Error::InternalEventTransmitError(e.to_string()))?;
 
     Ok(())
@@ -134,7 +135,7 @@ pub(crate) fn handle_move_window_v2(
     })?;
 
     internal_tx
-        .send(ServiceNotification::WindowMoved(address, workspace_id))
+        .send(ServiceNotification::ClientMoved(address, workspace_id))
         .map_err(|e| Error::InternalEventTransmitError(e.to_string()))?;
 
     Ok(())
@@ -170,7 +171,7 @@ pub(crate) fn handle_change_floating_mode(
     })?;
 
     internal_tx
-        .send(ServiceNotification::WindowUpdated(address))
+        .send(ServiceNotification::ClientUpdated(address))
         .map_err(|e| Error::InternalEventTransmitError(e.to_string()))?;
 
     Ok(())
@@ -194,7 +195,7 @@ pub(crate) fn handle_window_title(
     })?;
 
     internal_tx
-        .send(ServiceNotification::WindowUpdated(address))
+        .send(ServiceNotification::ClientUpdated(address))
         .map_err(|e| Error::InternalEventTransmitError(e.to_string()))?;
 
     Ok(())
@@ -220,7 +221,7 @@ pub(crate) fn handle_window_title_v2(
     })?;
 
     internal_tx
-        .send(ServiceNotification::WindowUpdated(address))
+        .send(ServiceNotification::ClientUpdated(address))
         .map_err(|e| Error::InternalEventTransmitError(e.to_string()))?;
 
     Ok(())
@@ -260,7 +261,7 @@ pub(crate) fn handle_toggle_group(
 
     for addr in addresses {
         internal_tx
-            .send(ServiceNotification::WindowUpdated(addr))
+            .send(ServiceNotification::ClientUpdated(addr))
             .map_err(|e| Error::InternalEventTransmitError(e.to_string()))?;
     }
 
@@ -278,7 +279,7 @@ pub(crate) fn handle_move_into_group(
     })?;
 
     internal_tx
-        .send(ServiceNotification::WindowUpdated(address))
+        .send(ServiceNotification::ClientUpdated(address))
         .map_err(|e| Error::InternalEventTransmitError(e.to_string()))?;
 
     Ok(())
@@ -295,7 +296,7 @@ pub(crate) fn handle_move_out_of_group(
     })?;
 
     internal_tx
-        .send(ServiceNotification::WindowUpdated(address))
+        .send(ServiceNotification::ClientUpdated(address))
         .map_err(|e| Error::InternalEventTransmitError(e.to_string()))?;
 
     Ok(())
@@ -331,7 +332,7 @@ pub(crate) fn handle_pin(
     })?;
 
     internal_tx
-        .send(ServiceNotification::WindowUpdated(address))
+        .send(ServiceNotification::ClientUpdated(address))
         .map_err(|e| Error::InternalEventTransmitError(e.to_string()))?;
 
     Ok(())

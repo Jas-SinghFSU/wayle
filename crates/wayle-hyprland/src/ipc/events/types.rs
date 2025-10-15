@@ -13,11 +13,11 @@ pub(crate) enum ServiceNotification {
     MonitorUpdated(String),
     MonitorRemoved(String),
 
-    WindowCreated(Address),
-    WindowUpdated(Address),
-    WindowRemoved(Address),
-    ActiveWindowUpdated(Address),
-    WindowMoved(Address, WorkspaceId),
+    ClientCreated(Address),
+    ClientUpdated(Address),
+    ClientRemoved(Address),
+    ActiveClientUpdated(Address),
+    ClientMoved(Address, WorkspaceId),
 
     LayerCreated(Namespace),
     LayerRemoved(Namespace),

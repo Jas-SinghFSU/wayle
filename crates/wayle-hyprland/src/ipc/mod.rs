@@ -1,4 +1,5 @@
 mod command;
+pub(crate) mod events;
 mod query;
 mod types;
 
@@ -15,11 +16,11 @@ use crate::{Error, Result};
 const END_OF_TRANSMISSION: u8 = b'\x04';
 
 #[derive(Debug, Clone)]
-pub(crate) struct CommandSocket {
+pub(crate) struct HyprMessenger {
     path: PathBuf,
 }
 
-impl CommandSocket {
+impl HyprMessenger {
     pub fn new() -> Result<Self> {
         let his = env::var("HYPRLAND_INSTANCE_SIGNATURE").map_err(|_| Error::HyprlandNotRunning)?;
         let runtime_dir = env::var("XDG_RUNTIME_DIR")

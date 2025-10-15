@@ -1,12 +1,12 @@
 use std::collections::HashMap;
 
-use super::CommandSocket;
+use super::HyprMessenger;
 use crate::{
     Address, BindData, ClientData, CursorPosition, DeviceInfo, Error, LayerData, LayerLevel,
     MonitorData, MonitorLayers, Result, WorkspaceData, WorkspaceId,
 };
 
-impl CommandSocket {
+impl HyprMessenger {
     pub(crate) async fn monitor(&self, name: String) -> Result<MonitorData> {
         let monitors = self.monitors().await?;
         monitors
