@@ -1,3 +1,5 @@
+use std::{convert::Infallible, str::FromStr};
+
 use serde::{Deserialize, Deserializer};
 
 use crate::{Address, MonitorId, WorkspaceInfo, deserialize_optional_address};
@@ -108,10 +110,11 @@ pub enum SolitaryBlocker {
     Errorbar,
 }
 
-impl SolitaryBlocker {
-    /// Parses a blocker from its string representation.
-    pub fn from_str(s: &str) -> Self {
-        match s {
+impl FromStr for SolitaryBlocker {
+    type Err = Infallible;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(match s {
             "NOTIFICATION" => Self::Notification,
             "LOCK" => Self::Lock,
             "WORKSPACE" => Self::Workspace,
@@ -129,7 +132,7 @@ impl SolitaryBlocker {
             "SURFACES" => Self::Surfaces,
             "ERRORBAR" => Self::Errorbar,
             _ => Self::Unknown,
-        }
+        })
     }
 }
 
@@ -140,7 +143,10 @@ where
     D: Deserializer<'de>,
 {
     let arr: Vec<String> = Deserialize::deserialize(deserializer)?;
-    Ok(arr.iter().map(|s| SolitaryBlocker::from_str(s)).collect())
+    Ok(arr
+        .iter()
+        .map(|s| s.parse().unwrap_or(SolitaryBlocker::Unknown))
+        .collect())
 }
 
 /// Reasons why tearing is blocked for a monitor.
@@ -162,10 +168,11 @@ pub enum TearingBlocker {
     Window,
 }
 
-impl TearingBlocker {
-    /// Parses a blocker from its string representation.
-    pub fn from_str(s: &str) -> Self {
-        match s {
+impl FromStr for TearingBlocker {
+    type Err = Infallible;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(match s {
             "NOT_TORN" => Self::NotTorn,
             "USER" => Self::User,
             "ZOOM" => Self::Zoom,
@@ -173,7 +180,7 @@ impl TearingBlocker {
             "CANDIDATE" => Self::Candidate,
             "WINDOW" => Self::Window,
             _ => Self::Unknown,
-        }
+        })
     }
 }
 
@@ -184,7 +191,10 @@ where
     D: Deserializer<'de>,
 {
     let arr: Vec<String> = Deserialize::deserialize(deserializer)?;
-    Ok(arr.iter().map(|s| TearingBlocker::from_str(s)).collect())
+    Ok(arr
+        .iter()
+        .map(|s| s.parse().unwrap_or(TearingBlocker::Unknown))
+        .collect())
 }
 
 /// Reasons why direct scanout is blocked for a monitor.
@@ -220,10 +230,11 @@ pub enum DirectScanoutBlocker {
     Cm,
 }
 
-impl DirectScanoutBlocker {
-    /// Parses a blocker from its string representation.
-    pub fn from_str(s: &str) -> Self {
-        match s {
+impl FromStr for DirectScanoutBlocker {
+    type Err = Infallible;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(match s {
             "USER" => Self::User,
             "WINDOWED" => Self::Windowed,
             "CONTENT" => Self::Content,
@@ -238,7 +249,7 @@ impl DirectScanoutBlocker {
             "FAILED" => Self::Failed,
             "CM" => Self::Cm,
             _ => Self::Unknown,
-        }
+        })
     }
 }
 
@@ -251,7 +262,7 @@ where
     let arr: Vec<String> = Deserialize::deserialize(deserializer)?;
     Ok(arr
         .iter()
-        .map(|s| DirectScanoutBlocker::from_str(s))
+        .map(|s| s.parse().unwrap_or(DirectScanoutBlocker::Unknown))
         .collect())
 }
 

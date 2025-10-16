@@ -3,18 +3,23 @@ pub(crate) mod types;
 
 use std::sync::Arc;
 
+use tokio::sync::broadcast::Sender;
 use tokio_util::sync::CancellationToken;
+use tracing::instrument;
 use types::{ClientParams, LiveClientParams};
 use wayle_common::Property;
-use wayle_traits::Reactive;
+use wayle_traits::{ModelMonitoring, Reactive};
 
 use crate::{
     Address, ClientData, ClientLocation, ClientSize, Error, FocusHistoryId, FullscreenMode,
     MonitorId, ProcessId, WorkspaceInfo,
+    ipc::{HyprMessenger, events::types::ServiceNotification},
 };
 
 #[derive(Debug, Clone)]
 pub struct Client {
+    pub(crate) hypr_messenger: HyprMessenger,
+    pub(crate) internal_tx: Option<Sender<ServiceNotification>>,
     pub(crate) cancellation_token: Option<CancellationToken>,
 
     pub address: Property<Address>,
@@ -55,19 +60,29 @@ impl Reactive for Client {
     type Context<'a> = ClientParams<'a>;
     type LiveContext<'a> = LiveClientParams<'a>;
 
+    #[instrument(skip(context), fields(address = %context.address), err)]
     async fn get(context: Self::Context<'_>) -> Result<Self, Self::Error> {
-        let client_data = context.hypr_messenger.client(context.address).await?;
-        Ok(Self::from_props(client_data, None))
+        let client_data = context.hypr_messenger.client(&context.address).await?;
+        Ok(Self::from_props(
+            client_data,
+            context.hypr_messenger,
+            None,
+            None,
+        ))
     }
 
+    #[instrument(skip(context), fields(address = %context.address), err)]
     async fn get_live(context: Self::LiveContext<'_>) -> Result<Arc<Self>, Self::Error> {
-        let client_data = context.hypr_messenger.client(context.address).await?;
+        let client_data = context.hypr_messenger.client(&context.address).await?;
         let arc_client_data = Arc::new(Self::from_props(
             client_data,
+            context.hypr_messenger,
+            Some(context.internal_tx.clone()),
             Some(context.cancellation_token.child_token()),
         ));
 
-        //TODO: Add monitoring here
+        arc_client_data.clone().start_monitoring().await?;
+
         Ok(arc_client_data)
     }
 }
@@ -75,9 +90,13 @@ impl Reactive for Client {
 impl Client {
     pub(crate) fn from_props(
         client_data: ClientData,
+        hypr_messenger: &HyprMessenger,
+        internal_tx: Option<Sender<ServiceNotification>>,
         cancellation_token: Option<CancellationToken>,
     ) -> Self {
         Self {
+            hypr_messenger: hypr_messenger.clone(),
+            internal_tx,
             cancellation_token,
             address: Property::new(client_data.address),
             mapped: Property::new(client_data.mapped),
@@ -105,5 +124,33 @@ impl Client {
             xdg_tag: Property::new(client_data.xdg_tag),
             xdg_description: Property::new(client_data.xdg_description),
         }
+    }
+
+    pub(crate) fn update(&self, client_data: ClientData) {
+        self.address.set(client_data.address);
+        self.mapped.set(client_data.mapped);
+        self.hidden.set(client_data.hidden);
+        self.at.set(client_data.at);
+        self.size.set(client_data.size);
+        self.workspace.set(client_data.workspace);
+        self.floating.set(client_data.floating);
+        self.pseudo.set(client_data.pseudo);
+        self.monitor.set(client_data.monitor);
+        self.class.set(client_data.class);
+        self.title.set(client_data.title);
+        self.initial_class.set(client_data.initial_class);
+        self.initial_title.set(client_data.initial_title);
+        self.pid.set(client_data.pid);
+        self.xwayland.set(client_data.xwayland);
+        self.pinned.set(client_data.pinned);
+        self.fullscreen.set(client_data.fullscreen);
+        self.fullscreen_client.set(client_data.fullscreen_client);
+        self.grouped.set(client_data.grouped);
+        self.tags.set(client_data.tags);
+        self.swallowing.set(client_data.swallowing);
+        self.focus_history_id.set(client_data.focus_history_id);
+        self.inhibiting_idle.set(client_data.inhibiting_idle);
+        self.xdg_tag.set(client_data.xdg_tag);
+        self.xdg_description.set(client_data.xdg_description);
     }
 }

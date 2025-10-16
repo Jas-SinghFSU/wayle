@@ -36,7 +36,7 @@ pub(crate) async fn dispatch(
         "focusedmonv2" => handle_focused_mon_v2(event, data, internal_tx, hyprland_tx),
         "activewindow" => handle_active_window(event, data, hyprland_tx),
         "activewindowv2" => handle_active_window_v2(data, internal_tx, hyprland_tx),
-        "fullscreen" => handle_fullscreen(event, data, internal_tx, hyprland_tx),
+        "fullscreen" => handle_fullscreen(event, data, hyprland_tx),
         "monitorremoved" => handle_monitor_removed(data, hyprland_tx),
         "monitorremovedv2" => handle_monitor_removed_v2(event, data, internal_tx, hyprland_tx),
         "monitoradded" => handle_monitor_added(data, hyprland_tx),
@@ -50,28 +50,28 @@ pub(crate) async fn dispatch(
         "renameworkspace" => handle_rename_workspace(event, data, internal_tx, hyprland_tx),
         "activespecial" => handle_active_special(event, data, hyprland_tx),
         "activespecialv2" => handle_active_special_v2(event, data, internal_tx, hyprland_tx),
-        "activelayout" => handle_active_layout(event, data, internal_tx, hyprland_tx),
+        "activelayout" => handle_active_layout(event, data, hyprland_tx),
         "openwindow" => handle_open_window(event, data, internal_tx, hyprland_tx),
         "closewindow" => handle_close_window(data, internal_tx, hyprland_tx),
         "movewindow" => handle_move_window(event, data, hyprland_tx),
         "movewindowv2" => handle_move_window_v2(event, data, internal_tx, hyprland_tx),
         "openlayer" => handle_open_layer(data, internal_tx, hyprland_tx),
         "closelayer" => handle_close_layer(data, internal_tx, hyprland_tx),
-        "submap" => handle_submap(event, data, internal_tx, hyprland_tx),
+        "submap" => handle_submap(data, hyprland_tx),
         "changefloatingmode" => handle_change_floating_mode(event, data, internal_tx, hyprland_tx),
         "urgent" => handle_urgent(data, hyprland_tx),
-        "screencast" => handle_screencast(event, data, internal_tx, hyprland_tx),
+        "screencast" => handle_screencast(event, data, hyprland_tx),
         "windowtitle" => handle_window_title(data, internal_tx, hyprland_tx),
         "windowtitlev2" => handle_window_title_v2(event, data, internal_tx, hyprland_tx),
         "togglegroup" => handle_toggle_group(event, data, internal_tx, hyprland_tx),
         "moveintogroup" => handle_move_into_group(data, internal_tx, hyprland_tx),
         "moveoutofgroup" => handle_move_out_of_group(data, internal_tx, hyprland_tx),
-        "ignoregrouplock" => handle_ignore_group_lock(event, data, internal_tx, hyprland_tx),
-        "lockgroups" => handle_lock_groups(event, data, internal_tx, hyprland_tx),
-        "configreloaded" => handle_config_reloaded(event, data, internal_tx, hyprland_tx),
+        "ignoregrouplock" => handle_ignore_group_lock(event, data, hyprland_tx),
+        "lockgroups" => handle_lock_groups(event, data, hyprland_tx),
+        "configreloaded" => handle_config_reloaded(hyprland_tx),
         "pin" => handle_pin(event, data, internal_tx, hyprland_tx),
         "minimized" => handle_minimized(event, data, hyprland_tx),
-        "bell" => handle_bell(event, data, internal_tx, hyprland_tx),
+        "bell" => handle_bell(data, hyprland_tx),
         _ => {
             warn!("Unknown Hyprland event: {event}");
             Ok(())
@@ -79,12 +79,7 @@ pub(crate) async fn dispatch(
     }
 }
 
-fn handle_fullscreen(
-    event: &str,
-    data: &str,
-    _internal_tx: Sender<ServiceNotification>,
-    hyprland_tx: Sender<HyprlandEvent>,
-) -> Result<()> {
+fn handle_fullscreen(event: &str, data: &str, hyprland_tx: Sender<HyprlandEvent>) -> Result<()> {
     let fullscreen = match data {
         "0" => false,
         "1" => true,
@@ -100,12 +95,7 @@ fn handle_fullscreen(
     Ok(())
 }
 
-fn handle_active_layout(
-    event: &str,
-    data: &str,
-    _internal_tx: Sender<ServiceNotification>,
-    hyprland_tx: Sender<HyprlandEvent>,
-) -> Result<()> {
+fn handle_active_layout(event: &str, data: &str, hyprland_tx: Sender<HyprlandEvent>) -> Result<()> {
     let Some((keyboard, layout)) = data.split_once(',') else {
         return Err(Error::EventParseError {
             event_data: format!("{event}>>{data}"),
@@ -121,12 +111,7 @@ fn handle_active_layout(
     Ok(())
 }
 
-fn handle_submap(
-    _event: &str,
-    data: &str,
-    _internal_tx: Sender<ServiceNotification>,
-    hyprland_tx: Sender<HyprlandEvent>,
-) -> Result<()> {
+fn handle_submap(data: &str, hyprland_tx: Sender<HyprlandEvent>) -> Result<()> {
     hyprland_tx.send(HyprlandEvent::Submap {
         name: data.to_string(),
     })?;
@@ -134,12 +119,7 @@ fn handle_submap(
     Ok(())
 }
 
-fn handle_screencast(
-    event: &str,
-    data: &str,
-    _internal_tx: Sender<ServiceNotification>,
-    hyprland_tx: Sender<HyprlandEvent>,
-) -> Result<()> {
+fn handle_screencast(event: &str, data: &str, hyprland_tx: Sender<HyprlandEvent>) -> Result<()> {
     let Some((state, owner)) = data.split_once(',') else {
         return Err(Error::EventParseError {
             event_data: format!("{event}>>{data}"),
@@ -167,7 +147,6 @@ fn handle_screencast(
 fn handle_ignore_group_lock(
     event: &str,
     data: &str,
-    _internal_tx: Sender<ServiceNotification>,
     hyprland_tx: Sender<HyprlandEvent>,
 ) -> Result<()> {
     let ignore = match data {
@@ -186,12 +165,7 @@ fn handle_ignore_group_lock(
     Ok(())
 }
 
-fn handle_lock_groups(
-    event: &str,
-    data: &str,
-    _internal_tx: Sender<ServiceNotification>,
-    hyprland_tx: Sender<HyprlandEvent>,
-) -> Result<()> {
+fn handle_lock_groups(event: &str, data: &str, hyprland_tx: Sender<HyprlandEvent>) -> Result<()> {
     let locked = match data {
         "0" => false,
         "1" => true,
@@ -208,23 +182,13 @@ fn handle_lock_groups(
     Ok(())
 }
 
-fn handle_config_reloaded(
-    _event: &str,
-    _data: &str,
-    _internal_tx: Sender<ServiceNotification>,
-    hyprland_tx: Sender<HyprlandEvent>,
-) -> Result<()> {
+fn handle_config_reloaded(hyprland_tx: Sender<HyprlandEvent>) -> Result<()> {
     hyprland_tx.send(HyprlandEvent::ConfigReloaded)?;
 
     Ok(())
 }
 
-fn handle_bell(
-    _event: &str,
-    data: &str,
-    _internal_tx: Sender<ServiceNotification>,
-    hyprland_tx: Sender<HyprlandEvent>,
-) -> Result<()> {
+fn handle_bell(data: &str, hyprland_tx: Sender<HyprlandEvent>) -> Result<()> {
     let address = if data.is_empty() {
         None
     } else {

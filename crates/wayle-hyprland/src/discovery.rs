@@ -1,12 +1,13 @@
 use std::sync::Arc;
 
+use tokio::sync::broadcast::Sender;
 use tokio_util::sync::CancellationToken;
-use tracing::error;
+use tracing::{error, instrument};
 use wayle_traits::ModelMonitoring;
 
 use crate::{
     core::{client::Client, layer::Layer, monitor::Monitor, workspace::Workspace},
-    ipc::HyprMessenger,
+    ipc::{HyprMessenger, events::types::ServiceNotification},
 };
 
 pub(super) struct HyprlandDiscovery {
@@ -17,8 +18,10 @@ pub(super) struct HyprlandDiscovery {
 }
 
 impl HyprlandDiscovery {
+    #[instrument(skip(hypr_messenger, internal_tx, cancellation_token))]
     pub async fn new(
         hypr_messenger: HyprMessenger,
+        internal_tx: &Sender<ServiceNotification>,
         cancellation_token: &CancellationToken,
     ) -> Self {
         let all_layers = hypr_messenger.layers().await.unwrap_or_else(|e| {
@@ -50,6 +53,8 @@ impl HyprlandDiscovery {
             let client_address = client_data.address.clone();
             let client = Arc::new(Client::from_props(
                 client_data,
+                &hypr_messenger,
+                Some(internal_tx.clone()),
                 Some(cancellation_token.child_token()),
             ));
 
@@ -67,6 +72,8 @@ impl HyprlandDiscovery {
             let monitor_name = monitor_data.name.clone();
             let monitor = Arc::new(Monitor::from_props(
                 monitor_data,
+                &hypr_messenger,
+                Some(internal_tx.clone()),
                 Some(cancellation_token.child_token()),
             ));
 
@@ -84,6 +91,8 @@ impl HyprlandDiscovery {
             let workspace_id = workspace_data.id;
             let workspace = Arc::new(Workspace::from_props(
                 workspace_data,
+                &hypr_messenger,
+                Some(internal_tx.clone()),
                 Some(cancellation_token.child_token()),
             ));
 

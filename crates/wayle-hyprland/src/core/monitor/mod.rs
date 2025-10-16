@@ -3,18 +3,23 @@ pub(crate) mod types;
 
 use std::sync::Arc;
 
+use tokio::sync::broadcast::Sender;
 use tokio_util::sync::CancellationToken;
+use tracing::instrument;
 use types::{LiveMonitorParams, MonitorParams};
 use wayle_common::Property;
-use wayle_traits::Reactive;
+use wayle_traits::{ModelMonitoring, Reactive};
 
 use crate::{
     Address, DirectScanoutBlocker, Error, MonitorData, MonitorId, Reserved, SolitaryBlocker,
     TearingBlocker, Transform, WorkspaceInfo,
+    ipc::{HyprMessenger, events::types::ServiceNotification},
 };
 
 #[derive(Debug, Clone)]
 pub struct Monitor {
+    pub(crate) hypr_messenger: HyprMessenger,
+    pub(crate) internal_tx: Option<Sender<ServiceNotification>>,
     pub(crate) cancellation_token: Option<CancellationToken>,
 
     pub id: Property<MonitorId>,
@@ -61,30 +66,44 @@ impl Reactive for Monitor {
     type Context<'a> = MonitorParams<'a>;
     type LiveContext<'a> = LiveMonitorParams<'a>;
 
+    #[instrument(skip(context), fields(name = %context.name), err)]
     async fn get(context: Self::Context<'_>) -> Result<Self, Self::Error> {
-        let monitor_data = context.hypr_messenger.monitor(context.name).await?;
+        let monitor_data = context.hypr_messenger.monitor(&context.name).await?;
 
-        Ok(Self::from_props(monitor_data, None))
+        Ok(Self::from_props(
+            monitor_data,
+            context.hypr_messenger,
+            None,
+            None,
+        ))
     }
 
+    #[instrument(skip(context), fields(name = %context.name), err)]
     async fn get_live(context: Self::LiveContext<'_>) -> Result<Arc<Self>, Self::Error> {
-        let monitor_data = context.hypr_messenger.monitor(context.name).await?;
-        let arc_monitor_data = Arc::new(Self::from_props(
+        let monitor_data = context.hypr_messenger.monitor(&context.name).await?;
+        let arc_monitor = Arc::new(Self::from_props(
             monitor_data,
+            context.hypr_messenger,
+            Some(context.internal_tx.clone()),
             Some(context.cancellation_token.child_token()),
         ));
 
-        // TODO: Add monitoring
-        Ok(arc_monitor_data)
+        arc_monitor.clone().start_monitoring().await?;
+
+        Ok(arc_monitor)
     }
 }
 
 impl Monitor {
     pub(crate) fn from_props(
         monitor_data: MonitorData,
+        hypr_messenger: &HyprMessenger,
+        internal_tx: Option<Sender<ServiceNotification>>,
         cancellation_token: Option<CancellationToken>,
     ) -> Self {
         Self {
+            hypr_messenger: hypr_messenger.clone(),
+            internal_tx,
             cancellation_token,
             id: Property::new(monitor_data.id),
             name: Property::new(monitor_data.name),
@@ -118,5 +137,41 @@ impl Monitor {
             mirror_of: Property::new(monitor_data.mirror_of),
             available_modes: Property::new(monitor_data.available_modes),
         }
+    }
+
+    pub(crate) fn update(&self, monitor_data: MonitorData) {
+        self.id.set(monitor_data.id);
+        self.name.set(monitor_data.name);
+        self.description.set(monitor_data.description);
+        self.make.set(monitor_data.make);
+        self.model.set(monitor_data.model);
+        self.serial.set(monitor_data.serial);
+        self.width.set(monitor_data.width);
+        self.height.set(monitor_data.height);
+        self.physical_width.set(monitor_data.physical_width);
+        self.physical_height.set(monitor_data.physical_height);
+        self.refresh_rate.set(monitor_data.refresh_rate);
+        self.x.set(monitor_data.x);
+        self.y.set(monitor_data.y);
+        self.active_workspace.set(monitor_data.active_workspace);
+        self.special_workspace.set(monitor_data.special_workspace);
+        self.reserved.set(monitor_data.reserved);
+        self.scale.set(monitor_data.scale);
+        self.transform.set(monitor_data.transform);
+        self.focused.set(monitor_data.focused);
+        self.dpms_status.set(monitor_data.dpms_status);
+        self.vrr.set(monitor_data.vrr);
+        self.solitary.set(monitor_data.solitary);
+        self.solitary_blocked_by
+            .set(monitor_data.solitary_blocked_by);
+        self.actively_tearing.set(monitor_data.actively_tearing);
+        self.tearing_blocked_by.set(monitor_data.tearing_blocked_by);
+        self.direct_scanout_to.set(monitor_data.direct_scanout_to);
+        self.direct_scanout_blocked_by
+            .set(monitor_data.direct_scanout_blocked_by);
+        self.disabled.set(monitor_data.disabled);
+        self.current_format.set(monitor_data.current_format);
+        self.mirror_of.set(monitor_data.mirror_of);
+        self.available_modes.set(monitor_data.available_modes);
     }
 }

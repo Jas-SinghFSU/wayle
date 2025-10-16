@@ -86,14 +86,14 @@ async fn monitor_device(
             };
 
             tokio::select! {
-                    _ = cancel_token.cancelled() => {
-                        debug!("Device monitoring cancelled");
-                        return;
-                    }
+                _ = cancel_token.cancelled() => {
+                    debug!("Device monitoring cancelled");
+                    return;
+                }
 
-                    Some(change) = native_path_changed.next() => {
-                        if let Ok(val) = change.get().await {
-                            device.native_path.set(val);
+                Some(change) = native_path_changed.next() => {
+                    if let Ok(val) = change.get().await {
+                        device.native_path.set(val);
                     }
                 }
                 Some(change) = vendor_changed.next() => {

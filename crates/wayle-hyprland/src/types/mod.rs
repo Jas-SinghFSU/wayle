@@ -61,13 +61,14 @@ pub struct WorkspaceInfo {
 
 /// Window address identifier.
 #[derive(Debug, Deserialize, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
-#[serde(transparent)]
+#[serde(from = "String")]
 pub struct Address(String);
 
 impl Address {
     /// Creates a new address from a string.
     pub fn new(address: String) -> Self {
-        Self(address)
+        let normalized = address.strip_prefix("0x").unwrap_or(&address).to_string();
+        Self(normalized)
     }
 
     /// Returns the address as a string slice.

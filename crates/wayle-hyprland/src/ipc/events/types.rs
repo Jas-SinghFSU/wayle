@@ -16,7 +16,6 @@ pub(crate) enum ServiceNotification {
     ClientCreated(Address),
     ClientUpdated(Address),
     ClientRemoved(Address),
-    ActiveClientUpdated(Address),
     ClientMoved(Address, WorkspaceId),
 
     LayerCreated(Namespace),

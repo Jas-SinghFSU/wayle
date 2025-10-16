@@ -1,5 +1,6 @@
 pub(crate) mod types;
 
+use tracing::instrument;
 use types::LayerParams;
 use wayle_common::Property;
 use wayle_traits::Static;
@@ -29,6 +30,7 @@ impl Static for Layer {
     type Error = Error;
     type Context<'a> = LayerParams<'a>;
 
+    #[instrument(skip(context), fields(address = %context.address), err)]
     async fn get(context: Self::Context<'_>) -> Result<Self, Self::Error> {
         let layer_data = context.hypr_messenger.layer(context.address).await?;
 

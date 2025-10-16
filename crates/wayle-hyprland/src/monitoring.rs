@@ -2,12 +2,12 @@ use std::sync::Arc;
 
 use tokio::sync::broadcast::Sender;
 use tokio_util::sync::CancellationToken;
-use tracing::{debug, error, warn};
+use tracing::{error, instrument, warn};
 use wayle_common::Property;
 use wayle_traits::{Reactive, ServiceMonitoring};
 
 use crate::{
-    Address, Error, HyprlandService, WorkspaceId,
+    Address, Error, HyprlandEvent, HyprlandService, WorkspaceId,
     core::{
         client::{Client, types::LiveClientParams},
         layer::Layer,
@@ -20,9 +20,11 @@ use crate::{
 impl ServiceMonitoring for HyprlandService {
     type Error = Error;
 
+    #[instrument(skip(self), err)]
     async fn start_monitoring(&self) -> Result<(), Self::Error> {
         handle_internal_events(
             &self.internal_tx,
+            &self.hyprland_tx,
             &self.hypr_messenger,
             &self.clients,
             &self.monitors,
@@ -37,8 +39,10 @@ impl ServiceMonitoring for HyprlandService {
 }
 
 #[allow(clippy::too_many_lines)]
+#[allow(clippy::too_many_arguments)]
 async fn handle_internal_events(
     internal_tx: &Sender<ServiceNotification>,
+    hyprland_tx: &Sender<crate::HyprlandEvent>,
     hypr_messenger: &HyprMessenger,
     clients: &Property<Vec<Arc<Client>>>,
     monitors: &Property<Vec<Arc<Monitor>>>,
@@ -47,6 +51,7 @@ async fn handle_internal_events(
     cancellation_token: &CancellationToken,
 ) {
     let internal_tx = internal_tx.clone();
+    let hyprland_tx = hyprland_tx.clone();
     let hypr_messenger = hypr_messenger.clone();
     let clients = clients.clone();
     let monitors = monitors.clone();
@@ -55,12 +60,12 @@ async fn handle_internal_events(
     let cancellation_token = cancellation_token.clone();
 
     let mut internal_rx = internal_tx.subscribe();
+    let mut hyprland_rx = hyprland_tx.subscribe();
 
     tokio::spawn(async move {
         loop {
             tokio::select! {
                 _ = cancellation_token.cancelled() => {
-                    debug!("Hyprland service monitoring cancelled");
                     return;
                 }
                 Ok(event) = internal_rx.recv() => {
@@ -124,15 +129,18 @@ async fn handle_internal_events(
                             handle_layer_removed(
                                 namespace,
                                 &layers,
-                                &hypr_messenger,
                             ).await;
                         }
 
                         _ => { /* remaining events handled by core models */ }
                     }
                 }
+                Ok(event) = hyprland_rx.recv() => {
+                    let HyprlandEvent::Fullscreen { .. } = event else { continue };
+                    let Ok(window) = hypr_messenger.active_window().await else { continue };
+                    let _ = internal_tx.send(ServiceNotification::ClientUpdated(window.address));
+                }
                 else => {
-                    debug!("All property streams ended for hyprland service");
                     break;
                 }
             }
@@ -311,27 +319,14 @@ pub(super) async fn handle_layer_created(
     }
 }
 
-pub(super) async fn handle_layer_removed(
-    namespace: String,
-    layers: &Property<Vec<Layer>>,
-    hypr_messenger: &HyprMessenger,
-) {
-    let all_layers = match hypr_messenger.layers().await {
-        Ok(data) => data,
-        Err(e) => {
-            error!("Failed to query layers: {e}");
-            return;
-        }
-    };
-
-    let existing_addresses: Vec<Address> = all_layers
-        .iter()
-        .map(|layer| layer.address.clone())
-        .collect();
-
+pub(super) async fn handle_layer_removed(namespace: String, layers: &Property<Vec<Layer>>) {
     let mut updated_layers = layers.get();
-    updated_layers.retain(|layer| {
-        layer.namespace.get() != namespace || existing_addresses.contains(&layer.address.get())
-    });
-    layers.set(updated_layers);
+    let original_len = updated_layers.len();
+    updated_layers.retain(|layer| layer.namespace.get() != namespace);
+
+    if updated_layers.len() != original_len {
+        layers.set(updated_layers);
+    } else {
+        warn!("Failed to remove layer with namespace '{namespace}': Not Found");
+    }
 }

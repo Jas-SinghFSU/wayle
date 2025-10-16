@@ -93,6 +93,7 @@ pub(crate) struct ClientData {
     pub tags: Vec<String>,
     #[serde(deserialize_with = "deserialize_optional_address")]
     pub swallowing: Option<Address>,
+    #[serde(rename = "focusHistoryID")]
     pub focus_history_id: FocusHistoryId,
     pub inhibiting_idle: bool,
     #[serde(deserialize_with = "deserialize_optional_string")]

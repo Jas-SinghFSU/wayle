@@ -9,6 +9,7 @@ use tokio::{
     io::{AsyncBufReadExt, AsyncWriteExt, BufReader},
     net::UnixStream,
 };
+use tracing::instrument;
 pub use types::*;
 
 use crate::{Error, Result};
@@ -33,6 +34,7 @@ impl HyprMessenger {
         })
     }
 
+    #[instrument(skip(self), fields(command = %command), err)]
     pub async fn send(&self, command: &str) -> Result<String> {
         let mut stream = UnixStream::connect(&self.path).await?;
         stream.write_all(command.as_bytes()).await?;

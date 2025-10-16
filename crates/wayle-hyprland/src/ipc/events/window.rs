@@ -35,7 +35,7 @@ pub(crate) fn handle_active_window_v2(
     })?;
 
     internal_tx
-        .send(ServiceNotification::ActiveClientUpdated(address))
+        .send(ServiceNotification::ClientUpdated(address))
         .map_err(|e| Error::InternalEventTransmitError(e.to_string()))?;
 
     Ok(())
