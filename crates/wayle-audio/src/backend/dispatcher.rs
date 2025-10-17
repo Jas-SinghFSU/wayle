@@ -128,3 +128,63 @@ pub(super) fn handle_external_command(
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::thread;
+
+    #[test]
+    fn should_process_returns_true_on_first_call() {
+        let limiter = VolumeRateLimiter::new();
+
+        let result = limiter.should_process();
+
+        assert!(result);
+    }
+
+    #[test]
+    fn should_process_returns_false_when_called_too_quickly() {
+        let limiter = VolumeRateLimiter::new();
+
+        limiter.should_process();
+        let result = limiter.should_process();
+
+        assert!(!result);
+    }
+
+    #[test]
+    fn should_process_returns_true_after_minimum_interval() {
+        let limiter = VolumeRateLimiter::new();
+
+        limiter.should_process();
+        thread::sleep(Duration::from_millis(35));
+        let result = limiter.should_process();
+
+        assert!(result);
+    }
+
+    #[test]
+    fn should_process_returns_true_on_lock_poisoned() {
+        use std::sync::{Arc, Barrier};
+
+        let limiter = Arc::new(VolumeRateLimiter::new());
+        let limiter_clone = Arc::clone(&limiter);
+        let barrier = Arc::new(Barrier::new(2));
+        let barrier_clone = Arc::clone(&barrier);
+
+        let handle = thread::spawn(move || {
+            let _guard = limiter_clone.last_volume_change.lock().unwrap();
+            barrier_clone.wait();
+            panic!("Intentional panic to poison lock");
+        });
+
+        barrier.wait();
+        thread::sleep(Duration::from_millis(10));
+        let _ = handle.join();
+
+        let result = limiter.should_process();
+
+        assert!(result);
+    }
+}

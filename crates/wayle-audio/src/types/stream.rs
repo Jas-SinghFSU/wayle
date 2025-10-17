@@ -128,3 +128,102 @@ impl StreamInfo {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn create_test_stream_info(properties: HashMap<String, String>) -> StreamInfo {
+        use crate::types::format::{ChannelMap, SampleFormat, SampleSpec};
+        use crate::volume::types::Volume;
+
+        StreamInfo {
+            index: 0,
+            name: String::from("test"),
+            application_name: None,
+            binary: None,
+            pid: None,
+            owner_module: None,
+            client: None,
+            device_index: 0,
+            volume: Volume::mono(1.0),
+            muted: false,
+            corked: false,
+            has_volume: true,
+            volume_writable: true,
+            state: StreamState::Running,
+            sample_spec: SampleSpec {
+                format: SampleFormat::S16LE,
+                rate: 44100,
+                channels: 2,
+            },
+            channel_map: ChannelMap {
+                channels: 2,
+                positions: vec![],
+            },
+            properties,
+            media: MediaInfo {
+                title: None,
+                artist: None,
+                album: None,
+                icon_name: None,
+            },
+            buffer_latency: 0,
+            device_latency: 0,
+            resample_method: None,
+            driver: String::from("test-driver"),
+            format: None,
+        }
+    }
+
+    #[test]
+    fn stream_type_returns_record_when_media_role_is_source_output() {
+        let mut props = HashMap::new();
+        props.insert(String::from("media.role"), String::from("source-output"));
+        let info = create_test_stream_info(props);
+
+        assert_eq!(info.stream_type(), StreamType::Record);
+    }
+
+    #[test]
+    fn stream_type_returns_playback_when_media_role_is_not_source_output() {
+        let mut props = HashMap::new();
+        props.insert(String::from("media.role"), String::from("sink-input"));
+        let info = create_test_stream_info(props);
+
+        assert_eq!(info.stream_type(), StreamType::Playback);
+    }
+
+    #[test]
+    fn stream_type_returns_playback_when_media_role_missing() {
+        let props = HashMap::new();
+        let info = create_test_stream_info(props);
+
+        assert_eq!(info.stream_type(), StreamType::Playback);
+    }
+
+    #[test]
+    fn key_returns_correct_stream_key_for_record_stream() {
+        let mut props = HashMap::new();
+        props.insert(String::from("media.role"), String::from("source-output"));
+        let mut info = create_test_stream_info(props);
+        info.index = 42;
+
+        let key = info.key();
+
+        assert_eq!(key.index, 42);
+        assert_eq!(key.stream_type, StreamType::Record);
+    }
+
+    #[test]
+    fn key_returns_correct_stream_key_for_playback_stream() {
+        let props = HashMap::new();
+        let mut info = create_test_stream_info(props);
+        info.index = 123;
+
+        let key = info.key();
+
+        assert_eq!(key.index, 123);
+        assert_eq!(key.stream_type, StreamType::Playback);
+    }
+}

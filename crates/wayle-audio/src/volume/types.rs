@@ -156,3 +156,191 @@ impl Volume {
         self.volumes.iter().all(|&v| v == 1.0)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn new_clamps_negative_volumes_to_zero() {
+        let volume = Volume::new(vec![-1.0, -0.5]);
+
+        assert_eq!(volume.as_slice(), &[0.0, 0.0]);
+    }
+
+    #[test]
+    fn new_clamps_volumes_above_four_to_four() {
+        let volume = Volume::new(vec![5.0, 10.0]);
+
+        assert_eq!(volume.as_slice(), &[4.0, 4.0]);
+    }
+
+    #[test]
+    fn new_preserves_volumes_in_valid_range() {
+        let volume = Volume::new(vec![0.5, 1.0, 2.0, 3.5]);
+
+        assert_eq!(volume.as_slice(), &[0.5, 1.0, 2.0, 3.5]);
+    }
+
+    #[test]
+    fn mono_creates_single_channel_volume() {
+        let volume = Volume::mono(1.5);
+
+        assert_eq!(volume.channels(), 1);
+        assert_eq!(volume.channel(0), Some(1.5));
+    }
+
+    #[test]
+    fn stereo_creates_two_channel_volume() {
+        let volume = Volume::stereo(0.8, 1.2);
+
+        assert_eq!(volume.channels(), 2);
+        assert_eq!(volume.channel(0), Some(0.8));
+        assert_eq!(volume.channel(1), Some(1.2));
+    }
+
+    #[test]
+    fn with_amplification_accepts_valid_range() {
+        let result = Volume::with_amplification(vec![0.0, 2.0, 4.0]);
+
+        assert!(result.is_ok());
+        let volume = result.unwrap();
+        assert_eq!(volume.as_slice(), &[0.0, 2.0, 4.0]);
+    }
+
+    #[test]
+    fn with_amplification_rejects_negative_volume() {
+        let result = Volume::with_amplification(vec![-0.1]);
+
+        assert!(result.is_err());
+        assert!(matches!(
+            result.unwrap_err(),
+            Error::InvalidVolume { channel: 0, .. }
+        ));
+    }
+
+    #[test]
+    fn with_amplification_rejects_volume_above_four() {
+        let result = Volume::with_amplification(vec![4.1]);
+
+        assert!(result.is_err());
+        assert!(matches!(
+            result.unwrap_err(),
+            Error::InvalidVolume { channel: 0, .. }
+        ));
+    }
+
+    #[test]
+    fn set_channel_updates_valid_channel() {
+        let mut volume = Volume::stereo(1.0, 1.0);
+
+        let result = volume.set_channel(0, 0.5);
+
+        assert!(result.is_ok());
+        assert_eq!(volume.channel(0), Some(0.5));
+        assert_eq!(volume.channel(1), Some(1.0));
+    }
+
+    #[test]
+    fn set_channel_clamps_out_of_range_values() {
+        let mut volume = Volume::mono(1.0);
+
+        volume.set_channel(0, -1.0).ok();
+        assert_eq!(volume.channel(0), Some(0.0));
+
+        volume.set_channel(0, 5.0).ok();
+        assert_eq!(volume.channel(0), Some(4.0));
+    }
+
+    #[test]
+    fn set_channel_returns_error_for_invalid_channel() {
+        let mut volume = Volume::mono(1.0);
+
+        let result = volume.set_channel(5, 1.0);
+
+        assert!(result.is_err());
+        assert!(matches!(
+            result.unwrap_err(),
+            Error::InvalidChannel { channel: 5 }
+        ));
+    }
+
+    #[test]
+    fn channel_returns_volume_for_valid_index() {
+        let volume = Volume::new(vec![0.5, 1.0, 1.5]);
+
+        assert_eq!(volume.channel(0), Some(0.5));
+        assert_eq!(volume.channel(1), Some(1.0));
+        assert_eq!(volume.channel(2), Some(1.5));
+    }
+
+    #[test]
+    fn channel_returns_none_for_invalid_index() {
+        let volume = Volume::mono(1.0);
+
+        assert_eq!(volume.channel(1), None);
+        assert_eq!(volume.channel(100), None);
+    }
+
+    #[test]
+    fn average_returns_zero_for_empty_channels() {
+        let volume = Volume::new(vec![]);
+
+        assert_eq!(volume.average(), 0.0);
+    }
+
+    #[test]
+    fn average_calculates_correct_value_for_multiple_channels() {
+        let volume = Volume::new(vec![0.5, 1.0, 1.5, 2.0]);
+
+        let avg = volume.average();
+
+        assert!((avg - 1.25).abs() < 0.01);
+    }
+
+    #[test]
+    fn is_muted_returns_true_when_all_channels_zero() {
+        let volume = Volume::new(vec![0.0, 0.0, 0.0]);
+
+        assert!(volume.is_muted());
+    }
+
+    #[test]
+    fn is_muted_returns_false_when_any_channel_nonzero() {
+        let volume = Volume::new(vec![0.0, 0.1, 0.0]);
+
+        assert!(!volume.is_muted());
+    }
+
+    #[test]
+    fn is_normal_returns_true_when_all_channels_one() {
+        let volume = Volume::new(vec![1.0, 1.0, 1.0]);
+
+        assert!(volume.is_normal());
+    }
+
+    #[test]
+    fn is_normal_returns_false_when_any_channel_not_one() {
+        let volume = Volume::new(vec![1.0, 0.9, 1.0]);
+
+        assert!(!volume.is_normal());
+    }
+
+    #[test]
+    fn from_percentage_converts_correctly() {
+        let volume = Volume::from_percentage(50.0, 2);
+
+        assert_eq!(volume.channels(), 2);
+        assert_eq!(volume.channel(0), Some(0.5));
+        assert_eq!(volume.channel(1), Some(0.5));
+    }
+
+    #[test]
+    fn to_percentage_converts_correctly() {
+        let volume = Volume::new(vec![0.5, 1.0, 1.5]);
+
+        let percentages = volume.to_percentage();
+
+        assert_eq!(percentages, vec![50.0, 100.0, 150.0]);
+    }
+}

@@ -3,6 +3,8 @@
 //! Provides integration with PulseAudio to monitor and control audio devices,
 //! including input/output device management, volume control, and stream monitoring.
 
+#![cfg_attr(test, allow(clippy::panic))]
+
 mod backend;
 /// Core domain models
 pub mod core;

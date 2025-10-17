@@ -220,3 +220,161 @@ fn update_stream_properties(
     playback_streams.set(playback);
     recording_streams.set(recording);
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::HashMap;
+    use tokio::sync::mpsc;
+    use wayle_common::Property;
+
+    use crate::{
+        backend::types::CommandSender,
+        types::{
+            format::{ChannelMap, SampleFormat, SampleSpec},
+            stream::{MediaInfo, StreamInfo, StreamKey, StreamState},
+        },
+        volume::types::Volume,
+    };
+
+    fn create_test_stream(index: u32, stream_type: StreamType) -> Arc<AudioStream> {
+        let (command_tx, _): (CommandSender, _) = mpsc::unbounded_channel();
+
+        let mut properties = HashMap::new();
+        if stream_type == StreamType::Record {
+            properties.insert(String::from("media.role"), String::from("source-output"));
+        }
+
+        let stream_info = StreamInfo {
+            index,
+            name: format!("test-stream-{}", index),
+            application_name: None,
+            binary: None,
+            pid: None,
+            owner_module: None,
+            client: None,
+            device_index: 0,
+            volume: Volume::mono(1.0),
+            muted: false,
+            corked: false,
+            has_volume: true,
+            volume_writable: true,
+            state: StreamState::Running,
+            sample_spec: SampleSpec {
+                format: SampleFormat::S16LE,
+                rate: 44100,
+                channels: 2,
+            },
+            channel_map: ChannelMap {
+                channels: 2,
+                positions: vec![],
+            },
+            properties,
+            media: MediaInfo {
+                title: None,
+                artist: None,
+                album: None,
+                icon_name: None,
+            },
+            buffer_latency: 0,
+            device_latency: 0,
+            resample_method: None,
+            driver: String::from("test"),
+            format: None,
+        };
+
+        Arc::new(AudioStream::from_info(stream_info, command_tx, None, None))
+    }
+
+    #[test]
+    fn update_stream_properties_filters_playback_streams_correctly() {
+        let mut streams = HashMap::new();
+        streams.insert(
+            StreamKey::new(1, StreamType::Playback),
+            create_test_stream(1, StreamType::Playback),
+        );
+        streams.insert(
+            StreamKey::new(2, StreamType::Playback),
+            create_test_stream(2, StreamType::Playback),
+        );
+        streams.insert(
+            StreamKey::new(3, StreamType::Record),
+            create_test_stream(3, StreamType::Record),
+        );
+
+        let playback = Property::new(Vec::new());
+        let recording = Property::new(Vec::new());
+
+        update_stream_properties(&streams, &playback, &recording);
+
+        assert_eq!(playback.get().len(), 2);
+        assert_eq!(recording.get().len(), 1);
+    }
+
+    #[test]
+    fn update_stream_properties_filters_recording_streams_correctly() {
+        let mut streams = HashMap::new();
+        streams.insert(
+            StreamKey::new(1, StreamType::Record),
+            create_test_stream(1, StreamType::Record),
+        );
+        streams.insert(
+            StreamKey::new(2, StreamType::Record),
+            create_test_stream(2, StreamType::Record),
+        );
+        streams.insert(
+            StreamKey::new(3, StreamType::Playback),
+            create_test_stream(3, StreamType::Playback),
+        );
+
+        let playback = Property::new(Vec::new());
+        let recording = Property::new(Vec::new());
+
+        update_stream_properties(&streams, &playback, &recording);
+
+        assert_eq!(playback.get().len(), 1);
+        assert_eq!(recording.get().len(), 2);
+    }
+
+    #[test]
+    fn update_stream_properties_handles_empty_streams() {
+        let streams = HashMap::new();
+
+        let playback = Property::new(Vec::new());
+        let recording = Property::new(Vec::new());
+
+        update_stream_properties(&streams, &playback, &recording);
+
+        assert_eq!(playback.get().len(), 0);
+        assert_eq!(recording.get().len(), 0);
+    }
+
+    #[test]
+    fn update_stream_properties_handles_mixed_stream_types() {
+        let mut streams = HashMap::new();
+        streams.insert(
+            StreamKey::new(1, StreamType::Playback),
+            create_test_stream(1, StreamType::Playback),
+        );
+        streams.insert(
+            StreamKey::new(2, StreamType::Record),
+            create_test_stream(2, StreamType::Record),
+        );
+        streams.insert(
+            StreamKey::new(3, StreamType::Playback),
+            create_test_stream(3, StreamType::Playback),
+        );
+        streams.insert(
+            StreamKey::new(4, StreamType::Record),
+            create_test_stream(4, StreamType::Record),
+        );
+
+        let playback = Property::new(Vec::new());
+        let recording = Property::new(Vec::new());
+
+        update_stream_properties(&streams, &playback, &recording);
+
+        assert_eq!(playback.get().len(), 2);
+        assert_eq!(recording.get().len(), 2);
+    }
+}

@@ -179,3 +179,28 @@ pub(crate) enum AgentEvent {
     /// Pairing request was cancelled.
     Cancelled,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn agent_capability_from_str_handles_all_variants() {
+        assert_eq!(AgentCapability::from("DisplayYesNo"), AgentCapability::DisplayYesNo);
+        assert_eq!(AgentCapability::from("DisplayOnly"), AgentCapability::DisplayOnly);
+        assert_eq!(AgentCapability::from("KeyboardOnly"), AgentCapability::KeyboardOnly);
+        assert_eq!(AgentCapability::from("KeyboardDisplay"), AgentCapability::KeyboardDisplay);
+        assert_eq!(AgentCapability::from("NoInputNoOutput"), AgentCapability::NoInputNoOutput);
+    }
+
+    #[test]
+    fn agent_capability_from_empty_string_returns_keyboard_display() {
+        assert_eq!(AgentCapability::from(""), AgentCapability::KeyboardDisplay);
+    }
+
+    #[test]
+    fn agent_capability_from_unknown_defaults_to_keyboard_display() {
+        assert_eq!(AgentCapability::from("unknown"), AgentCapability::KeyboardDisplay);
+        assert_eq!(AgentCapability::from("invalid"), AgentCapability::KeyboardDisplay);
+    }
+}

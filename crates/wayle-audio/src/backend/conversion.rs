@@ -19,12 +19,6 @@ use crate::{
     volume::types::Volume,
 };
 
-/// Convert our volume to PulseAudio volume
-///
-/// Maps our 0.0-4.0 range to PulseAudio's 0-MAX range:
-/// - 0.0 → PA_VOLUME_MUTED (0)
-/// - 1.0 → PA_VOLUME_NORM (65536)
-/// - 4.0 → PA_VOLUME_MAX (262144)
 pub(crate) fn convert_volume_to_pulse(volume: &Volume) -> ChannelVolumes {
     let channels = volume.channels();
     if channels == 0 {
@@ -40,12 +34,6 @@ pub(crate) fn convert_volume_to_pulse(volume: &Volume) -> ChannelVolumes {
     pulse_volume
 }
 
-/// Convert PulseAudio volume to our volume
-///
-/// Maps PulseAudio's 0-MAX range to our 0.0-4.0 range:
-/// - PA_VOLUME_MUTED (0) → 0.0
-/// - PA_VOLUME_NORM (65536) → 1.0
-/// - PA_VOLUME_MAX (262144) → 4.0
 pub(crate) fn convert_volume_from_pulse(pulse_volume: &ChannelVolumes) -> Volume {
     let volumes: Vec<f64> = (0..pulse_volume.len())
         .map(|i| {
@@ -57,12 +45,10 @@ pub(crate) fn convert_volume_from_pulse(pulse_volume: &ChannelVolumes) -> Volume
     Volume::new(volumes)
 }
 
-/// Convert a single PulseAudio volume to our volume
 fn convert_single_volume_from_pulse(pulse_volume: PulseVolume) -> Volume {
     Volume::new(vec![pulse_volume.0 as f64 / PulseVolume::NORMAL.0 as f64])
 }
 
-/// Convert PulseAudio channel position to our position
 fn convert_channel_position(position: Position) -> ChannelPosition {
     match position {
         Position::Mono => ChannelPosition::Mono,
@@ -78,7 +64,6 @@ fn convert_channel_position(position: Position) -> ChannelPosition {
     }
 }
 
-/// Convert PulseAudio sample format to our format
 pub(crate) fn convert_sample_format(format: PulseFormat) -> SampleFormat {
     match format {
         PulseFormat::U8 => SampleFormat::U8,
@@ -98,7 +83,6 @@ fn cow_str_to_string(cow_str: Option<&Cow<str>>) -> String {
     cow_str.map(|s| s.to_string()).unwrap_or_default()
 }
 
-/// Create device info from PulseAudio sink information
 pub(crate) fn create_device_info_from_sink(sink_info: &PulseSinkInfo) -> SinkInfo {
     let volume = convert_volume_from_pulse(&sink_info.volume);
     let name = cow_str_to_string(sink_info.name.as_ref());
@@ -183,7 +167,6 @@ pub(crate) fn create_device_info_from_sink(sink_info: &PulseSinkInfo) -> SinkInf
     }
 }
 
-/// Create device info from PulseAudio source information
 pub(crate) fn create_device_info_from_source(source_info: &PulseSourceInfo) -> SourceInfo {
     let volume = convert_volume_from_pulse(&source_info.volume);
     let name = cow_str_to_string(source_info.name.as_ref());
@@ -275,7 +258,6 @@ pub(crate) fn create_device_info_from_source(source_info: &PulseSourceInfo) -> S
     }
 }
 
-/// Create stream info from PulseAudio sink input information
 pub(crate) fn create_stream_info_from_sink_input(sink_input_info: &SinkInputInfo) -> StreamInfo {
     let volume = convert_volume_from_pulse(&sink_input_info.volume);
     let name = sink_input_info.name.clone().unwrap_or_default().to_string();
@@ -344,7 +326,6 @@ pub(crate) fn create_stream_info_from_sink_input(sink_input_info: &SinkInputInfo
     }
 }
 
-/// Create stream info from PulseAudio source output information
 pub(crate) fn create_stream_info_from_source_output(
     source_output_info: &SourceOutputInfo,
 ) -> StreamInfo {
@@ -416,5 +397,181 @@ pub(crate) fn create_stream_info_from_source_output(
             .map(|s| s.to_string())
             .unwrap_or_default(),
         format: Some(format!("{:?}", source_output_info.format.get_encoding())),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn convert_volume_to_pulse_with_empty_channels_returns_default() {
+        let volume = Volume::new(vec![]);
+
+        let result = convert_volume_to_pulse(&volume);
+
+        assert_eq!(result.len(), 0);
+    }
+
+    #[test]
+    fn convert_volume_to_pulse_converts_normal_volume_correctly() {
+        let volume = Volume::mono(1.0);
+
+        let result = convert_volume_to_pulse(&volume);
+
+        assert_eq!(result.len(), 1);
+        assert_eq!(result.avg(), PulseVolume::NORMAL);
+    }
+
+    #[test]
+    fn convert_volume_to_pulse_converts_zero_volume_to_muted() {
+        let volume = Volume::mono(0.0);
+
+        let result = convert_volume_to_pulse(&volume);
+
+        assert_eq!(result.len(), 1);
+        assert_eq!(result.avg(), PulseVolume::MUTED);
+    }
+
+    #[test]
+    fn convert_volume_to_pulse_converts_max_volume_correctly() {
+        let volume = Volume::mono(4.0);
+
+        let result = convert_volume_to_pulse(&volume);
+
+        let expected_value = PulseVolume((4.0 * PulseVolume::NORMAL.0 as f64) as u32);
+        assert_eq!(result.avg(), expected_value);
+    }
+
+    #[test]
+    fn convert_volume_from_pulse_converts_normal_volume_correctly() {
+        let mut pulse_volume = ChannelVolumes::default();
+        pulse_volume.set(1, PulseVolume::NORMAL);
+
+        let result = convert_volume_from_pulse(&pulse_volume);
+
+        assert_eq!(result.channels(), 1);
+        assert_eq!(result.channel(0), Some(1.0));
+    }
+
+    #[test]
+    fn convert_volume_from_pulse_converts_muted_to_zero() {
+        let mut pulse_volume = ChannelVolumes::default();
+        pulse_volume.set(1, PulseVolume::MUTED);
+
+        let result = convert_volume_from_pulse(&pulse_volume);
+
+        assert_eq!(result.channels(), 1);
+        assert_eq!(result.channel(0), Some(0.0));
+    }
+
+    #[test]
+    fn convert_volume_from_pulse_converts_max_volume_correctly() {
+        let mut pulse_volume = ChannelVolumes::default();
+        let max_pulse_vol = PulseVolume((4.0 * PulseVolume::NORMAL.0 as f64) as u32);
+        pulse_volume.set(1, max_pulse_vol);
+
+        let result = convert_volume_from_pulse(&pulse_volume);
+
+        assert_eq!(result.channels(), 1);
+        let channel_vol = result.channel(0).unwrap();
+        assert!((channel_vol - 4.0).abs() < 0.01);
+    }
+
+    #[test]
+    fn convert_volume_from_pulse_handles_multi_channel() {
+        let mut pulse_volume = ChannelVolumes::default();
+        pulse_volume.set(2, PulseVolume::NORMAL);
+
+        let result = convert_volume_from_pulse(&pulse_volume);
+
+        assert_eq!(result.channels(), 2);
+        assert_eq!(result.channel(0), Some(1.0));
+        assert_eq!(result.channel(1), Some(1.0));
+    }
+
+    #[test]
+    fn convert_sample_format_converts_u8_correctly() {
+        let result = convert_sample_format(PulseFormat::U8);
+        assert_eq!(result, SampleFormat::U8);
+    }
+
+    #[test]
+    fn convert_sample_format_converts_s16le_correctly() {
+        let result = convert_sample_format(PulseFormat::S16le);
+        assert_eq!(result, SampleFormat::S16LE);
+    }
+
+    #[test]
+    fn convert_sample_format_converts_s16be_correctly() {
+        let result = convert_sample_format(PulseFormat::S16be);
+        assert_eq!(result, SampleFormat::S16BE);
+    }
+
+    #[test]
+    fn convert_sample_format_converts_unknown_to_unknown() {
+        let result = convert_sample_format(PulseFormat::Invalid);
+        assert_eq!(result, SampleFormat::Unknown);
+    }
+
+    #[test]
+    fn create_device_info_from_sink_maps_running_state_correctly() {
+        let sink = create_minimal_pulse_sink(SinkState::Running);
+
+        let result = create_device_info_from_sink(&sink);
+
+        assert_eq!(result.device.state, DeviceState::Running);
+    }
+
+    #[test]
+    fn create_device_info_from_sink_maps_idle_state_correctly() {
+        let sink = create_minimal_pulse_sink(SinkState::Idle);
+
+        let result = create_device_info_from_sink(&sink);
+
+        assert_eq!(result.device.state, DeviceState::Idle);
+    }
+
+    #[test]
+    fn create_device_info_from_sink_maps_suspended_state_to_suspended() {
+        let sink = create_minimal_pulse_sink(SinkState::Suspended);
+
+        let result = create_device_info_from_sink(&sink);
+
+        assert_eq!(result.device.state, DeviceState::Suspended);
+    }
+
+    fn create_minimal_pulse_sink(state: SinkState) -> PulseSinkInfo<'static> {
+        let mut channel_map = libpulse_binding::channelmap::Map::default();
+        channel_map.init_stereo();
+
+        PulseSinkInfo {
+            name: Some("test-sink".into()),
+            index: 0,
+            description: Some("Test Sink".into()),
+            sample_spec: libpulse_binding::sample::Spec {
+                format: PulseFormat::S16le,
+                channels: 2,
+                rate: 44100,
+            },
+            channel_map,
+            owner_module: None,
+            volume: ChannelVolumes::default(),
+            mute: false,
+            monitor_source: 1,
+            monitor_source_name: Some("test-sink.monitor".into()),
+            latency: libpulse_binding::time::MicroSeconds(0),
+            driver: Some("test-driver".into()),
+            flags: libpulse_binding::def::SinkFlagSet::empty(),
+            proplist: libpulse_binding::proplist::Proplist::new().unwrap(),
+            configured_latency: libpulse_binding::time::MicroSeconds(0),
+            base_volume: PulseVolume::NORMAL,
+            state,
+            n_volume_steps: 65536,
+            card: None,
+            ports: vec![],
+            active_port: None,
+            formats: vec![],
+        }
     }
 }

@@ -107,3 +107,67 @@ impl Display for DisconnectReason {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn preferred_bearer_from_str_handles_all_variants() {
+        assert_eq!(PreferredBearer::from("last-used"), PreferredBearer::LastUsed);
+        assert_eq!(PreferredBearer::from("bredr"), PreferredBearer::BrEdr);
+        assert_eq!(PreferredBearer::from("le"), PreferredBearer::Le);
+        assert_eq!(PreferredBearer::from("last-seen"), PreferredBearer::LastSeen);
+    }
+
+    #[test]
+    fn preferred_bearer_from_str_defaults_to_last_used() {
+        assert_eq!(PreferredBearer::from("unknown"), PreferredBearer::LastUsed);
+        assert_eq!(PreferredBearer::from(""), PreferredBearer::LastUsed);
+    }
+
+    #[test]
+    fn disconnect_reason_from_str_handles_all_variants() {
+        assert_eq!(
+            DisconnectReason::from("org.bluez.Reason.Timeout"),
+            DisconnectReason::ConnectionTimeout
+        );
+        assert_eq!(
+            DisconnectReason::from("org.bluez.Reason.Local"),
+            DisconnectReason::ConnectionTerminatedLocal
+        );
+        assert_eq!(
+            DisconnectReason::from("org.bluez.Reason.Remote"),
+            DisconnectReason::ConnectionTerminatedRemote
+        );
+        assert_eq!(
+            DisconnectReason::from("org.bluez.Reason.Authentication"),
+            DisconnectReason::AuthenticationFailure
+        );
+        assert_eq!(
+            DisconnectReason::from("org.bluez.Reason.Suspend"),
+            DisconnectReason::Suspend
+        );
+    }
+
+    #[test]
+    fn disconnect_reason_from_str_defaults_to_unknown() {
+        assert_eq!(DisconnectReason::from("unknown"), DisconnectReason::Unknown);
+        assert_eq!(DisconnectReason::from(""), DisconnectReason::Unknown);
+    }
+
+    #[test]
+    fn disconnect_reason_from_u8_handles_hci_error_codes() {
+        assert_eq!(DisconnectReason::from(0x08), DisconnectReason::ConnectionTimeout);
+        assert_eq!(DisconnectReason::from(0x16), DisconnectReason::ConnectionTerminatedLocal);
+        assert_eq!(DisconnectReason::from(0x13), DisconnectReason::ConnectionTerminatedRemote);
+        assert_eq!(DisconnectReason::from(0x05), DisconnectReason::AuthenticationFailure);
+    }
+
+    #[test]
+    fn disconnect_reason_from_u8_defaults_to_unknown() {
+        assert_eq!(DisconnectReason::from(0xFF), DisconnectReason::Unknown);
+        assert_eq!(DisconnectReason::from(0x00), DisconnectReason::Unknown);
+        assert_eq!(DisconnectReason::from(0x42), DisconnectReason::Unknown);
+    }
+}

@@ -201,3 +201,118 @@ impl<'a> DiscoveryFilterOptions<'a> {
         filter
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn address_type_from_str_parses_random() {
+        assert_eq!(AddressType::from("random"), AddressType::Random);
+        assert_eq!(AddressType::from("Random"), AddressType::Random);
+        assert_eq!(AddressType::from("RANDOM"), AddressType::Random);
+    }
+
+    #[test]
+    fn address_type_from_str_defaults_to_public() {
+        assert_eq!(AddressType::from("public"), AddressType::Public);
+        assert_eq!(AddressType::from("unknown"), AddressType::Public);
+        assert_eq!(AddressType::from(""), AddressType::Public);
+    }
+
+    #[test]
+    fn power_state_from_str_handles_all_variants() {
+        assert_eq!(PowerState::from("on"), PowerState::On);
+        assert_eq!(PowerState::from("off"), PowerState::Off);
+        assert_eq!(PowerState::from("off-enabling"), PowerState::OffToOn);
+        assert_eq!(PowerState::from("on-disabling"), PowerState::OnToOff);
+    }
+
+    #[test]
+    fn power_state_from_str_defaults_to_off() {
+        assert_eq!(PowerState::from("unknown"), PowerState::Off);
+        assert_eq!(PowerState::from(""), PowerState::Off);
+    }
+
+    #[test]
+    fn adapter_role_from_str_handles_all_variants() {
+        assert_eq!(AdapterRole::from("central"), AdapterRole::Central);
+        assert_eq!(AdapterRole::from("peripheral"), AdapterRole::Peripheral);
+        assert_eq!(AdapterRole::from("central-peripheral"), AdapterRole::CentralPeripheral);
+    }
+
+    #[test]
+    fn adapter_role_from_str_defaults_to_central() {
+        assert_eq!(AdapterRole::from("unknown"), AdapterRole::Central);
+        assert_eq!(AdapterRole::from(""), AdapterRole::Central);
+    }
+
+    #[test]
+    fn discovery_transport_from_str_handles_all_variants() {
+        assert_eq!(DiscoveryTransport::from("auto"), DiscoveryTransport::Auto);
+        assert_eq!(DiscoveryTransport::from("Auto"), DiscoveryTransport::Auto);
+        assert_eq!(DiscoveryTransport::from("bredr"), DiscoveryTransport::BrEdr);
+        assert_eq!(DiscoveryTransport::from("BREDR"), DiscoveryTransport::BrEdr);
+        assert_eq!(DiscoveryTransport::from("le"), DiscoveryTransport::Le);
+        assert_eq!(DiscoveryTransport::from("LE"), DiscoveryTransport::Le);
+    }
+
+    #[test]
+    fn discovery_transport_from_str_defaults_to_auto() {
+        assert_eq!(DiscoveryTransport::from("unknown"), DiscoveryTransport::Auto);
+        assert_eq!(DiscoveryTransport::from(""), DiscoveryTransport::Auto);
+    }
+
+    #[test]
+    fn discovery_filter_to_filter_with_empty_options_returns_empty_map() {
+        let options = DiscoveryFilterOptions::new();
+        let filter = options.to_filter();
+
+        assert!(filter.is_empty());
+    }
+
+    #[test]
+    fn discovery_filter_to_filter_with_uuids_includes_uuids_field() {
+        let options = DiscoveryFilterOptions {
+            uuids: Some(vec!["0000110a-0000-1000-8000-00805f9b34fb"]),
+            ..Default::default()
+        };
+        let filter = options.to_filter();
+
+        assert!(filter.contains_key("UUIDs"));
+        assert_eq!(filter.len(), 1);
+    }
+
+    #[test]
+    fn discovery_filter_to_filter_with_rssi_includes_rssi_field() {
+        let options = DiscoveryFilterOptions {
+            rssi: Some(-70),
+            ..Default::default()
+        };
+        let filter = options.to_filter();
+
+        assert!(filter.contains_key("RSSI"));
+        assert_eq!(filter.len(), 1);
+    }
+
+    #[test]
+    fn discovery_filter_to_filter_with_all_options_includes_all_fields() {
+        let options = DiscoveryFilterOptions {
+            uuids: Some(vec!["0000110a-0000-1000-8000-00805f9b34fb"]),
+            rssi: Some(-70),
+            pathloss: Some(10),
+            transport: Some(DiscoveryTransport::Le),
+            duplicate_data: Some(true),
+            discoverable: Some(false),
+        };
+        let filter = options.to_filter();
+
+        assert_eq!(filter.len(), 6);
+        assert!(filter.contains_key("UUIDs"));
+        assert!(filter.contains_key("RSSI"));
+        assert!(filter.contains_key("Pathloss"));
+        assert!(filter.contains_key("Transport"));
+        assert!(filter.contains_key("DuplicateData"));
+        assert!(filter.contains_key("Discoverable"));
+    }
+}
