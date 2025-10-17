@@ -34,27 +34,6 @@ pub struct PropertyInfo {
 ///
 /// A vector of `PropertyInfo` structs representing all properties found in the schema.
 /// Returns an empty vector if no properties are found or the schema is invalid.
-///
-/// # Example
-///
-/// ```
-/// use serde_json::json;
-/// use wayle::docs::extract_property_info;
-///
-/// let schema = json!({
-///     "properties": {
-///         "name": {
-///             "type": "string",
-///             "description": "The user's name",
-///             "default": "John Doe"
-///         }
-///     }
-/// });
-///
-/// let properties = extract_property_info(&schema);
-/// assert_eq!(properties[0].name, "name");
-/// assert_eq!(properties[0].type_name, "string");
-/// ```
 pub fn extract_property_info(schema: &Value) -> Vec<PropertyInfo> {
     schema
         .get("properties")

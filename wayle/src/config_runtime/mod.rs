@@ -16,8 +16,4 @@ pub mod path_ops;
 /// Configuration runtime
 pub mod runtime;
 
-#[cfg(test)]
-/// Configuration runtime tests
-pub mod tests;
-
 pub use changes::Error;

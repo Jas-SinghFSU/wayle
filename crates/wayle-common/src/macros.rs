@@ -510,12 +510,6 @@ macro_rules! unwrap_f64_or {
 /// Items in the vector must have:
 /// - `object_path: OwnedObjectPath` field
 /// - `cancellation_token: Option<CancellationToken>` field
-///
-/// # Example
-/// ```rust
-/// remove_and_cancel!(devices_prop, object_path);
-/// remove_and_cancel!(adapters_prop, removed_path);
-/// ```
 #[macro_export]
 macro_rules! remove_and_cancel {
     ($property:expr, $target_path:expr) => {{

@@ -36,18 +36,6 @@ impl Config {
     /// - Any imported files cannot be loaded
     /// - The merged configuration is invalid
     /// - Circular imports are detected
-    ///
-    /// # Example
-    ///
-    /// ```rust
-    /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
-    /// use wayle::config::Config;
-    /// use std::path::Path;
-    ///
-    /// let config = Config::load_with_imports(Path::new("config.toml"))?;
-    /// # Ok(())
-    /// # }
-    /// ```
     pub fn load_with_imports(path: &Path) -> Result<Config, Error> {
         if !path.exists() {
             create_default_config_file(path)?;

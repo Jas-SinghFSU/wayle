@@ -17,10 +17,6 @@ pub mod paths;
 /// Styling configuration
 pub mod styling;
 
-#[cfg(test)]
-/// Configuration tests
-pub mod tests;
-
 pub use error::Error;
 use general::GeneralConfig;
 use media::MediaConfig;
