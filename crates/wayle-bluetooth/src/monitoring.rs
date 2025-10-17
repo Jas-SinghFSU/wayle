@@ -397,4 +397,3 @@ async fn handle_device_connection_changed(
 
     connected.set(connected_devices);
 }
-

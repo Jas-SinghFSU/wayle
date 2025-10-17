@@ -223,11 +223,12 @@ fn update_stream_properties(
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::collections::HashMap;
+
     use tokio::sync::mpsc;
     use wayle_common::Property;
 
+    use super::*;
     use crate::{
         backend::types::CommandSender,
         types::{

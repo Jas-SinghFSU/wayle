@@ -238,7 +238,10 @@ mod tests {
     fn adapter_role_from_str_handles_all_variants() {
         assert_eq!(AdapterRole::from("central"), AdapterRole::Central);
         assert_eq!(AdapterRole::from("peripheral"), AdapterRole::Peripheral);
-        assert_eq!(AdapterRole::from("central-peripheral"), AdapterRole::CentralPeripheral);
+        assert_eq!(
+            AdapterRole::from("central-peripheral"),
+            AdapterRole::CentralPeripheral
+        );
     }
 
     #[test]
@@ -259,7 +262,10 @@ mod tests {
 
     #[test]
     fn discovery_transport_from_str_defaults_to_auto() {
-        assert_eq!(DiscoveryTransport::from("unknown"), DiscoveryTransport::Auto);
+        assert_eq!(
+            DiscoveryTransport::from("unknown"),
+            DiscoveryTransport::Auto
+        );
         assert_eq!(DiscoveryTransport::from(""), DiscoveryTransport::Auto);
     }
 

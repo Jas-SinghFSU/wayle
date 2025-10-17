@@ -134,8 +134,10 @@ mod tests {
     use super::*;
 
     fn create_test_stream_info(properties: HashMap<String, String>) -> StreamInfo {
-        use crate::types::format::{ChannelMap, SampleFormat, SampleSpec};
-        use crate::volume::types::Volume;
+        use crate::{
+            types::format::{ChannelMap, SampleFormat, SampleSpec},
+            volume::types::Volume,
+        };
 
         StreamInfo {
             index: 0,

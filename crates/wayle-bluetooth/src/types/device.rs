@@ -114,10 +114,16 @@ mod tests {
 
     #[test]
     fn preferred_bearer_from_str_handles_all_variants() {
-        assert_eq!(PreferredBearer::from("last-used"), PreferredBearer::LastUsed);
+        assert_eq!(
+            PreferredBearer::from("last-used"),
+            PreferredBearer::LastUsed
+        );
         assert_eq!(PreferredBearer::from("bredr"), PreferredBearer::BrEdr);
         assert_eq!(PreferredBearer::from("le"), PreferredBearer::Le);
-        assert_eq!(PreferredBearer::from("last-seen"), PreferredBearer::LastSeen);
+        assert_eq!(
+            PreferredBearer::from("last-seen"),
+            PreferredBearer::LastSeen
+        );
     }
 
     #[test]
@@ -158,10 +164,22 @@ mod tests {
 
     #[test]
     fn disconnect_reason_from_u8_handles_hci_error_codes() {
-        assert_eq!(DisconnectReason::from(0x08), DisconnectReason::ConnectionTimeout);
-        assert_eq!(DisconnectReason::from(0x16), DisconnectReason::ConnectionTerminatedLocal);
-        assert_eq!(DisconnectReason::from(0x13), DisconnectReason::ConnectionTerminatedRemote);
-        assert_eq!(DisconnectReason::from(0x05), DisconnectReason::AuthenticationFailure);
+        assert_eq!(
+            DisconnectReason::from(0x08),
+            DisconnectReason::ConnectionTimeout
+        );
+        assert_eq!(
+            DisconnectReason::from(0x16),
+            DisconnectReason::ConnectionTerminatedLocal
+        );
+        assert_eq!(
+            DisconnectReason::from(0x13),
+            DisconnectReason::ConnectionTerminatedRemote
+        );
+        assert_eq!(
+            DisconnectReason::from(0x05),
+            DisconnectReason::AuthenticationFailure
+        );
     }
 
     #[test]

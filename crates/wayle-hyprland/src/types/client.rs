@@ -101,3 +101,60 @@ pub(crate) struct ClientData {
     #[serde(deserialize_with = "deserialize_optional_string")]
     pub xdg_description: Option<String>,
 }
+
+#[cfg(test)]
+mod tests {
+    use serde::Deserialize;
+
+    use super::*;
+
+    #[test]
+    fn fullscreen_mode_from_u8_converts_full() {
+        let mode = FullscreenMode::from(1u8);
+
+        assert_eq!(mode, FullscreenMode::Full);
+    }
+
+    #[test]
+    fn fullscreen_mode_from_u8_converts_maximize() {
+        let mode = FullscreenMode::from(2u8);
+
+        assert_eq!(mode, FullscreenMode::Maximize);
+    }
+
+    #[test]
+    fn fullscreen_mode_from_u8_defaults_to_none() {
+        assert_eq!(FullscreenMode::from(0u8), FullscreenMode::None);
+        assert_eq!(FullscreenMode::from(99u8), FullscreenMode::None);
+    }
+
+    #[test]
+    fn deserialize_window_size_creates_correct_struct() {
+        #[derive(Deserialize)]
+        struct TestStruct {
+            #[serde(deserialize_with = "deserialize_window_size")]
+            size: ClientSize,
+        }
+
+        let json = r#"{"size": [1920, 1080]}"#;
+        let result: TestStruct = serde_json::from_str(json).unwrap();
+
+        assert_eq!(result.size.width, 1920);
+        assert_eq!(result.size.height, 1080);
+    }
+
+    #[test]
+    fn deserialize_window_location_creates_correct_struct() {
+        #[derive(Deserialize)]
+        struct TestStruct {
+            #[serde(deserialize_with = "deserialize_window_location")]
+            location: ClientLocation,
+        }
+
+        let json = r#"{"location": [100, 200]}"#;
+        let result: TestStruct = serde_json::from_str(json).unwrap();
+
+        assert_eq!(result.location.x, 100);
+        assert_eq!(result.location.y, 200);
+    }
+}

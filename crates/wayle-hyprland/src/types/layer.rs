@@ -90,3 +90,58 @@ pub(crate) struct LayerResponse {
     pub namespace: String,
     pub pid: ProcessId,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn layer_level_from_u8_converts_background() {
+        let level = LayerLevel::from(0u8);
+
+        assert_eq!(level, LayerLevel::Background);
+    }
+
+    #[test]
+    fn layer_level_from_u8_converts_bottom() {
+        let level = LayerLevel::from(1u8);
+
+        assert_eq!(level, LayerLevel::Bottom);
+    }
+
+    #[test]
+    fn layer_level_from_u8_converts_top() {
+        let level = LayerLevel::from(2u8);
+
+        assert_eq!(level, LayerLevel::Top);
+    }
+
+    #[test]
+    fn layer_level_from_u8_converts_overlay() {
+        let level = LayerLevel::from(3u8);
+
+        assert_eq!(level, LayerLevel::Overlay);
+    }
+
+    #[test]
+    fn layer_level_from_u8_returns_unknown_for_invalid() {
+        let level = LayerLevel::from(99u8);
+
+        assert_eq!(level, LayerLevel::Unknown);
+    }
+
+    #[test]
+    fn layer_level_from_str_converts_all_valid_values() {
+        assert_eq!(LayerLevel::from("0"), LayerLevel::Background);
+        assert_eq!(LayerLevel::from("1"), LayerLevel::Bottom);
+        assert_eq!(LayerLevel::from("2"), LayerLevel::Top);
+        assert_eq!(LayerLevel::from("3"), LayerLevel::Overlay);
+    }
+
+    #[test]
+    fn layer_level_from_str_returns_unknown_for_invalid() {
+        let level = LayerLevel::from("invalid");
+
+        assert_eq!(level, LayerLevel::Unknown);
+    }
+}

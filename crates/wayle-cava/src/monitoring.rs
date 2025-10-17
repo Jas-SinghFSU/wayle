@@ -121,3 +121,154 @@ fn calculate_cava_buffer_size(sample_rate: u32, channels: u32) -> usize {
     let fft_bass_size = fft_size * BASS_BUFFER_MULTIPLIER;
     fft_bass_size * channels as usize
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const BASE_FFT_SIZE: usize = 512;
+    const BASS_BUFFER_MULTIPLIER: usize = 2;
+
+    const TIER_1_MAX: u32 = 8125;
+    const TIER_2_MIN: u32 = 8126;
+    const TIER_2_MAX: u32 = 16250;
+    const TIER_3_MIN: u32 = 16251;
+    const TIER_3_MAX: u32 = 32500;
+    const TIER_4_MIN: u32 = 32501;
+    const TIER_4_MAX: u32 = 75000;
+    const TIER_5_MIN: u32 = 75001;
+    const TIER_5_MAX: u32 = 150000;
+    const TIER_6_MIN: u32 = 150001;
+    const TIER_6_MAX: u32 = 300000;
+    const TIER_7_MIN: u32 = 300001;
+
+    const MULTIPLIER_TIER_1: usize = 1;
+    const MULTIPLIER_TIER_2: usize = 2;
+    const MULTIPLIER_TIER_3: usize = 4;
+    const MULTIPLIER_TIER_4: usize = 8;
+    const MULTIPLIER_TIER_5: usize = 16;
+    const MULTIPLIER_TIER_6: usize = 32;
+    const MULTIPLIER_TIER_7: usize = 64;
+
+    const MONO_CHANNELS: u32 = 1;
+    const STEREO_CHANNELS: u32 = 2;
+
+    #[test]
+    fn calculate_cava_buffer_size_with_low_sample_rate_returns_base_multiplier() {
+        let sample_rate = TIER_1_MAX;
+        let channels = MONO_CHANNELS;
+
+        let result = calculate_cava_buffer_size(sample_rate, channels);
+
+        let expected =
+            BASE_FFT_SIZE * MULTIPLIER_TIER_1 * BASS_BUFFER_MULTIPLIER * channels as usize;
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn calculate_cava_buffer_size_with_mid_sample_rate_returns_doubled_multiplier() {
+        let sample_rate = TIER_2_MAX;
+        let channels = MONO_CHANNELS;
+
+        let result = calculate_cava_buffer_size(sample_rate, channels);
+
+        let expected =
+            BASE_FFT_SIZE * MULTIPLIER_TIER_2 * BASS_BUFFER_MULTIPLIER * channels as usize;
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn calculate_cava_buffer_size_with_high_sample_rate_returns_max_multiplier() {
+        let sample_rate = TIER_7_MIN * 2;
+        let channels = MONO_CHANNELS;
+
+        let result = calculate_cava_buffer_size(sample_rate, channels);
+
+        let expected =
+            BASE_FFT_SIZE * MULTIPLIER_TIER_7 * BASS_BUFFER_MULTIPLIER * channels as usize;
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn calculate_cava_buffer_size_multiplies_by_channel_count() {
+        let sample_rate = TIER_4_MAX;
+        let channels = STEREO_CHANNELS;
+
+        let result = calculate_cava_buffer_size(sample_rate, channels);
+
+        let expected =
+            BASE_FFT_SIZE * MULTIPLIER_TIER_4 * BASS_BUFFER_MULTIPLIER * channels as usize;
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn calculate_cava_buffer_size_at_boundary_values() {
+        let channels = MONO_CHANNELS;
+
+        assert_eq!(
+            calculate_cava_buffer_size(TIER_1_MAX, channels),
+            BASE_FFT_SIZE * MULTIPLIER_TIER_1 * BASS_BUFFER_MULTIPLIER * channels as usize
+        );
+        assert_eq!(
+            calculate_cava_buffer_size(TIER_2_MIN, channels),
+            BASE_FFT_SIZE * MULTIPLIER_TIER_2 * BASS_BUFFER_MULTIPLIER * channels as usize
+        );
+
+        assert_eq!(
+            calculate_cava_buffer_size(TIER_2_MAX, channels),
+            BASE_FFT_SIZE * MULTIPLIER_TIER_2 * BASS_BUFFER_MULTIPLIER * channels as usize
+        );
+        assert_eq!(
+            calculate_cava_buffer_size(TIER_3_MIN, channels),
+            BASE_FFT_SIZE * MULTIPLIER_TIER_3 * BASS_BUFFER_MULTIPLIER * channels as usize
+        );
+
+        assert_eq!(
+            calculate_cava_buffer_size(TIER_3_MAX, channels),
+            BASE_FFT_SIZE * MULTIPLIER_TIER_3 * BASS_BUFFER_MULTIPLIER * channels as usize
+        );
+        assert_eq!(
+            calculate_cava_buffer_size(TIER_4_MIN, channels),
+            BASE_FFT_SIZE * MULTIPLIER_TIER_4 * BASS_BUFFER_MULTIPLIER * channels as usize
+        );
+
+        assert_eq!(
+            calculate_cava_buffer_size(TIER_4_MAX, channels),
+            BASE_FFT_SIZE * MULTIPLIER_TIER_4 * BASS_BUFFER_MULTIPLIER * channels as usize
+        );
+        assert_eq!(
+            calculate_cava_buffer_size(TIER_5_MIN, channels),
+            BASE_FFT_SIZE * MULTIPLIER_TIER_5 * BASS_BUFFER_MULTIPLIER * channels as usize
+        );
+
+        assert_eq!(
+            calculate_cava_buffer_size(TIER_5_MAX, channels),
+            BASE_FFT_SIZE * MULTIPLIER_TIER_5 * BASS_BUFFER_MULTIPLIER * channels as usize
+        );
+        assert_eq!(
+            calculate_cava_buffer_size(TIER_6_MIN, channels),
+            BASE_FFT_SIZE * MULTIPLIER_TIER_6 * BASS_BUFFER_MULTIPLIER * channels as usize
+        );
+
+        assert_eq!(
+            calculate_cava_buffer_size(TIER_6_MAX, channels),
+            BASE_FFT_SIZE * MULTIPLIER_TIER_6 * BASS_BUFFER_MULTIPLIER * channels as usize
+        );
+        assert_eq!(
+            calculate_cava_buffer_size(TIER_7_MIN, channels),
+            BASE_FFT_SIZE * MULTIPLIER_TIER_7 * BASS_BUFFER_MULTIPLIER * channels as usize
+        );
+    }
+
+    #[test]
+    fn calculate_cava_buffer_size_above_threshold_uses_fallback_multiplier() {
+        let sample_rate = TIER_7_MIN * 10;
+        let channels = MONO_CHANNELS;
+
+        let result = calculate_cava_buffer_size(sample_rate, channels);
+
+        let expected =
+            BASE_FFT_SIZE * MULTIPLIER_TIER_7 * BASS_BUFFER_MULTIPLIER * channels as usize;
+        assert_eq!(result, expected);
+    }
+}

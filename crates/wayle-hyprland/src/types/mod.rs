@@ -132,3 +132,126 @@ pub struct CursorPosition {
     /// The y-coordinate of the cursor
     pub y: i32,
 }
+
+#[cfg(test)]
+mod tests {
+    use serde::Deserialize;
+
+    use super::*;
+
+    #[test]
+    fn address_new_strips_0x_prefix() {
+        let address = Address::new("0xdeadbeef".to_string());
+
+        assert_eq!(address.as_str(), "deadbeef");
+    }
+
+    #[test]
+    fn address_new_preserves_address_without_prefix() {
+        let address = Address::new("deadbeef".to_string());
+
+        assert_eq!(address.as_str(), "deadbeef");
+    }
+
+    #[test]
+    fn screencast_owner_try_from_converts_monitor() {
+        let result = ScreencastOwner::try_from("0");
+
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), ScreencastOwner::Monitor);
+    }
+
+    #[test]
+    fn screencast_owner_try_from_converts_window() {
+        let result = ScreencastOwner::try_from("1");
+
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), ScreencastOwner::Window);
+    }
+
+    #[test]
+    fn screencast_owner_try_from_fails_for_invalid_value() {
+        let result = ScreencastOwner::try_from("2");
+
+        assert!(result.is_err());
+        let error = result.unwrap_err();
+        if let Error::InvalidEnumValue { type_name, value } = error {
+            assert_eq!(type_name, "ScreencastOwner");
+            assert_eq!(value, "2");
+        } else {
+            panic!("Expected InvalidEnumValue error");
+        }
+    }
+
+    #[test]
+    fn deserialize_optional_address_returns_none_for_zero() {
+        #[derive(Deserialize)]
+        struct TestStruct {
+            #[serde(deserialize_with = "deserialize_optional_address")]
+            address: Option<Address>,
+        }
+
+        let json = r#"{"address": "0"}"#;
+        let result: TestStruct = serde_json::from_str(json).unwrap();
+
+        assert!(result.address.is_none());
+    }
+
+    #[test]
+    fn deserialize_optional_address_returns_none_for_empty() {
+        #[derive(Deserialize)]
+        struct TestStruct {
+            #[serde(deserialize_with = "deserialize_optional_address")]
+            address: Option<Address>,
+        }
+
+        let json = r#"{"address": ""}"#;
+        let result: TestStruct = serde_json::from_str(json).unwrap();
+
+        assert!(result.address.is_none());
+    }
+
+    #[test]
+    fn deserialize_optional_address_returns_some_for_valid() {
+        #[derive(Deserialize)]
+        struct TestStruct {
+            #[serde(deserialize_with = "deserialize_optional_address")]
+            address: Option<Address>,
+        }
+
+        let json = r#"{"address": "0xdeadbeef"}"#;
+        let result: TestStruct = serde_json::from_str(json).unwrap();
+
+        assert!(result.address.is_some());
+        assert_eq!(result.address.unwrap().as_str(), "deadbeef");
+    }
+
+    #[test]
+    fn deserialize_optional_string_returns_none_for_empty() {
+        #[derive(Deserialize)]
+        struct TestStruct {
+            #[serde(deserialize_with = "deserialize_optional_string")]
+            value: Option<String>,
+        }
+
+        let json = r#"{"value": ""}"#;
+        let result: TestStruct = serde_json::from_str(json).unwrap();
+
+        assert!(result.value.is_none());
+    }
+
+    #[test]
+    fn deserialize_optional_string_returns_some_for_non_empty() {
+        #[derive(Deserialize)]
+        struct TestStruct {
+            #[serde(deserialize_with = "deserialize_optional_string")]
+            value: Option<String>,
+        }
+
+        let json = r#"{"value": "test"}"#;
+        let result: TestStruct = serde_json::from_str(json).unwrap();
+
+        assert!(result.value.is_some());
+        assert_eq!(result.value.unwrap(), "test");
+    }
+}

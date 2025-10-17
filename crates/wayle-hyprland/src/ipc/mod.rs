@@ -56,3 +56,72 @@ impl HyprMessenger {
         })
     }
 }
+
+#[cfg(test)]
+#[allow(unsafe_code)]
+mod tests {
+    use std::env;
+
+    use super::*;
+
+    #[test]
+    fn new_succeeds_with_valid_env_vars() {
+        unsafe {
+            env::set_var("HYPRLAND_INSTANCE_SIGNATURE", "test_signature");
+            env::set_var("XDG_RUNTIME_DIR", "/tmp");
+        }
+
+        let result = HyprMessenger::new();
+
+        assert!(result.is_ok());
+        let messenger = result.unwrap();
+        assert_eq!(
+            messenger.path,
+            PathBuf::from("/tmp/hypr/test_signature/.socket.sock")
+        );
+
+        unsafe {
+            env::remove_var("HYPRLAND_INSTANCE_SIGNATURE");
+            env::remove_var("XDG_RUNTIME_DIR");
+        }
+    }
+
+    #[test]
+    fn new_fails_when_hyprland_instance_signature_missing() {
+        unsafe {
+            env::remove_var("HYPRLAND_INSTANCE_SIGNATURE");
+            env::set_var("XDG_RUNTIME_DIR", "/tmp");
+        }
+
+        let result = HyprMessenger::new();
+
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), Error::HyprlandNotRunning));
+
+        unsafe {
+            env::remove_var("XDG_RUNTIME_DIR");
+        }
+    }
+
+    #[test]
+    fn new_fails_when_xdg_runtime_dir_missing() {
+        unsafe {
+            env::set_var("HYPRLAND_INSTANCE_SIGNATURE", "test_signature");
+            env::remove_var("XDG_RUNTIME_DIR");
+        }
+
+        let result = HyprMessenger::new();
+
+        assert!(result.is_err());
+        let error = result.unwrap_err();
+        if let Error::InvalidInstanceSignature(msg) = error {
+            assert_eq!(msg, "XDG_RUNTIME_DIR not set");
+        } else {
+            panic!("Expected InvalidInstanceSignature error");
+        }
+
+        unsafe {
+            env::remove_var("HYPRLAND_INSTANCE_SIGNATURE");
+        }
+    }
+}

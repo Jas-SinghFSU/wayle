@@ -199,3 +199,228 @@ fn handle_bell(data: &str, hyprland_tx: Sender<HyprlandEvent>) -> Result<()> {
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use tokio::sync::broadcast;
+
+    use super::*;
+
+    #[test]
+    fn handle_fullscreen_parses_false_correctly() {
+        let (tx, _rx) = broadcast::channel(10);
+
+        let result = handle_fullscreen("fullscreen", "0", tx);
+
+        assert!(result.is_ok() || matches!(result, Err(Error::HyprlandEventTransmitError(_))));
+    }
+
+    #[test]
+    fn handle_fullscreen_parses_true_correctly() {
+        let (tx, _rx) = broadcast::channel(10);
+
+        let result = handle_fullscreen("fullscreen", "1", tx);
+
+        assert!(result.is_ok() || matches!(result, Err(Error::HyprlandEventTransmitError(_))));
+    }
+
+    #[test]
+    fn handle_fullscreen_returns_error_for_invalid_value() {
+        let (tx, _) = broadcast::channel(10);
+
+        let result = handle_fullscreen("fullscreen", "2", tx);
+
+        assert!(result.is_err());
+        if let Err(Error::EventParseError { event_data, reason }) = result {
+            assert!(event_data.contains("fullscreen"));
+            assert!(event_data.contains("2"));
+            assert!(reason.contains("invalid fullscreen value"));
+        } else {
+            panic!("Expected EventParseError");
+        }
+    }
+
+    #[test]
+    fn handle_active_layout_parses_valid_data() {
+        let (tx, _rx) = broadcast::channel(10);
+
+        let result = handle_active_layout("activelayout", "keyboard1,us", tx);
+
+        assert!(result.is_ok() || matches!(result, Err(Error::HyprlandEventTransmitError(_))));
+    }
+
+    #[test]
+    fn handle_active_layout_returns_error_without_comma() {
+        let (tx, _) = broadcast::channel(10);
+
+        let result = handle_active_layout("activelayout", "no_comma_here", tx);
+
+        assert!(result.is_err());
+        if let Err(Error::EventParseError { reason, .. }) = result {
+            assert!(reason.contains("comma-separated"));
+        } else {
+            panic!("Expected EventParseError");
+        }
+    }
+
+    #[test]
+    fn handle_screencast_parses_valid_state_and_owner() {
+        let (tx, _rx) = broadcast::channel(10);
+
+        let result = handle_screencast("screencast", "1,1", tx);
+
+        assert!(result.is_ok() || matches!(result, Err(Error::HyprlandEventTransmitError(_))));
+    }
+
+    #[test]
+    fn handle_screencast_returns_error_for_invalid_state() {
+        let (tx, _) = broadcast::channel(10);
+
+        let result = handle_screencast("screencast", "5,0", tx);
+
+        assert!(result.is_err());
+        if let Err(Error::EventParseError { reason, .. }) = result {
+            assert!(reason.contains("invalid state value"));
+        } else {
+            panic!("Expected EventParseError");
+        }
+    }
+
+    #[test]
+    fn handle_screencast_returns_error_without_comma() {
+        let (tx, _) = broadcast::channel(10);
+
+        let result = handle_screencast("screencast", "no_comma", tx);
+
+        assert!(result.is_err());
+        if let Err(Error::EventParseError { reason, .. }) = result {
+            assert!(reason.contains("comma-separated"));
+        } else {
+            panic!("Expected EventParseError");
+        }
+    }
+
+    #[test]
+    fn handle_screencast_returns_error_for_invalid_owner() {
+        let (tx, _) = broadcast::channel(10);
+
+        let result = handle_screencast("screencast", "1,99", tx);
+
+        assert!(result.is_err());
+        assert!(matches!(
+            result.unwrap_err(),
+            Error::InvalidEnumValue { .. }
+        ));
+    }
+
+    #[test]
+    fn handle_bell_creates_some_address_for_non_empty_data() {
+        let (tx, mut rx) = broadcast::channel(10);
+
+        let result = handle_bell("0xdeadbeef", tx);
+
+        assert!(result.is_ok());
+        let event = rx.try_recv().unwrap();
+        if let HyprlandEvent::Bell { address } = event {
+            assert!(address.is_some());
+            assert_eq!(address.unwrap().as_str(), "deadbeef");
+        } else {
+            panic!("Expected Bell event");
+        }
+    }
+
+    #[test]
+    fn handle_bell_creates_none_address_for_empty_data() {
+        let (tx, mut rx) = broadcast::channel(10);
+
+        let result = handle_bell("", tx);
+
+        assert!(result.is_ok());
+        let event = rx.try_recv().unwrap();
+        if let HyprlandEvent::Bell { address } = event {
+            assert!(address.is_none());
+        } else {
+            panic!("Expected Bell event");
+        }
+    }
+
+    #[test]
+    fn handle_ignore_group_lock_parses_true() {
+        let (tx, _rx) = broadcast::channel(10);
+
+        let result = handle_ignore_group_lock("ignoregrouplock", "1", tx);
+
+        assert!(result.is_ok() || matches!(result, Err(Error::HyprlandEventTransmitError(_))));
+    }
+
+    #[test]
+    fn handle_ignore_group_lock_parses_false() {
+        let (tx, _rx) = broadcast::channel(10);
+
+        let result = handle_ignore_group_lock("ignoregrouplock", "0", tx);
+
+        assert!(result.is_ok() || matches!(result, Err(Error::HyprlandEventTransmitError(_))));
+    }
+
+    #[test]
+    fn handle_ignore_group_lock_returns_error_for_invalid() {
+        let (tx, _) = broadcast::channel(10);
+
+        let result = handle_ignore_group_lock("ignoregrouplock", "invalid", tx);
+
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn handle_lock_groups_parses_true() {
+        let (tx, _rx) = broadcast::channel(10);
+
+        let result = handle_lock_groups("lockgroups", "1", tx);
+
+        assert!(result.is_ok() || matches!(result, Err(Error::HyprlandEventTransmitError(_))));
+    }
+
+    #[test]
+    fn handle_lock_groups_parses_false() {
+        let (tx, _rx) = broadcast::channel(10);
+
+        let result = handle_lock_groups("lockgroups", "0", tx);
+
+        assert!(result.is_ok() || matches!(result, Err(Error::HyprlandEventTransmitError(_))));
+    }
+
+    #[test]
+    fn handle_lock_groups_returns_error_for_invalid() {
+        let (tx, _) = broadcast::channel(10);
+
+        let result = handle_lock_groups("lockgroups", "99", tx);
+
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn handle_config_reloaded_sends_event() {
+        let (tx, mut rx) = broadcast::channel(10);
+
+        let result = handle_config_reloaded(tx);
+
+        assert!(result.is_ok());
+        let event = rx.try_recv().unwrap();
+        assert!(matches!(event, HyprlandEvent::ConfigReloaded));
+    }
+
+    #[test]
+    fn handle_submap_sends_event_with_name() {
+        let (tx, mut rx) = broadcast::channel(10);
+
+        let result = handle_submap("resize", tx);
+
+        assert!(result.is_ok());
+        let event = rx.try_recv().unwrap();
+        if let HyprlandEvent::Submap { name } = event {
+            assert_eq!(name, "resize");
+        } else {
+            panic!("Expected Submap event");
+        }
+    }
+}

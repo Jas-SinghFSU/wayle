@@ -489,3 +489,159 @@ impl Drop for CavaService {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const VALID_BARS: usize = 20;
+    const VALID_FRAMERATE: u32 = 60;
+    const VALID_LOW_CUTOFF: u32 = 50;
+    const VALID_HIGH_CUTOFF: u32 = 10000;
+    const VALID_SAMPLERATE: u32 = 44100;
+    const VALID_NOISE_REDUCTION: f64 = 0.77;
+
+    const ZERO_BARS: usize = 0;
+    const EXCESSIVE_BARS: usize = MAX_BARS + 1;
+    const ZERO_FRAMERATE: u32 = 0;
+    const ZERO_LOW_CUTOFF: u32 = 0;
+    const ZERO_HIGH_CUTOFF: u32 = 0;
+    const ZERO_SAMPLERATE: u32 = 0;
+
+    fn valid_builder() -> CavaServiceBuilder {
+        CavaServiceBuilder::new()
+            .bars(VALID_BARS)
+            .framerate(VALID_FRAMERATE)
+            .low_cutoff(VALID_LOW_CUTOFF)
+            .high_cutoff(VALID_HIGH_CUTOFF)
+            .samplerate(VALID_SAMPLERATE)
+            .noise_reduction(VALID_NOISE_REDUCTION)
+    }
+
+    #[tokio::test]
+    async fn builder_build_with_zero_bars_returns_error() {
+        let builder = valid_builder().bars(ZERO_BARS);
+
+        let result = builder.build().await;
+
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), Error::InvalidParameter(_)));
+    }
+
+    #[tokio::test]
+    async fn builder_build_with_bars_exceeding_max_returns_error() {
+        let builder = valid_builder().bars(EXCESSIVE_BARS);
+
+        let result = builder.build().await;
+
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+        assert!(matches!(err, Error::InvalidParameter(_)));
+    }
+
+    #[tokio::test]
+    async fn builder_build_with_zero_framerate_returns_error() {
+        let builder = valid_builder().framerate(ZERO_FRAMERATE);
+
+        let result = builder.build().await;
+
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), Error::InvalidParameter(_)));
+    }
+
+    #[tokio::test]
+    async fn builder_build_with_zero_low_cutoff_returns_error() {
+        let builder = valid_builder().low_cutoff(ZERO_LOW_CUTOFF);
+
+        let result = builder.build().await;
+
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), Error::InvalidParameter(_)));
+    }
+
+    #[tokio::test]
+    async fn builder_build_with_zero_high_cutoff_returns_error() {
+        let builder = valid_builder().high_cutoff(ZERO_HIGH_CUTOFF);
+
+        let result = builder.build().await;
+
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), Error::InvalidParameter(_)));
+    }
+
+    #[tokio::test]
+    async fn builder_build_with_zero_samplerate_returns_error() {
+        let builder = valid_builder().samplerate(ZERO_SAMPLERATE);
+
+        let result = builder.build().await;
+
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), Error::InvalidParameter(_)));
+    }
+
+    #[tokio::test]
+    async fn builder_build_with_high_cutoff_less_than_or_equal_to_low_cutoff_returns_error() {
+        let low = VALID_LOW_CUTOFF;
+        let high_equal = low;
+        let high_less = low - 1;
+
+        let result_equal = valid_builder()
+            .low_cutoff(low)
+            .high_cutoff(high_equal)
+            .build()
+            .await;
+
+        assert!(result_equal.is_err());
+        assert!(matches!(
+            result_equal.unwrap_err(),
+            Error::InvalidParameter(_)
+        ));
+
+        let result_less = valid_builder()
+            .low_cutoff(low)
+            .high_cutoff(high_less)
+            .build()
+            .await;
+
+        assert!(result_less.is_err());
+        assert!(matches!(
+            result_less.unwrap_err(),
+            Error::InvalidParameter(_)
+        ));
+    }
+
+    #[tokio::test]
+    async fn builder_build_with_samplerate_violating_nyquist_returns_error() {
+        let high_cutoff = VALID_HIGH_CUTOFF;
+        let invalid_samplerate = high_cutoff * 2;
+
+        let result = valid_builder()
+            .high_cutoff(high_cutoff)
+            .samplerate(invalid_samplerate)
+            .build()
+            .await;
+
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), Error::InvalidParameter(_)));
+    }
+
+    #[tokio::test]
+    async fn builder_build_with_noise_reduction_below_zero_returns_error() {
+        let below_zero = -0.1;
+
+        let result = valid_builder().noise_reduction(below_zero).build().await;
+
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), Error::InvalidParameter(_)));
+    }
+
+    #[tokio::test]
+    async fn builder_build_with_noise_reduction_above_one_returns_error() {
+        let above_one = 1.1;
+
+        let result = valid_builder().noise_reduction(above_one).build().await;
+
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), Error::InvalidParameter(_)));
+    }
+}

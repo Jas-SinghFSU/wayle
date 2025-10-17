@@ -117,3 +117,146 @@ impl<T: Clone + Send + Sync + 'static> Drop for ComputedProperty<T> {
         self._task.abort();
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use futures::stream;
+    use tokio::sync::mpsc;
+
+    use super::*;
+
+    #[test]
+    fn set_updates_value_when_different() {
+        let property = Property::new(42);
+
+        property.set(100);
+
+        assert_eq!(property.get(), 100);
+    }
+
+    #[test]
+    fn set_does_not_notify_when_value_unchanged() {
+        let property = Property::new(42);
+        let mut watch_stream = property.watch();
+
+        property.set(42);
+
+        let current_value = tokio::runtime::Runtime::new().unwrap().block_on(async {
+            tokio::time::timeout(tokio::time::Duration::from_millis(10), watch_stream.next()).await
+        });
+
+        assert!(current_value.is_ok());
+        assert_eq!(current_value.unwrap().unwrap(), 42);
+
+        property.set(42);
+
+        let next_value = tokio::runtime::Runtime::new().unwrap().block_on(async {
+            tokio::time::timeout(tokio::time::Duration::from_millis(10), watch_stream.next()).await
+        });
+
+        assert!(next_value.is_err());
+    }
+
+    #[tokio::test]
+    async fn set_notifies_watchers_when_value_changes() {
+        let property = Property::new(1);
+        let mut watch_stream = property.watch();
+
+        let initial = watch_stream.next().await;
+        assert_eq!(initial, Some(1));
+
+        property.set(2);
+
+        let updated = watch_stream.next().await;
+        assert_eq!(updated, Some(2));
+    }
+
+    #[tokio::test]
+    async fn computed_property_initializes_with_initial_value() {
+        let (tx, mut rx) = mpsc::channel::<()>(1);
+        let input_stream = stream::poll_fn(move |cx| rx.poll_recv(cx));
+
+        let computed = ComputedProperty::new(10, input_stream, || 20);
+
+        assert_eq!(computed.get(), 10);
+
+        drop(tx);
+    }
+
+    #[tokio::test]
+    async fn computed_property_recomputes_when_input_stream_emits() {
+        let (tx, mut rx) = mpsc::channel(10);
+        let input_stream = stream::poll_fn(move |cx| rx.poll_recv(cx));
+
+        let counter = std::sync::Arc::new(std::sync::atomic::AtomicI32::new(0));
+        let counter_clone = counter.clone();
+
+        let computed = ComputedProperty::new(0, input_stream, move || {
+            counter_clone.fetch_add(1, std::sync::atomic::Ordering::SeqCst)
+        });
+
+        assert_eq!(computed.get(), 0);
+
+        tx.send(()).await.unwrap();
+        tokio::time::sleep(tokio::time::Duration::from_millis(50)).await;
+        assert_eq!(computed.get(), 0);
+
+        tx.send(()).await.unwrap();
+        tokio::time::sleep(tokio::time::Duration::from_millis(50)).await;
+        assert_eq!(computed.get(), 1);
+
+        drop(tx);
+    }
+
+    #[tokio::test]
+    async fn computed_property_stops_computing_when_stream_ends() {
+        let (tx, mut rx) = mpsc::channel(10);
+        let input_stream = stream::poll_fn(move |cx| rx.poll_recv(cx));
+
+        let counter = std::sync::Arc::new(std::sync::atomic::AtomicI32::new(0));
+        let counter_clone = counter.clone();
+
+        let computed = ComputedProperty::new(0, input_stream, move || {
+            counter_clone.fetch_add(1, std::sync::atomic::Ordering::SeqCst)
+        });
+
+        tx.send(()).await.unwrap();
+        tokio::time::sleep(tokio::time::Duration::from_millis(50)).await;
+
+        let value_before_drop = computed.get();
+
+        drop(tx);
+        tokio::time::sleep(tokio::time::Duration::from_millis(50)).await;
+
+        assert_eq!(computed.get(), value_before_drop);
+    }
+
+    #[tokio::test]
+    async fn computed_property_aborts_task_on_drop() {
+        let (tx, mut rx) = mpsc::channel(10);
+        let input_stream = stream::poll_fn(move |cx| rx.poll_recv(cx));
+
+        let counter = std::sync::Arc::new(std::sync::atomic::AtomicI32::new(0));
+        let counter_clone = counter.clone();
+
+        {
+            let computed = ComputedProperty::new(0, input_stream, move || {
+                counter_clone.fetch_add(1, std::sync::atomic::Ordering::SeqCst)
+            });
+
+            tx.send(()).await.unwrap();
+            tokio::time::sleep(tokio::time::Duration::from_millis(50)).await;
+
+            let value = computed.get();
+            assert_eq!(value, 0);
+        }
+
+        let count_after_drop = counter.load(std::sync::atomic::Ordering::SeqCst);
+
+        tx.send(()).await.unwrap();
+        tokio::time::sleep(tokio::time::Duration::from_millis(50)).await;
+
+        let count_after_send = counter.load(std::sync::atomic::Ordering::SeqCst);
+        assert_eq!(count_after_send, count_after_drop);
+    }
+}

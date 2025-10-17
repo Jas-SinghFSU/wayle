@@ -131,8 +131,9 @@ pub(super) fn handle_external_command(
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::thread;
+
+    use super::*;
 
     #[test]
     fn should_process_returns_true_on_first_call() {
