@@ -3,5 +3,4 @@ target/
 # Temporary sandboxes
 Wayle
 src/cli/commands/audio/
-examples/
 tools/
