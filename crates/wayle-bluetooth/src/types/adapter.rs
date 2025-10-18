@@ -3,12 +3,10 @@ use std::{
     fmt::{Display, Formatter, Result},
 };
 
-use serde::{Deserialize, Serialize};
 use zbus::zvariant::Value;
 
 /// Bluetooth address type for adapters and devices.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AddressType {
     /// Public Bluetooth address
     Public,
@@ -37,7 +35,7 @@ impl From<&str> for AddressType {
 /// Power state of a Bluetooth adapter.
 ///
 /// [experimental]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PowerState {
     /// Adapter is powered on
     On,
@@ -73,8 +71,7 @@ impl Display for PowerState {
 }
 
 /// Role capabilities of a Bluetooth adapter.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "kebab-case")]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AdapterRole {
     /// Supports the central role
     Central,
@@ -106,8 +103,7 @@ impl Display for AdapterRole {
 }
 
 /// Discovery transport filter for Bluetooth scanning.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DiscoveryTransport {
     /// Interleaved scan, use LE, BREDR, or both depending on what's currently enabled
     Auto,

@@ -674,3 +674,33 @@ impl TrayItem {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parse_service_identifier_with_slash_splits_correctly() {
+        let (service, path) = TrayItem::parse_service_identifier(":1.234/StatusNotifierItem");
+
+        assert_eq!(service, ":1.234");
+        assert_eq!(path, "/StatusNotifierItem");
+    }
+
+    #[test]
+    fn parse_service_identifier_without_slash_uses_default_path() {
+        let (service, path) =
+            TrayItem::parse_service_identifier("org.kde.StatusNotifierItem-4077-1");
+
+        assert_eq!(service, "org.kde.StatusNotifierItem-4077-1");
+        assert_eq!(path, "/StatusNotifierItem");
+    }
+
+    #[test]
+    fn parse_service_identifier_with_multiple_slashes_splits_at_first() {
+        let (service, path) = TrayItem::parse_service_identifier(":1.234/some/nested/path");
+
+        assert_eq!(service, ":1.234");
+        assert_eq!(path, "/some/nested/path");
+    }
+}

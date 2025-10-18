@@ -228,3 +228,40 @@ fn should_ignore(bus_name: &str, ignored_patterns: &[String]) -> bool {
         .iter()
         .any(|pattern| bus_name.contains(pattern))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn should_ignore_returns_true_when_pattern_matches() {
+        let patterns = vec![String::from("spotify"), String::from("chrome")];
+        let bus_name = "org.mpris.MediaPlayer2.spotify";
+
+        assert!(should_ignore(bus_name, &patterns));
+    }
+
+    #[test]
+    fn should_ignore_returns_false_when_no_patterns_match() {
+        let patterns = vec![String::from("spotify"), String::from("chrome")];
+        let bus_name = "org.mpris.MediaPlayer2.vlc";
+
+        assert!(!should_ignore(bus_name, &patterns));
+    }
+
+    #[test]
+    fn should_ignore_with_empty_patterns_returns_false() {
+        let patterns = vec![];
+        let bus_name = "org.mpris.MediaPlayer2.spotify";
+
+        assert!(!should_ignore(bus_name, &patterns));
+    }
+
+    #[test]
+    fn should_ignore_matches_substring_in_bus_name() {
+        let patterns = vec![String::from("chromium")];
+        let bus_name = "org.mpris.MediaPlayer2.chromium.instance123";
+
+        assert!(should_ignore(bus_name, &patterns));
+    }
+}

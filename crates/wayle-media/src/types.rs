@@ -121,3 +121,116 @@ impl From<f64> for Volume {
         Self::new(value)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn playback_state_from_str_with_playing_returns_playing() {
+        let state = PlaybackState::from("Playing");
+        assert_eq!(state, PlaybackState::Playing);
+    }
+
+    #[test]
+    fn playback_state_from_str_with_paused_returns_paused() {
+        let state = PlaybackState::from("Paused");
+        assert_eq!(state, PlaybackState::Paused);
+    }
+
+    #[test]
+    fn playback_state_from_str_with_stopped_returns_stopped() {
+        let state = PlaybackState::from("Stopped");
+        assert_eq!(state, PlaybackState::Stopped);
+    }
+
+    #[test]
+    fn playback_state_from_str_with_unknown_value_returns_stopped() {
+        let state = PlaybackState::from("Unknown");
+        assert_eq!(state, PlaybackState::Stopped);
+    }
+
+    #[test]
+    fn loop_mode_from_str_with_none_returns_none() {
+        let mode = LoopMode::from("None");
+        assert_eq!(mode, LoopMode::None);
+    }
+
+    #[test]
+    fn loop_mode_from_str_with_track_returns_track() {
+        let mode = LoopMode::from("Track");
+        assert_eq!(mode, LoopMode::Track);
+    }
+
+    #[test]
+    fn loop_mode_from_str_with_playlist_returns_playlist() {
+        let mode = LoopMode::from("Playlist");
+        assert_eq!(mode, LoopMode::Playlist);
+    }
+
+    #[test]
+    fn loop_mode_from_str_with_unknown_value_returns_unsupported() {
+        let mode = LoopMode::from("Unknown");
+        assert_eq!(mode, LoopMode::Unsupported);
+    }
+
+    #[test]
+    fn shuffle_mode_from_bool_with_true_returns_on() {
+        let mode = ShuffleMode::from(true);
+        assert_eq!(mode, ShuffleMode::On);
+    }
+
+    #[test]
+    fn shuffle_mode_from_bool_with_false_returns_off() {
+        let mode = ShuffleMode::from(false);
+        assert_eq!(mode, ShuffleMode::Off);
+    }
+
+    #[test]
+    fn volume_new_clamps_negative_to_zero() {
+        let volume = Volume::new(-0.5);
+        assert_eq!(*volume, 0.0);
+    }
+
+    #[test]
+    fn volume_new_clamps_above_one_to_one() {
+        let volume = Volume::new(1.5);
+        assert_eq!(*volume, 1.0);
+    }
+
+    #[test]
+    fn volume_new_preserves_valid_value() {
+        let volume = Volume::new(0.5);
+        assert_eq!(*volume, 0.5);
+    }
+
+    #[test]
+    fn volume_new_with_zero_returns_zero() {
+        let volume = Volume::new(0.0);
+        assert_eq!(*volume, 0.0);
+    }
+
+    #[test]
+    fn volume_new_with_one_returns_one() {
+        let volume = Volume::new(1.0);
+        assert_eq!(*volume, 1.0);
+    }
+
+    #[test]
+    fn volume_as_percentage_converts_zero_to_zero() {
+        let volume = Volume::new(0.0);
+        assert_eq!(volume.as_percentage(), 0.0);
+    }
+
+    #[test]
+    fn volume_as_percentage_converts_one_to_hundred() {
+        let volume = Volume::new(1.0);
+        assert_eq!(volume.as_percentage(), 100.0);
+    }
+
+    #[test]
+    fn volume_as_percentage_converts_half_to_fifty() {
+        let volume = Volume::new(0.5);
+        assert_eq!(volume.as_percentage(), 50.0);
+    }
+}

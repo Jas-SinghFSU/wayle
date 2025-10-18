@@ -173,3 +173,188 @@ impl Display for SecurityType {
         write!(f, "{}", self.as_str())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn from_flags_returns_enterprise_when_rsn_has_802_1x() {
+        let security = SecurityType::from_flags(
+            NM80211ApFlags::NONE,
+            NM80211ApSecurityFlags::NONE,
+            NM80211ApSecurityFlags::KEY_MGMT_802_1X,
+        );
+        assert_eq!(security, SecurityType::Enterprise);
+    }
+
+    #[test]
+    fn from_flags_returns_enterprise_when_wpa_has_802_1x() {
+        let security = SecurityType::from_flags(
+            NM80211ApFlags::NONE,
+            NM80211ApSecurityFlags::KEY_MGMT_802_1X,
+            NM80211ApSecurityFlags::NONE,
+        );
+        assert_eq!(security, SecurityType::Enterprise);
+    }
+
+    #[test]
+    fn from_flags_returns_enterprise_when_rsn_has_eap_suite_b_192() {
+        let security = SecurityType::from_flags(
+            NM80211ApFlags::NONE,
+            NM80211ApSecurityFlags::NONE,
+            NM80211ApSecurityFlags::KEY_MGMT_EAP_SUITE_B_192,
+        );
+        assert_eq!(security, SecurityType::Enterprise);
+    }
+
+    #[test]
+    fn from_flags_returns_wpa3_when_rsn_has_sae() {
+        let security = SecurityType::from_flags(
+            NM80211ApFlags::NONE,
+            NM80211ApSecurityFlags::NONE,
+            NM80211ApSecurityFlags::KEY_MGMT_SAE,
+        );
+        assert_eq!(security, SecurityType::Wpa3);
+    }
+
+    #[test]
+    fn from_flags_returns_wpa3_when_rsn_has_owe() {
+        let security = SecurityType::from_flags(
+            NM80211ApFlags::NONE,
+            NM80211ApSecurityFlags::NONE,
+            NM80211ApSecurityFlags::KEY_MGMT_OWE,
+        );
+        assert_eq!(security, SecurityType::Wpa3);
+    }
+
+    #[test]
+    fn from_flags_returns_wpa3_when_rsn_has_owe_tm() {
+        let security = SecurityType::from_flags(
+            NM80211ApFlags::NONE,
+            NM80211ApSecurityFlags::NONE,
+            NM80211ApSecurityFlags::KEY_MGMT_OWE_TM,
+        );
+        assert_eq!(security, SecurityType::Wpa3);
+    }
+
+    #[test]
+    fn from_flags_returns_wpa2_when_rsn_has_psk() {
+        let security = SecurityType::from_flags(
+            NM80211ApFlags::NONE,
+            NM80211ApSecurityFlags::NONE,
+            NM80211ApSecurityFlags::KEY_MGMT_PSK,
+        );
+        assert_eq!(security, SecurityType::Wpa2);
+    }
+
+    #[test]
+    fn from_flags_returns_wpa_when_wpa_has_psk() {
+        let security = SecurityType::from_flags(
+            NM80211ApFlags::NONE,
+            NM80211ApSecurityFlags::KEY_MGMT_PSK,
+            NM80211ApSecurityFlags::NONE,
+        );
+        assert_eq!(security, SecurityType::Wpa);
+    }
+
+    #[test]
+    fn from_flags_returns_wep_when_wpa_has_wep40() {
+        let security = SecurityType::from_flags(
+            NM80211ApFlags::NONE,
+            NM80211ApSecurityFlags::PAIR_WEP40,
+            NM80211ApSecurityFlags::NONE,
+        );
+        assert_eq!(security, SecurityType::Wep);
+    }
+
+    #[test]
+    fn from_flags_returns_wep_when_wpa_has_wep104() {
+        let security = SecurityType::from_flags(
+            NM80211ApFlags::NONE,
+            NM80211ApSecurityFlags::PAIR_WEP104,
+            NM80211ApSecurityFlags::NONE,
+        );
+        assert_eq!(security, SecurityType::Wep);
+    }
+
+    #[test]
+    fn from_flags_returns_wep_when_rsn_has_wep40() {
+        let security = SecurityType::from_flags(
+            NM80211ApFlags::NONE,
+            NM80211ApSecurityFlags::NONE,
+            NM80211ApSecurityFlags::PAIR_WEP40,
+        );
+        assert_eq!(security, SecurityType::Wep);
+    }
+
+    #[test]
+    fn from_flags_returns_wep_when_rsn_has_wep104() {
+        let security = SecurityType::from_flags(
+            NM80211ApFlags::NONE,
+            NM80211ApSecurityFlags::NONE,
+            NM80211ApSecurityFlags::GROUP_WEP104,
+        );
+        assert_eq!(security, SecurityType::Wep);
+    }
+
+    #[test]
+    fn from_flags_returns_wep_when_privacy_flag_set_and_no_wpa_rsn() {
+        let security = SecurityType::from_flags(
+            NM80211ApFlags::PRIVACY,
+            NM80211ApSecurityFlags::NONE,
+            NM80211ApSecurityFlags::NONE,
+        );
+        assert_eq!(security, SecurityType::Wep);
+    }
+
+    #[test]
+    fn from_flags_returns_none_when_no_security_flags() {
+        let security = SecurityType::from_flags(
+            NM80211ApFlags::NONE,
+            NM80211ApSecurityFlags::NONE,
+            NM80211ApSecurityFlags::NONE,
+        );
+        assert_eq!(security, SecurityType::None);
+    }
+
+    #[test]
+    fn from_flags_prioritizes_enterprise_over_wpa3() {
+        let security = SecurityType::from_flags(
+            NM80211ApFlags::NONE,
+            NM80211ApSecurityFlags::NONE,
+            NM80211ApSecurityFlags::KEY_MGMT_802_1X.union(NM80211ApSecurityFlags::KEY_MGMT_SAE),
+        );
+        assert_eq!(security, SecurityType::Enterprise);
+    }
+
+    #[test]
+    fn from_flags_prioritizes_wpa3_over_wpa2() {
+        let security = SecurityType::from_flags(
+            NM80211ApFlags::NONE,
+            NM80211ApSecurityFlags::NONE,
+            NM80211ApSecurityFlags::KEY_MGMT_SAE.union(NM80211ApSecurityFlags::KEY_MGMT_PSK),
+        );
+        assert_eq!(security, SecurityType::Wpa3);
+    }
+
+    #[test]
+    fn from_flags_prioritizes_wpa2_over_wpa() {
+        let security = SecurityType::from_flags(
+            NM80211ApFlags::NONE,
+            NM80211ApSecurityFlags::KEY_MGMT_PSK,
+            NM80211ApSecurityFlags::KEY_MGMT_PSK,
+        );
+        assert_eq!(security, SecurityType::Wpa2);
+    }
+
+    #[test]
+    fn from_flags_prioritizes_wpa_over_wep() {
+        let security = SecurityType::from_flags(
+            NM80211ApFlags::NONE,
+            NM80211ApSecurityFlags::KEY_MGMT_PSK.union(NM80211ApSecurityFlags::PAIR_WEP40),
+            NM80211ApSecurityFlags::NONE,
+        );
+        assert_eq!(security, SecurityType::Wpa);
+    }
+}

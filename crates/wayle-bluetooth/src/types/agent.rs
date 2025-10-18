@@ -1,13 +1,12 @@
 use std::fmt::{Display, Formatter, Result};
 
-use serde::{Deserialize, Serialize};
 use tokio::sync::oneshot::Sender;
 use zbus::zvariant::OwnedObjectPath;
 
 /// Agent capability for pairing operations.
 ///
 /// Describes the input/output capabilities of the agent for pairing.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AgentCapability {
     /// Can display information and accept yes/no input
     DisplayYesNo,

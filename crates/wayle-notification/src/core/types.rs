@@ -60,3 +60,98 @@ impl Action {
         raw
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parse_dbus_actions_with_empty_input_returns_empty_vec() {
+        let raw_actions: Vec<String> = vec![];
+
+        let result = Action::parse_dbus_actions(&raw_actions);
+
+        assert_eq!(result, vec![]);
+    }
+
+    #[test]
+    fn parse_dbus_actions_with_even_count_creates_actions() {
+        let raw_actions = vec![
+            "reply".to_string(),
+            "Reply".to_string(),
+            "delete".to_string(),
+            "Delete".to_string(),
+        ];
+
+        let result = Action::parse_dbus_actions(&raw_actions);
+
+        assert_eq!(result.len(), 2);
+        assert_eq!(result[0].id, "reply");
+        assert_eq!(result[0].label, "Reply");
+        assert_eq!(result[1].id, "delete");
+        assert_eq!(result[1].label, "Delete");
+    }
+
+    #[test]
+    fn parse_dbus_actions_with_odd_count_uses_id_as_label_for_last() {
+        let raw_actions = vec![
+            "reply".to_string(),
+            "Reply".to_string(),
+            "default".to_string(),
+        ];
+
+        let result = Action::parse_dbus_actions(&raw_actions);
+
+        assert_eq!(result.len(), 2);
+        assert_eq!(result[0].id, "reply");
+        assert_eq!(result[0].label, "Reply");
+        assert_eq!(result[1].id, "default");
+        assert_eq!(result[1].label, "default");
+    }
+
+    #[test]
+    fn to_dbus_format_with_empty_input_returns_empty_vec() {
+        let actions: Vec<Action> = vec![];
+
+        let result = Action::to_dbus_format(&actions);
+
+        assert_eq!(result, Vec::<String>::new());
+    }
+
+    #[test]
+    fn to_dbus_format_creates_alternating_id_label_pairs() {
+        let actions = vec![
+            Action {
+                id: "reply".to_string(),
+                label: "Reply".to_string(),
+            },
+            Action {
+                id: "delete".to_string(),
+                label: "Delete".to_string(),
+            },
+        ];
+
+        let result = Action::to_dbus_format(&actions);
+
+        assert_eq!(result.len(), 4);
+        assert_eq!(result[0], "reply");
+        assert_eq!(result[1], "Reply");
+        assert_eq!(result[2], "delete");
+        assert_eq!(result[3], "Delete");
+    }
+
+    #[test]
+    fn parse_and_to_dbus_format_are_inverse_operations() {
+        let original = vec![
+            "reply".to_string(),
+            "Reply".to_string(),
+            "mark-read".to_string(),
+            "Mark as Read".to_string(),
+        ];
+
+        let parsed = Action::parse_dbus_actions(&original);
+        let result = Action::to_dbus_format(&parsed);
+
+        assert_eq!(result, original);
+    }
+}

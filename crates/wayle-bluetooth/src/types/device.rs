@@ -3,24 +3,18 @@ use std::{
     fmt::{Display, Formatter, Result},
 };
 
-use serde::{Deserialize, Serialize};
-
 /// Preferred bearer for dual-mode Bluetooth devices.
 ///
 /// [experimental]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PreferredBearer {
     /// Connect to last used bearer first (default)
-    #[serde(rename = "last-used")]
     LastUsed,
     /// Connect to BR/EDR first
-    #[serde(rename = "bredr")]
     BrEdr,
     /// Connect to LE first
-    #[serde(rename = "le")]
     Le,
     /// Connect to last seen bearer first
-    #[serde(rename = "last-seen")]
     LastSeen,
 }
 
@@ -54,7 +48,7 @@ impl Display for PreferredBearer {
 }
 
 /// Bluetooth device disconnection reason.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DisconnectReason {
     /// Unknown reason
     Unknown,

@@ -427,4 +427,38 @@ mod tests {
             });
         });
     }
+
+    #[test]
+    fn runtime_state_serde_round_trip_preserves_all_fields() {
+        let original = RuntimeState {
+            active_media_player: Some("test-player".to_string()),
+            last_updated: SystemTime::now(),
+        };
+
+        let serialized = serde_json::to_string(&original).unwrap();
+        let deserialized: RuntimeState = serde_json::from_str(&serialized).unwrap();
+
+        assert_eq!(
+            original.active_media_player,
+            deserialized.active_media_player
+        );
+        assert_eq!(original.last_updated, deserialized.last_updated);
+    }
+
+    #[test]
+    fn runtime_state_serde_round_trip_with_none_player() {
+        let original = RuntimeState {
+            active_media_player: None,
+            last_updated: SystemTime::now(),
+        };
+
+        let serialized = serde_json::to_string(&original).unwrap();
+        let deserialized: RuntimeState = serde_json::from_str(&serialized).unwrap();
+
+        assert_eq!(
+            original.active_media_player,
+            deserialized.active_media_player
+        );
+        assert_eq!(original.last_updated, deserialized.last_updated);
+    }
 }

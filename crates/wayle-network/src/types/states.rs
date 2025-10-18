@@ -567,3 +567,112 @@ impl NetworkStatus {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn from_device_state_returns_connected_when_activated() {
+        assert_eq!(
+            NetworkStatus::from_device_state(NMDeviceState::Activated),
+            NetworkStatus::Connected
+        );
+    }
+
+    #[test]
+    fn from_device_state_returns_connecting_for_prepare() {
+        assert_eq!(
+            NetworkStatus::from_device_state(NMDeviceState::Prepare),
+            NetworkStatus::Connecting
+        );
+    }
+
+    #[test]
+    fn from_device_state_returns_connecting_for_config() {
+        assert_eq!(
+            NetworkStatus::from_device_state(NMDeviceState::Config),
+            NetworkStatus::Connecting
+        );
+    }
+
+    #[test]
+    fn from_device_state_returns_connecting_for_need_auth() {
+        assert_eq!(
+            NetworkStatus::from_device_state(NMDeviceState::NeedAuth),
+            NetworkStatus::Connecting
+        );
+    }
+
+    #[test]
+    fn from_device_state_returns_connecting_for_ip_config() {
+        assert_eq!(
+            NetworkStatus::from_device_state(NMDeviceState::IpConfig),
+            NetworkStatus::Connecting
+        );
+    }
+
+    #[test]
+    fn from_device_state_returns_connecting_for_ip_check() {
+        assert_eq!(
+            NetworkStatus::from_device_state(NMDeviceState::IpCheck),
+            NetworkStatus::Connecting
+        );
+    }
+
+    #[test]
+    fn from_device_state_returns_connecting_for_secondaries() {
+        assert_eq!(
+            NetworkStatus::from_device_state(NMDeviceState::Secondaries),
+            NetworkStatus::Connecting
+        );
+    }
+
+    #[test]
+    fn from_device_state_returns_disconnected_for_unknown() {
+        assert_eq!(
+            NetworkStatus::from_device_state(NMDeviceState::Unknown),
+            NetworkStatus::Disconnected
+        );
+    }
+
+    #[test]
+    fn from_device_state_returns_disconnected_for_unmanaged() {
+        assert_eq!(
+            NetworkStatus::from_device_state(NMDeviceState::Unmanaged),
+            NetworkStatus::Disconnected
+        );
+    }
+
+    #[test]
+    fn from_device_state_returns_disconnected_for_unavailable() {
+        assert_eq!(
+            NetworkStatus::from_device_state(NMDeviceState::Unavailable),
+            NetworkStatus::Disconnected
+        );
+    }
+
+    #[test]
+    fn from_device_state_returns_disconnected_for_disconnected() {
+        assert_eq!(
+            NetworkStatus::from_device_state(NMDeviceState::Disconnected),
+            NetworkStatus::Disconnected
+        );
+    }
+
+    #[test]
+    fn from_device_state_returns_disconnected_for_deactivating() {
+        assert_eq!(
+            NetworkStatus::from_device_state(NMDeviceState::Deactivating),
+            NetworkStatus::Disconnected
+        );
+    }
+
+    #[test]
+    fn from_device_state_returns_disconnected_for_failed() {
+        assert_eq!(
+            NetworkStatus::from_device_state(NMDeviceState::Failed),
+            NetworkStatus::Disconnected
+        );
+    }
+}

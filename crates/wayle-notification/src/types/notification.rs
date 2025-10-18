@@ -273,3 +273,201 @@ pub struct Action {
     /// The localized string that will be displayed to the user.
     pub label: String,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn urgency_from_u8_with_zero_returns_low() {
+        let result = Urgency::from(0);
+
+        assert_eq!(result, Urgency::Low);
+    }
+
+    #[test]
+    fn urgency_from_u8_with_two_returns_critical() {
+        let result = Urgency::from(2);
+
+        assert_eq!(result, Urgency::Critical);
+    }
+
+    #[test]
+    fn urgency_from_u8_with_one_returns_normal() {
+        let result = Urgency::from(1);
+
+        assert_eq!(result, Urgency::Normal);
+    }
+
+    #[test]
+    fn urgency_from_u8_with_five_returns_normal() {
+        let result = Urgency::from(5);
+
+        assert_eq!(result, Urgency::Normal);
+    }
+
+    #[test]
+    fn closed_reason_from_u32_with_one_returns_expired() {
+        let result = ClosedReason::from(1);
+
+        assert_eq!(result, ClosedReason::Expired);
+    }
+
+    #[test]
+    fn closed_reason_from_u32_with_two_returns_dismissed_by_user() {
+        let result = ClosedReason::from(2);
+
+        assert_eq!(result, ClosedReason::DismissedByUser);
+    }
+
+    #[test]
+    fn closed_reason_from_u32_with_three_returns_closed() {
+        let result = ClosedReason::from(3);
+
+        assert_eq!(result, ClosedReason::Closed);
+    }
+
+    #[test]
+    fn closed_reason_from_u32_with_zero_returns_unknown() {
+        let result = ClosedReason::from(0);
+
+        assert_eq!(result, ClosedReason::Unknown);
+    }
+
+    #[test]
+    fn closed_reason_from_u32_with_five_returns_unknown() {
+        let result = ClosedReason::from(5);
+
+        assert_eq!(result, ClosedReason::Unknown);
+    }
+
+    #[test]
+    fn capabilities_from_str_with_action_icons_returns_correct_variant() {
+        let result = "action-icons".parse::<Capabilities>().unwrap();
+
+        assert_eq!(result, Capabilities::ActionIcons);
+    }
+
+    #[test]
+    fn capabilities_from_str_with_actions_returns_correct_variant() {
+        let result = "actions".parse::<Capabilities>().unwrap();
+
+        assert_eq!(result, Capabilities::Actions);
+    }
+
+    #[test]
+    fn capabilities_from_str_with_persistence_returns_correct_variant() {
+        let result = "persistence".parse::<Capabilities>().unwrap();
+
+        assert_eq!(result, Capabilities::Persistence);
+    }
+
+    #[test]
+    fn capabilities_from_str_with_vendor_prefix_returns_vendor() {
+        let result = "x-custom-cap".parse::<Capabilities>().unwrap();
+
+        assert_eq!(result, Capabilities::Vendor("x-custom-cap".to_string()));
+    }
+
+    #[test]
+    fn capabilities_from_str_with_unknown_wraps_in_vendor_format() {
+        let result = "unknown-capability".parse::<Capabilities>().unwrap();
+
+        assert_eq!(
+            result,
+            Capabilities::Vendor("x-unknown-unknown-capability".to_string())
+        );
+    }
+
+    #[test]
+    fn capabilities_as_str_for_action_icons_returns_correct_string() {
+        let cap = Capabilities::ActionIcons;
+
+        let result = cap.as_str();
+
+        assert_eq!(result, "action-icons");
+    }
+
+    #[test]
+    fn capabilities_as_str_for_persistence_returns_correct_string() {
+        let cap = Capabilities::Persistence;
+
+        let result = cap.as_str();
+
+        assert_eq!(result, "persistence");
+    }
+
+    #[test]
+    fn capabilities_as_str_with_vendor_returns_inner_string() {
+        let cap = Capabilities::Vendor("x-custom".to_string());
+
+        let result = cap.as_str();
+
+        assert_eq!(result, "x-custom");
+    }
+
+    #[test]
+    fn category_from_str_with_call_returns_correct_variant() {
+        let result = "call".parse::<Category>().unwrap();
+
+        assert_eq!(result, Category::Call);
+    }
+
+    #[test]
+    fn category_from_str_with_email_arrived_returns_correct_variant() {
+        let result = "email.arrived".parse::<Category>().unwrap();
+
+        assert_eq!(result, Category::EmailArrived);
+    }
+
+    #[test]
+    fn category_from_str_with_network_error_returns_correct_variant() {
+        let result = "network.error".parse::<Category>().unwrap();
+
+        assert_eq!(result, Category::NetworkError);
+    }
+
+    #[test]
+    fn category_from_str_with_vendor_prefix_returns_vendor() {
+        let result = "x-custom-category".parse::<Category>().unwrap();
+
+        assert_eq!(result, Category::Vendor("x-custom-category".to_string()));
+    }
+
+    #[test]
+    fn category_from_str_with_unknown_wraps_in_vendor_format() {
+        let result = "unknown-category".parse::<Category>().unwrap();
+
+        assert_eq!(
+            result,
+            Category::Vendor("x-unknown-unknown-category".to_string())
+        );
+    }
+
+    #[test]
+    fn category_as_str_for_call_returns_correct_string() {
+        let cat = Category::Call;
+
+        let result = cat.as_str();
+
+        assert_eq!(result, "call");
+    }
+
+    #[test]
+    fn category_as_str_for_email_arrived_returns_correct_string() {
+        let cat = Category::EmailArrived;
+
+        let result = cat.as_str();
+
+        assert_eq!(result, "email.arrived");
+    }
+
+    #[test]
+    fn category_as_str_with_vendor_returns_inner_string() {
+        let cat = Category::Vendor("x-custom".to_string());
+
+        let result = cat.as_str();
+
+        assert_eq!(result, "x-custom");
+    }
+}

@@ -127,3 +127,203 @@ pub struct DeviceStateChangedEvent {
     /// The reason for the state change.
     pub reason: NMDeviceStateReason,
 }
+
+#[cfg(test)]
+mod tests {
+    use zbus::zvariant::Value;
+
+    use super::*;
+
+    fn create_test_settings() -> HashMap<String, HashMap<String, OwnedValue>> {
+        let mut settings = HashMap::new();
+        let mut connection_section = HashMap::new();
+        connection_section.insert(
+            "uuid".to_string(),
+            Value::from("test-uuid-123").try_to_owned().unwrap(),
+        );
+        connection_section.insert(
+            "id".to_string(),
+            Value::from("Test Connection").try_to_owned().unwrap(),
+        );
+        connection_section.insert(
+            "type".to_string(),
+            Value::from("802-11-wireless").try_to_owned().unwrap(),
+        );
+        settings.insert("connection".to_string(), connection_section);
+        settings
+    }
+
+    #[test]
+    fn uuid_returns_some_when_connection_uuid_exists() {
+        let settings = create_test_settings();
+        let applied = AppliedConnection {
+            settings,
+            version_id: 1,
+        };
+
+        assert_eq!(applied.uuid(), Some("test-uuid-123".to_string()));
+    }
+
+    #[test]
+    fn uuid_returns_none_when_connection_section_missing() {
+        let settings = HashMap::new();
+        let applied = AppliedConnection {
+            settings,
+            version_id: 1,
+        };
+
+        assert_eq!(applied.uuid(), None);
+    }
+
+    #[test]
+    fn uuid_returns_none_when_uuid_field_missing() {
+        let mut settings = HashMap::new();
+        let mut connection_section = HashMap::new();
+        connection_section.insert(
+            "id".to_string(),
+            Value::from("Test").try_to_owned().unwrap(),
+        );
+        settings.insert("connection".to_string(), connection_section);
+
+        let applied = AppliedConnection {
+            settings,
+            version_id: 1,
+        };
+
+        assert_eq!(applied.uuid(), None);
+    }
+
+    #[test]
+    fn uuid_returns_none_when_uuid_not_string() {
+        let mut settings = HashMap::new();
+        let mut connection_section = HashMap::new();
+        connection_section.insert(
+            "uuid".to_string(),
+            Value::from(42u32).try_to_owned().unwrap(),
+        );
+        settings.insert("connection".to_string(), connection_section);
+
+        let applied = AppliedConnection {
+            settings,
+            version_id: 1,
+        };
+
+        assert_eq!(applied.uuid(), None);
+    }
+
+    #[test]
+    fn id_returns_some_when_connection_id_exists() {
+        let settings = create_test_settings();
+        let applied = AppliedConnection {
+            settings,
+            version_id: 1,
+        };
+
+        assert_eq!(applied.id(), Some("Test Connection".to_string()));
+    }
+
+    #[test]
+    fn id_returns_none_when_connection_section_missing() {
+        let settings = HashMap::new();
+        let applied = AppliedConnection {
+            settings,
+            version_id: 1,
+        };
+
+        assert_eq!(applied.id(), None);
+    }
+
+    #[test]
+    fn id_returns_none_when_id_field_missing() {
+        let mut settings = HashMap::new();
+        let mut connection_section = HashMap::new();
+        connection_section.insert(
+            "uuid".to_string(),
+            Value::from("test-uuid").try_to_owned().unwrap(),
+        );
+        settings.insert("connection".to_string(), connection_section);
+
+        let applied = AppliedConnection {
+            settings,
+            version_id: 1,
+        };
+
+        assert_eq!(applied.id(), None);
+    }
+
+    #[test]
+    fn id_returns_none_when_id_not_string() {
+        let mut settings = HashMap::new();
+        let mut connection_section = HashMap::new();
+        connection_section.insert("id".to_string(), Value::from(true).try_to_owned().unwrap());
+        settings.insert("connection".to_string(), connection_section);
+
+        let applied = AppliedConnection {
+            settings,
+            version_id: 1,
+        };
+
+        assert_eq!(applied.id(), None);
+    }
+
+    #[test]
+    fn connection_type_returns_some_when_type_exists() {
+        let settings = create_test_settings();
+        let applied = AppliedConnection {
+            settings,
+            version_id: 1,
+        };
+
+        assert_eq!(
+            applied.connection_type(),
+            Some("802-11-wireless".to_string())
+        );
+    }
+
+    #[test]
+    fn connection_type_returns_none_when_connection_section_missing() {
+        let settings = HashMap::new();
+        let applied = AppliedConnection {
+            settings,
+            version_id: 1,
+        };
+
+        assert_eq!(applied.connection_type(), None);
+    }
+
+    #[test]
+    fn connection_type_returns_none_when_type_field_missing() {
+        let mut settings = HashMap::new();
+        let mut connection_section = HashMap::new();
+        connection_section.insert(
+            "uuid".to_string(),
+            Value::from("test-uuid").try_to_owned().unwrap(),
+        );
+        settings.insert("connection".to_string(), connection_section);
+
+        let applied = AppliedConnection {
+            settings,
+            version_id: 1,
+        };
+
+        assert_eq!(applied.connection_type(), None);
+    }
+
+    #[test]
+    fn connection_type_returns_none_when_type_not_string() {
+        let mut settings = HashMap::new();
+        let mut connection_section = HashMap::new();
+        connection_section.insert(
+            "type".to_string(),
+            Value::from(123i32).try_to_owned().unwrap(),
+        );
+        settings.insert("connection".to_string(), connection_section);
+
+        let applied = AppliedConnection {
+            settings,
+            version_id: 1,
+        };
+
+        assert_eq!(applied.connection_type(), None);
+    }
+}

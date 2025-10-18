@@ -3,7 +3,6 @@ use std::{
     fmt::{self, Debug, Display, Formatter},
 };
 
-use serde::{Deserialize, Serialize};
 use zbus::zvariant::OwnedValue;
 
 /// Raw menu item properties from D-Bus.
@@ -25,13 +24,11 @@ pub type RawMenuItemKeysList = Vec<RawMenuItemKeys>;
 pub type RawMenuLayout = (u32, (i32, HashMap<String, OwnedValue>, Vec<OwnedValue>));
 
 /// Type of a DBusMenu item.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MenuItemType {
     /// Standard clickable menu item.
-    #[serde(rename = "standard")]
     Standard,
     /// Menu separator.
-    #[serde(rename = "separator")]
     Separator,
 }
 
@@ -60,16 +57,13 @@ impl Display for MenuItemType {
 }
 
 /// Toggle type for checkable menu items.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ToggleType {
     /// No toggle capability.
-    #[serde(rename = "none")]
     None,
     /// Checkbox (independent toggle).
-    #[serde(rename = "checkmark")]
     Checkmark,
     /// Radio button (mutually exclusive within group).
-    #[serde(rename = "radio")]
     Radio,
 }
 
@@ -100,16 +94,13 @@ impl Display for ToggleType {
 }
 
 /// Toggle state for checkable menu items.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ToggleState {
     /// Unchecked state.
-    #[serde(rename = "unchecked")]
     Unchecked,
     /// Checked state.
-    #[serde(rename = "checked")]
     Checked,
     /// Indeterminate state.
-    #[serde(rename = "unknown")]
     Unknown,
 }
 
@@ -140,28 +131,23 @@ impl From<ToggleState> for i32 {
 }
 
 /// Disposition of a menu item.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Disposition {
     /// Normal menu item.
-    #[serde(rename = "normal")]
     Normal,
     /// Informative item.
-    #[serde(rename = "informative")]
     Informative,
     /// Warning item.
-    #[serde(rename = "warning")]
     Warning,
     /// Alert item.
-    #[serde(rename = "alert")]
     Alert,
 }
 
 /// How children of a menu item should be displayed.
 /// Only one value is defined in the spec: "submenu".
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ChildrenDisplay {
     /// Children should be displayed as a submenu.
-    #[serde(rename = "submenu")]
     Submenu,
 }
 
@@ -215,19 +201,15 @@ impl Display for Disposition {
 }
 
 /// DBusMenu event types.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MenuEvent {
     /// Item was clicked.
-    #[serde(rename = "clicked")]
     Clicked,
     /// Mouse hovered over item.
-    #[serde(rename = "hovered")]
     Hovered,
     /// Submenu was opened.
-    #[serde(rename = "opened")]
     Opened,
     /// Submenu was closed.
-    #[serde(rename = "closed")]
     Closed,
 }
 
@@ -258,7 +240,7 @@ impl Display for MenuEvent {
 ///
 /// Contains all official properties from the DBusMenu specification.
 /// Properties map from com.canonical.dbusmenu as defined in libdbusmenu.
-#[derive(Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, PartialEq)]
 pub struct MenuItem {
     /// Menu item ID (always present).
     pub id: i32,
@@ -512,4 +494,374 @@ pub struct DBusMenuLayoutItem {
     pub properties: HashMap<String, OwnedValue>,
     /// Child items.
     pub children: Vec<OwnedValue>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn menu_item_type_from_str_with_separator_returns_separator() {
+        let item_type = MenuItemType::from("separator");
+        assert_eq!(item_type, MenuItemType::Separator);
+    }
+
+    #[test]
+    fn menu_item_type_from_str_with_standard_returns_standard() {
+        let item_type = MenuItemType::from("standard");
+        assert_eq!(item_type, MenuItemType::Standard);
+    }
+
+    #[test]
+    fn menu_item_type_from_str_with_unknown_returns_standard() {
+        let item_type = MenuItemType::from("unknown");
+        assert_eq!(item_type, MenuItemType::Standard);
+    }
+
+    #[test]
+    fn toggle_type_from_str_with_checkmark_returns_checkmark() {
+        let toggle_type = ToggleType::from("checkmark");
+        assert_eq!(toggle_type, ToggleType::Checkmark);
+    }
+
+    #[test]
+    fn toggle_type_from_str_with_radio_returns_radio() {
+        let toggle_type = ToggleType::from("radio");
+        assert_eq!(toggle_type, ToggleType::Radio);
+    }
+
+    #[test]
+    fn toggle_type_from_str_with_unknown_returns_none() {
+        let toggle_type = ToggleType::from("unknown");
+        assert_eq!(toggle_type, ToggleType::None);
+    }
+
+    #[test]
+    fn toggle_state_from_i32_with_zero_returns_unchecked() {
+        let state = ToggleState::from(0);
+        assert_eq!(state, ToggleState::Unchecked);
+    }
+
+    #[test]
+    fn toggle_state_from_i32_with_one_returns_checked() {
+        let state = ToggleState::from(1);
+        assert_eq!(state, ToggleState::Checked);
+    }
+
+    #[test]
+    fn toggle_state_from_i32_with_negative_returns_unknown() {
+        let state = ToggleState::from(-1);
+        assert_eq!(state, ToggleState::Unknown);
+    }
+
+    #[test]
+    fn toggle_state_to_i32_unchecked_returns_zero() {
+        let value: i32 = ToggleState::Unchecked.into();
+        assert_eq!(value, 0);
+    }
+
+    #[test]
+    fn toggle_state_to_i32_checked_returns_one() {
+        let value: i32 = ToggleState::Checked.into();
+        assert_eq!(value, 1);
+    }
+
+    #[test]
+    fn toggle_state_to_i32_unknown_returns_negative_one() {
+        let value: i32 = ToggleState::Unknown.into();
+        assert_eq!(value, -1);
+    }
+
+    #[test]
+    fn disposition_from_str_with_informative_returns_informative() {
+        let disposition = Disposition::from("informative");
+        assert_eq!(disposition, Disposition::Informative);
+    }
+
+    #[test]
+    fn disposition_from_str_with_warning_returns_warning() {
+        let disposition = Disposition::from("warning");
+        assert_eq!(disposition, Disposition::Warning);
+    }
+
+    #[test]
+    fn disposition_from_str_with_alert_returns_alert() {
+        let disposition = Disposition::from("alert");
+        assert_eq!(disposition, Disposition::Alert);
+    }
+
+    #[test]
+    fn disposition_from_str_with_unknown_returns_normal() {
+        let disposition = Disposition::from("unknown");
+        assert_eq!(disposition, Disposition::Normal);
+    }
+
+    #[test]
+    fn children_display_from_str_always_returns_submenu() {
+        assert_eq!(ChildrenDisplay::from("submenu"), ChildrenDisplay::Submenu);
+        assert_eq!(ChildrenDisplay::from("unknown"), ChildrenDisplay::Submenu);
+        assert_eq!(ChildrenDisplay::from(""), ChildrenDisplay::Submenu);
+    }
+
+    #[test]
+    fn menu_event_from_str_with_clicked_returns_clicked() {
+        let event = MenuEvent::from("clicked");
+        assert_eq!(event, MenuEvent::Clicked);
+    }
+
+    #[test]
+    fn menu_event_from_str_with_hovered_returns_hovered() {
+        let event = MenuEvent::from("hovered");
+        assert_eq!(event, MenuEvent::Hovered);
+    }
+
+    #[test]
+    fn menu_event_from_str_with_opened_returns_opened() {
+        let event = MenuEvent::from("opened");
+        assert_eq!(event, MenuEvent::Opened);
+    }
+
+    #[test]
+    fn menu_event_from_str_with_closed_returns_closed() {
+        let event = MenuEvent::from("closed");
+        assert_eq!(event, MenuEvent::Closed);
+    }
+
+    #[test]
+    fn menu_event_from_str_with_unknown_returns_clicked() {
+        let event = MenuEvent::from("unknown");
+        assert_eq!(event, MenuEvent::Clicked);
+    }
+
+    #[test]
+    fn menu_item_is_separator_with_separator_type_returns_true() {
+        let item = MenuItem {
+            id: 1,
+            label: None,
+            enabled: true,
+            visible: true,
+            item_type: MenuItemType::Separator,
+            toggle_type: ToggleType::None,
+            toggle_state: ToggleState::Unchecked,
+            icon_name: None,
+            icon_data: None,
+            accessible_desc: None,
+            shortcut: None,
+            disposition: Disposition::Normal,
+            children_display: ChildrenDisplay::Submenu,
+            children: vec![],
+        };
+
+        assert!(item.is_separator());
+    }
+
+    #[test]
+    fn menu_item_is_separator_with_standard_type_returns_false() {
+        let item = MenuItem {
+            id: 1,
+            label: None,
+            enabled: true,
+            visible: true,
+            item_type: MenuItemType::Standard,
+            toggle_type: ToggleType::None,
+            toggle_state: ToggleState::Unchecked,
+            icon_name: None,
+            icon_data: None,
+            accessible_desc: None,
+            shortcut: None,
+            disposition: Disposition::Normal,
+            children_display: ChildrenDisplay::Submenu,
+            children: vec![],
+        };
+
+        assert!(!item.is_separator());
+    }
+
+    #[test]
+    fn menu_item_has_children_with_empty_vec_returns_false() {
+        let item = MenuItem {
+            id: 1,
+            label: None,
+            enabled: true,
+            visible: true,
+            item_type: MenuItemType::Standard,
+            toggle_type: ToggleType::None,
+            toggle_state: ToggleState::Unchecked,
+            icon_name: None,
+            icon_data: None,
+            accessible_desc: None,
+            shortcut: None,
+            disposition: Disposition::Normal,
+            children_display: ChildrenDisplay::Submenu,
+            children: vec![],
+        };
+
+        assert!(!item.has_children());
+    }
+
+    #[test]
+    fn menu_item_has_children_with_items_returns_true() {
+        let child = MenuItem {
+            id: 2,
+            label: Some(String::from("Child")),
+            enabled: true,
+            visible: true,
+            item_type: MenuItemType::Standard,
+            toggle_type: ToggleType::None,
+            toggle_state: ToggleState::Unchecked,
+            icon_name: None,
+            icon_data: None,
+            accessible_desc: None,
+            shortcut: None,
+            disposition: Disposition::Normal,
+            children_display: ChildrenDisplay::Submenu,
+            children: vec![],
+        };
+
+        let item = MenuItem {
+            id: 1,
+            label: None,
+            enabled: true,
+            visible: true,
+            item_type: MenuItemType::Standard,
+            toggle_type: ToggleType::None,
+            toggle_state: ToggleState::Unchecked,
+            icon_name: None,
+            icon_data: None,
+            accessible_desc: None,
+            shortcut: None,
+            disposition: Disposition::Normal,
+            children_display: ChildrenDisplay::Submenu,
+            children: vec![child],
+        };
+
+        assert!(item.has_children());
+    }
+
+    #[test]
+    fn menu_item_has_submenu_with_empty_vec_returns_false() {
+        let item = MenuItem {
+            id: 1,
+            label: None,
+            enabled: true,
+            visible: true,
+            item_type: MenuItemType::Standard,
+            toggle_type: ToggleType::None,
+            toggle_state: ToggleState::Unchecked,
+            icon_name: None,
+            icon_data: None,
+            accessible_desc: None,
+            shortcut: None,
+            disposition: Disposition::Normal,
+            children_display: ChildrenDisplay::Submenu,
+            children: vec![],
+        };
+
+        assert!(!item.has_submenu());
+    }
+
+    #[test]
+    fn menu_item_has_submenu_with_items_returns_true() {
+        let child = MenuItem {
+            id: 2,
+            label: Some(String::from("Child")),
+            enabled: true,
+            visible: true,
+            item_type: MenuItemType::Standard,
+            toggle_type: ToggleType::None,
+            toggle_state: ToggleState::Unchecked,
+            icon_name: None,
+            icon_data: None,
+            accessible_desc: None,
+            shortcut: None,
+            disposition: Disposition::Normal,
+            children_display: ChildrenDisplay::Submenu,
+            children: vec![],
+        };
+
+        let item = MenuItem {
+            id: 1,
+            label: None,
+            enabled: true,
+            visible: true,
+            item_type: MenuItemType::Standard,
+            toggle_type: ToggleType::None,
+            toggle_state: ToggleState::Unchecked,
+            icon_name: None,
+            icon_data: None,
+            accessible_desc: None,
+            shortcut: None,
+            disposition: Disposition::Normal,
+            children_display: ChildrenDisplay::Submenu,
+            children: vec![child],
+        };
+
+        assert!(item.has_submenu());
+    }
+
+    #[test]
+    fn menu_item_is_checkable_with_checkmark_returns_true() {
+        let item = MenuItem {
+            id: 1,
+            label: None,
+            enabled: true,
+            visible: true,
+            item_type: MenuItemType::Standard,
+            toggle_type: ToggleType::Checkmark,
+            toggle_state: ToggleState::Unchecked,
+            icon_name: None,
+            icon_data: None,
+            accessible_desc: None,
+            shortcut: None,
+            disposition: Disposition::Normal,
+            children_display: ChildrenDisplay::Submenu,
+            children: vec![],
+        };
+
+        assert!(item.is_checkable());
+    }
+
+    #[test]
+    fn menu_item_is_checkable_with_radio_returns_true() {
+        let item = MenuItem {
+            id: 1,
+            label: None,
+            enabled: true,
+            visible: true,
+            item_type: MenuItemType::Standard,
+            toggle_type: ToggleType::Radio,
+            toggle_state: ToggleState::Unchecked,
+            icon_name: None,
+            icon_data: None,
+            accessible_desc: None,
+            shortcut: None,
+            disposition: Disposition::Normal,
+            children_display: ChildrenDisplay::Submenu,
+            children: vec![],
+        };
+
+        assert!(item.is_checkable());
+    }
+
+    #[test]
+    fn menu_item_is_checkable_with_none_returns_false() {
+        let item = MenuItem {
+            id: 1,
+            label: None,
+            enabled: true,
+            visible: true,
+            item_type: MenuItemType::Standard,
+            toggle_type: ToggleType::None,
+            toggle_state: ToggleState::Unchecked,
+            icon_name: None,
+            icon_data: None,
+            accessible_desc: None,
+            shortcut: None,
+            disposition: Disposition::Normal,
+            children_display: ChildrenDisplay::Submenu,
+            children: vec![],
+        };
+
+        assert!(!item.is_checkable());
+    }
 }

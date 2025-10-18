@@ -4,10 +4,9 @@ pub mod item;
 pub mod menu;
 
 use item::ScrollOrientation;
-use serde::{Deserialize, Serialize};
 
 /// Coordinates for mouse events.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Coordinates {
     /// X coordinate.
     pub x: i32,
@@ -23,7 +22,7 @@ impl Coordinates {
 }
 
 /// Scroll delta and orientation.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ScrollDelta {
     /// Number of scroll steps (positive = down/right, negative = up/left).
     pub delta: i32,
@@ -58,4 +57,17 @@ pub enum TrayMode {
     Host,
     /// Auto-detect based on whether watcher name is available.
     Auto,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn coordinates_new_creates_with_correct_values() {
+        let coords = Coordinates::new(100, 200);
+
+        assert_eq!(coords.x, 100);
+        assert_eq!(coords.y, 200);
+    }
 }

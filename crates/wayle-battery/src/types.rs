@@ -1,9 +1,7 @@
 use std::fmt::{Display, Formatter, Result as FmtResult};
 
-use serde::{Deserialize, Serialize};
-
 /// Type of power source as defined by UPower
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DeviceType {
     /// Unknown device type
     Unknown,
@@ -138,7 +136,7 @@ impl Display for DeviceType {
 }
 
 /// The battery power state as defined by UPower
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DeviceState {
     /// Unknown state
     Unknown,
@@ -185,7 +183,7 @@ impl Display for DeviceState {
 }
 
 /// Technology used in the battery
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BatteryTechnology {
     /// Unknown technology
     Unknown,
@@ -232,7 +230,7 @@ impl Display for BatteryTechnology {
 }
 
 /// Warning level of the battery
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum WarningLevel {
     /// Unknown warning level
     Unknown,
@@ -275,7 +273,7 @@ impl Display for WarningLevel {
 }
 
 /// Battery level for devices with coarse reporting
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BatteryLevel {
     /// Unknown battery level
     Unknown,

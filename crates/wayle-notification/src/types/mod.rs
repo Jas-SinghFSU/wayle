@@ -39,3 +39,35 @@ impl Signal {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn signal_notification_closed_returns_correct_str() {
+        let signal = Signal::NotificationClosed;
+
+        let result = signal.as_str();
+
+        assert_eq!(result, "NotificationClosed");
+    }
+
+    #[test]
+    fn signal_action_invoked_returns_correct_str() {
+        let signal = Signal::ActionInvoked;
+
+        let result = signal.as_str();
+
+        assert_eq!(result, "ActionInvoked");
+    }
+
+    #[test]
+    fn signal_activation_token_returns_correct_str() {
+        let signal = Signal::ActivationToken;
+
+        let result = signal.as_str();
+
+        assert_eq!(result, "ActivationToken");
+    }
+}
