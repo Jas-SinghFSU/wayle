@@ -28,7 +28,7 @@ A fast, configurable desktop environment shell for Wayland compositors. Built in
 
 ### UI Components
 
-- [ ] **Component Library** - Base Relm4 widgets and containers
+- [ ] **Component Library (WIP)** - Base Relm4 widgets and containers
 - [ ] **Bar Modules**:
   - [ ] Battery
   - [ ] Dashboard
