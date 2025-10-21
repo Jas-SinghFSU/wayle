@@ -1,6 +1,6 @@
 use schemars::Schema;
 
-use crate::config::clock::ClockConfig;
+use crate::config::schemas::clock::ClockConfig;
 
 pub(crate) type SchemeFn = fn() -> Schema;
 

@@ -14,9 +14,6 @@ pub mod config;
 /// Documentation generation for configuration schemas.
 pub mod docs;
 
-/// Reactive configuration runtime with change tracking.
-pub mod config_runtime;
-
 /// Command-line interface for configuration management.
 pub mod cli;
 

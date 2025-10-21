@@ -36,7 +36,8 @@ tracing-subscriber.workspace = true
 zbus.workspace = true
 
 # Common dependencies
-wayle-common.workspace = true
+wayle-common = { workspace = true, features = ["schema"] }
+wayle-derive.workspace = true
 wayle-traits.workspace = true
 
 # Service dependencies

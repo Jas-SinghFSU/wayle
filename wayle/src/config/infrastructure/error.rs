@@ -61,6 +61,24 @@ pub enum Error {
         /// Import error details
         details: String,
     },
+
+    /// Error occurred while serializing configuration
+    #[error("failed to serialize {content_type}: {details}")]
+    SerializationError {
+        /// Type of content being serialized
+        content_type: String,
+        /// Serialization error details
+        details: String,
+    },
+
+    /// Error occurred while persisting configuration to disk
+    #[error("failed to persist config to '{path}': {details}")]
+    PersistenceError {
+        /// Path where persistence failed
+        path: PathBuf,
+        /// Error details from the persistence operation
+        details: String,
+    },
 }
 
 impl Error {

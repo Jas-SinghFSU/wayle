@@ -9,7 +9,7 @@ pub mod macros;
 mod property;
 mod state;
 
-pub use property::{ComputedProperty, Property, PropertyStream};
+pub use property::{ComputedProperty, Property, PropertyStream, SubscribeChanges, UpdateFromToml};
 pub use state::RuntimeState;
 
 /// Root path for service object paths in D-Bus hierarchy.

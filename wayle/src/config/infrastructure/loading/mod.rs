@@ -13,8 +13,8 @@ use file_creation::create_default_config_file;
 use merging::merge_toml_configs;
 use toml::Value;
 
-use super::Config;
-use crate::config::error::Error;
+use super::error::Error;
+use crate::config::Config;
 
 impl Config {
     /// Loads a configuration file with support for importing other TOML files

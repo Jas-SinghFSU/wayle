@@ -2234,6 +2234,7 @@ dependencies = [
  "wayle-battery",
  "wayle-bluetooth",
  "wayle-common",
+ "wayle-derive",
  "wayle-media",
  "wayle-network",
  "wayle-notification",
@@ -2317,11 +2318,26 @@ name = "wayle-common"
 version = "0.1.0"
 dependencies = [
  "futures",
+ "schemars",
  "serde",
  "serde_json",
  "tempfile",
  "tokio",
  "tokio-stream",
+ "toml 0.9.7",
+ "tracing",
+]
+
+[[package]]
+name = "wayle-derive"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+ "tokio",
+ "toml 0.9.7",
+ "wayle-common",
 ]
 
 [[package]]

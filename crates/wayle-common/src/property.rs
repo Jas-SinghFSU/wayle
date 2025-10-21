@@ -1,8 +1,38 @@
 use std::fmt::Debug;
 
 use futures::stream::{Stream, StreamExt};
-use tokio::sync::watch;
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use tokio::sync::{mpsc, watch};
 use tokio_stream::wrappers::WatchStream;
+use tracing::warn;
+
+#[cfg(feature = "schema")]
+use std::borrow::Cow;
+
+#[cfg(feature = "schema")]
+use schemars::{JsonSchema, Schema, SchemaGenerator};
+
+/// Trait for updating struct fields from TOML values.
+///
+/// Enables dynamic updates from configuration files without losing
+/// existing Property watchers. Implement this trait to enable config reloading.
+pub trait UpdateFromToml {
+    /// Update this value from a TOML value.
+    ///
+    /// If deserialization fails, implementations should log and skip the update
+    /// rather than returning an error, allowing partial updates to succeed.
+    fn update_from_toml(&self, value: &toml::Value);
+}
+
+/// Trait for subscribing to changes in config structures.
+///
+/// Enables automatic persistence by watching all fields for changes.
+pub trait SubscribeChanges {
+    /// Subscribe to changes by sending notifications to the provided channel.
+    ///
+    /// Spawns background tasks that watch for changes and send () to the channel.
+    fn subscribe_changes(&self, tx: mpsc::UnboundedSender<()>);
+}
 
 /// Stream of property value changes.
 pub type PropertyStream<T> = Box<dyn Stream<Item = T> + Send + Unpin>;
@@ -64,6 +94,70 @@ impl<T: Clone + Send + Sync + Debug + 'static> Debug for Property<T> {
         f.debug_struct("Property")
             .field("value", &self.get())
             .finish()
+    }
+}
+
+impl<T: Clone + Send + Sync + Serialize + 'static> Serialize for Property<T> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        self.get().serialize(serializer)
+    }
+}
+
+impl<'de, T: Clone + Send + Sync + Deserialize<'de> + 'static> Deserialize<'de> for Property<T> {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let value = T::deserialize(deserializer)?;
+        Ok(Property::new(value))
+    }
+}
+
+#[cfg(feature = "schema")]
+impl<T: Clone + Send + Sync + JsonSchema + 'static> JsonSchema for Property<T> {
+    fn schema_name() -> Cow<'static, str> {
+        T::schema_name()
+    }
+
+    fn json_schema(gen_param: &mut SchemaGenerator) -> Schema {
+        T::json_schema(gen_param)
+    }
+}
+
+impl<T> UpdateFromToml for Property<T>
+where
+    T: Clone + Send + Sync + PartialEq + for<'de> Deserialize<'de> + 'static,
+{
+    fn update_from_toml(&self, value: &toml::Value) {
+        match T::deserialize(value.clone()) {
+            Ok(new_value) => {
+                self.set(new_value);
+            }
+            Err(e) => {
+                warn!(
+                    error = %e,
+                    value = ?value,
+                    "Failed to deserialize TOML value for Property, skipping update"
+                );
+            }
+        }
+    }
+}
+
+impl<T: Clone + Send + Sync + 'static> SubscribeChanges for Property<T> {
+    fn subscribe_changes(&self, tx: mpsc::UnboundedSender<()>) {
+        let mut watch_stream = self.watch();
+
+        tokio::spawn(async move {
+            watch_stream.next().await;
+
+            while watch_stream.next().await.is_some() {
+                let _ = tx.send(());
+            }
+        });
     }
 }
 
@@ -258,5 +352,90 @@ mod tests {
 
         let count_after_send = counter.load(std::sync::atomic::Ordering::SeqCst);
         assert_eq!(count_after_send, count_after_drop);
+    }
+
+    #[test]
+    fn serializes_to_inner_value() {
+        let property = Property::new(42);
+
+        let json = serde_json::to_string(&property).unwrap();
+
+        assert_eq!(json, "42");
+    }
+
+    #[test]
+    fn deserializes_from_inner_value() {
+        let json = "\"hello\"";
+
+        let property: Property<String> = serde_json::from_str(json).unwrap();
+
+        assert_eq!(property.get(), "hello");
+    }
+
+    #[test]
+    fn roundtrip_serialization() {
+        use serde::{Deserialize, Serialize};
+
+        #[derive(Debug, Clone, Serialize, Deserialize)]
+        struct Config {
+            name: Property<String>,
+            count: Property<i32>,
+            enabled: Property<bool>,
+        }
+
+        let config = Config {
+            name: Property::new(String::from("test")),
+            count: Property::new(42),
+            enabled: Property::new(true),
+        };
+
+        let json = serde_json::to_string(&config).unwrap();
+        let deserialized: Config = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(deserialized.name.get(), "test");
+        assert_eq!(deserialized.count.get(), 42);
+        assert!(deserialized.enabled.get());
+    }
+
+    #[test]
+    fn toml_serialization() {
+        use serde::{Deserialize, Serialize};
+
+        #[derive(Debug, Clone, Serialize, Deserialize)]
+        struct ClockConfig {
+            format: Property<String>,
+            show_seconds: Property<bool>,
+        }
+
+        let config = ClockConfig {
+            format: Property::new(String::from("%H:%M")),
+            show_seconds: Property::new(false),
+        };
+
+        let toml_string = toml::to_string(&config).unwrap();
+
+        assert!(toml_string.contains("format = \"%H:%M\""));
+        assert!(toml_string.contains("show_seconds = false"));
+    }
+
+    #[test]
+    fn toml_deserialization() {
+        use serde::{Deserialize, Serialize};
+
+        #[derive(Debug, Clone, Serialize, Deserialize)]
+        struct ClockConfig {
+            format: Property<String>,
+            show_seconds: Property<bool>,
+        }
+
+        let toml_string = r#"
+            format = "%H:%M:%S"
+            show_seconds = true
+        "#;
+
+        let config: ClockConfig = toml::from_str(toml_string).unwrap();
+
+        assert_eq!(config.format.get(), "%H:%M:%S");
+        assert!(config.show_seconds.get());
     }
 }

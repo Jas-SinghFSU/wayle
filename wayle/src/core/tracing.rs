@@ -2,7 +2,7 @@ use std::{env, error::Error, io, mem};
 
 use tracing_subscriber::{EnvFilter, Layer, fmt, layer::SubscriberExt, util::SubscriberInitExt};
 
-use crate::config::paths::ConfigPaths;
+use crate::config::infrastructure::paths::ConfigPaths;
 
 /// Initialize tracing for the application
 ///

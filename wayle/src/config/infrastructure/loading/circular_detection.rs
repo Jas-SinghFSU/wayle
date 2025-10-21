@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use crate::config::error::Error;
+use crate::config::infrastructure::error::Error;
 
 /// Tracks import chains for circular detection
 pub(crate) struct CircularDetector {

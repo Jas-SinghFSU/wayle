@@ -1,18 +1,23 @@
-use crate::{cli::CliAction, config_runtime::runtime::ConfigRuntime};
+use crate::{cli::CliAction, config::ConfigService};
 
 /// Execute the command
 ///
 /// # Errors
 /// Returns error if config loading fails, value parsing fails, or path cannot be set.
 pub async fn execute(path: String, value: String) -> CliAction {
-    let config_runtime =
-        ConfigRuntime::load().map_err(|e| format!("Failed to load config: {e}"))?;
+    let config_service =
+        ConfigService::load().await.map_err(|e| format!("Failed to load config: {e}"))?;
 
     let toml_value = parse_toml_value(&value)?;
 
-    config_runtime
+    config_service
         .set_by_path(&path, toml_value)
         .map_err(|e| format!("Failed to set config at '{path}': {e}"))?;
+
+    config_service
+        .save()
+        .await
+        .map_err(|e| format!("Failed to save config: {e}"))?;
 
     println!("Set {path} = {value}");
 

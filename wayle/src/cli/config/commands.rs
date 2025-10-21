@@ -15,9 +15,4 @@ pub enum ConfigCommands {
         /// The value to set (use JSON format for complex types)
         value: String,
     },
-    /// Watch for changes to a configuration path
-    Watch {
-        /// The configuration path to watch (e.g., "modules.battery.enabled")
-        path: String,
-    },
 }
