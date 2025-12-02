@@ -117,12 +117,16 @@ wayle config set general.theme dark
 ```
 
 ## Building
+
 Switch to nightly Rust:
+
 ```bash
 rustup toolchain install nightly
 rustup default nightly
 ```
+
 Then clone the repository and build:
+
 ```bash
 git clone https://github.com/Jas-SinghFSU/wayle
 cd wayle
@@ -131,4 +135,4 @@ cargo install --path wayle
 
 ## License
 
-GPL-3.0-only
+MIT
