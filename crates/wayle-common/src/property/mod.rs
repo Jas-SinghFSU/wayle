@@ -1,10 +1,60 @@
+//! Reactive property system with layered configuration support.
+//!
+//! This module provides reactive properties that can be watched for changes,
+//! with special support for three-layer configuration (default, config, runtime).
+//!
+//! # Data Flow
+//!
+//! ```text
+//! config.toml --> ApplyConfigLayer --> ConfigProperty.config
+//!                                              |
+//!                                              v
+//! runtime.toml --> ApplyRuntimeLayer --> ConfigProperty.runtime --> effective value
+//!                                              |
+//!                                              v
+//!                                      SubscribeChanges --> watchers
+//!
+//! On save:
+//!
+//! ConfigProperty.runtime --> ExtractRuntimeValues --> runtime.toml
+//! ```
+//!
+//! # Layer Precedence
+//!
+//! The effective value follows: `runtime > config > default`
+//!
+//! - **Default**: Compiled-in value, always present
+//! - **Config**: User's base configuration from `config.toml`
+//! - **Runtime**: GUI overrides persisted to `runtime.toml`
+//!
+//! # Value Source
+//!
+//! [`ValueSource`] indicates where the effective value originates:
+//!
+//! - `Default` - Using compiled default (no config, no runtime)
+//! - `Config` - Using config.toml value (has config, no runtime)
+//! - `Custom` - Using runtime value without config.toml base (no config, has runtime)
+//! - `Override` - Runtime override of config.toml value (has config, has runtime)
+//!
+//! # Traits
+//!
+//! - [`ApplyConfigLayer`] - Apply TOML values to the config layer
+//! - [`ApplyRuntimeLayer`] - Apply TOML values to the runtime layer
+//! - [`ExtractRuntimeValues`] - Extract runtime overrides for persistence
+//! - [`SubscribeChanges`] - Subscribe to value change notifications
+//!
+//! All traits have derive macros in `wayle_derive` for automatic implementation
+//! on config structs.
+
+mod config;
+mod traits;
+
 use std::fmt::Debug;
 
 use futures::stream::{Stream, StreamExt};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use tokio::sync::{mpsc, watch};
+use tokio::sync::watch;
 use tokio_stream::wrappers::WatchStream;
-use tracing::warn;
 
 #[cfg(feature = "schema")]
 use std::borrow::Cow;
@@ -12,27 +62,8 @@ use std::borrow::Cow;
 #[cfg(feature = "schema")]
 use schemars::{JsonSchema, Schema, SchemaGenerator};
 
-/// Trait for updating struct fields from TOML values.
-///
-/// Enables dynamic updates from configuration files without losing
-/// existing Property watchers. Implement this trait to enable config reloading.
-pub trait UpdateFromToml {
-    /// Update this value from a TOML value.
-    ///
-    /// If deserialization fails, implementations should log and skip the update
-    /// rather than returning an error, allowing partial updates to succeed.
-    fn update_from_toml(&self, value: &toml::Value);
-}
-
-/// Trait for subscribing to changes in config structures.
-///
-/// Enables automatic persistence by watching all fields for changes.
-pub trait SubscribeChanges {
-    /// Subscribe to changes by sending notifications to the provided channel.
-    ///
-    /// Spawns background tasks that watch for changes and send () to the channel.
-    fn subscribe_changes(&self, tx: mpsc::UnboundedSender<()>);
-}
+pub use config::{ConfigProperty, ValueSource};
+pub use traits::{ApplyConfigLayer, ApplyRuntimeLayer, ExtractRuntimeValues, SubscribeChanges};
 
 /// Stream of property value changes.
 pub type PropertyStream<T> = Box<dyn Stream<Item = T> + Send + Unpin>;
@@ -56,9 +87,8 @@ impl<T: Clone + Send + Sync + 'static> Property<T> {
 
     /// Set the property value.
     ///
-    /// **Note**: This method is intended for service implementations only.
-    /// External consumers should not call this method directly.
-    #[doc(alias = "internal_set")]
+    /// For service runtime state only. Configuration values should use
+    /// `ConfigProperty` which provides layered default/config/runtime handling.
     pub fn set(&self, new_value: T)
     where
         T: PartialEq,
@@ -124,40 +154,6 @@ impl<T: Clone + Send + Sync + JsonSchema + 'static> JsonSchema for Property<T> {
 
     fn json_schema(gen_param: &mut SchemaGenerator) -> Schema {
         T::json_schema(gen_param)
-    }
-}
-
-impl<T> UpdateFromToml for Property<T>
-where
-    T: Clone + Send + Sync + PartialEq + for<'de> Deserialize<'de> + 'static,
-{
-    fn update_from_toml(&self, value: &toml::Value) {
-        match T::deserialize(value.clone()) {
-            Ok(new_value) => {
-                self.set(new_value);
-            }
-            Err(e) => {
-                warn!(
-                    error = %e,
-                    value = ?value,
-                    "Failed to deserialize TOML value for Property, skipping update"
-                );
-            }
-        }
-    }
-}
-
-impl<T: Clone + Send + Sync + 'static> SubscribeChanges for Property<T> {
-    fn subscribe_changes(&self, tx: mpsc::UnboundedSender<()>) {
-        let mut watch_stream = self.watch();
-
-        tokio::spawn(async move {
-            watch_stream.next().await;
-
-            while watch_stream.next().await.is_some() {
-                let _ = tx.send(());
-            }
-        });
     }
 }
 

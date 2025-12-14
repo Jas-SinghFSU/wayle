@@ -14,5 +14,5 @@ use zbus::{proxy, zvariant::Value as Variant};
 pub(crate) trait DHCP6Config {
     /// Configuration options returned by a DHCP server.
     #[zbus(property)]
-    fn options(&self) -> zbus::Result<HashMap<String, Variant>>;
+    fn options(&self) -> zbus::Result<HashMap<String, Variant<'_>>>;
 }

@@ -1,0 +1,356 @@
+use std::fmt::Debug;
+use std::sync::RwLock;
+
+use futures::{Stream, StreamExt};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use tokio::sync::mpsc;
+
+#[cfg(feature = "schema")]
+use std::borrow::Cow;
+
+#[cfg(feature = "schema")]
+use schemars::{JsonSchema, Schema, SchemaGenerator};
+
+use super::Property;
+use super::traits::{ApplyConfigLayer, ApplyRuntimeLayer, ExtractRuntimeValues, SubscribeChanges};
+
+/// Indicates where a configuration value originates from.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ValueSource {
+    /// Using the compiled default value.
+    Default,
+    /// Set in config.toml (user's base configuration).
+    Config,
+    /// Changed via GUI, not present in config.toml.
+    Custom,
+    /// GUI override of a config.toml value.
+    Override,
+}
+
+/// A layered configuration property with provenance tracking.
+///
+/// Wraps a reactive `Property<T>` and adds three-layer configuration support:
+/// - **Default**: Compiled-in default value
+/// - **Config**: Value from config.toml (user's base configuration)
+/// - **Runtime**: GUI overrides (stored in runtime.toml)
+///
+/// The effective value follows precedence: runtime > config > default.
+pub struct ConfigProperty<T: Clone + Send + Sync + PartialEq + 'static> {
+    default: T,
+    config: RwLock<Option<T>>,
+    runtime: RwLock<Option<T>>,
+    effective: Property<T>,
+}
+
+impl<T: Clone + Send + Sync + PartialEq + 'static> ConfigProperty<T> {
+    /// Creates a new ConfigProperty with the given default value.
+    pub fn new(default: T) -> Self {
+        let effective = Property::new(default.clone());
+        Self {
+            default,
+            config: RwLock::new(None),
+            runtime: RwLock::new(None),
+            effective,
+        }
+    }
+
+    /// Returns the effective (currently active) value.
+    ///
+    /// Precedence: runtime > config > default.
+    pub fn get(&self) -> T {
+        self.effective.get()
+    }
+
+    /// Returns the compiled default value.
+    pub fn default(&self) -> &T {
+        &self.default
+    }
+
+    /// Returns the config.toml value, if set.
+    pub fn config(&self) -> Option<T> {
+        self.config.read().ok().and_then(|guard| guard.clone())
+    }
+
+    /// Returns the runtime override value, if set.
+    pub fn runtime(&self) -> Option<T> {
+        self.runtime.read().ok().and_then(|guard| guard.clone())
+    }
+
+    /// Returns where the current effective value originates from.
+    pub fn source(&self) -> ValueSource {
+        let has_runtime = self
+            .runtime
+            .read()
+            .ok()
+            .is_some_and(|guard| guard.is_some());
+        let has_config = self.config.read().ok().is_some_and(|guard| guard.is_some());
+
+        match (has_runtime, has_config) {
+            (true, true) => ValueSource::Override,
+            (true, false) => ValueSource::Custom,
+            (false, true) => ValueSource::Config,
+            (false, false) => ValueSource::Default,
+        }
+    }
+
+    /// Sets a runtime override value (used by GUI).
+    ///
+    /// This value takes precedence over config.toml and default values.
+    pub fn set(&self, value: T) {
+        if let Ok(mut guard) = self.runtime.write() {
+            *guard = Some(value);
+        }
+        self.recompute_effective();
+    }
+
+    /// Clears the runtime override, falling back to config or default.
+    pub fn clear_runtime(&self) {
+        if let Ok(mut guard) = self.runtime.write() {
+            *guard = None;
+        }
+        self.recompute_effective();
+    }
+
+    /// Sets the config.toml value (used during config loading).
+    pub fn set_config(&self, value: T) {
+        if let Ok(mut guard) = self.config.write() {
+            *guard = Some(value);
+        }
+        self.recompute_effective();
+    }
+
+    /// Clears the config value (rarely needed).
+    pub fn clear_config(&self) {
+        if let Ok(mut guard) = self.config.write() {
+            *guard = None;
+        }
+        self.recompute_effective();
+    }
+
+    /// Watch for changes to the effective value.
+    ///
+    /// The stream immediately yields the current value, then yields
+    /// whenever the effective value changes.
+    pub fn watch(&self) -> impl Stream<Item = T> + Send + 'static {
+        self.effective.watch()
+    }
+
+    fn recompute_effective(&self) {
+        let runtime_value = self.runtime.read().ok().and_then(|guard| guard.clone());
+        let config_value = self.config.read().ok().and_then(|guard| guard.clone());
+
+        let effective = runtime_value
+            .or(config_value)
+            .unwrap_or_else(|| self.default.clone());
+
+        self.effective.set(effective);
+    }
+}
+
+impl<T: Clone + Send + Sync + PartialEq + 'static> Clone for ConfigProperty<T> {
+    fn clone(&self) -> Self {
+        let config_value = self.config.read().ok().and_then(|guard| guard.clone());
+        let runtime_value = self.runtime.read().ok().and_then(|guard| guard.clone());
+
+        Self {
+            default: self.default.clone(),
+            config: RwLock::new(config_value),
+            runtime: RwLock::new(runtime_value),
+            effective: self.effective.clone(),
+        }
+    }
+}
+
+impl<T: Clone + Send + Sync + PartialEq + Debug + 'static> Debug for ConfigProperty<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let config_value = self.config.read().ok().and_then(|guard| guard.clone());
+        let runtime_value = self.runtime.read().ok().and_then(|guard| guard.clone());
+
+        f.debug_struct("ConfigProperty")
+            .field("effective", &self.get())
+            .field("source", &self.source())
+            .field("default", &self.default)
+            .field("config", &config_value)
+            .field("runtime", &runtime_value)
+            .finish()
+    }
+}
+
+impl<T: Clone + Send + Sync + PartialEq + Serialize + 'static> Serialize for ConfigProperty<T> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        self.get().serialize(serializer)
+    }
+}
+
+impl<'de, T: Clone + Send + Sync + PartialEq + Deserialize<'de> + 'static> Deserialize<'de>
+    for ConfigProperty<T>
+{
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let value = T::deserialize(deserializer)?;
+        Ok(ConfigProperty::new(value))
+    }
+}
+
+#[cfg(feature = "schema")]
+impl<T: Clone + Send + Sync + PartialEq + JsonSchema + 'static> JsonSchema for ConfigProperty<T> {
+    fn schema_name() -> Cow<'static, str> {
+        T::schema_name()
+    }
+
+    fn json_schema(gen_param: &mut SchemaGenerator) -> Schema {
+        T::json_schema(gen_param)
+    }
+}
+
+impl<T> ApplyConfigLayer for ConfigProperty<T>
+where
+    T: Clone + Send + Sync + PartialEq + for<'de> Deserialize<'de> + 'static,
+{
+    fn apply_config_layer(&self, value: &toml::Value) {
+        match T::deserialize(value.clone()) {
+            Ok(new_value) => {
+                self.set_config(new_value);
+            }
+            Err(e) => {
+                tracing::warn!(
+                    error = %e,
+                    value = ?value,
+                    "Failed to deserialize config layer value, skipping"
+                );
+            }
+        }
+    }
+}
+
+impl<T> ApplyRuntimeLayer for ConfigProperty<T>
+where
+    T: Clone + Send + Sync + PartialEq + for<'de> Deserialize<'de> + 'static,
+{
+    fn apply_runtime_layer(&self, value: &toml::Value) {
+        match T::deserialize(value.clone()) {
+            Ok(new_value) => {
+                self.set(new_value);
+            }
+            Err(e) => {
+                tracing::warn!(
+                    error = %e,
+                    value = ?value,
+                    "Failed to deserialize runtime layer value, skipping"
+                );
+            }
+        }
+    }
+}
+
+impl<T> ExtractRuntimeValues for ConfigProperty<T>
+where
+    T: Clone + Send + Sync + PartialEq + Serialize + 'static,
+{
+    fn extract_runtime_values(&self) -> Option<toml::Value> {
+        self.runtime().map(|value| {
+            toml::Value::try_from(value).unwrap_or_else(|e| {
+                tracing::warn!(error = %e, "Failed to serialize runtime value");
+                toml::Value::String(String::from("<serialization error>"))
+            })
+        })
+    }
+}
+
+impl<T: Clone + Send + Sync + PartialEq + 'static> SubscribeChanges for ConfigProperty<T> {
+    fn subscribe_changes(&self, tx: mpsc::UnboundedSender<()>) {
+        let mut watch_stream = self.watch();
+
+        tokio::spawn(async move {
+            watch_stream.next().await;
+
+            while watch_stream.next().await.is_some() {
+                let _ = tx.send(());
+            }
+        });
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn new_uses_default_value() {
+        let prop = ConfigProperty::new(42);
+
+        assert_eq!(prop.get(), 42);
+        assert_eq!(prop.source(), ValueSource::Default);
+    }
+
+    #[test]
+    fn set_config_changes_effective_value() {
+        let prop = ConfigProperty::new(10);
+
+        prop.set_config(20);
+
+        assert_eq!(prop.get(), 20);
+        assert_eq!(prop.source(), ValueSource::Config);
+        assert_eq!(prop.config(), Some(20));
+    }
+
+    #[test]
+    fn set_runtime_overrides_config() {
+        let prop = ConfigProperty::new(10);
+        prop.set_config(20);
+
+        prop.set(30);
+
+        assert_eq!(prop.get(), 30);
+        assert_eq!(prop.source(), ValueSource::Override);
+        assert_eq!(prop.config(), Some(20));
+        assert_eq!(prop.runtime(), Some(30));
+    }
+
+    #[test]
+    fn set_runtime_without_config_is_custom() {
+        let prop = ConfigProperty::new(10);
+
+        prop.set(30);
+
+        assert_eq!(prop.get(), 30);
+        assert_eq!(prop.source(), ValueSource::Custom);
+    }
+
+    #[test]
+    fn clear_runtime_falls_back_to_config() {
+        let prop = ConfigProperty::new(10);
+        prop.set_config(20);
+        prop.set(30);
+
+        prop.clear_runtime();
+
+        assert_eq!(prop.get(), 20);
+        assert_eq!(prop.source(), ValueSource::Config);
+    }
+
+    #[test]
+    fn clear_runtime_falls_back_to_default() {
+        let prop = ConfigProperty::new(10);
+        prop.set(30);
+
+        prop.clear_runtime();
+
+        assert_eq!(prop.get(), 10);
+        assert_eq!(prop.source(), ValueSource::Default);
+    }
+
+    #[test]
+    fn default_returns_original_default() {
+        let prop = ConfigProperty::new(42);
+        prop.set_config(100);
+        prop.set(200);
+
+        assert_eq!(*prop.default(), 42);
+    }
+}

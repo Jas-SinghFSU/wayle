@@ -5,7 +5,7 @@ use notify::{
 };
 use tokio::sync::mpsc;
 use tracing::{debug, error, info, instrument};
-use wayle_common::UpdateFromToml;
+use wayle_common::ApplyConfigLayer;
 
 use super::{error::Error, paths::ConfigPaths, service::ConfigService};
 use crate::config::Config;
@@ -100,7 +100,7 @@ impl FileWatcher {
                 details: e.to_string(),
             })?;
 
-        self.config_service.config().update_from_toml(&toml_value);
+        self.config_service.config().apply_config_layer(&toml_value);
 
         Ok(())
     }

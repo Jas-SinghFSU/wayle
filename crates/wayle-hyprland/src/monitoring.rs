@@ -42,7 +42,7 @@ impl ServiceMonitoring for HyprlandService {
 #[allow(clippy::too_many_arguments)]
 async fn handle_internal_events(
     internal_tx: &Sender<ServiceNotification>,
-    hyprland_tx: &Sender<crate::HyprlandEvent>,
+    hyprland_tx: &Sender<HyprlandEvent>,
     hypr_messenger: &HyprMessenger,
     clients: &Property<Vec<Arc<Client>>>,
     monitors: &Property<Vec<Arc<Monitor>>>,

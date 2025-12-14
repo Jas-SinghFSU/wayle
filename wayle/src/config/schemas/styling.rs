@@ -1,6 +1,6 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use wayle_common::Property;
+use wayle_common::ConfigProperty;
 
 /// Styling configuration for button UI components.
 ///
@@ -10,16 +10,16 @@ use wayle_common::Property;
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct ButtonStyling {
     /// Button background color
-    pub background: Property<String>,
+    pub background: ConfigProperty<String>,
 
     /// Icon color
-    pub icon_color: Property<String>,
+    pub icon_color: ConfigProperty<String>,
 
     /// Corner roundness where higher value represents more rounding
-    pub border_radius: Property<u8>,
+    pub border_radius: ConfigProperty<u8>,
 
     /// Internal spacing in (px|em|rem)
-    pub padding: Property<String>,
+    pub padding: ConfigProperty<String>,
 }
 
 /// Styling configuration for dropdown UI components.
@@ -30,11 +30,11 @@ pub struct ButtonStyling {
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct DropdownStyling {
     /// Dropdown background color
-    pub background: Property<String>,
+    pub background: ConfigProperty<String>,
 
     /// Text color
-    pub text_color: Property<String>,
+    pub text_color: ConfigProperty<String>,
 
     /// Corner roundness where higher value represents more rounding
-    pub border_radius: Property<u8>,
+    pub border_radius: ConfigProperty<u8>,
 }

@@ -34,20 +34,20 @@ pub mod infrastructure {
 
 pub use infrastructure::error::Error;
 pub use infrastructure::persistence::PersistenceWatcher;
-pub use infrastructure::service::ConfigService;
+pub use infrastructure::service::{ConfigService, ConfigServiceCli};
 pub use infrastructure::watcher::FileWatcher;
 
 use schemas::general::GeneralConfig;
 use schemas::media::MediaConfig;
 use schemas::modules::ModulesConfig;
 use serde::{Deserialize, Serialize};
-use wayle_derive::{SubscribeChanges, UpdateFromToml};
+use wayle_derive::{ApplyConfigLayer, ApplyRuntimeLayer, ExtractRuntimeValues, SubscribeChanges};
 
 /// Main configuration structure for Wayle.
 ///
 /// Represents the complete configuration schema that can be loaded
 /// from TOML files. All fields have sensible defaults.
-#[derive(Debug, Clone, Serialize, Deserialize, Default, UpdateFromToml, SubscribeChanges)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default, ApplyConfigLayer, ApplyRuntimeLayer, ExtractRuntimeValues, SubscribeChanges)]
 #[serde(default)]
 pub struct Config {
     /// General application settings.

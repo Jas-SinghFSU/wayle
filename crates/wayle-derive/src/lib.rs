@@ -24,36 +24,16 @@ fn validate_named_struct(input: &DeriveInput) -> Result<&FieldsNamed, TokenStrea
     }
 }
 
-/// Derive macro for `UpdateFromToml` trait.
+/// Derive macro for `ApplyConfigLayer` trait.
 ///
-/// Automatically generates code to update struct fields from TOML values.
+/// Walks struct fields and applies TOML values to their config layer.
+/// Used when loading config.toml.
 ///
-/// # Requirements
+/// # Generated Code
 ///
-/// - Only works with structs that have named fields
-/// - All fields must implement `UpdateFromToml`
-/// - Field names in TOML must match struct field names exactly
-///
-/// # Behavior
-///
-/// Updates are applied field-by-field. Missing TOML fields are silently ignored,
-/// allowing partial updates. Type mismatches are handled by the field's
-/// `UpdateFromToml` implementation.
-///
-/// # Example
-///
-/// ```ignore
-/// use wayle_common::{Property, UpdateFromToml};
-/// use wayle_derive::UpdateFromToml;
-///
-/// #[derive(UpdateFromToml)]
-/// struct BatteryConfig {
-///     enabled: Property<bool>,
-///     low_threshold: Property<u32>,
-/// }
-/// ```
-#[proc_macro_derive(UpdateFromToml)]
-pub fn derive_update_from_toml(input: TokenStream) -> TokenStream {
+/// For each field, generates: `self.field.apply_config_layer(&toml["field"])`
+#[proc_macro_derive(ApplyConfigLayer)]
+pub fn derive_apply_config_layer(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
     let name = &input.ident;
 
@@ -67,21 +47,104 @@ pub fn derive_update_from_toml(input: TokenStream) -> TokenStream {
 
         quote! {
             if let Some(field_value) = table.get(stringify!(#field_name)) {
-                self.#field_name.update_from_toml(field_value);
+                self.#field_name.apply_config_layer(field_value);
             }
         }
     });
 
-    let update_fields = quote! {
-        if let toml::Value::Table(table) = value {
-            #(#field_updates)*
+    let expanded = quote! {
+        impl wayle_common::ApplyConfigLayer for #name {
+            fn apply_config_layer(&self, value: &toml::Value) {
+                if let toml::Value::Table(table) = value {
+                    #(#field_updates)*
+                }
+            }
         }
     };
 
+    TokenStream::from(expanded)
+}
+
+/// Derive macro for `ApplyRuntimeLayer` trait.
+///
+/// Walks struct fields and applies TOML values to their runtime layer.
+/// Used when loading runtime.toml (GUI overrides).
+///
+/// # Generated Code
+///
+/// For each field, generates: `self.field.apply_runtime_layer(&toml["field"])`
+#[proc_macro_derive(ApplyRuntimeLayer)]
+pub fn derive_apply_runtime_layer(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    let name = &input.ident;
+
+    let fields = match validate_named_struct(&input) {
+        Ok(fields) => fields,
+        Err(err) => return err,
+    };
+
+    let field_updates = fields.named.iter().map(|field| {
+        let field_name = &field.ident;
+
+        quote! {
+            if let Some(field_value) = table.get(stringify!(#field_name)) {
+                self.#field_name.apply_runtime_layer(field_value);
+            }
+        }
+    });
+
     let expanded = quote! {
-        impl wayle_common::UpdateFromToml for #name {
-            fn update_from_toml(&self, value: &toml::Value) {
-                #update_fields
+        impl wayle_common::ApplyRuntimeLayer for #name {
+            fn apply_runtime_layer(&self, value: &toml::Value) {
+                if let toml::Value::Table(table) = value {
+                    #(#field_updates)*
+                }
+            }
+        }
+    };
+
+    TokenStream::from(expanded)
+}
+
+/// Derive macro for `ExtractRuntimeValues` trait.
+///
+/// Walks struct fields and collects runtime layer values into a TOML table.
+/// Used when persisting runtime.toml.
+///
+/// # Generated Code
+///
+/// For each field with a runtime value, adds it to the output table.
+/// Returns None if no fields have runtime values.
+#[proc_macro_derive(ExtractRuntimeValues)]
+pub fn derive_extract_runtime_values(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    let name = &input.ident;
+
+    let fields = match validate_named_struct(&input) {
+        Ok(fields) => fields,
+        Err(err) => return err,
+    };
+
+    let field_extractions = fields.named.iter().map(|field| {
+        let field_name = &field.ident;
+
+        quote! {
+            if let Some(value) = self.#field_name.extract_runtime_values() {
+                table.insert(String::from(stringify!(#field_name)), value);
+            }
+        }
+    });
+
+    let expanded = quote! {
+        impl wayle_common::ExtractRuntimeValues for #name {
+            fn extract_runtime_values(&self) -> Option<toml::Value> {
+                let mut table = toml::map::Map::new();
+                #(#field_extractions)*
+                if table.is_empty() {
+                    None
+                } else {
+                    Some(toml::Value::Table(table))
+                }
             }
         }
     };

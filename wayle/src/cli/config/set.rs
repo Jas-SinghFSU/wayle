@@ -1,4 +1,7 @@
-use crate::{cli::CliAction, config::ConfigService};
+use crate::{
+    cli::CliAction,
+    config::{ConfigService, ConfigServiceCli},
+};
 
 /// Execute the command
 ///
