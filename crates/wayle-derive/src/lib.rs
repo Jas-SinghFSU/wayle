@@ -15,12 +15,11 @@ fn validate_named_struct(input: &DeriveInput) -> Result<&FieldsNamed, TokenStrea
             .to_compile_error()
             .into()),
         },
-        _ => Err(syn::Error::new_spanned(
-            input,
-            "Can only be derived for structs",
-        )
-        .to_compile_error()
-        .into()),
+        _ => Err(
+            syn::Error::new_spanned(input, "Can only be derived for structs")
+                .to_compile_error()
+                .into(),
+        ),
     }
 }
 

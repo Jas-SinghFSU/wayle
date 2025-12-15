@@ -9,7 +9,7 @@
 //! - Panel and widget system
 
 /// Configuration schema definitions and validation.
-pub mod config;
+pub use wayle_config as config;
 
 /// Documentation generation for configuration schemas.
 pub mod docs;

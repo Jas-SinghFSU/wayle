@@ -6,7 +6,17 @@ use wayle_derive::{ApplyConfigLayer, ApplyRuntimeLayer, ExtractRuntimeValues, Su
 /// Core clock functionality settings.
 ///
 /// Each field is reactive and can be watched for changes.
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, ApplyConfigLayer, ApplyRuntimeLayer, ExtractRuntimeValues, SubscribeChanges)]
+#[derive(
+    Debug,
+    Clone,
+    Serialize,
+    Deserialize,
+    JsonSchema,
+    ApplyConfigLayer,
+    ApplyRuntimeLayer,
+    ExtractRuntimeValues,
+    SubscribeChanges,
+)]
 #[serde(default)]
 pub struct ClockGeneralConfig {
     /// Time format string using strftime syntax.

@@ -6,7 +6,7 @@ use zbus::zvariant::OwnedObjectPath;
 /// Agent capability for pairing operations.
 ///
 /// Describes the input/output capabilities of the agent for pairing.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum AgentCapability {
     /// Can display information and accept yes/no input
     DisplayYesNo,
@@ -15,15 +15,10 @@ pub enum AgentCapability {
     /// Can input text but cannot display
     KeyboardOnly,
     /// Can both display and input text
+    #[default]
     KeyboardDisplay,
     /// No input or output capabilities
     NoInputNoOutput,
-}
-
-impl Default for AgentCapability {
-    fn default() -> Self {
-        Self::KeyboardDisplay
-    }
 }
 
 impl From<&str> for AgentCapability {

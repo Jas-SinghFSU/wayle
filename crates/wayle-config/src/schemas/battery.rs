@@ -8,7 +8,17 @@ use wayle_derive::{ApplyConfigLayer, ApplyRuntimeLayer, ExtractRuntimeValues, Su
 /// Controls the display and behavior of battery information in the status bar,
 /// including percentage display and low battery warnings.
 /// Each field is reactive and can be watched for changes.
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, ApplyConfigLayer, ApplyRuntimeLayer, ExtractRuntimeValues, SubscribeChanges)]
+#[derive(
+    Debug,
+    Clone,
+    Serialize,
+    Deserialize,
+    JsonSchema,
+    ApplyConfigLayer,
+    ApplyRuntimeLayer,
+    ExtractRuntimeValues,
+    SubscribeChanges,
+)]
 #[serde(default)]
 pub struct BatteryConfig {
     /// Whether the battery module is displayed in the status bar.

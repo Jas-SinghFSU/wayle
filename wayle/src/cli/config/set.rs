@@ -8,8 +8,9 @@ use crate::{
 /// # Errors
 /// Returns error if config loading fails, value parsing fails, or path cannot be set.
 pub async fn execute(path: String, value: String) -> CliAction {
-    let config_service =
-        ConfigService::load().await.map_err(|e| format!("Failed to load config: {e}"))?;
+    let config_service = ConfigService::load()
+        .await
+        .map_err(|e| format!("Failed to load config: {e}"))?;
 
     let toml_value = parse_toml_value(&value)?;
 

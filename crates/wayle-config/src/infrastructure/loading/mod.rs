@@ -14,7 +14,7 @@ use merging::merge_toml_configs;
 use toml::Value;
 
 use super::error::Error;
-use crate::config::Config;
+use crate::Config;
 
 impl Config {
     /// Loads a configuration file with support for importing other TOML files

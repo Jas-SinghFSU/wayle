@@ -2219,7 +2219,6 @@ dependencies = [
  "clap",
  "derive_more",
  "futures",
- "notify",
  "schemars",
  "serde",
  "serde_json",
@@ -2234,6 +2233,7 @@ dependencies = [
  "wayle-battery",
  "wayle-bluetooth",
  "wayle-common",
+ "wayle-config",
  "wayle-derive",
  "wayle-media",
  "wayle-network",
@@ -2326,6 +2326,21 @@ dependencies = [
  "tokio-stream",
  "toml 0.9.7",
  "tracing",
+]
+
+[[package]]
+name = "wayle-config"
+version = "0.1.0"
+dependencies = [
+ "notify",
+ "schemars",
+ "serde",
+ "thiserror 2.0.17",
+ "tokio",
+ "toml 0.9.7",
+ "tracing",
+ "wayle-common",
+ "wayle-derive",
 ]
 
 [[package]]

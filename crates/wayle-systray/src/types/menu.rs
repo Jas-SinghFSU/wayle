@@ -24,18 +24,13 @@ pub type RawMenuItemKeysList = Vec<RawMenuItemKeys>;
 pub type RawMenuLayout = (u32, (i32, HashMap<String, OwnedValue>, Vec<OwnedValue>));
 
 /// Type of a DBusMenu item.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum MenuItemType {
     /// Standard clickable menu item.
+    #[default]
     Standard,
     /// Menu separator.
     Separator,
-}
-
-impl Default for MenuItemType {
-    fn default() -> Self {
-        Self::Standard
-    }
 }
 
 impl From<&str> for MenuItemType {
@@ -57,20 +52,15 @@ impl Display for MenuItemType {
 }
 
 /// Toggle type for checkable menu items.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum ToggleType {
     /// No toggle capability.
+    #[default]
     None,
     /// Checkbox (independent toggle).
     Checkmark,
     /// Radio button (mutually exclusive within group).
     Radio,
-}
-
-impl Default for ToggleType {
-    fn default() -> Self {
-        Self::None
-    }
 }
 
 impl From<&str> for ToggleType {
@@ -94,20 +84,15 @@ impl Display for ToggleType {
 }
 
 /// Toggle state for checkable menu items.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum ToggleState {
     /// Unchecked state.
+    #[default]
     Unchecked,
     /// Checked state.
     Checked,
     /// Indeterminate state.
     Unknown,
-}
-
-impl Default for ToggleState {
-    fn default() -> Self {
-        Self::Unchecked
-    }
 }
 
 impl From<i32> for ToggleState {
@@ -131,9 +116,10 @@ impl From<ToggleState> for i32 {
 }
 
 /// Disposition of a menu item.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum Disposition {
     /// Normal menu item.
+    #[default]
     Normal,
     /// Informative item.
     Informative,
@@ -145,16 +131,11 @@ pub enum Disposition {
 
 /// How children of a menu item should be displayed.
 /// Only one value is defined in the spec: "submenu".
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum ChildrenDisplay {
     /// Children should be displayed as a submenu.
+    #[default]
     Submenu,
-}
-
-impl Default for ChildrenDisplay {
-    fn default() -> Self {
-        Self::Submenu
-    }
 }
 
 impl From<&str> for ChildrenDisplay {
@@ -169,12 +150,6 @@ impl From<&str> for ChildrenDisplay {
 impl Display for ChildrenDisplay {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "submenu")
-    }
-}
-
-impl Default for Disposition {
-    fn default() -> Self {
-        Self::Normal
     }
 }
 

@@ -6,7 +6,17 @@ use wayle_derive::{ApplyConfigLayer, ApplyRuntimeLayer, ExtractRuntimeValues, Su
 /// Media service configuration.
 ///
 /// Each field is reactive and can be watched for changes.
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, ApplyConfigLayer, ApplyRuntimeLayer, ExtractRuntimeValues, SubscribeChanges)]
+#[derive(
+    Debug,
+    Clone,
+    Serialize,
+    Deserialize,
+    JsonSchema,
+    ApplyConfigLayer,
+    ApplyRuntimeLayer,
+    ExtractRuntimeValues,
+    SubscribeChanges,
+)]
 #[serde(default)]
 pub struct MediaConfig {
     /// List of player bus name patterns to ignore during discovery

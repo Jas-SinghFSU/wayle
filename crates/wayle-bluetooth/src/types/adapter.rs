@@ -103,20 +103,15 @@ impl Display for AdapterRole {
 }
 
 /// Discovery transport filter for Bluetooth scanning.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum DiscoveryTransport {
     /// Interleaved scan, use LE, BREDR, or both depending on what's currently enabled
+    #[default]
     Auto,
     /// BR/EDR inquiry only
     BrEdr,
     /// LE scan only
     Le,
-}
-
-impl Default for DiscoveryTransport {
-    fn default() -> Self {
-        Self::Auto
-    }
 }
 
 impl From<&str> for DiscoveryTransport {

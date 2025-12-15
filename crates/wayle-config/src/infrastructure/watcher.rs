@@ -8,7 +8,7 @@ use tracing::{debug, error, info, instrument};
 use wayle_common::ApplyConfigLayer;
 
 use super::{error::Error, paths::ConfigPaths, service::ConfigService};
-use crate::config::Config;
+use crate::Config;
 
 /// Watches configuration files for changes and syncs to Properties.
 ///

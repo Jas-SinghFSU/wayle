@@ -6,9 +6,10 @@ use std::{
 /// Preferred bearer for dual-mode Bluetooth devices.
 ///
 /// [experimental]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum PreferredBearer {
     /// Connect to last used bearer first (default)
+    #[default]
     LastUsed,
     /// Connect to BR/EDR first
     BrEdr,
@@ -16,12 +17,6 @@ pub enum PreferredBearer {
     Le,
     /// Connect to last seen bearer first
     LastSeen,
-}
-
-impl Default for PreferredBearer {
-    fn default() -> Self {
-        Self::LastUsed
-    }
 }
 
 impl From<&str> for PreferredBearer {

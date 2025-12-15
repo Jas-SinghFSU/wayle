@@ -1,11 +1,13 @@
-use std::{fs, sync::Arc};
+use std::{
+    fs,
+    sync::{Arc, RwLock},
+};
 
-use std::sync::RwLock;
 use tracing::{info, instrument};
 use wayle_common::{ApplyConfigLayer, ApplyRuntimeLayer, ExtractRuntimeValues};
 
 use super::{error::Error, paths::ConfigPaths, toml_path, watcher::FileWatcher};
-use crate::config::Config;
+use crate::Config;
 
 /// Configuration service with reactive properties.
 ///

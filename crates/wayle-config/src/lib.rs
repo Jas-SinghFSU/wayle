@@ -1,4 +1,12 @@
-/// Configuration schema definitions
+//! Configuration management for Wayle.
+//!
+//! This crate provides the configuration system used by Wayle and its applets.
+//! It includes schema definitions, configuration loading/saving, and file watching.
+
+/// Documentation and metadata types for configuration schemas.
+pub mod docs;
+
+/// Configuration schema definitions.
 pub mod schemas {
     /// Battery configuration
     pub mod battery;
@@ -32,14 +40,13 @@ pub mod infrastructure {
     pub mod watcher;
 }
 
-pub use infrastructure::error::Error;
-pub use infrastructure::persistence::PersistenceWatcher;
-pub use infrastructure::service::{ConfigService, ConfigServiceCli};
-pub use infrastructure::watcher::FileWatcher;
-
-use schemas::general::GeneralConfig;
-use schemas::media::MediaConfig;
-use schemas::modules::ModulesConfig;
+pub use infrastructure::{
+    error::Error,
+    persistence::PersistenceWatcher,
+    service::{ConfigService, ConfigServiceCli},
+    watcher::FileWatcher,
+};
+use schemas::{general::GeneralConfig, media::MediaConfig, modules::ModulesConfig};
 use serde::{Deserialize, Serialize};
 use wayle_derive::{ApplyConfigLayer, ApplyRuntimeLayer, ExtractRuntimeValues, SubscribeChanges};
 
@@ -47,7 +54,17 @@ use wayle_derive::{ApplyConfigLayer, ApplyRuntimeLayer, ExtractRuntimeValues, Su
 ///
 /// Represents the complete configuration schema that can be loaded
 /// from TOML files. All fields have sensible defaults.
-#[derive(Debug, Clone, Serialize, Deserialize, Default, ApplyConfigLayer, ApplyRuntimeLayer, ExtractRuntimeValues, SubscribeChanges)]
+#[derive(
+    Debug,
+    Clone,
+    Serialize,
+    Deserialize,
+    Default,
+    ApplyConfigLayer,
+    ApplyRuntimeLayer,
+    ExtractRuntimeValues,
+    SubscribeChanges,
+)]
 #[serde(default)]
 pub struct Config {
     /// General application settings.

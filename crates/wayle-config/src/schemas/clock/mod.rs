@@ -11,13 +11,24 @@ use serde::{Deserialize, Serialize};
 use styling::{ClockButtonStyling, ClockDropdownStyling, ClockStyling};
 use wayle_derive::{ApplyConfigLayer, ApplyRuntimeLayer, ExtractRuntimeValues, SubscribeChanges};
 
-use crate::docs::module::{BehaviorConfigs, ModuleInfo, ModuleInfoProvider, StylingConfigs};
+use crate::docs::{BehaviorConfigs, ModuleInfo, ModuleInfoProvider, StylingConfigs};
 
 /// Configuration for the clock module.
 ///
 /// Provides comprehensive settings for displaying time and calendar information,
 /// including general behavior, button appearance, dropdown functionality, and styling options.
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, Default, ApplyConfigLayer, ApplyRuntimeLayer, ExtractRuntimeValues, SubscribeChanges)]
+#[derive(
+    Debug,
+    Clone,
+    Serialize,
+    Deserialize,
+    JsonSchema,
+    Default,
+    ApplyConfigLayer,
+    ApplyRuntimeLayer,
+    ExtractRuntimeValues,
+    SubscribeChanges,
+)]
 #[serde(default)]
 pub struct ClockConfig {
     /// General configuration settings that apply to all clock functionality.

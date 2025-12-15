@@ -1,19 +1,19 @@
 #![allow(missing_docs)]
 
-use wayle_common::{Property, UpdateFromToml};
-use wayle_derive::UpdateFromToml;
+use wayle_common::{ApplyConfigLayer, ConfigProperty};
+use wayle_derive::ApplyConfigLayer;
 
-#[derive(UpdateFromToml)]
+#[derive(ApplyConfigLayer)]
 struct SimpleConfig {
-    enabled: Property<bool>,
-    count: Property<u32>,
+    enabled: ConfigProperty<bool>,
+    count: ConfigProperty<u32>,
 }
 
 #[test]
 fn updates_all_fields_from_table() {
     let config = SimpleConfig {
-        enabled: Property::new(false),
-        count: Property::new(0),
+        enabled: ConfigProperty::new(false),
+        count: ConfigProperty::new(0),
     };
 
     let toml_value = toml::toml! {
@@ -21,7 +21,7 @@ fn updates_all_fields_from_table() {
         count = 42
     };
 
-    config.update_from_toml(&toml::Value::Table(toml_value));
+    config.apply_config_layer(&toml::Value::Table(toml_value));
 
     assert!(config.enabled.get());
     assert_eq!(config.count.get(), 42);
@@ -30,15 +30,15 @@ fn updates_all_fields_from_table() {
 #[test]
 fn updates_partial_fields() {
     let config = SimpleConfig {
-        enabled: Property::new(false),
-        count: Property::new(10),
+        enabled: ConfigProperty::new(false),
+        count: ConfigProperty::new(10),
     };
 
     let toml_value = toml::toml! {
         enabled = true
     };
 
-    config.update_from_toml(&toml::Value::Table(toml_value));
+    config.apply_config_layer(&toml::Value::Table(toml_value));
 
     assert!(config.enabled.get());
     assert_eq!(config.count.get(), 10);
@@ -47,8 +47,8 @@ fn updates_partial_fields() {
 #[test]
 fn ignores_unknown_fields() {
     let config = SimpleConfig {
-        enabled: Property::new(false),
-        count: Property::new(0),
+        enabled: ConfigProperty::new(false),
+        count: ConfigProperty::new(0),
     };
 
     let toml_value = toml::toml! {
@@ -57,7 +57,7 @@ fn ignores_unknown_fields() {
         count = 99
     };
 
-    config.update_from_toml(&toml::Value::Table(toml_value));
+    config.apply_config_layer(&toml::Value::Table(toml_value));
 
     assert!(config.enabled.get());
     assert_eq!(config.count.get(), 99);
@@ -66,11 +66,11 @@ fn ignores_unknown_fields() {
 #[test]
 fn handles_non_table_value() {
     let config = SimpleConfig {
-        enabled: Property::new(true),
-        count: Property::new(5),
+        enabled: ConfigProperty::new(true),
+        count: ConfigProperty::new(5),
     };
 
-    config.update_from_toml(&toml::Value::String("not a table".to_string()));
+    config.apply_config_layer(&toml::Value::String("not a table".to_string()));
 
     assert!(config.enabled.get());
     assert_eq!(config.count.get(), 5);
@@ -79,33 +79,33 @@ fn handles_non_table_value() {
 #[test]
 fn handles_empty_table() {
     let config = SimpleConfig {
-        enabled: Property::new(true),
-        count: Property::new(5),
+        enabled: ConfigProperty::new(true),
+        count: ConfigProperty::new(5),
     };
 
     use toml::map::Map;
     let toml_value = Map::new();
 
-    config.update_from_toml(&toml::Value::Table(toml_value));
+    config.apply_config_layer(&toml::Value::Table(toml_value));
 
     assert!(config.enabled.get());
     assert_eq!(config.count.get(), 5);
 }
 
-#[derive(UpdateFromToml)]
+#[derive(ApplyConfigLayer)]
 struct NestedConfig {
     simple: SimpleConfig,
-    name: Property<String>,
+    name: ConfigProperty<String>,
 }
 
 #[test]
 fn updates_nested_structs() {
     let config = NestedConfig {
         simple: SimpleConfig {
-            enabled: Property::new(false),
-            count: Property::new(0),
+            enabled: ConfigProperty::new(false),
+            count: ConfigProperty::new(0),
         },
-        name: Property::new("old".to_string()),
+        name: ConfigProperty::new("old".to_string()),
     };
 
     let toml_value = toml::toml! {
@@ -115,7 +115,7 @@ fn updates_nested_structs() {
         count = 100
     };
 
-    config.update_from_toml(&toml::Value::Table(toml_value));
+    config.apply_config_layer(&toml::Value::Table(toml_value));
 
     assert_eq!(config.name.get(), "new");
     assert!(config.simple.enabled.get());

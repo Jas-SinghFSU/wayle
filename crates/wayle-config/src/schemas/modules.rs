@@ -8,7 +8,18 @@ use super::{battery::BatteryConfig, clock::ClockConfig};
 ///
 /// If a module's configuration is not specified in TOML,
 /// it uses its default settings.
-#[derive(Debug, Clone, Serialize, Deserialize, Default, JsonSchema, ApplyConfigLayer, ApplyRuntimeLayer, ExtractRuntimeValues, SubscribeChanges)]
+#[derive(
+    Debug,
+    Clone,
+    Serialize,
+    Deserialize,
+    Default,
+    JsonSchema,
+    ApplyConfigLayer,
+    ApplyRuntimeLayer,
+    ExtractRuntimeValues,
+    SubscribeChanges,
+)]
 #[serde(default)]
 pub struct ModulesConfig {
     /// Configuration for the battery status module.

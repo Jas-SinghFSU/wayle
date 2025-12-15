@@ -1,18 +1,17 @@
-use std::fmt::Debug;
-use std::sync::RwLock;
+#[cfg(feature = "schema")]
+use std::borrow::Cow;
+use std::{fmt::Debug, sync::RwLock};
 
 use futures::{Stream, StreamExt};
+#[cfg(feature = "schema")]
+use schemars::{JsonSchema, Schema, SchemaGenerator};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use tokio::sync::mpsc;
 
-#[cfg(feature = "schema")]
-use std::borrow::Cow;
-
-#[cfg(feature = "schema")]
-use schemars::{JsonSchema, Schema, SchemaGenerator};
-
-use super::Property;
-use super::traits::{ApplyConfigLayer, ApplyRuntimeLayer, ExtractRuntimeValues, SubscribeChanges};
+use super::{
+    Property,
+    traits::{ApplyConfigLayer, ApplyRuntimeLayer, ExtractRuntimeValues, SubscribeChanges},
+};
 
 /// Indicates where a configuration value originates from.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

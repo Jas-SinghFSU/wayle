@@ -12,9 +12,10 @@ pub type RawPixmaps = Vec<RawPixmap>;
 pub type RawTooltip = (String, RawPixmaps, String, String);
 
 /// Describes the category of a StatusNotifierItem.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum Category {
     /// The item describes the status of a generic application.
+    #[default]
     ApplicationStatus,
     /// The item describes the status of communication oriented applications.
     Communications,
@@ -22,12 +23,6 @@ pub enum Category {
     SystemServices,
     /// The item describes the state and control of a particular hardware.
     Hardware,
-}
-
-impl Default for Category {
-    fn default() -> Self {
-        Self::ApplicationStatus
-    }
 }
 
 impl From<&str> for Category {
@@ -54,20 +49,15 @@ impl Display for Category {
 }
 
 /// Describes the status of a StatusNotifierItem or its associated application.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum Status {
     /// The item doesn't convey important information to the user.
+    #[default]
     Passive,
     /// The item is active and should be shown to the user.
     Active,
     /// The item carries really important information for the user.
     NeedsAttention,
-}
-
-impl Default for Status {
-    fn default() -> Self {
-        Self::Passive
-    }
 }
 
 impl From<&str> for Status {

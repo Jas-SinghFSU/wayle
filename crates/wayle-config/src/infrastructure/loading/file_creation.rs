@@ -1,6 +1,6 @@
 use std::{fs, path::Path};
 
-use crate::config::infrastructure::error::Error;
+use crate::infrastructure::error::Error;
 
 /// Creates a default configuration file if it doesn't exist
 pub fn create_default_config_file(path: &Path) -> Result<(), Error> {

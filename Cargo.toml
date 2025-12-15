@@ -5,7 +5,9 @@ members = [
     "crates/wayle-battery",
     "crates/wayle-bluetooth",
     "crates/wayle-cava",
-    "crates/wayle-common", "crates/wayle-derive",
+    "crates/wayle-common",
+    "crates/wayle-config",
+    "crates/wayle-derive",
     "crates/wayle-hyprland",
     "crates/wayle-media",
     "crates/wayle-network",
@@ -64,6 +66,7 @@ wayle-audio = { path = "crates/wayle-audio" }
 wayle-battery = { path = "crates/wayle-battery" }
 wayle-bluetooth = { path = "crates/wayle-bluetooth" }
 wayle-common = { path = "crates/wayle-common" }
+wayle-config = { path = "crates/wayle-config" }
 wayle-derive = { path = "crates/wayle-derive" }
 wayle-media = { path = "crates/wayle-media" }
 wayle-network = { path = "crates/wayle-network" }

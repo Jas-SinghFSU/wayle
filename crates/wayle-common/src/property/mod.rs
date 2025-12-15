@@ -49,20 +49,17 @@
 mod config;
 mod traits;
 
+#[cfg(feature = "schema")]
+use std::borrow::Cow;
 use std::fmt::Debug;
 
+pub use config::{ConfigProperty, ValueSource};
 use futures::stream::{Stream, StreamExt};
+#[cfg(feature = "schema")]
+use schemars::{JsonSchema, Schema, SchemaGenerator};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use tokio::sync::watch;
 use tokio_stream::wrappers::WatchStream;
-
-#[cfg(feature = "schema")]
-use std::borrow::Cow;
-
-#[cfg(feature = "schema")]
-use schemars::{JsonSchema, Schema, SchemaGenerator};
-
-pub use config::{ConfigProperty, ValueSource};
 pub use traits::{ApplyConfigLayer, ApplyRuntimeLayer, ExtractRuntimeValues, SubscribeChanges};
 
 /// Stream of property value changes.
