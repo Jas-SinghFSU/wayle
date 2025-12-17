@@ -1,11 +1,5 @@
 cognitive-complexity-threshold = 25
-
-# Maximum lines in a function
 too-many-lines-threshold = 100
-
-# Type complexity threshold
 type-complexity-threshold = 250
-
-# Don't warn about "Config" appearing in "GeneralConfig"
 allow-expect-in-tests = true
 allow-unwrap-in-tests = true
