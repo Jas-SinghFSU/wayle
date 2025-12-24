@@ -1,0 +1,113 @@
+// Design tokens derived from palette variables.
+// Palette vars ($palette-*) are injected by Rust at runtime.
+
+:root {
+  // Palette
+  --palette-bg: #{$palette-bg};
+  --palette-surface: #{$palette-surface};
+  --palette-elevated: #{$palette-elevated};
+  --palette-fg: #{$palette-fg};
+  --palette-fg-muted: #{$palette-fg-muted};
+  --palette-primary: #{$palette-primary};
+  --palette-red: #{$palette-red};
+  --palette-yellow: #{$palette-yellow};
+  --palette-green: #{$palette-green};
+  --palette-blue: #{$palette-blue};
+
+  // Backgrounds
+  --bg-base: var(--palette-bg);
+  --bg-surface: var(--palette-surface);
+  --bg-elevated: var(--palette-elevated);
+  --bg-overlay: color-mix(in srgb, var(--palette-elevated) 92%, var(--palette-fg));
+  --bg-hover: color-mix(in srgb, var(--palette-elevated) 88%, var(--palette-fg));
+  --bg-active: color-mix(in srgb, var(--palette-elevated) 82%, var(--palette-fg));
+  --bg-selected: color-mix(in srgb, var(--accent) 15%, transparent);
+
+  // Foregrounds
+  --fg-default: var(--palette-fg);
+  --fg-muted: var(--palette-fg-muted);
+  --fg-subtle: color-mix(in srgb, var(--palette-fg) 50%, transparent);
+  --fg-on-accent: var(--palette-bg);
+
+  // Accent
+  --accent: var(--palette-primary);
+  --accent-subtle: color-mix(in srgb, var(--accent) 15%, transparent);
+  --accent-hover: color-mix(in srgb, var(--accent) 80%, white);
+
+  // Status
+  --status-error: var(--palette-red);
+  --status-warning: var(--palette-yellow);
+  --status-success: var(--palette-green);
+  --status-info: var(--palette-blue);
+
+  --status-error-subtle: color-mix(in srgb, var(--status-error) 15%, transparent);
+  --status-warning-subtle: color-mix(in srgb, var(--status-warning) 15%, transparent);
+  --status-success-subtle: color-mix(in srgb, var(--status-success) 15%, transparent);
+  --status-info-subtle: color-mix(in srgb, var(--status-info) 15%, transparent);
+
+  --status-error-hover: color-mix(in srgb, var(--status-error) 85%, black);
+
+  // Borders
+  --border-subtle: color-mix(in srgb, var(--palette-fg) 12%, transparent);
+  --border-default: color-mix(in srgb, var(--palette-elevated) 90%, var(--palette-fg));
+  --border-strong: color-mix(in srgb, var(--palette-elevated) 82%, var(--palette-fg));
+  --border-accent: var(--accent);
+  --border-error: var(--status-error);
+
+  // Overlays
+  --scrim: rgba(0, 0, 0, 0.6);
+
+  // Spacing
+  --space-xs: calc(0.25rem * #{$global-scale});
+  --space-sm: calc(0.5rem * #{$global-scale});
+  --space-md: calc(1rem * #{$global-scale});
+  --space-lg: calc(1.5rem * #{$global-scale});
+  --space-xl: calc(2rem * #{$global-scale});
+
+  // Typography
+  --text-xs: calc(0.75rem * #{$global-scale});
+  --text-sm: calc(0.8125rem * #{$global-scale});
+  --text-base: calc(0.875rem * #{$global-scale});
+  --text-md: calc(0.9375rem * #{$global-scale});
+  --text-lg: calc(1.125rem * #{$global-scale});
+  --text-xl: calc(1.375rem * #{$global-scale});
+  --text-2xl: calc(1.75rem * #{$global-scale});
+  --text-3xl: calc(2.25rem * #{$global-scale});
+
+  --weight-normal: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  --leading-none: 1;
+  --leading-tight: 1.25;
+  --leading-snug: 1.375;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+
+  --tracking-tight: -0.025em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.025em;
+  --tracking-wider: 0.05em;
+
+  --font-sans: #{$font-sans};
+  --font-mono: #{$font-mono};
+
+  // Border radius
+  --radius-none: 0;
+  --radius-sm: calc(0.375rem * #{$global-scale});
+  --radius-md: calc(0.625rem * #{$global-scale});
+  --radius-lg: calc(0.875rem * #{$global-scale});
+  --radius-xl: calc(1.125rem * #{$global-scale});
+  --radius-full: 9999px;
+
+  // Shadows
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 12px 48px rgba(0, 0, 0, 0.5);
+
+  // Transitions
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 350ms;
+}

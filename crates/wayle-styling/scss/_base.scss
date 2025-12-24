@@ -1,0 +1,12 @@
+// Base styles applied to all Wayle components.
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+window {
+  background-color: var(--bg-base);
+  color: var(--fg-default);
+  font-family: var(--font-sans);
+}

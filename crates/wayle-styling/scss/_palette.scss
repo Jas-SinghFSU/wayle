@@ -1,0 +1,17 @@
+// Default palette values for editor intellisense.
+// Not used at runtime - Rust generates the actual values.
+
+$palette-bg: #11111b !default;
+$palette-surface: #181825 !default;
+$palette-elevated: #1e1e2e !default;
+$palette-fg: #cdd6f4 !default;
+$palette-fg-muted: #bac2de !default;
+$palette-primary: #b4befe !default;
+$palette-red: #f38ba8 !default;
+$palette-yellow: #f9e2af !default;
+$palette-green: #a6e3a1 !default;
+$palette-blue: #74c7ec !default;
+
+$font-sans: "Inter" !default;
+$font-mono: "JetBrains Mono" !default;
+$global-scale: 1 !default;

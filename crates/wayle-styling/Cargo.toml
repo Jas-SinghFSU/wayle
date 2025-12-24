@@ -1,0 +1,20 @@
+[package]
+name = "wayle-styling"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+description = "SCSS compilation and theming for Wayle"
+
+[dependencies]
+grass.workspace = true
+thiserror.workspace = true
+wayle-config = { path = "../wayle-config", features = ["schema"] }
+
+[dev-dependencies]
+gtk4 = { workspace = true, features = ["v4_12"] }
+
+[lints]
+workspace = true
