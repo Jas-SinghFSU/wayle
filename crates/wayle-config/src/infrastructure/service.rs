@@ -7,7 +7,7 @@ use tracing::{info, instrument};
 use wayle_common::{ApplyConfigLayer, ApplyRuntimeLayer, ExtractRuntimeValues};
 
 use super::{error::Error, paths::ConfigPaths, toml_path, watcher::FileWatcher};
-use crate::Config;
+use crate::{Config, infrastructure::themes::utils::load_themes};
 
 /// Configuration service with reactive properties.
 ///
@@ -49,6 +49,9 @@ impl ConfigService {
             config: Arc::new(config),
             _watcher: Arc::new(RwLock::new(None)),
         });
+
+        let themes_dir = ConfigPaths::themes_dir();
+        load_themes(&service.config, &themes_dir);
 
         let watcher = FileWatcher::start(Arc::clone(&service))?;
         *service

@@ -8,7 +8,7 @@ use tracing::{debug, error, info, instrument};
 use wayle_common::ApplyConfigLayer;
 
 use super::{error::Error, paths::ConfigPaths, service::ConfigService};
-use crate::Config;
+use crate::{Config, infrastructure::themes::utils::load_themes};
 
 /// Watches configuration files for changes and syncs to Properties.
 ///
@@ -51,7 +51,7 @@ impl FileWatcher {
         })?;
 
         watcher
-            .watch(&config_dir, RecursiveMode::NonRecursive)
+            .watch(&config_dir, RecursiveMode::Recursive)
             .map_err(|e| Error::IoError {
                 path: config_dir.clone(),
                 details: e.to_string(),
@@ -73,7 +73,7 @@ impl FileWatcher {
                     continue;
                 }
 
-                if let Err(e) = watcher_clone.reload_and_sync().await {
+                if let Err(e) = watcher_clone.reload_and_sync(&event.paths).await {
                     error!(error = ?e, "Failed to reload config after file change");
                 }
             }
@@ -90,7 +90,13 @@ impl FileWatcher {
     }
 
     #[instrument(skip(self))]
-    async fn reload_and_sync(&self) -> Result<(), Error> {
+    async fn reload_and_sync(&self, paths: &[PathBuf]) -> Result<(), Error> {
+        let themes_dir = ConfigPaths::themes_dir();
+        if paths.iter().any(|path| path.starts_with(&themes_dir)) {
+            load_themes(self.config_service.config(), &themes_dir);
+            return Ok(());
+        }
+
         let config_path = ConfigPaths::main_config();
         let reloaded_config = Config::load_with_imports(&config_path)?;
 

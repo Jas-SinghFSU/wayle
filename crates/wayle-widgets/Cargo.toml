@@ -1,0 +1,17 @@
+[package]
+name = "wayle-widgets"
+description = "Reusable GTK4/Relm4 widget library for Wayle"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+gtk4.workspace = true
+relm4.workspace = true
+glib.workspace = true
+
+[lints]
+workspace = true

@@ -13,8 +13,10 @@ members = [
     "crates/wayle-network",
     "crates/wayle-notification",
     "crates/wayle-power-profiles",
+    "crates/wayle-styling",
     "crates/wayle-systray",
     "crates/wayle-traits",
+    "crates/wayle-widgets",
     "wayle",
 ]
 
@@ -27,7 +29,6 @@ repository = "https://github.com/Jas-SinghFSU/wayle"
 rust-version = "1.85"
 
 [workspace.dependencies]
-# Core dependencies used by multiple crates
 async-stream = "0.3.6"
 async-trait = "0.1.89"
 bitflags = "2.9.4"
@@ -37,6 +38,7 @@ derive_more = { version = "2.0.1", default-features = false, features = [
     "debug",
 ] }
 futures = "0.3.31"
+grass = "0.13.4"
 libpulse-binding = "2.30.1"
 libc = "0.2.176"
 notify = "8"
@@ -72,8 +74,10 @@ wayle-media = { path = "crates/wayle-media" }
 wayle-network = { path = "crates/wayle-network" }
 wayle-notification = { path = "crates/wayle-notification" }
 wayle-power-profiles = { path = "crates/wayle-power-profiles" }
+wayle-styling = { path = "crates/wayle-styling" }
 wayle-systray = { path = "crates/wayle-systray" }
 wayle-traits = { path = "crates/wayle-traits" }
+wayle-widgets = { path = "crates/wayle-widgets" }
 
 [workspace.lints.rust]
 unsafe_code = "deny"

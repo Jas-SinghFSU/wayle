@@ -102,4 +102,18 @@ impl ConfigPaths {
             }
         }
     }
+
+    /// Returns the path to the themes/ directory
+    ///
+    /// # Panics
+    /// Panics if neither HOME nor XDG_CONFIG_HOME environment variables are set
+    #[allow(clippy::panic)]
+    pub fn themes_dir() -> PathBuf {
+        match Self::config_dir() {
+            Ok(dir) => dir.join("themes"),
+            Err(_) => {
+                panic!("Failed to determine config directory - is $HOME or $XDG_CONFIG_HOME set?")
+            }
+        }
+    }
 }

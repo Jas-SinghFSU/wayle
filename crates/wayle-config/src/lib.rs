@@ -34,6 +34,8 @@ pub mod infrastructure {
     pub mod persistence;
     /// Configuration service
     pub mod service;
+    /// Wayle theme management and discovery
+    pub mod themes;
     /// TOML path utilities
     pub mod toml_path;
     /// File watching
@@ -46,7 +48,9 @@ pub use infrastructure::{
     service::{ConfigService, ConfigServiceCli},
     watcher::FileWatcher,
 };
-use schemas::{general::GeneralConfig, media::MediaConfig, modules::ModulesConfig};
+use schemas::{
+    general::GeneralConfig, media::MediaConfig, modules::ModulesConfig, styling::StylingConfig,
+};
 use serde::{Deserialize, Serialize};
 use wayle_derive::{ApplyConfigLayer, ApplyRuntimeLayer, ExtractRuntimeValues, SubscribeChanges};
 
@@ -69,6 +73,9 @@ use wayle_derive::{ApplyConfigLayer, ApplyRuntimeLayer, ExtractRuntimeValues, Su
 pub struct Config {
     /// General application settings.
     pub general: GeneralConfig,
+
+    /// Styling configuration (theme, fonts, scale).
+    pub styling: StylingConfig,
 
     /// Module-specific configurations.
     pub modules: ModulesConfig,

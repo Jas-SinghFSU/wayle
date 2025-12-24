@@ -79,6 +79,15 @@ pub enum Error {
         /// Error details from the persistence operation
         details: String,
     },
+
+    /// Error occurred while serializing theme file
+    #[error("failed to serialize theme file '{path}': {details}")]
+    ThemeSerializationError {
+        /// Path of the theme file
+        path: PathBuf,
+        /// Error details from the theme serialization operation
+        details: String,
+    },
 }
 
 impl Error {

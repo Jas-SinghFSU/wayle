@@ -1,0 +1,143 @@
+use super::Palette;
+
+/// All built-in theme palettes.
+pub fn builtins() -> Vec<Palette> {
+    vec![
+        catppuccin(),
+        catppuccin_latte(),
+        gruvbox(),
+        tokyo_night(),
+        rose_pine(),
+        dracula(),
+        nord(),
+        everforest(),
+    ]
+}
+
+fn catppuccin() -> Palette {
+    Palette {
+        name: String::from("catppuccin"),
+        bg: String::from("#11111b"),
+        surface: String::from("#181825"),
+        elevated: String::from("#1e1e2e"),
+        fg: String::from("#cdd6f4"),
+        fg_muted: String::from("#bac2de"),
+        primary: String::from("#b4befe"),
+        red: String::from("#f38ba8"),
+        yellow: String::from("#f9e2af"),
+        green: String::from("#a6e3a1"),
+        blue: String::from("#74c7ec"),
+    }
+}
+
+fn catppuccin_latte() -> Palette {
+    Palette {
+        name: String::from("catppuccin-latte"),
+        bg: String::from("#eff1f5"),
+        surface: String::from("#e6e9ef"),
+        elevated: String::from("#dce0e8"),
+        fg: String::from("#4c4f69"),
+        fg_muted: String::from("#6c6f85"),
+        primary: String::from("#7287fd"),
+        red: String::from("#d20f39"),
+        yellow: String::from("#df8e1d"),
+        green: String::from("#40a02b"),
+        blue: String::from("#1e66f5"),
+    }
+}
+
+fn gruvbox() -> Palette {
+    Palette {
+        name: String::from("gruvbox"),
+        bg: String::from("#282828"),
+        surface: String::from("#3c3836"),
+        elevated: String::from("#504945"),
+        fg: String::from("#ebdbb2"),
+        fg_muted: String::from("#d5c4a1"),
+        primary: String::from("#83a598"),
+        red: String::from("#fb4934"),
+        yellow: String::from("#fabd2f"),
+        green: String::from("#b8bb26"),
+        blue: String::from("#8ec07c"),
+    }
+}
+
+fn tokyo_night() -> Palette {
+    Palette {
+        name: String::from("tokyo-night"),
+        bg: String::from("#16161e"),
+        surface: String::from("#1a1b26"),
+        elevated: String::from("#202230"),
+        fg: String::from("#c0caf5"),
+        fg_muted: String::from("#a9b1d6"),
+        primary: String::from("#7aa2f7"),
+        red: String::from("#f7768e"),
+        yellow: String::from("#e0af68"),
+        green: String::from("#9ece6a"),
+        blue: String::from("#7dcfff"),
+    }
+}
+
+fn rose_pine() -> Palette {
+    Palette {
+        name: String::from("rose-pine"),
+        bg: String::from("#191724"),
+        surface: String::from("#1f1d2e"),
+        elevated: String::from("#26233a"),
+        fg: String::from("#e0def4"),
+        fg_muted: String::from("#908caa"),
+        primary: String::from("#c4a7e7"),
+        red: String::from("#eb6f92"),
+        yellow: String::from("#f6c177"),
+        green: String::from("#31748f"),
+        blue: String::from("#9ccfd8"),
+    }
+}
+
+fn dracula() -> Palette {
+    Palette {
+        name: String::from("dracula"),
+        bg: String::from("#282a36"),
+        surface: String::from("#343746"),
+        elevated: String::from("#44475a"),
+        fg: String::from("#f8f8f2"),
+        fg_muted: String::from("#6272a4"),
+        primary: String::from("#bd93f9"),
+        red: String::from("#ff5555"),
+        yellow: String::from("#f1fa8c"),
+        green: String::from("#50fa7b"),
+        blue: String::from("#8be9fd"),
+    }
+}
+
+fn nord() -> Palette {
+    Palette {
+        name: String::from("nord"),
+        bg: String::from("#2e3440"),
+        surface: String::from("#3b4252"),
+        elevated: String::from("#434c5e"),
+        fg: String::from("#eceff4"),
+        fg_muted: String::from("#d8dee9"),
+        primary: String::from("#88c0d0"),
+        red: String::from("#bf616a"),
+        yellow: String::from("#ebcb8b"),
+        green: String::from("#a3be8c"),
+        blue: String::from("#81a1c1"),
+    }
+}
+
+fn everforest() -> Palette {
+    Palette {
+        name: String::from("everforest"),
+        bg: String::from("#2d353b"),
+        surface: String::from("#343f44"),
+        elevated: String::from("#3d484d"),
+        fg: String::from("#d3c6aa"),
+        fg_muted: String::from("#9da9a0"),
+        primary: String::from("#7fbbb3"),
+        red: String::from("#e67e80"),
+        yellow: String::from("#dbbc7f"),
+        green: String::from("#a7c080"),
+        blue: String::from("#83c092"),
+    }
+}
