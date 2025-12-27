@@ -1,0 +1,48 @@
+entry {
+  &.input {
+    all: unset;
+
+    background-color: var(--bg-overlay);
+    border-radius: var(--rounding-element);
+    padding: var(--space-md) var(--space-md);
+    font-weight: var(--weight-medium);
+
+    >text {
+      margin-left: var(--space-sm);
+      margin-right: var(--space-sm);
+
+      color: var(--fg-default);
+
+      >placeholder {
+        color: var(--fg-subtle);
+      }
+
+      >selection {
+        background-color: var(--accent);
+        color: var(--fg-on-accent);
+      }
+
+    }
+
+    &:focus-within {
+      box-shadow: 0 0 0 var(--focus-ring-width) var(--accent);
+    }
+
+    >image.left,
+    >image.right {
+      color: var(--fg-subtle);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+    }
+
+    &.error {
+      box-shadow: 0 0 0 var(--focus-ring-width) var(--status-error);
+    }
+
+    &.warning {
+      box-shadow: 0 0 0 var(--focus-ring-width) var(--status-warning);
+    }
+  }
+}
