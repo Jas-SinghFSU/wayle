@@ -5,37 +5,59 @@
 
 mod error;
 
-pub use error::Error;
-use wayle_config::{infrastructure::themes::Palette, schemas::styling::FontConfig};
+use std::fs;
+use std::io::Write;
+use std::path::PathBuf;
 
-/// Compiles the complete stylesheet from palette, font, and scale inputs.
+pub use error::Error;
+use wayle_config::{
+    infrastructure::themes::Palette,
+    schemas::styling::{FontConfig, RoundingLevel},
+};
+
+fn scss_dir() -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("scss")
+}
+
+/// Compiles the complete stylesheet from palette, font, scale, and rounding inputs.
 ///
-/// Generates SCSS variables from the inputs, combines them with the embedded
-/// SCSS files (tokens, base styles), and compiles to CSS.
+/// Generates SCSS variables from the inputs, writes them to a temporary file,
+/// and compiles the main SCSS entry point which imports all component styles.
 ///
 /// # Arguments
 ///
 /// * `palette` - Color palette for the theme
 /// * `fonts` - Font configuration for sans and mono families
 /// * `scale` - Global UI scale multiplier (1.0 = default)
+/// * `rounding` - Global rounding preference
 ///
 /// # Errors
 ///
 /// Returns an error if SCSS compilation fails.
-pub fn compile(palette: &Palette, fonts: &FontConfig, scale: f32) -> Result<String, Error> {
+pub fn compile(
+    palette: &Palette,
+    fonts: &FontConfig,
+    scale: f32,
+    rounding: RoundingLevel,
+) -> Result<String, Error> {
     let variables = format!(
-        "{}\n{}\n{}\n",
+        "{}\n{}\n{}\n{}\n",
         palette_to_scss(palette),
         fonts_to_scss(fonts),
-        scale_to_scss(scale)
+        scale_to_scss(scale),
+        rounding_to_scss(rounding)
     );
 
-    let tokens = include_str!("../scss/_tokens.scss");
-    let base = include_str!("../scss/_base.scss");
+    let scss_path = scss_dir();
+    let variables_path = scss_path.join("_variables.scss");
+    let main_path = scss_path.join("main.scss");
 
-    let full_scss = format!("{variables}\n{tokens}\n{base}");
+    let mut file = fs::File::create(&variables_path).map_err(Error::Io)?;
+    file.write_all(variables.as_bytes()).map_err(Error::Io)?;
 
-    grass::from_string(full_scss, &grass::Options::default()).map_err(Error::Compilation)
+    let options = grass::Options::default().load_path(&scss_path);
+
+    grass::from_path(&main_path, &options).map_err(Error::Compilation)
 }
 
 fn palette_to_scss(palette: &Palette) -> String {
@@ -78,6 +100,14 @@ fn scale_to_scss(scale: f32) -> String {
     format!("$global-scale: {};\n", scale)
 }
 
+fn rounding_to_scss(rounding: RoundingLevel) -> String {
+    let (element, container) = rounding.to_css_values();
+    format!(
+        "$rounding-element: {};\n$rounding-container: {};\n",
+        element, container
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use wayle_config::infrastructure::themes::palettes;
@@ -90,9 +120,18 @@ mod tests {
 
         let palette = palettes::builtins().into_iter().next().unwrap();
         let fonts = FontConfig::default();
-        let css = compile(&palette, &fonts, 1.0).unwrap();
+        let css = compile(&palette, &fonts, 1.0, RoundingLevel::default()).unwrap();
 
         let provider = gtk4::CssProvider::new();
         provider.load_from_string(&css);
+    }
+
+    #[test]
+    fn debug_print_css() {
+        let palette = palettes::builtins().into_iter().next().unwrap();
+        let fonts = FontConfig::default();
+        let css = compile(&palette, &fonts, 1.0, RoundingLevel::default()).unwrap();
+
+        println!("\n=== COMPILED CSS ===\n{}\n=== END ===", css);
     }
 }

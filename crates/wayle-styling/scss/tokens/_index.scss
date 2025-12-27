@@ -93,13 +93,27 @@
   --font-sans: #{$font-sans};
   --font-mono: #{$font-mono};
 
-  // Border radius
+  // Border radius (raw values)
   --radius-none: 0;
   --radius-sm: calc(0.375rem * #{$global-scale});
   --radius-md: calc(0.625rem * #{$global-scale});
   --radius-lg: calc(0.875rem * #{$global-scale});
   --radius-xl: calc(1.125rem * #{$global-scale});
   --radius-full: 9999px;
+
+  // Semantic rounding tokens
+  // User configures a single rounding preference (none/sm/md/lg).
+  // Components use these semantic tokens instead of raw --radius-* values.
+  //
+  // --rounding-element: Interactive components (buttons, inputs, chips, badges).
+  //                     Anything the user directly clicks or types into.
+  //
+  // --rounding-container: Wrapper components (cards, dialogs, dropdowns, panels).
+  //                       Larger surfaces that contain other elements.
+  //
+  // For always-rounded shapes (toggles, sliders, spinners), use --radius-full directly.
+  --rounding-element: #{$rounding-element};
+  --rounding-container: #{$rounding-container};
 
   // Shadows
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);

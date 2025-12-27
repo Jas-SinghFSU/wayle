@@ -1,5 +1,6 @@
 [workspace]
 resolver = "2"
+exclude = ["sandbox"]
 members = [
     "crates/wayle-audio",
     "crates/wayle-battery",

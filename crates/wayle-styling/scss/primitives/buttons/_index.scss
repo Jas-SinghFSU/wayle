@@ -1,0 +1,139 @@
+.btn {
+  all: unset;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--rounding-element);
+  font-size: var(--text-md);
+  font-weight: var(--weight-medium);
+}
+
+
+/*******************************************
+*                 primary                 *
+*******************************************/
+
+.btn-primary {
+  background-color: var(--accent);
+  color: var(--fg-on-accent);
+}
+
+.btn-primary:hover {
+  background-color: var(--accent-hover);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+}
+
+/*******************************************
+*                secondary                *
+*******************************************/
+
+.btn-secondary {
+  background-color: var(--bg-overlay);
+  color: var(--fg-muted);
+}
+
+.btn-secondary:hover {
+  background-color: var(--bg-active);
+  color: var(--fg-default);
+}
+
+.btn-secondary:disabled {
+  opacity: 0.5;
+}
+
+/*******************************************
+*                  icon                   *
+*******************************************/
+
+.btn-icon {
+  background-color: var(--bg-overlay);
+  color: var(--fg-subtle);
+}
+
+.btn-icon:hover {
+  background-color: var(--bg-active);
+}
+
+.btn-icon:disabled {
+  opacity: 0.5;
+}
+
+/*******************************************
+*                 danger                  *
+*******************************************/
+
+.btn-danger {
+  background-color: var(--status-error);
+  color: var(--fg-on-accent);
+}
+
+.btn-danger:hover {
+  background-color: var(--status-error-hover);
+}
+
+.btn-danger:disabled {
+  opacity: 0.5;
+}
+
+/*******************************************
+*                  ghost                  *
+*******************************************/
+
+.btn-ghost {
+  background-color: transparent;
+  color: var(--fg-muted);
+}
+
+.btn-ghost:hover {
+  background-color: var(--bg-hover);
+  color: var(--fg-default);
+}
+
+.btn-ghost:disabled {
+  opacity: 0.5;
+}
+
+/*******************************************
+*               ghost icon                *
+*******************************************/
+
+.btn-ghost-icon {
+  background-color: transparent;
+  color: var(--fg-subtle);
+}
+
+.btn-ghost-icon:hover {
+  background-color: var(--bg-hover);
+  color: var(--fg-default);
+}
+
+.btn-ghost-icon:disabled {
+  opacity: 0.5;
+}
+
+/*******************************************
+*                  link                   *
+*******************************************/
+
+.btn-link {
+  background: none;
+  color: var(--accent);
+  text-decoration: none;
+
+  &.muted {
+    color: var(--fg-muted);
+  }
+
+  &.danger {
+    color: var(--status-error);
+  }
+}
+
+.btn-link:hover label {
+  text-decoration: underline;
+}
+
+.btn-link:disabled {
+  opacity: 0.5;
+}

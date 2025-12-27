@@ -1,9 +1,43 @@
 use std::fmt;
 use std::str::FromStr;
 
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::infrastructure::themes::Palette;
+
+/// Global rounding preference for UI components.
+///
+/// Controls how rounded corners appear throughout the shell. A single setting
+/// applies proportionally to both interactive elements and containers.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum RoundingLevel {
+    /// Sharp corners (no rounding).
+    None,
+    /// Subtle rounding.
+    Sm,
+    /// Moderate rounding (default).
+    #[default]
+    Md,
+    /// Pronounced rounding.
+    Lg,
+}
+
+impl RoundingLevel {
+    /// Returns the CSS variable references for element and container rounding.
+    ///
+    /// Elements get the base level, containers get one step larger for
+    /// perceptual consistency on larger surfaces.
+    pub fn to_css_values(self) -> (&'static str, &'static str) {
+        match self {
+            Self::None => ("var(--radius-none)", "var(--radius-none)"),
+            Self::Sm => ("var(--radius-sm)", "var(--radius-md)"),
+            Self::Md => ("var(--radius-md)", "var(--radius-lg)"),
+            Self::Lg => ("var(--radius-lg)", "var(--radius-xl)"),
+        }
+    }
+}
 
 /// Semantic color names from the palette.
 ///

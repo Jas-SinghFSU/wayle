@@ -6,7 +6,7 @@ mod types;
 pub use components::{ButtonStyling, DropdownStyling};
 pub use fonts::FontConfig;
 pub use theme::{CustomPalette, ThemeConfig, ThemeEntry};
-pub use types::{ColorValue, InvalidPaletteColor, PaletteColor};
+pub use types::{ColorValue, InvalidPaletteColor, PaletteColor, RoundingLevel};
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -39,7 +39,11 @@ pub struct StylingConfig {
     /// Global UI scale multiplier affecting all rem-based sizing.
     pub scale: ConfigProperty<f32>,
 
+    /// Global rounding preference (none, sm, md, lg).
+    pub rounding: ConfigProperty<RoundingLevel>,
+
     /// Bar background
+    #[serde(rename = "bar-bg")]
     pub bar_bg: ConfigProperty<ColorValue>,
 }
 
@@ -49,6 +53,7 @@ impl Default for StylingConfig {
             theme: ThemeConfig::default(),
             fonts: FontConfig::default(),
             scale: ConfigProperty::new(1.0),
+            rounding: ConfigProperty::new(RoundingLevel::default()),
             bar_bg: ConfigProperty::new(ColorValue::Palette(PaletteColor::Primary)),
         }
     }
