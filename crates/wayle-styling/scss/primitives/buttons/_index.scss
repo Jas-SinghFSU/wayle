@@ -26,6 +26,11 @@
     opacity: 0.5;
   }
 
+  &.btn-primary:focus-visible {
+    outline: var(--focus-ring-width) solid var(--accent);
+    outline-offset: 0.125rem;
+  }
+
   /*******************************************
   *                secondary                *
   *******************************************/
@@ -42,6 +47,11 @@
 
   &.btn-secondary:disabled {
     opacity: 0.5;
+  }
+
+  &.btn-secondary:focus-visible {
+    outline: var(--focus-ring-width) solid var(--fg-muted);
+    outline-offset: 0.125rem;
   }
 
   /*******************************************
@@ -61,6 +71,11 @@
     opacity: 0.5;
   }
 
+  &.btn-icon:focus-visible {
+    outline: var(--focus-ring-width) solid var(--fg-subtle);
+    outline-offset: 0.125rem;
+  }
+
   /*******************************************
   *                 danger                  *
   *******************************************/
@@ -76,6 +91,11 @@
 
   &.btn-danger:disabled {
     opacity: 0.5;
+  }
+
+  &.btn-danger:focus-visible {
+    outline: var(--focus-ring-width) solid var(--status-error);
+    outline-offset: 0.125rem;
   }
 
   /*******************************************
@@ -96,6 +116,11 @@
     opacity: 0.5;
   }
 
+  &.btn-ghost:focus-visible {
+    outline: var(--focus-ring-width) solid var(--fg-muted);
+    outline-offset: 0.125rem;
+  }
+
   /*******************************************
   *               ghost icon                *
   *******************************************/
@@ -113,6 +138,11 @@
   &.btn-ghost-icon:disabled {
     opacity: 0.5;
   }
+
+  &.btn-ghost-icon:focus-visible {
+    outline: var(--focus-ring-width) solid var(--fg-subtle);
+    outline-offset: 0.125rem;
+  }
 }
 
 /*******************************************
@@ -124,13 +154,28 @@
   background: none;
   color: var(--accent);
   text-decoration: none;
+  border-radius: var(--rounding-element);
+  padding: var(--space-xs) var(--space-sm);
+
+  &:focus-visible {
+    outline: var(--focus-ring-width) solid var(--accent);
+    outline-offset: 0.125rem;
+  }
 
   &.muted {
     color: var(--fg-muted);
+
+    &:focus-visible {
+      outline-color: var(--fg-muted);
+    }
   }
 
   &.danger {
     color: var(--status-error);
+
+    &:focus-visible {
+      outline-color: var(--status-error);
+    }
   }
 }
 
@@ -175,6 +220,11 @@
 
     &:checked arrow {
       -gtk-icon-transform: rotate(-0.5turn);
+    }
+
+    &:focus-visible {
+      outline: var(--focus-ring-width) solid var(--border-strong);
+      outline-offset: 0.125rem;
     }
   }
 

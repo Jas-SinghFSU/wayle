@@ -30,41 +30,47 @@
   .popover-item {
     min-height: 4rem;
 
-    :hover {
+    &:hover {
       transition: background var(--duration-fast);
       background: var(--bg-overlay);
     }
 
-    .popover-item-icon-container {
+    &:focus-visible {
+      background: var(--bg-overlay);
+      outline: var(--focus-ring-width) solid var(--accent);
+      outline-offset: -0.125rem;
+    }
+
+    .icon {
       margin-left: calc(var(--space-sm) + var(--space-xs));
       margin-right: var(--space-sm);
       background: var(--accent-subtle);
       padding: var(--space-sm);
       border-radius: var(--rounding-element);
 
-      .popover-item-icon {
+      image {
         -gtk-icon-size: var(--icon-md);
         color: var(--accent);
       }
     }
 
-    .popover-item-label-container {
+    .labels {
       margin-left: calc(var(--space-sm) + var(--space-xs));
 
-      .popover-item-label {
+      .label {
         font-size: var(--text-md);
         font-weight: var(--weight-medium);
         color: var(--fg-default);
       }
 
-      .popover-item-subtitle {
+      .subtitle {
         font-size: var(--text-md);
         font-weight: var(--weight-medium);
         color: var(--fg-subtle);
       }
     }
 
-    .popover-item-active {
+    .active-icon {
       margin-right: calc(var(--space-sm) + var(--space-xs));
       margin-left: var(--space-md);
       color: var(--accent);

@@ -6,7 +6,7 @@ use relm4::gtk;
 impl WidgetTemplate for TextInput {
     view! {
         gtk::Entry {
-            set_css_classes: &["input"],
+            set_css_classes: &["text-input"],
         }
     }
 }

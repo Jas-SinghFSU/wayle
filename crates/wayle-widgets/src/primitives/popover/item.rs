@@ -23,31 +23,29 @@ impl FactoryComponent for PopoverItem {
             add_css_class: "popover-item",
 
             gtk::Box {
-                add_css_class: "popover-item-content",
                 set_orientation: gtk::Orientation::Horizontal,
 
                 gtk::Box {
-                    add_css_class: "popover-item-icon-container",
+                    add_css_class: "icon",
                     set_valign: gtk::Align::Center,
                     set_halign: gtk::Align::Start,
                     #[watch]
                     set_visible: self.icon.is_some(),
 
                     gtk::Image {
-                        add_css_class: "popover-item-icon",
                         set_icon_name: self.icon.as_deref(),
                     },
                 },
 
                 gtk::Box {
-                    add_css_class: "popover-item-label-container",
+                    add_css_class: "labels",
                     set_orientation: gtk::Orientation::Vertical,
                     set_valign: gtk::Align::Center,
                     set_halign: gtk::Align::Start,
                     set_hexpand: true,
 
                     gtk::Label {
-                        add_css_class: "popover-item-label",
+                        add_css_class: "label",
                         set_halign: gtk::Align::Start,
                         set_ellipsize: gtk::pango::EllipsizeMode::End,
                         #[watch]
@@ -57,7 +55,7 @@ impl FactoryComponent for PopoverItem {
                     },
 
                     gtk::Label {
-                        add_css_class: "popover-item-subtitle",
+                        add_css_class: "subtitle",
                         set_halign: gtk::Align::Start,
                         set_ellipsize: gtk::pango::EllipsizeMode::End,
                         set_max_width_chars: 30,
@@ -69,7 +67,7 @@ impl FactoryComponent for PopoverItem {
                 },
 
                 gtk::Image {
-                    add_css_class: "popover-item-active",
+                    add_css_class: "active-icon",
                     set_valign: gtk::Align::Center,
                     set_halign: gtk::Align::End,
                     set_icon_name: self.active_icon.as_deref(),

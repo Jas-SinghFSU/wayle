@@ -1,4 +1,3 @@
-use gtk4::Align;
 use gtk4::prelude::BoxExt;
 use gtk4::prelude::WidgetExt;
 use relm4::WidgetTemplate;
