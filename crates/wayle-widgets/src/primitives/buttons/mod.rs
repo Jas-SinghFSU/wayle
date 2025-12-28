@@ -1,8 +1,12 @@
+//! Button widget templates.
+#![allow(missing_docs)]
+
 use gtk4::prelude::BoxExt;
 use gtk4::prelude::WidgetExt;
 use relm4::WidgetTemplate;
 use relm4::gtk;
 
+/// Primary action button with accent background.
 #[relm4::widget_template(pub)]
 impl WidgetTemplate for PrimaryButton {
     view! {
@@ -22,6 +26,7 @@ impl WidgetTemplate for PrimaryButton {
     }
 }
 
+/// Secondary action button with subtle background.
 #[relm4::widget_template(pub)]
 impl WidgetTemplate for SecondaryButton {
     view! {
@@ -41,6 +46,7 @@ impl WidgetTemplate for SecondaryButton {
     }
 }
 
+/// Destructive action button with error-colored background.
 #[relm4::widget_template(pub)]
 impl WidgetTemplate for DangerButton {
     view! {
@@ -60,6 +66,7 @@ impl WidgetTemplate for DangerButton {
     }
 }
 
+/// Transparent button with text, no background until hover.
 #[relm4::widget_template(pub)]
 impl WidgetTemplate for GhostButton {
     view! {
@@ -79,6 +86,7 @@ impl WidgetTemplate for GhostButton {
     }
 }
 
+/// Icon-only ghost button.
 #[relm4::widget_template(pub)]
 impl WidgetTemplate for GhostIconButton {
     view! {
@@ -89,6 +97,7 @@ impl WidgetTemplate for GhostIconButton {
     }
 }
 
+/// Icon-only button with background.
 #[relm4::widget_template(pub)]
 impl WidgetTemplate for IconButton {
     view! {
@@ -99,6 +108,7 @@ impl WidgetTemplate for IconButton {
     }
 }
 
+/// Text-only link-styled button.
 #[relm4::widget_template(pub)]
 impl WidgetTemplate for LinkButton {
     view! {
@@ -118,6 +128,7 @@ impl WidgetTemplate for LinkButton {
     }
 }
 
+/// Muted link button for secondary actions.
 #[relm4::widget_template(pub)]
 impl WidgetTemplate for MutedLinkButton {
     view! {
@@ -137,6 +148,7 @@ impl WidgetTemplate for MutedLinkButton {
     }
 }
 
+/// Danger-colored link button for destructive actions.
 #[relm4::widget_template(pub)]
 impl WidgetTemplate for DangerLinkButton {
     view! {
@@ -156,6 +168,7 @@ impl WidgetTemplate for DangerLinkButton {
     }
 }
 
+/// Button that opens a popover menu.
 #[relm4::widget_template(pub)]
 impl WidgetTemplate for MenuButton {
     view! {

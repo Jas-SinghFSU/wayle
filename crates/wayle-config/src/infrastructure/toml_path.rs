@@ -243,7 +243,7 @@ mod tests {
             let mut map = HashMap::new();
             flatten(&toml::Value::Table(value), "", &mut map);
 
-            assert!(map.get("parent").is_none());
+            assert!(!map.contains_key("parent"));
             assert_eq!(
                 map.get("parent.child"),
                 Some(&toml::Value::String("leaf".into()))

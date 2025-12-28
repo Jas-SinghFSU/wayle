@@ -149,7 +149,7 @@ mod tests {
     fn track_properties_from_mpris_extracts_artist_as_string_array() {
         let mut metadata = HashMap::new();
         let artists = vec![Value::new("Artist One"), Value::new("Artist Two")];
-        let array = Array::try_from(artists).unwrap();
+        let array = Array::from(artists);
         metadata.insert(
             String::from("xesam:artist"),
             Value::Array(array).try_to_owned().unwrap(),
@@ -177,7 +177,7 @@ mod tests {
     fn track_properties_from_mpris_extracts_album_artist() {
         let mut metadata = HashMap::new();
         let artists = vec![Value::new("Album Artist")];
-        let array = Array::try_from(artists).unwrap();
+        let array = Array::from(artists);
         metadata.insert(
             String::from("xesam:albumArtist"),
             Value::Array(array).try_to_owned().unwrap(),
@@ -254,7 +254,7 @@ mod tests {
             Value::new("Second"),
             Value::new("Third"),
         ];
-        let array = Array::try_from(strings).unwrap();
+        let array = Array::from(strings);
         let value = Value::Array(array).try_to_owned().unwrap();
 
         let result = TrackProperties::as_string_array(&value);
@@ -265,7 +265,7 @@ mod tests {
     #[test]
     fn as_string_array_handles_single_element() {
         let strings = vec![Value::new("Single")];
-        let array = Array::try_from(strings).unwrap();
+        let array = Array::from(strings);
         let value = Value::Array(array).try_to_owned().unwrap();
 
         let result = TrackProperties::as_string_array(&value);
@@ -291,7 +291,7 @@ mod tests {
             Value::I32(123),
             Value::new("Also Valid"),
         ];
-        let array = Array::try_from(mixed).unwrap();
+        let array = Array::from(mixed);
         let value = Value::Array(array).try_to_owned().unwrap();
 
         let result = TrackProperties::as_string_array(&value);

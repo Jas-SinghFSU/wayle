@@ -58,7 +58,7 @@ impl HyprMessenger {
 }
 
 #[cfg(test)]
-#[allow(unsafe_code)]
+#[allow(unsafe_code, clippy::panic)]
 mod tests {
     use std::env;
 

@@ -165,6 +165,7 @@ impl TryFrom<HashMap<String, OwnedValue>> for ProfileHold {
 }
 
 #[cfg(test)]
+#[allow(clippy::panic)]
 mod tests {
     use std::collections::HashMap;
 

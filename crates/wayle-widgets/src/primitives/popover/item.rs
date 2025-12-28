@@ -2,11 +2,17 @@ use gtk::prelude::*;
 use relm4::factory::{FactoryComponent, FactorySender};
 use relm4::prelude::*;
 
+/// Data model for a popover list item.
 pub struct PopoverItem {
+    /// Leading icon name.
     pub icon: Option<String>,
+    /// Primary label text.
     pub label: String,
+    /// Secondary description text.
     pub subtitle: Option<String>,
+    /// Trailing icon shown when active.
     pub active_icon: Option<String>,
+    /// Whether this item is currently selected.
     pub is_active: bool,
 }
 

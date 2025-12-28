@@ -134,6 +134,7 @@ pub struct CursorPosition {
 }
 
 #[cfg(test)]
+#[allow(clippy::panic)]
 mod tests {
     use serde::Deserialize;
 

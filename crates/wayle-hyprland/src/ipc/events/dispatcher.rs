@@ -201,6 +201,7 @@ fn handle_bell(data: &str, hyprland_tx: Sender<HyprlandEvent>) -> Result<()> {
 }
 
 #[cfg(test)]
+#[allow(clippy::panic)]
 mod tests {
     use tokio::sync::broadcast;
 
