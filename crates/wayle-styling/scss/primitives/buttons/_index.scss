@@ -4,112 +4,115 @@
   border-radius: var(--rounding-element);
   font-size: var(--text-md);
   font-weight: var(--weight-medium);
-}
 
+  &:hover {
+    transition: background var(--duration-fast);
+  }
 
-/*******************************************
-*                 primary                 *
-*******************************************/
+  /*******************************************
+  *                 primary                 *
+  *******************************************/
 
-.btn-primary {
-  background-color: var(--accent);
-  color: var(--fg-on-accent);
-}
+  &.btn-primary {
+    background: var(--accent);
+    color: var(--fg-on-accent);
+  }
 
-.btn-primary:hover {
-  background-color: var(--accent-hover);
-}
+  &.btn-primary:hover {
+    background: var(--accent-hover);
+  }
 
-.btn-primary:disabled {
-  opacity: 0.5;
-}
+  &.btn-primary:disabled {
+    opacity: 0.5;
+  }
 
-/*******************************************
-*                secondary                *
-*******************************************/
+  /*******************************************
+  *                secondary                *
+  *******************************************/
 
-.btn-secondary {
-  background-color: var(--bg-overlay);
-  color: var(--fg-muted);
-}
+  &.btn-secondary {
+    background: var(--bg-overlay);
+    color: var(--fg-muted);
+  }
 
-.btn-secondary:hover {
-  background-color: var(--bg-active);
-  color: var(--fg-default);
-}
+  &.btn-secondary:hover {
+    background: var(--bg-active);
+    color: var(--fg-default);
+  }
 
-.btn-secondary:disabled {
-  opacity: 0.5;
-}
+  &.btn-secondary:disabled {
+    opacity: 0.5;
+  }
 
-/*******************************************
-*                  icon                   *
-*******************************************/
+  /*******************************************
+  *                  icon                   *
+  *******************************************/
 
-.btn-icon {
-  background-color: var(--bg-overlay);
-  color: var(--fg-subtle);
-}
+  &.btn-icon {
+    background: var(--bg-overlay);
+    color: var(--fg-subtle);
+  }
 
-.btn-icon:hover {
-  background-color: var(--bg-active);
-}
+  &.btn-icon:hover {
+    background: var(--bg-active);
+  }
 
-.btn-icon:disabled {
-  opacity: 0.5;
-}
+  &.btn-icon:disabled {
+    opacity: 0.5;
+  }
 
-/*******************************************
-*                 danger                  *
-*******************************************/
+  /*******************************************
+  *                 danger                  *
+  *******************************************/
 
-.btn-danger {
-  background-color: var(--status-error);
-  color: var(--fg-on-accent);
-}
+  &.btn-danger {
+    background: var(--status-error);
+    color: var(--fg-on-accent);
+  }
 
-.btn-danger:hover {
-  background-color: var(--status-error-hover);
-}
+  &.btn-danger:hover {
+    background: var(--status-error-hover);
+  }
 
-.btn-danger:disabled {
-  opacity: 0.5;
-}
+  &.btn-danger:disabled {
+    opacity: 0.5;
+  }
 
-/*******************************************
-*                  ghost                  *
-*******************************************/
+  /*******************************************
+  *                  ghost                  *
+  *******************************************/
 
-.btn-ghost {
-  background-color: transparent;
-  color: var(--fg-muted);
-}
+  &.btn-ghost {
+    background: transparent;
+    color: var(--fg-muted);
+  }
 
-.btn-ghost:hover {
-  background-color: var(--bg-hover);
-  color: var(--fg-default);
-}
+  &.btn-ghost:hover {
+    background: var(--bg-hover);
+    color: var(--fg-default);
+  }
 
-.btn-ghost:disabled {
-  opacity: 0.5;
-}
+  &.btn-ghost:disabled {
+    opacity: 0.5;
+  }
 
-/*******************************************
-*               ghost icon                *
-*******************************************/
+  /*******************************************
+  *               ghost icon                *
+  *******************************************/
 
-.btn-ghost-icon {
-  background-color: transparent;
-  color: var(--fg-subtle);
-}
+  &.btn-ghost-icon {
+    background: transparent;
+    color: var(--fg-subtle);
+  }
 
-.btn-ghost-icon:hover {
-  background-color: var(--bg-hover);
-  color: var(--fg-default);
-}
+  &.btn-ghost-icon:hover {
+    background: var(--bg-hover);
+    color: var(--fg-default);
+  }
 
-.btn-ghost-icon:disabled {
-  opacity: 0.5;
+  &.btn-ghost-icon:disabled {
+    opacity: 0.5;
+  }
 }
 
 /*******************************************
@@ -117,6 +120,7 @@
 *******************************************/
 
 .btn-link {
+  all: unset;
   background: none;
   color: var(--accent);
   text-decoration: none;
@@ -136,4 +140,47 @@
 
 .btn-link:disabled {
   opacity: 0.5;
+}
+
+/*******************************************
+*                  menu                   *
+*******************************************/
+
+.btn-menu {
+  all: unset;
+
+  >button.toggle {
+    all: unset;
+    min-width: 10rem;
+    padding: var(--space-sm) var(--space-sm);
+
+    font-size: var(--text-md);
+    font-weight: var(--weight-semibold);
+
+    background: var(--bg-overlay);
+    transition: background var(--duration-fast);
+    color: var(--fg-muted);
+
+    border-radius: var(--rounding-element);
+    border: 1px solid var(--border-strong);
+
+    &:hover {
+      background: var(--bg-active);
+      transition: background var(--duration-fast);
+    }
+
+    &:checked {
+      background: var(--bg-active);
+    }
+
+    &:checked arrow {
+      -gtk-icon-transform: rotate(-0.5turn);
+    }
+  }
+
+  arrow {
+    color: var(--fg-subtle);
+    transition: -gtk-icon-transform var(--duration-fast);
+    -gtk-icon-transform: rotate(0turn);
+  }
 }

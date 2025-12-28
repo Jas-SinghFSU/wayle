@@ -1,0 +1,86 @@
+use gtk::prelude::*;
+use relm4::factory::{FactoryComponent, FactorySender};
+use relm4::prelude::*;
+
+pub struct PopoverItem {
+    pub icon: Option<String>,
+    pub label: String,
+    pub subtitle: Option<String>,
+    pub active_icon: Option<String>,
+    pub is_active: bool,
+}
+
+#[relm4::factory(pub)]
+impl FactoryComponent for PopoverItem {
+    type Init = PopoverItem;
+    type Input = ();
+    type Output = ();
+    type CommandOutput = ();
+    type ParentWidget = gtk::ListBox;
+
+    view! {
+        gtk::ListBoxRow {
+            add_css_class: "popover-item",
+
+            gtk::Box {
+                add_css_class: "popover-item-content",
+                set_orientation: gtk::Orientation::Horizontal,
+
+                gtk::Box {
+                    add_css_class: "popover-item-icon-container",
+                    set_valign: gtk::Align::Center,
+                    set_halign: gtk::Align::Start,
+                    #[watch]
+                    set_visible: self.icon.is_some(),
+
+                    gtk::Image {
+                        add_css_class: "popover-item-icon",
+                        set_icon_name: self.icon.as_deref(),
+                    },
+                },
+
+                gtk::Box {
+                    add_css_class: "popover-item-label-container",
+                    set_orientation: gtk::Orientation::Vertical,
+                    set_valign: gtk::Align::Center,
+                    set_halign: gtk::Align::Start,
+                    set_hexpand: true,
+
+                    gtk::Label {
+                        add_css_class: "popover-item-label",
+                        set_halign: gtk::Align::Start,
+                        set_ellipsize: gtk::pango::EllipsizeMode::End,
+                        #[watch]
+                        set_max_width_chars: if self.icon.is_some() { 30 } else { 35 },
+                        #[watch]
+                        set_label: &self.label,
+                    },
+
+                    gtk::Label {
+                        add_css_class: "popover-item-subtitle",
+                        set_halign: gtk::Align::Start,
+                        set_ellipsize: gtk::pango::EllipsizeMode::End,
+                        set_max_width_chars: 30,
+                        #[watch]
+                        set_label: &self.subtitle.as_deref().unwrap_or(""),
+                        #[watch]
+                        set_visible: self.subtitle.is_some(),
+                    }
+                },
+
+                gtk::Image {
+                    add_css_class: "popover-item-active",
+                    set_valign: gtk::Align::Center,
+                    set_halign: gtk::Align::End,
+                    set_icon_name: self.active_icon.as_deref(),
+                    #[watch]
+                    set_visible: self.is_active && self.active_icon.is_some(),
+                }
+            }
+        }
+    }
+
+    fn init_model(init: Self::Init, _index: &Self::Index, _sender: FactorySender<Self>) -> Self {
+        init
+    }
+}

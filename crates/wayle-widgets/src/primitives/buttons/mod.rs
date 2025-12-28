@@ -1,7 +1,8 @@
+use gtk4::Align;
 use gtk4::prelude::BoxExt;
 use gtk4::prelude::WidgetExt;
-use relm4::gtk;
 use relm4::WidgetTemplate;
+use relm4::gtk;
 
 #[relm4::widget_template(pub)]
 impl WidgetTemplate for PrimaryButton {
@@ -151,6 +152,23 @@ impl WidgetTemplate for DangerLinkButton {
                 },
                 #[name = "label"]
                 gtk::Label {},
+            },
+        }
+    }
+}
+
+#[relm4::widget_template(pub)]
+impl WidgetTemplate for MenuButton {
+    view! {
+        gtk::MenuButton {
+            set_css_classes: &["btn-menu"],
+            set_cursor_from_name: Some("pointer"),
+            set_always_show_arrow: true,
+
+            #[wrap(Some)]
+            #[name = "label"]
+            set_child = &gtk::Label {
+                set_xalign: 0.0,
             },
         }
     }

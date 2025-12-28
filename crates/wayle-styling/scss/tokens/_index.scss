@@ -127,4 +127,16 @@
   --duration-fast: 150ms;
   --duration-normal: 250ms;
   --duration-slow: 350ms;
+
+  // Icons (inline - scale with text)
+  --icon-xs: 0.75em;
+  --icon-sm: 1em;
+  --icon-md: 1.25em;
+  --icon-lg: 1.5em;
+  --icon-xl: 2em;
+
+  // Icons (illustration - fixed sizes for empty states, modals)
+  --icon-2xl: calc(2.5rem * #{$global-scale});
+  --icon-3xl: calc(3rem * #{$global-scale});
+  --icon-4xl: calc(4rem * #{$global-scale});
 }
