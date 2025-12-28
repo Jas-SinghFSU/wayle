@@ -1,0 +1,37 @@
+.slider {
+  all: unset;
+
+  trough {
+    background: var(--bg-active);
+    border-radius: var(--rounding-element);
+    min-height: 0.5rem;
+    min-width: 10rem;
+
+    highlight {
+      background: var(--accent);
+      border-radius: var(--rounding-element);
+    }
+
+    slider {
+      background: var(--fg-default);
+      border-radius: var(--rounding-element);
+      min-width: 1rem;
+      min-height: 1rem;
+      margin: -0.3125rem;
+      box-shadow: var(--shadow-sm);
+    }
+  }
+
+  &:hover trough slider {
+    background: var(--fg-default);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+  }
+
+  &:focus-visible {
+    outline: var(--focus-ring-width) solid var(--accent);
+    outline-offset: 0.125rem;
+  }
+}

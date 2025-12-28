@@ -1,0 +1,15 @@
+use gtk4::prelude::*;
+use relm4::WidgetTemplate;
+use relm4::gtk;
+
+#[relm4::widget_template(pub)]
+impl WidgetTemplate for Slider {
+    view! {
+        gtk::Scale {
+            set_css_classes: &["slider"],
+            set_draw_value: false,
+            set_cursor_from_name: Some("pointer"),
+            set_has_origin: true,
+        }
+    }
+}
