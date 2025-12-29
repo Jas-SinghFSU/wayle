@@ -2,8 +2,7 @@
 #![allow(missing_docs)]
 
 use gtk4::prelude::WidgetExt;
-use relm4::gtk;
-use relm4::WidgetTemplate;
+use relm4::{WidgetTemplate, gtk};
 
 /// Default status dot with subtle foreground color.
 #[relm4::widget_template(pub)]

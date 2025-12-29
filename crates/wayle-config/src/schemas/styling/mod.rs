@@ -5,11 +5,10 @@ mod types;
 
 pub use components::{ButtonStyling, DropdownStyling};
 pub use fonts::FontConfig;
-pub use theme::{CustomPalette, ThemeConfig, ThemeEntry};
-pub use types::{ColorValue, InvalidPaletteColor, PaletteColor, RoundingLevel};
-
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+pub use theme::{CustomPalette, ThemeConfig, ThemeEntry};
+pub use types::{ColorValue, InvalidPaletteColor, PaletteColor, RoundingLevel};
 use wayle_common::ConfigProperty;
 use wayle_derive::{ApplyConfigLayer, ApplyRuntimeLayer, ExtractRuntimeValues, SubscribeChanges};
 

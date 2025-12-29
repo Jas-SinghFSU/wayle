@@ -1,0 +1,19 @@
+[package]
+name = "wayle-icons"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+description = "Icon management for Wayle with CDN fetching and GTK integration"
+
+[dependencies]
+gtk4.workspace = true
+reqwest.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+
+[lints]
+workspace = true

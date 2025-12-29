@@ -4,8 +4,8 @@ use clap::{
 };
 
 use crate::cli::{
-    config::commands::ConfigCommands, media::commands::MediaCommands,
-    panel::commands::PanelCommands,
+    config::commands::ConfigCommands, icons::commands::IconsCommands,
+    media::commands::MediaCommands, panel::commands::PanelCommands,
 };
 
 fn get_styles() -> Styles {
@@ -43,6 +43,12 @@ pub enum Commands {
         /// Configuration subcommand to execute.
         #[command(subcommand)]
         command: ConfigCommands,
+    },
+    /// Icon management commands
+    Icons {
+        /// Icons subcommand to execute.
+        #[command(subcommand)]
+        command: IconsCommands,
     },
     /// Media player control commands
     Media {

@@ -1,6 +1,8 @@
 use gtk::prelude::*;
-use relm4::factory::{FactoryComponent, FactorySender};
-use relm4::prelude::*;
+use relm4::{
+    factory::{FactoryComponent, FactorySender},
+    prelude::*,
+};
 
 /// Data model for a popover list item.
 pub struct PopoverItem {

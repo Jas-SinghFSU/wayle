@@ -2,8 +2,7 @@
 #![allow(missing_docs)]
 
 use gtk4::prelude::{OrientableExt, WidgetExt};
-use relm4::WidgetTemplate;
-use relm4::gtk;
+use relm4::{WidgetTemplate, gtk};
 
 /// Default alert with neutral styling.
 #[relm4::widget_template(pub)]
@@ -16,7 +15,7 @@ impl WidgetTemplate for Alert {
             gtk::Image {
                 set_css_classes: &["alert-icon"],
                 set_valign: gtk::Align::Start,
-                set_icon_name: Some("dialog-information-symbolic"),
+                set_icon_name: Some("tb-info-circle-symbolic"),
             },
 
             gtk::Box {
@@ -52,7 +51,7 @@ impl WidgetTemplate for SuccessAlert {
             gtk::Image {
                 set_css_classes: &["alert-icon"],
                 set_valign: gtk::Align::Start,
-                set_icon_name: Some("emblem-ok-symbolic"),
+                set_icon_name: Some("tb-check-symbolic"),
             },
 
             gtk::Box {
@@ -88,7 +87,7 @@ impl WidgetTemplate for WarningAlert {
             gtk::Image {
                 set_css_classes: &["alert-icon"],
                 set_valign: gtk::Align::Start,
-                set_icon_name: Some("dialog-warning-symbolic"),
+                set_icon_name: Some("tb-alert-triangle-symbolic"),
             },
 
             gtk::Box {
@@ -124,7 +123,7 @@ impl WidgetTemplate for ErrorAlert {
             gtk::Image {
                 set_css_classes: &["alert-icon"],
                 set_valign: gtk::Align::Start,
-                set_icon_name: Some("dialog-error-symbolic"),
+                set_icon_name: Some("tb-alert-triangle-symbolic"),
             },
 
             gtk::Box {
@@ -160,7 +159,7 @@ impl WidgetTemplate for InfoAlert {
             gtk::Image {
                 set_css_classes: &["alert-icon"],
                 set_valign: gtk::Align::Start,
-                set_icon_name: Some("dialog-information-symbolic"),
+                set_icon_name: Some("tb-info-circle-symbolic"),
             },
 
             gtk::Box {

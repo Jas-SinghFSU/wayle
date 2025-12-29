@@ -5,9 +5,7 @@
 
 mod error;
 
-use std::fs;
-use std::io::Write;
-use std::path::PathBuf;
+use std::{fs, io::Write, path::PathBuf};
 
 pub use error::Error;
 use wayle_config::{

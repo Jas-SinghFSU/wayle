@@ -4,13 +4,10 @@
 mod header;
 mod item;
 
+use gtk4::prelude::{PopoverExt, WidgetExt};
 pub use header::PopoverHeader;
 pub use item::PopoverItem;
-
-use gtk4::prelude::PopoverExt;
-use gtk4::prelude::WidgetExt;
-use relm4::WidgetTemplate;
-use relm4::gtk;
+use relm4::{WidgetTemplate, gtk};
 
 /// Styled popover container for dropdown content.
 #[relm4::widget_template(pub)]

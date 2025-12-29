@@ -133,6 +133,26 @@ cd wayle
 cargo install --path wayle
 ```
 
+## Icons
+
+Wayle uses GTK symbolic icons that support CSS color theming. Bundled icons required by core components are installed automatically on first launch.
+
+To manually manage icons:
+
+```bash
+# Install bundled icons (automatic on first launch)
+wayle icons setup
+
+# Install additional icons from CDN sources
+wayle icons install tabler home settings bell
+wayle icons install simple-icons firefox spotify
+
+# See all available sources
+wayle icons install --help
+```
+
+Icons are installed to `~/.local/share/wayle/icons/` as GTK symbolic icons.
+
 ## License
 
 MIT

@@ -234,17 +234,18 @@ pub fn derive_subscribe_changes(input: TokenStream) -> TokenStream {
         Err(err) => return err,
     };
 
-    let field_subscriptions = fields
-        .named
-        .iter()
-        .filter(|field| !should_skip(field))
-        .map(|field| {
-            let field_name = &field.ident;
+    let field_subscriptions =
+        fields
+            .named
+            .iter()
+            .filter(|field| !should_skip(field))
+            .map(|field| {
+                let field_name = &field.ident;
 
-            quote! {
-                self.#field_name.subscribe_changes(tx.clone());
-            }
-        });
+                quote! {
+                    self.#field_name.subscribe_changes(tx.clone());
+                }
+            });
 
     let subscribe_fields = quote! {
         #(#field_subscriptions)*

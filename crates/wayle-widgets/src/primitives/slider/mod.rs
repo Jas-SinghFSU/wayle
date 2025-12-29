@@ -2,8 +2,7 @@
 #![allow(missing_docs)]
 
 use gtk4::prelude::*;
-use relm4::WidgetTemplate;
-use relm4::gtk;
+use relm4::{WidgetTemplate, gtk};
 
 /// Horizontal range slider with origin highlight.
 #[relm4::widget_template(pub)]

@@ -1,10 +1,8 @@
 //! Button widget templates.
 #![allow(missing_docs)]
 
-use gtk4::prelude::BoxExt;
-use gtk4::prelude::WidgetExt;
-use relm4::WidgetTemplate;
-use relm4::gtk;
+use gtk4::prelude::{BoxExt, WidgetExt};
+use relm4::{WidgetTemplate, gtk};
 
 /// Primary action button with accent background.
 #[relm4::widget_template(pub)]

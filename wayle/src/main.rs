@@ -22,6 +22,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let result = match cli.command {
         Commands::Panel { command } => wayle::cli::panel::execute(command).await,
         Commands::Config { command } => wayle::cli::config::execute(command).await,
+        Commands::Icons { command } => wayle::cli::icons::execute(command).await,
         Commands::Media { command } => wayle::cli::media::execute(command).await,
     };
 
