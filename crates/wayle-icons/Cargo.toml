@@ -10,10 +10,12 @@ description = "Icon management for Wayle with CDN fetching and GTK integration"
 
 [dependencies]
 gtk4.workspace = true
+notify.workspace = true
 reqwest.workspace = true
 thiserror.workspace = true
 tokio.workspace = true
 tracing.workspace = true
+usvg = "0.45"
 
 [lints]
 workspace = true

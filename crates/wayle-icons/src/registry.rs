@@ -1,11 +1,14 @@
 //! GTK IconTheme integration for Wayle icons.
 //!
 //! The registry ensures GTK can discover icons in the Wayle icon directory.
+//! It also watches the icon directory for changes and automatically refreshes
+//! GTK's icon cache when icons are added or removed.
 
-use std::{fs, path::PathBuf};
+use std::{fs, path::PathBuf, thread};
 
-use gtk4::gdk;
-use tracing::info;
+use gtk4::{gdk, glib};
+use notify::{Event, RecommendedWatcher, RecursiveMode, Watcher};
+use tracing::{debug, info, warn};
 
 use crate::error::{Error, Result};
 
@@ -88,7 +91,7 @@ impl IconRegistry {
     /// Ensures the icon directory structure and index.theme exist.
     ///
     /// Use this in CLI contexts where GTK is not available.
-    /// For GUI applications, use [`init`] instead.
+    /// For GUI applications, use [`Self::init`] instead.
     ///
     /// # Errors
     ///
@@ -99,12 +102,13 @@ impl IconRegistry {
         Ok(())
     }
 
-    /// Initializes the icon registry with GTK.
+    /// Initializes the icon registry with GTK and starts watching for changes.
     ///
     /// This method:
     /// 1. Creates the icon directory structure if it doesn't exist
     /// 2. Creates the `index.theme` file if missing
     /// 3. Registers the directory with GTK's IconTheme
+    /// 4. Starts a background watcher that refreshes icons when files change
     ///
     /// Call this once at application startup before displaying any widgets
     /// that use Wayle icons.
@@ -118,9 +122,62 @@ impl IconRegistry {
     pub fn init(&self) -> Result<()> {
         self.ensure_setup()?;
         self.register_with_gtk()?;
+        self.start_watcher();
 
-        info!(path = %self.base_path.display(), "Icon registry initialized");
+        info!(path = %self.base_path.display(), "Icon registry initialized with file watching");
         Ok(())
+    }
+
+    fn start_watcher(&self) {
+        let icons_dir = self.icons_dir();
+        let base_path = self.base_path.clone();
+
+        thread::spawn(move || {
+            let (tx, rx) = std::sync::mpsc::channel();
+
+            let mut watcher: RecommendedWatcher =
+                match notify::recommended_watcher(move |res: std::result::Result<Event, _>| {
+                    if let Ok(event) = res {
+                        if event.kind.is_create() || event.kind.is_remove() {
+                            let _ = tx.send(());
+                        }
+                    }
+                }) {
+                    Ok(watcher) => watcher,
+                    Err(err) => {
+                        warn!("Failed to create icon watcher: {err}");
+                        return;
+                    }
+                };
+
+            if let Err(err) = watcher.watch(&icons_dir, RecursiveMode::NonRecursive) {
+                warn!(path = %icons_dir.display(), "Failed to watch icons directory: {err}");
+                return;
+            }
+
+            debug!(path = %icons_dir.display(), "Watching icons directory for changes");
+
+            let mut last_refresh = std::time::Instant::now();
+            loop {
+                if rx.recv().is_err() {
+                    break;
+                }
+
+                if last_refresh.elapsed() < std::time::Duration::from_millis(100) {
+                    continue;
+                }
+                last_refresh = std::time::Instant::now();
+
+                let base_path = base_path.clone();
+                glib::idle_add_once(move || {
+                    if let Err(err) = Self::refresh_gtk_theme(&base_path) {
+                        warn!("Failed to refresh icon theme: {err}");
+                    } else {
+                        debug!("Icon theme refreshed");
+                    }
+                });
+            }
+        });
     }
 
     /// Ensures the icon directory structure exists.
@@ -153,11 +210,39 @@ impl IconRegistry {
 
     /// Registers the icon directory with GTK's IconTheme.
     fn register_with_gtk(&self) -> Result<()> {
+        Self::refresh_gtk_theme(&self.base_path)
+    }
+
+    /// Forces GTK to rescan icon directories and pick up newly installed icons.
+    ///
+    /// GTK's IconTheme caches directory contents at startup and doesn't
+    /// automatically detect new files. Call this after installing icons
+    /// via CLI while a GUI application is running.
+    ///
+    /// # Errors
+    ///
+    /// Returns error if no display is available.
+    pub fn refresh() -> Result<()> {
+        let path = Self::default_path()?;
+        Self::refresh_gtk_theme(&path)
+    }
+
+    fn refresh_gtk_theme(base_path: &PathBuf) -> Result<()> {
         let display = gdk::Display::default()
             .ok_or_else(|| Error::RegistryError("no display".to_string()))?;
 
         let icon_theme = gtk4::IconTheme::for_display(&display);
-        icon_theme.add_search_path(&self.base_path);
+
+        let mut paths: Vec<PathBuf> = icon_theme
+            .search_path()
+            .into_iter()
+            .filter(|p| p != base_path)
+            .collect();
+
+        paths.push(base_path.clone());
+
+        let path_refs: Vec<&std::path::Path> = paths.iter().map(|p| p.as_path()).collect();
+        icon_theme.set_search_path(&path_refs);
 
         Ok(())
     }

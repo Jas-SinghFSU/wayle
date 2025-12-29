@@ -15,7 +15,10 @@ pub fn execute() -> CliAction {
     let source_dir = Path::new(RESOURCES_DIR);
 
     if !source_dir.exists() {
-        return Err(format!("Resources directory not found: {}", source_dir.display()));
+        return Err(format!(
+            "Resources directory not found: {}",
+            source_dir.display()
+        ));
     }
 
     let registry = IconRegistry::new().map_err(|err| err.to_string())?;
@@ -35,7 +38,10 @@ pub fn execute() -> CliAction {
             let dest_path = dest_dir.join(filename);
             fs::copy(&path, &dest_path)
                 .map_err(|err| format!("Failed to copy {}: {err}", path.display()))?;
-            println!("Installed: {}", filename.to_string_lossy().trim_end_matches(".svg"));
+            println!(
+                "Installed: {}",
+                filename.to_string_lossy().trim_end_matches(".svg")
+            );
             count += 1;
         }
     }
