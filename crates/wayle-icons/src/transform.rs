@@ -486,6 +486,34 @@ mod tests {
                 result
             );
         }
+
+        #[test]
+        fn converts_rect_to_path() {
+            let svg = r#"<svg viewBox="0 0 24 24">
+                <rect x="4" y="4" width="16" height="16"/>
+            </svg>"#;
+            let result = to_symbolic(svg);
+
+            assert!(
+                result.contains("<path d='M"),
+                "Rect should be converted to path, got: {}",
+                result
+            );
+        }
+
+        #[test]
+        fn converts_circle_to_path() {
+            let svg = r#"<svg viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="8"/>
+            </svg>"#;
+            let result = to_symbolic(svg);
+
+            assert!(
+                result.contains("<path d='M"),
+                "Circle should be converted to path, got: {}",
+                result
+            );
+        }
     }
 
     mod build_path_element_tests {
