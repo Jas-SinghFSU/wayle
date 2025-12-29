@@ -23,7 +23,7 @@
   }
 
   &.info {
-    background: var(--accent);
+    background: var(--status-info);
     color: var(--fg-on-accent);
   }
 
@@ -54,8 +54,8 @@
   }
 
   &.info {
-    background: var(--accent-subtle);
-    color: var(--accent);
+    background: var(--status-info-subtle);
+    color: var(--status-info);
   }
 
 }

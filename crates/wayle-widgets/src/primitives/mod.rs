@@ -1,5 +1,7 @@
 //! Primitive widget components.
 
+/// Alert banners for status messages and notifications.
+pub mod alert;
 /// Status indicator badges with filled and subtle variants.
 pub mod badge;
 /// Button variants styled with Wayle's design tokens.
@@ -8,6 +10,8 @@ pub mod buttons;
 pub mod popover;
 /// Range slider for value selection.
 pub mod slider;
+/// Small circular status indicators.
+pub mod status_dot;
 /// Toggle switch for binary states.
 pub mod switch;
 /// Text entry field.

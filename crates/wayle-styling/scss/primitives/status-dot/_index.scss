@@ -1,0 +1,22 @@
+.status-dot {
+  min-width: 0.55rem;
+  min-height: 0.55rem;
+  border-radius: var(--radius-full);
+  background: var(--fg-subtle);
+
+  &.success {
+    background: var(--status-success);
+  }
+
+  &.warning {
+    background: var(--status-warning);
+  }
+
+  &.error {
+    background: var(--status-error);
+  }
+
+  &.info {
+    background: var(--accent);
+  }
+}
