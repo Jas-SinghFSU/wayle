@@ -135,7 +135,7 @@ cargo install --path wayle
 
 ## Icons
 
-Wayle uses GTK symbolic icons that support CSS color theming. Bundled icons required by core components are installed automatically on first launch.
+Wayle uses GTK symbolic icons that support CSS color theming.
 
 To manually manage icons:
 
