@@ -6,6 +6,8 @@ pub mod alert;
 pub mod badge;
 /// Button variants styled with Wayle's design tokens.
 pub mod buttons;
+/// Confirmation modal for destructive/irreversible actions.
+pub mod confirm_modal;
 /// Dropdown container with header, content, and footer.
 pub mod dropdown;
 /// Popover menus and list items.

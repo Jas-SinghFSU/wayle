@@ -69,7 +69,7 @@
   --text-sm: calc(0.8125rem * #{$global-scale});
   --text-base: calc(0.875rem * #{$global-scale});
   --text-md: calc(0.9375rem * #{$global-scale});
-  --text-lg: calc(1.125rem * #{$global-scale});
+  --text-lg: calc(1.05rem * #{$global-scale});
   --text-xl: calc(1.375rem * #{$global-scale});
   --text-2xl: calc(1.75rem * #{$global-scale});
   --text-3xl: calc(2.25rem * #{$global-scale});
@@ -78,6 +78,8 @@
   --weight-medium: 500;
   --weight-semibold: 600;
   --weight-bold: 700;
+  --weight-bold2: 800;
+  --weight-bold3: 900;
 
   --leading-none: 1;
   --leading-tight: 1.25;

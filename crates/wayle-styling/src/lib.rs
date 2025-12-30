@@ -52,6 +52,8 @@ pub fn compile(
 
     let mut file = fs::File::create(&variables_path).map_err(Error::Io)?;
     file.write_all(variables.as_bytes()).map_err(Error::Io)?;
+    file.sync_all().map_err(Error::Io)?;
+    drop(file);
 
     let options = grass::Options::default().load_path(&scss_path);
 
