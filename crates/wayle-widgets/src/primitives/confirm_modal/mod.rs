@@ -31,7 +31,7 @@ impl ModalIcon {
     fn icon_name(self) -> Option<&'static str> {
         match self {
             Self::Warning => Some("tb-alert-triangle-symbolic"),
-            Self::Error => Some("tb-x-symbolic"),
+            Self::Error => Some("tb-xbox-x-symbolic"),
             Self::Success => Some("tb-check-symbolic"),
             Self::Info => Some("tb-info-circle-symbolic"),
             Self::None => None,

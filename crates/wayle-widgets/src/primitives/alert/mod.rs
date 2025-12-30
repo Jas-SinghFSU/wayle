@@ -123,7 +123,7 @@ impl WidgetTemplate for ErrorAlert {
             gtk::Image {
                 set_css_classes: &["alert-icon"],
                 set_valign: gtk::Align::Start,
-                set_icon_name: Some("tb-alert-triangle-symbolic"),
+                set_icon_name: Some("tb-xbox-x-symbolic"),
             },
 
             gtk::Box {
