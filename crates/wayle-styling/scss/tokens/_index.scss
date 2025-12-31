@@ -1,6 +1,8 @@
 // Design tokens derived from palette variables.
 // Palette vars ($palette-*) are injected by Rust at runtime.
 
+$global-scale: 1;
+
 :root {
   // Palette
   --palette-bg: #{$palette-bg};
@@ -131,12 +133,12 @@
   --duration-normal: 250ms;
   --duration-slow: 350ms;
 
-  // Icons (inline - scale with text)
-  --icon-xs: 0.75rem;
-  --icon-sm: 1rem;
-  --icon-md: 1.25rem;
-  --icon-lg: 1.6rem;
-  --icon-xl: 2rem;
+  // Icons (inline - scale with global-scale)
+  --icon-xs: calc(0.75rem * #{$global-scale});
+  --icon-sm: calc(1rem * #{$global-scale});
+  --icon-md: calc(1.25rem * #{$global-scale});
+  --icon-lg: calc(1.6rem * #{$global-scale});
+  --icon-xl: calc(2rem * #{$global-scale});
 
   // Icons (illustration - fixed sizes for empty states, modals)
   --icon-2xl: calc(2.5rem * #{$global-scale});

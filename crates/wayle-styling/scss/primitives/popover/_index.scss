@@ -1,4 +1,5 @@
 .popover {
+  all: unset;
   margin-top: var(--space-sm);
 
   * {
@@ -10,8 +11,8 @@
     background: var(--bg-surface);
     border: 1px solid var(--bg-hover);
     box-shadow: var(--shadow);
-    min-width: 20rem;
-    min-height: 2.5rem;
+    min-width: calc(20rem * #{$global-scale});
+    min-height: calc(2.5rem * #{$global-scale});
   }
 
   .popover-header {
@@ -28,7 +29,7 @@
   }
 
   .popover-item {
-    min-height: 4rem;
+    min-height: calc(4rem * #{$global-scale});
 
     &:hover {
       transition: background var(--duration-fast);
@@ -38,7 +39,7 @@
     &:focus-visible {
       background: var(--bg-overlay);
       outline: var(--focus-ring-width) solid var(--accent);
-      outline-offset: -0.125rem;
+      outline-offset: calc(-0.125rem * #{$global-scale});
     }
 
     .icon {
@@ -71,6 +72,7 @@
     }
 
     .active-icon {
+      -gtk-icon-size: var(--icon-md);
       margin-right: calc(var(--space-sm) + var(--space-xs));
       margin-left: var(--space-md);
       color: var(--accent);

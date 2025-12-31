@@ -5,6 +5,10 @@
   font-size: var(--text-md);
   font-weight: var(--weight-medium);
 
+  image {
+    -gtk-icon-size: var(--icon-md);
+  }
+
   &:hover {
     transition: background var(--duration-fast);
   }
@@ -28,7 +32,7 @@
 
   &.btn-primary:focus-visible {
     outline: var(--focus-ring-width) solid var(--accent);
-    outline-offset: 0.125rem;
+    outline-offset: calc(0.125rem * #{$global-scale});
   }
 
   /*******************************************
@@ -51,7 +55,7 @@
 
   &.btn-secondary:focus-visible {
     outline: var(--focus-ring-width) solid var(--fg-muted);
-    outline-offset: 0.125rem;
+    outline-offset: calc(0.125rem * #{$global-scale});
   }
 
   /*******************************************
@@ -73,7 +77,7 @@
 
   &.btn-icon:focus-visible {
     outline: var(--focus-ring-width) solid var(--fg-subtle);
-    outline-offset: 0.125rem;
+    outline-offset: calc(0.125rem * #{$global-scale});
   }
 
   /*******************************************
@@ -95,7 +99,7 @@
 
   &.btn-danger:focus-visible {
     outline: var(--focus-ring-width) solid var(--status-error);
-    outline-offset: 0.125rem;
+    outline-offset: calc(0.125rem * #{$global-scale});
   }
 
   /*******************************************
@@ -118,7 +122,7 @@
 
   &.btn-ghost:focus-visible {
     outline: var(--focus-ring-width) solid var(--fg-muted);
-    outline-offset: 0.125rem;
+    outline-offset: calc(0.125rem * #{$global-scale});
   }
 
   /*******************************************
@@ -141,7 +145,7 @@
 
   &.btn-ghost-icon:focus-visible {
     outline: var(--focus-ring-width) solid var(--fg-subtle);
-    outline-offset: 0.125rem;
+    outline-offset: calc(0.125rem * #{$global-scale});
   }
 }
 
@@ -156,10 +160,15 @@
   text-decoration: none;
   border-radius: var(--rounding-element);
   padding: var(--space-xs) var(--space-sm);
+  font-size: var(--text-md);
+
+  image {
+    -gtk-icon-size: var(--icon-md);
+  }
 
   &:focus-visible {
     outline: var(--focus-ring-width) solid var(--accent);
-    outline-offset: 0.125rem;
+    outline-offset: calc(0.125rem * #{$global-scale});
   }
 
   &.muted {
@@ -196,7 +205,7 @@
 
   >button.toggle {
     all: unset;
-    min-width: 10rem;
+    min-width: calc(10rem * #{$global-scale});
     padding: var(--space-sm) var(--space-sm);
 
     font-size: var(--text-md);
@@ -224,7 +233,7 @@
 
     &:focus-visible {
       outline: var(--focus-ring-width) solid var(--border-strong);
-      outline-offset: 0.125rem;
+      outline-offset: calc(0.125rem * #{$global-scale});
     }
   }
 

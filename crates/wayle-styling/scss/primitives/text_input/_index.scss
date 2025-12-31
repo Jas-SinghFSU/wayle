@@ -5,6 +5,7 @@ entry {
     background-color: var(--bg-overlay);
     border-radius: var(--rounding-element);
     padding: var(--space-md) var(--space-md);
+    font-size: var(--text-md);
     font-weight: var(--weight-medium);
 
     >text {
@@ -31,6 +32,7 @@ entry {
     >image.left,
     >image.right {
       color: var(--fg-subtle);
+      -gtk-icon-size: var(--icon-md);
     }
 
     &:disabled {

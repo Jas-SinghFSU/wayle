@@ -1,6 +1,7 @@
 .modal {
+  all: unset;
   background: var(--bg-surface);
-  min-width: 29rem;
+  min-width: calc(29rem * #{$global-scale});
 
   .modal-header {
     padding: var(--space-lg);
@@ -61,8 +62,7 @@
 
       .modal-description {
         margin-top: var(--space-sm);
-        font-size: var(--text-lg);
-        font-weight: var(--weight-medium);
+        font-size: var(--text-md);
         color: var(--fg-muted);
       }
 

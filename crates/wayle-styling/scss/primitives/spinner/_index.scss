@@ -1,5 +1,5 @@
 .spinner {
-  background: none;
+  all: unset;
   opacity: 0;
   -gtk-icon-source: -gtk-icontheme('tb-loader-2-symbolic');
   -gtk-icon-size: var(--icon-xl);

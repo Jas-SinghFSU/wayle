@@ -1,13 +1,14 @@
 .dropdown {
+  all: unset;
   background: var(--bg-surface);
   border-radius: var(--rounding-container);
   border: 1px solid var(--border-default);
   box-shadow: var(--shadow);
-  min-width: 28rem;
+  min-width: calc(28rem * #{$global-scale});
 }
 
 .dropdown-header {
-  padding: calc(var(--space-sm) + var(--space-xs)) var(--space-lg);
+  padding: calc(var(--space-sm) + var(--space-xs)) var(--space-md);
 
   border-bottom: 1px solid var(--border-default);
   border-top-left-radius: var(--rounding-container);
@@ -16,7 +17,7 @@
   background: var(--bg-elevated);
 
   .dropdown-title {
-    font-size: var(--text-md);
+    font-size: var(--text-lg);
     font-weight: var(--weight-bold);
     color: var(--fg-default);
 
@@ -34,6 +35,8 @@
 
 .dropdown-content {
   padding: calc(var(--space-sm) + var(--space-xs));
+  font-size: var(--text-lg);
+  color: var(--fg-muted);
 }
 
 
@@ -42,4 +45,5 @@
   border-top: 1px solid var(--border-default);
   border-bottom-left-radius: var(--rounding-container);
   border-bottom-right-radius: var(--rounding-container);
+  font-size: var(--text-md);
 }
