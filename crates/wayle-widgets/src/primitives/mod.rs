@@ -12,8 +12,12 @@ pub mod confirm_modal;
 pub mod dropdown;
 /// Popover menus and list items.
 pub mod popover;
+/// Separator component
+pub mod separator;
 /// Range slider for value selection.
 pub mod slider;
+/// Spinner widget
+pub mod spinner;
 /// Small circular status indicators.
 pub mod status_dot;
 /// Toggle switch for binary states.
