@@ -25,11 +25,20 @@ use wayle_widgets::primitives::progress_bar::{ProgressBar, ProgressBarClass};
 
 ## Class Constants
 
-| Constant                   | CSS Class  | Effect        |
-| -------------------------- | ---------- | ------------- |
-| `ProgressBarClass::SUCCESS` | `.success` | Green fill    |
-| `ProgressBarClass::WARNING` | `.warning` | Yellow fill   |
-| `ProgressBarClass::ERROR`   | `.error`   | Red fill      |
+### Status
+
+| Constant                    | CSS Class  | Effect      |
+| --------------------------- | ---------- | ----------- |
+| `ProgressBarClass::SUCCESS` | `.success` | Green fill  |
+| `ProgressBarClass::WARNING` | `.warning` | Yellow fill |
+| `ProgressBarClass::ERROR`   | `.error`   | Red fill    |
+
+### Size
+
+| Constant                  | CSS Class | Effect       |
+| ------------------------- | --------- | ------------ |
+| `ProgressBarClass::SMALL` | `.sm`     | Compact size |
+| `ProgressBarClass::LARGE` | `.lg`     | Large size   |
 
 ## Usage
 
@@ -52,6 +61,25 @@ view! {
     ProgressBar {
         add_css_class: ProgressBarClass::ERROR,
         set_fraction: 0.15,
+    }
+}
+```
+
+### Size Variants
+
+```rust
+view! {
+    #[template]
+    ProgressBar {
+        add_css_class: ProgressBarClass::SMALL,
+        add_css_class: ProgressBarClass::SUCCESS,
+        set_fraction: 1.0,
+    }
+
+    #[template]
+    ProgressBar {
+        add_css_class: ProgressBarClass::LARGE,
+        set_fraction: 0.65,
     }
 }
 ```

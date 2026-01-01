@@ -2,7 +2,7 @@
 #![allow(missing_docs)]
 
 use gtk4::prelude::WidgetExt;
-use relm4::{gtk, WidgetTemplate};
+use relm4::{WidgetTemplate, gtk};
 
 /// CSS class constants for ProgressBar color variants.
 ///
@@ -23,6 +23,10 @@ impl ProgressBarClass {
     pub const WARNING: &'static str = "warning";
     /// Error/negative color.
     pub const ERROR: &'static str = "error";
+    /// Compact size variant.
+    pub const SMALL: &'static str = "sm";
+    /// Large size variant.
+    pub const LARGE: &'static str = "lg";
 }
 
 /// Linear progress indicator for determinate progress.
