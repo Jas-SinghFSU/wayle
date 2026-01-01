@@ -14,6 +14,8 @@ pub mod dropdown;
 pub mod empty_state;
 /// Popover menus and list items.
 pub mod popover;
+/// Linear progress indicator for determinate progress.
+pub mod progress_bar;
 /// Separator component
 pub mod separator;
 /// Range slider for value selection (continuous and stepped variants).
