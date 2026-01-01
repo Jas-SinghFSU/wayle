@@ -20,7 +20,31 @@ Button variants for actions and navigation.
 ## Import
 
 ```rust
-use wayle_widgets::primitives::buttons::{PrimaryButton, SecondaryButton, GhostButton};
+use wayle_widgets::primitives::buttons::{
+    PrimaryButton, SecondaryButton, GhostButton, LinkButton, LinkButtonClass,
+};
+```
+
+## Link Button Modifiers
+
+For `LinkButton`, use `LinkButtonClass` constants to apply modifiers:
+
+| Constant                | CSS Class | Effect                   |
+| ----------------------- | --------- | ------------------------ |
+| `LinkButtonClass::MUTED`  | `.muted`  | De-emphasized text color |
+| `LinkButtonClass::DANGER` | `.danger` | Red destructive color    |
+
+```rust
+view! {
+    #[template]
+    LinkButton {
+        add_css_class: LinkButtonClass::MUTED,
+        #[template_child]
+        label {
+            set_label: "Cancel",
+        },
+    }
+}
 ```
 
 ## Usage

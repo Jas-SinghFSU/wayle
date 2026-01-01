@@ -20,8 +20,16 @@ Linear progress indicator for determinate progress.
 ## Import
 
 ```rust
-use wayle_widgets::primitives::progress_bar::ProgressBar;
+use wayle_widgets::primitives::progress_bar::{ProgressBar, ProgressBarClass};
 ```
+
+## Class Constants
+
+| Constant                   | CSS Class  | Effect        |
+| -------------------------- | ---------- | ------------- |
+| `ProgressBarClass::SUCCESS` | `.success` | Green fill    |
+| `ProgressBarClass::WARNING` | `.warning` | Yellow fill   |
+| `ProgressBarClass::ERROR`   | `.error`   | Red fill      |
 
 ## Usage
 
@@ -42,7 +50,7 @@ view! {
 view! {
     #[template]
     ProgressBar {
-        add_css_class: "error",
+        add_css_class: ProgressBarClass::ERROR,
         set_fraction: 0.15,
     }
 }

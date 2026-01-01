@@ -19,7 +19,7 @@ Loading indicator with animated rotation.
 ## Import
 
 ```rust
-use wayle_widgets::primitives::spinner::Spinner;
+use wayle_widgets::primitives::spinner::{Spinner, SpinnerClass};
 ```
 
 ## Usage
@@ -40,16 +40,23 @@ view! {
     gtk::Box {
         #[template]
         Spinner {
-            add_css_class: "sm",
+            add_css_class: SpinnerClass::SM,
         },
 
         #[template]
         Spinner {
-            add_css_class: "lg",
+            add_css_class: SpinnerClass::LG,
         },
     }
 }
 ```
+
+## Class Constants
+
+| Constant           | CSS Class | Effect     |
+| ------------------ | --------- | ---------- |
+| `SpinnerClass::SM` | `.sm`     | Small size |
+| `SpinnerClass::LG` | `.lg`     | Large size |
 
 ### Conditional Display
 

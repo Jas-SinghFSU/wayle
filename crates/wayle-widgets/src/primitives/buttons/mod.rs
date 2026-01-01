@@ -4,6 +4,23 @@
 use gtk4::prelude::{BoxExt, WidgetExt};
 use relm4::{WidgetTemplate, gtk};
 
+/// CSS class constants for button modifiers.
+///
+/// ```ignore
+/// #[template]
+/// LinkButton {
+///     add_css_class: ButtonClass::MUTED,
+/// }
+/// ```
+pub struct LinkButtonClass;
+
+impl LinkButtonClass {
+    /// Muted/subdued text color for secondary links.
+    pub const MUTED: &'static str = "muted";
+    /// Danger/error color for destructive links.
+    pub const DANGER: &'static str = "danger";
+}
+
 /// Primary action button with accent background.
 #[relm4::widget_template(pub)]
 impl WidgetTemplate for PrimaryButton {
@@ -131,7 +148,7 @@ impl WidgetTemplate for LinkButton {
 impl WidgetTemplate for MutedLinkButton {
     view! {
         gtk::Button {
-            set_css_classes: &["btn-link", "muted"],
+            set_css_classes: &["btn-link", LinkButtonClass::MUTED],
             set_cursor_from_name: Some("pointer"),
             gtk::Box {
                 set_spacing: 8,
@@ -151,7 +168,7 @@ impl WidgetTemplate for MutedLinkButton {
 impl WidgetTemplate for DangerLinkButton {
     view! {
         gtk::Button {
-            set_css_classes: &["btn-link", "danger"],
+            set_css_classes: &["btn-link", LinkButtonClass::DANGER],
             set_cursor_from_name: Some("pointer"),
             gtk::Box {
                 set_spacing: 8,

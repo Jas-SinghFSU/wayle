@@ -18,8 +18,15 @@ Text entry field with Wayle styling.
 ## Import
 
 ```rust
-use wayle_widgets::primitives::text_input::TextInput;
+use wayle_widgets::primitives::text_input::{TextInput, TextInputClass};
 ```
+
+## Class Constants
+
+| Constant                | CSS Class  | Effect                   |
+| ----------------------- | ---------- | ------------------------ |
+| `TextInputClass::ERROR` | `.error`   | Red focus ring for error |
+| `TextInputClass::WARNING` | `.warning` | Yellow focus ring        |
 
 ## Usage
 
@@ -30,6 +37,18 @@ view! {
     #[template]
     TextInput {
         set_placeholder_text: Some("Enter text..."),
+    }
+}
+```
+
+### With Validation State
+
+```rust
+view! {
+    #[template]
+    TextInput {
+        add_css_class: TextInputClass::ERROR,
+        set_placeholder_text: Some("Invalid input"),
     }
 }
 ```
