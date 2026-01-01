@@ -91,6 +91,65 @@ struct ScaledPath {
     d: String,
     /// Original stroke width scaled to target size, if the path had a stroke.
     stroke_width: Option<f32>,
+    /// Whether this path is a bounding box rectangle that should be filtered out.
+    is_bounding_box: bool,
+}
+
+/// Detects if a path is a bounding box rectangle that should be filtered out.
+///
+/// Many icon libraries include invisible bounding boxes for alignment.
+/// These are axis-aligned rectangles spanning the full viewBox with no
+/// visible stroke or fill in the source. After conversion, they appear
+/// as unwanted squares around the actual icon content.
+///
+/// Detection criteria (all must be true):
+/// - Exactly 5 segments: MoveTo, 3x LineTo, Close
+/// - Forms an axis-aligned rectangle (only horizontal/vertical lines)
+/// - Spans from origin (0,0) to target size (16,16)
+fn is_bounding_box_path(path: &usvg::tiny_skia_path::Path, target_size: f32) -> bool {
+    let segments: Vec<_> = path.segments().collect();
+
+    if segments.len() != 5 {
+        return false;
+    }
+
+    let epsilon = 0.5;
+
+    let corners: Vec<(f32, f32)> = segments
+        .iter()
+        .filter_map(|seg| match seg {
+            PathSegment::MoveTo(p) | PathSegment::LineTo(p) => Some((p.x, p.y)),
+            _ => None,
+        })
+        .collect();
+
+    if corners.len() != 4 {
+        return false;
+    }
+
+    let mut has_origin = false;
+    let mut has_top_right = false;
+    let mut has_bottom_right = false;
+    let mut has_bottom_left = false;
+
+    for (x, y) in &corners {
+        let at_left = x.abs() < epsilon;
+        let at_right = (*x - target_size).abs() < epsilon;
+        let at_top = y.abs() < epsilon;
+        let at_bottom = (*y - target_size).abs() < epsilon;
+
+        if at_left && at_top {
+            has_origin = true;
+        } else if at_right && at_top {
+            has_top_right = true;
+        } else if at_right && at_bottom {
+            has_bottom_right = true;
+        } else if at_left && at_bottom {
+            has_bottom_left = true;
+        }
+    }
+
+    has_origin && has_top_right && has_bottom_right && has_bottom_left
 }
 
 /// Extracts all path elements from the parsed SVG tree.
@@ -131,7 +190,14 @@ fn collect_paths_from_group(
 
                     if !d.is_empty() {
                         let stroke_width = path.stroke().map(|s| s.width().get() * scale);
-                        paths.push(ScaledPath { d, stroke_width });
+                        let has_visible_paint = path.fill().is_some() || path.stroke().is_some();
+                        let is_bounding_box = !has_visible_paint
+                            && is_bounding_box_path(&transformed_path, TARGET_SIZE);
+                        paths.push(ScaledPath {
+                            d,
+                            stroke_width,
+                            is_bounding_box,
+                        });
                     }
                 }
             }
@@ -204,7 +270,7 @@ fn build_gtk_svg(paths: &[ScaledPath], style: IconStyle, scale: f32) -> String {
     output.push_str("     xmlns:gpa='https://www.gtk.org/grappa'\n");
     output.push_str("     gpa:version='1'>\n");
 
-    for path in paths {
+    for path in paths.iter().filter(|p| !p.is_bounding_box) {
         let path_element = build_path_element(&path.d, style, path.stroke_width, scale);
         output.push_str(&path_element);
     }
@@ -259,6 +325,7 @@ fn build_fallback_svg(original: &str, style: IconStyle) -> String {
         let path = ScaledPath {
             d,
             stroke_width: None,
+            is_bounding_box: false,
         };
         build_gtk_svg(&[path], style, 1.0_f32)
     } else {
@@ -620,6 +687,70 @@ mod tests {
             let result = build_fallback_svg(svg, IconStyle::Fill);
 
             assert_eq!(result, "<svg width='16' height='16'/>");
+        }
+    }
+
+    mod bounding_box_tests {
+        use super::*;
+
+        #[test]
+        fn filters_out_bounding_box_rectangle() {
+            let svg = r#"<svg viewBox="0 0 24 24">
+                <rect x="0" y="0" width="24" height="24" fill="none" stroke="none"/>
+                <circle cx="12" cy="12" r="8" stroke="currentColor"/>
+            </svg>"#;
+            let result = to_symbolic(svg);
+
+            let path_count = result.matches("<path d='").count();
+            assert_eq!(
+                path_count, 1,
+                "Bounding box rect should be filtered, leaving only the circle: {}",
+                result
+            );
+        }
+
+        #[test]
+        fn preserves_non_bounding_box_rectangles() {
+            let svg = r#"<svg viewBox="0 0 24 24">
+                <rect x="4" y="4" width="16" height="16"/>
+            </svg>"#;
+            let result = to_symbolic(svg);
+
+            assert!(
+                result.contains("<path d='"),
+                "Smaller rectangle should be preserved: {}",
+                result
+            );
+        }
+
+        #[test]
+        fn preserves_partial_bounding_box() {
+            let svg = r#"<svg viewBox="0 0 24 24">
+                <rect x="0" y="0" width="24" height="12"/>
+            </svg>"#;
+            let result = to_symbolic(svg);
+
+            assert!(
+                result.contains("<path d='"),
+                "Partial bounding rect should be preserved: {}",
+                result
+            );
+        }
+
+        #[test]
+        fn preserves_visible_full_size_rectangle() {
+            let svg = r#"<svg viewBox="0 0 24 24" stroke="currentColor">
+                <rect x="0" y="0" width="24" height="24"/>
+                <circle cx="6" cy="6" r="2"/>
+            </svg>"#;
+            let result = to_symbolic(svg);
+
+            let path_count = result.matches("<path d='").count();
+            assert_eq!(
+                path_count, 2,
+                "Visible full-size rect (like dice outline) should be preserved: {}",
+                result
+            );
         }
     }
 }
