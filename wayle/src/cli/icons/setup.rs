@@ -33,8 +33,10 @@ pub fn execute() -> CliAction {
     let mut count = 0;
     for entry in entries.flatten() {
         let path = entry.path();
+        let Some(filename) = path.file_name() else {
+            continue;
+        };
         if path.extension().is_some_and(|ext| ext == "svg") {
-            let filename = path.file_name().unwrap();
             let dest_path = dest_dir.join(filename);
             fs::copy(&path, &dest_path)
                 .map_err(|err| format!("Failed to copy {}: {err}", path.display()))?;
