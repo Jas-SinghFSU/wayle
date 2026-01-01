@@ -4,14 +4,7 @@
 use gtk4::prelude::{BoxExt, WidgetExt};
 use relm4::{WidgetTemplate, gtk};
 
-/// CSS class constants for button modifiers.
-///
-/// ```ignore
-/// #[template]
-/// LinkButton {
-///     add_css_class: ButtonClass::MUTED,
-/// }
-/// ```
+/// CSS class constants for link button modifiers.
 pub struct LinkButtonClass;
 
 impl LinkButtonClass {
@@ -26,7 +19,7 @@ impl LinkButtonClass {
 impl WidgetTemplate for PrimaryButton {
     view! {
         gtk::Button {
-            set_css_classes: &["btn", "btn-primary"],
+            add_css_class: "primary",
             set_cursor_from_name: Some("pointer"),
             gtk::Box {
                 set_spacing: 8,
@@ -46,7 +39,7 @@ impl WidgetTemplate for PrimaryButton {
 impl WidgetTemplate for SecondaryButton {
     view! {
         gtk::Button {
-            set_css_classes: &["btn", "btn-secondary"],
+            add_css_class: "secondary",
             set_cursor_from_name: Some("pointer"),
             gtk::Box {
                 set_spacing: 8,
@@ -66,7 +59,7 @@ impl WidgetTemplate for SecondaryButton {
 impl WidgetTemplate for DangerButton {
     view! {
         gtk::Button {
-            set_css_classes: &["btn", "btn-danger"],
+            add_css_class: "danger",
             set_cursor_from_name: Some("pointer"),
             gtk::Box {
                 set_spacing: 8,
@@ -86,7 +79,7 @@ impl WidgetTemplate for DangerButton {
 impl WidgetTemplate for GhostButton {
     view! {
         gtk::Button {
-            set_css_classes: &["btn", "btn-ghost"],
+            add_css_class: "ghost",
             set_cursor_from_name: Some("pointer"),
             gtk::Box {
                 set_spacing: 8,
@@ -106,7 +99,7 @@ impl WidgetTemplate for GhostButton {
 impl WidgetTemplate for GhostIconButton {
     view! {
         gtk::Button {
-            set_css_classes: &["btn", "btn-ghost-icon"],
+            add_css_class: "ghost-icon",
             set_cursor_from_name: Some("pointer"),
         }
     }
@@ -117,7 +110,7 @@ impl WidgetTemplate for GhostIconButton {
 impl WidgetTemplate for IconButton {
     view! {
         gtk::Button {
-            set_css_classes: &["btn", "btn-icon"],
+            add_css_class: "icon",
             set_cursor_from_name: Some("pointer"),
         }
     }
@@ -128,7 +121,7 @@ impl WidgetTemplate for IconButton {
 impl WidgetTemplate for LinkButton {
     view! {
         gtk::Button {
-            set_css_classes: &["btn-link"],
+            add_css_class: "link",
             set_cursor_from_name: Some("pointer"),
             gtk::Box {
                 set_spacing: 8,
@@ -148,7 +141,7 @@ impl WidgetTemplate for LinkButton {
 impl WidgetTemplate for MutedLinkButton {
     view! {
         gtk::Button {
-            set_css_classes: &["btn-link", LinkButtonClass::MUTED],
+            set_css_classes: &["link", LinkButtonClass::MUTED],
             set_cursor_from_name: Some("pointer"),
             gtk::Box {
                 set_spacing: 8,
@@ -168,7 +161,7 @@ impl WidgetTemplate for MutedLinkButton {
 impl WidgetTemplate for DangerLinkButton {
     view! {
         gtk::Button {
-            set_css_classes: &["btn-link", LinkButtonClass::DANGER],
+            set_css_classes: &["link", LinkButtonClass::DANGER],
             set_cursor_from_name: Some("pointer"),
             gtk::Box {
                 set_spacing: 8,
@@ -188,7 +181,7 @@ impl WidgetTemplate for DangerLinkButton {
 impl WidgetTemplate for MenuButton {
     view! {
         gtk::MenuButton {
-            set_css_classes: &["btn-menu"],
+            add_css_class: "menu",
             set_cursor_from_name: Some("pointer"),
             set_always_show_arrow: true,
 

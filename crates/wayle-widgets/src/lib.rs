@@ -24,6 +24,7 @@ pub mod prelude {
     pub use crate::primitives::badge::*;
     pub use crate::primitives::buttons::*;
     pub use crate::primitives::card::*;
+    pub use crate::primitives::checkbox::*;
     pub use crate::primitives::confirm_modal::*;
     pub use crate::primitives::dropdown::*;
     pub use crate::primitives::empty_state::*;

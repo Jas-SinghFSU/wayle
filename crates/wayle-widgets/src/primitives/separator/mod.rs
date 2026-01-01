@@ -8,7 +8,6 @@ use relm4::{WidgetTemplate, gtk};
 impl WidgetTemplate for HorizontalSeparator {
     view! {
         gtk::Separator {
-            set_css_classes: &["separator"],
             set_hexpand: true,
             set_valign: gtk::Align::Center,
         }
@@ -19,7 +18,6 @@ impl WidgetTemplate for HorizontalSeparator {
 impl WidgetTemplate for VerticalSeparator {
     view! {
         gtk::Separator {
-            set_css_classes: &["separator"],
             set_orientation: gtk::Orientation::Vertical,
             set_vexpand: true,
             set_halign: gtk::Align::Center,

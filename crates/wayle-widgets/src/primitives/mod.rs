@@ -8,6 +8,8 @@ pub mod badge;
 pub mod buttons;
 /// A content containing card component.
 pub mod card;
+/// Checkbox for multi-select options.
+pub mod checkbox;
 /// Confirmation modal for destructive/irreversible actions.
 pub mod confirm_modal;
 /// Dropdown container with header, content, and footer.

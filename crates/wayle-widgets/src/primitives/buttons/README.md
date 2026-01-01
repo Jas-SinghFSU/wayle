@@ -29,8 +29,8 @@ use wayle_widgets::primitives::buttons::{
 
 For `LinkButton`, use `LinkButtonClass` constants to apply modifiers:
 
-| Constant                | CSS Class | Effect                   |
-| ----------------------- | --------- | ------------------------ |
+| Constant                  | CSS Class | Effect                   |
+| ------------------------- | --------- | ------------------------ |
 | `LinkButtonClass::MUTED`  | `.muted`  | De-emphasized text color |
 | `LinkButtonClass::DANGER` | `.danger` | Red destructive color    |
 

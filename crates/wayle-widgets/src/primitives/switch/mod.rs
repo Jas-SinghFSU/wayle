@@ -9,7 +9,6 @@ use relm4::{WidgetTemplate, gtk};
 impl WidgetTemplate for Switch {
     view! {
         gtk::Switch {
-            set_css_classes: &["switch"],
             set_cursor_from_name: Some("pointer"),
         }
     }

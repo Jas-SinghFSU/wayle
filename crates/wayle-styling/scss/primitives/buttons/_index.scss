@@ -1,4 +1,4 @@
-.btn {
+button {
     all: unset;
     padding: var(--space-sm) var(--space-md);
     border-radius: var(--rounding-element);
@@ -13,197 +13,171 @@
         transition: background var(--duration-fast);
     }
 
-    /*******************************************
-  *                 primary                 *
-  *******************************************/
-
-    &.btn-primary {
+    &.primary {
         background: var(--accent);
         color: var(--fg-on-accent);
-    }
 
-    &.btn-primary:hover {
-        background: var(--accent-hover);
-    }
+        &:hover {
+            background: var(--accent-hover);
+        }
 
-    &.btn-primary:disabled {
-        opacity: 0.5;
-    }
-
-    &.btn-primary:focus-visible {
-        outline: var(--focus-ring-width) solid var(--accent);
-        outline-offset: calc(0.125rem * #{$global-scale});
-    }
-
-    /*******************************************
-  *                secondary                *
-  *******************************************/
-
-    &.btn-secondary {
-        background: var(--bg-overlay);
-        color: var(--fg-muted);
-    }
-
-    &.btn-secondary:hover {
-        background: var(--bg-active);
-        color: var(--fg-default);
-    }
-
-    &.btn-secondary:disabled {
-        opacity: 0.5;
-    }
-
-    &.btn-secondary:focus-visible {
-        outline: var(--focus-ring-width) solid var(--fg-muted);
-        outline-offset: calc(0.125rem * #{$global-scale});
-    }
-
-    /*******************************************
-  *                  icon                   *
-  *******************************************/
-
-    &.btn-icon {
-        background: var(--bg-overlay);
-        color: var(--fg-subtle);
-    }
-
-    &.btn-icon:hover {
-        background: var(--bg-active);
-    }
-
-    &.btn-icon:disabled {
-        opacity: 0.5;
-    }
-
-    &.btn-icon:focus-visible {
-        outline: var(--focus-ring-width) solid var(--fg-subtle);
-        outline-offset: calc(0.125rem * #{$global-scale});
-    }
-
-    /*******************************************
-  *                 danger                  *
-  *******************************************/
-
-    &.btn-danger {
-        background: var(--status-error);
-        color: var(--fg-on-accent);
-    }
-
-    &.btn-danger:hover {
-        background: var(--status-error-hover);
-    }
-
-    &.btn-danger:disabled {
-        opacity: 0.5;
-    }
-
-    &.btn-danger:focus-visible {
-        outline: var(--focus-ring-width) solid var(--status-error);
-        outline-offset: calc(0.125rem * #{$global-scale});
-    }
-
-    /*******************************************
-  *                  ghost                  *
-  *******************************************/
-
-    &.btn-ghost {
-        background: transparent;
-        color: var(--fg-muted);
-    }
-
-    &.btn-ghost:hover {
-        background: var(--bg-hover);
-        color: var(--fg-default);
-    }
-
-    &.btn-ghost:disabled {
-        opacity: 0.5;
-    }
-
-    &.btn-ghost:focus-visible {
-        outline: var(--focus-ring-width) solid var(--fg-muted);
-        outline-offset: calc(0.125rem * #{$global-scale});
-    }
-
-    /*******************************************
-  *               ghost icon                *
-  *******************************************/
-
-    &.btn-ghost-icon {
-        background: transparent;
-        color: var(--fg-subtle);
-    }
-
-    &.btn-ghost-icon:hover {
-        background: var(--bg-hover);
-        color: var(--fg-default);
-    }
-
-    &.btn-ghost-icon:disabled {
-        opacity: 0.5;
-    }
-
-    &.btn-ghost-icon:focus-visible {
-        outline: var(--focus-ring-width) solid var(--fg-subtle);
-        outline-offset: calc(0.125rem * #{$global-scale});
-    }
-}
-
-/*******************************************
-*                  link                   *
-*******************************************/
-
-.btn-link {
-    all: unset;
-    background: none;
-    color: var(--accent);
-    text-decoration: none;
-    border-radius: var(--rounding-element);
-    padding: var(--space-xs) var(--space-sm);
-    font-size: var(--text-md);
-
-    image {
-        -gtk-icon-size: var(--icon-md);
-    }
-
-    &:focus-visible {
-        outline: var(--focus-ring-width) solid var(--accent);
-        outline-offset: calc(0.125rem * #{$global-scale});
-    }
-
-    &.muted {
-        color: var(--fg-muted);
+        &:disabled {
+            opacity: 0.5;
+        }
 
         &:focus-visible {
-            outline-color: var(--fg-muted);
+            outline: var(--focus-ring-width) solid var(--accent);
+            outline-offset: calc(0.125rem * #{$global-scale});
+        }
+    }
+
+    &.secondary {
+        background: var(--bg-overlay);
+        color: var(--fg-muted);
+
+        &:hover {
+            background: var(--bg-active);
+            color: var(--fg-default);
+        }
+
+        &:disabled {
+            opacity: 0.5;
+        }
+
+        &:focus-visible {
+            outline: var(--focus-ring-width) solid var(--fg-muted);
+            outline-offset: calc(0.125rem * #{$global-scale});
+        }
+    }
+
+    &.icon {
+        background: var(--bg-overlay);
+        color: var(--fg-subtle);
+
+        &:hover {
+            background: var(--bg-active);
+        }
+
+        &:disabled {
+            opacity: 0.5;
+        }
+
+        &:focus-visible {
+            outline: var(--focus-ring-width) solid var(--fg-subtle);
+            outline-offset: calc(0.125rem * #{$global-scale});
         }
     }
 
     &.danger {
-        color: var(--status-error);
+        background: var(--status-error);
+        color: var(--fg-on-accent);
+
+        &:hover {
+            background: var(--status-error-hover);
+        }
+
+        &:disabled {
+            opacity: 0.5;
+        }
 
         &:focus-visible {
-            outline-color: var(--status-error);
+            outline: var(--focus-ring-width) solid var(--status-error);
+            outline-offset: calc(0.125rem * #{$global-scale});
+        }
+    }
+
+    &.ghost {
+        background: transparent;
+        color: var(--fg-muted);
+
+        &:hover {
+            background: var(--bg-hover);
+            color: var(--fg-default);
+        }
+
+        &:disabled {
+            opacity: 0.5;
+        }
+
+        &:focus-visible {
+            outline: var(--focus-ring-width) solid var(--fg-muted);
+            outline-offset: calc(0.125rem * #{$global-scale});
+        }
+    }
+
+    &.ghost-icon {
+        background: transparent;
+        color: var(--fg-subtle);
+
+        &:hover {
+            background: var(--bg-hover);
+            color: var(--fg-default);
+        }
+
+        &:disabled {
+            opacity: 0.5;
+        }
+
+        &:focus-visible {
+            outline: var(--focus-ring-width) solid var(--fg-subtle);
+            outline-offset: calc(0.125rem * #{$global-scale});
+        }
+    }
+
+    &.link {
+        background: none;
+        color: var(--accent);
+        text-decoration: none;
+        padding: var(--space-xs) var(--space-sm);
+
+        &:hover label {
+            text-decoration: underline;
+        }
+
+        &:disabled {
+            opacity: 0.5;
+        }
+
+        &:focus-visible {
+            outline: var(--focus-ring-width) solid var(--accent);
+            outline-offset: calc(0.125rem * #{$global-scale});
+        }
+
+        &.muted {
+            color: var(--fg-muted);
+
+            &:focus-visible {
+                outline-color: var(--fg-muted);
+            }
+        }
+
+        &.danger {
+            color: var(--status-error);
+
+            &:focus-visible {
+                outline-color: var(--status-error);
+            }
         }
     }
 }
 
-.btn-link:hover label {
-    text-decoration: underline;
-}
-
-.btn-link:disabled {
-    opacity: 0.5;
-}
-
-/*******************************************
-*                  menu                   *
-*******************************************/
-
-.btn-menu {
+menubutton {
     all: unset;
 
     > button.toggle {
+        arrow {
+            -gtk-icon-size: var(--icon-sm);
+            color: var(--fg-subtle);
+            transition: -gtk-icon-transform var(--duration-super-fast);
+            -gtk-icon-transform: rotate(0turn);
+        }
+
+        &:checked arrow {
+            -gtk-icon-transform: rotate(-0.5turn);
+        }
+    }
+
+    &.menu > button.toggle {
         all: unset;
         min-width: calc(10rem * #{$global-scale});
         padding: var(--space-sm) var(--space-sm);
@@ -227,19 +201,9 @@
             background: var(--bg-active);
         }
 
-        &:checked arrow {
-            -gtk-icon-transform: rotate(-0.5turn);
-        }
-
         &:focus-visible {
             outline: var(--focus-ring-width) solid var(--border-strong);
             outline-offset: calc(0.125rem * #{$global-scale});
         }
-    }
-
-    arrow {
-        color: var(--fg-subtle);
-        transition: -gtk-icon-transform var(--duration-super-fast);
-        -gtk-icon-transform: rotate(0turn);
     }
 }

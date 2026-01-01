@@ -1,50 +1,48 @@
 entry {
-    &.text-input {
-        all: unset;
+    all: unset;
 
-        background-color: var(--bg-overlay);
-        border-radius: var(--rounding-element);
-        padding: 0px var(--space-md);
-        font-size: var(--text-md);
-        font-weight: var(--weight-medium);
+    background-color: var(--bg-overlay);
+    border-radius: var(--rounding-element);
+    padding: 0px var(--space-md);
+    font-size: var(--text-md);
+    font-weight: var(--weight-medium);
 
-        > text {
-            padding: var(--space-md) var(--space-xs);
-            margin-left: var(--space-sm);
-            margin-right: var(--space-sm);
+    > text {
+        padding: var(--space-md) var(--space-xs);
+        margin-left: var(--space-sm);
+        margin-right: var(--space-sm);
 
-            color: var(--fg-default);
+        color: var(--fg-default);
 
-            > placeholder {
-                color: var(--fg-subtle);
-            }
-
-            > selection {
-                background-color: var(--accent);
-                color: var(--fg-on-accent);
-            }
-        }
-
-        &:focus-within {
-            box-shadow: 0 0 0 var(--focus-ring-width) var(--accent);
-        }
-
-        > image.left,
-        > image.right {
+        > placeholder {
             color: var(--fg-subtle);
-            -gtk-icon-size: var(--icon-md);
         }
 
-        &:disabled {
-            opacity: 0.5;
+        > selection {
+            background-color: var(--accent);
+            color: var(--fg-on-accent);
         }
+    }
 
-        &.error {
-            box-shadow: 0 0 0 var(--focus-ring-width) var(--status-error);
-        }
+    &:focus-within {
+        box-shadow: 0 0 0 var(--focus-ring-width) var(--accent);
+    }
 
-        &.warning {
-            box-shadow: 0 0 0 var(--focus-ring-width) var(--status-warning);
-        }
+    > image.left,
+    > image.right {
+        color: var(--fg-subtle);
+        -gtk-icon-size: var(--icon-md);
+    }
+
+    &:disabled {
+        opacity: 0.5;
+    }
+
+    &.error {
+        box-shadow: 0 0 0 var(--focus-ring-width) var(--status-error);
+    }
+
+    &.warning {
+        box-shadow: 0 0 0 var(--focus-ring-width) var(--status-warning);
     }
 }

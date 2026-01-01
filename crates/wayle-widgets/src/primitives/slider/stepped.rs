@@ -88,7 +88,6 @@ impl SimpleComponent for SteppedSlider {
     view! {
         #[name = "scale"]
         gtk::Scale {
-            set_css_classes: &["slider"],
             set_draw_value: false,
             set_cursor_from_name: Some("pointer"),
             set_has_origin: true,

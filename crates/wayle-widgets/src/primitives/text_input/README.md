@@ -23,9 +23,9 @@ use wayle_widgets::primitives::text_input::{TextInput, TextInputClass};
 
 ## Class Constants
 
-| Constant                | CSS Class  | Effect                   |
-| ----------------------- | ---------- | ------------------------ |
-| `TextInputClass::ERROR` | `.error`   | Red focus ring for error |
+| Constant                  | CSS Class  | Effect                   |
+| ------------------------- | ---------- | ------------------------ |
+| `TextInputClass::ERROR`   | `.error`   | Red focus ring for error |
 | `TextInputClass::WARNING` | `.warning` | Yellow focus ring        |
 
 ## Usage
