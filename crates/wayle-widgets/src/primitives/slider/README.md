@@ -4,10 +4,10 @@ Range sliders for value selection.
 
 ## Available
 
-| Type | Name | Use Case |
-|------|------|----------|
-| Template | `Slider` | Volume, brightness, continuous ranges |
-| Component | `SteppedSlider` | Discrete values with snapping |
+| Type      | Name            | Use Case                              |
+| --------- | --------------- | ------------------------------------- |
+| Template  | `Slider`        | Volume, brightness, continuous ranges |
+| Component | `SteppedSlider` | Discrete values with snapping         |
 
 ## Import
 
@@ -76,20 +76,20 @@ fn init(...) -> ComponentParts<Self> {
 
 ### SteppedSliderInit Fields
 
-| Field | Type | Default | Purpose |
-|-------|------|---------|---------|
-| `range` | `(f64, f64)` | `(0.0, 100.0)` | Value range |
-| `value` | `f64` | `50.0` | Initial value |
-| `steps` | `Vec<f64>` | 5 steps | Snap points |
-| `show_labels` | `bool` | `false` | Show step labels |
-| `emit_mode` | `EmitMode` | `Continuous` | When to emit changes |
+| Field         | Type         | Default        | Purpose              |
+| ------------- | ------------ | -------------- | -------------------- |
+| `range`       | `(f64, f64)` | `(0.0, 100.0)` | Value range          |
+| `value`       | `f64`        | `50.0`         | Initial value        |
+| `steps`       | `Vec<f64>`   | 5 steps        | Snap points          |
+| `show_labels` | `bool`       | `false`        | Show step labels     |
+| `emit_mode`   | `EmitMode`   | `Continuous`   | When to emit changes |
 
 ### EmitMode
 
-| Mode | Behavior |
-|------|----------|
-| `Continuous` | Emit on every drag |
-| `OnRelease` | Emit only on release |
+| Mode         | Behavior             |
+| ------------ | -------------------- |
+| `Continuous` | Emit on every drag   |
+| `OnRelease`  | Emit only on release |
 
 ### Messages
 

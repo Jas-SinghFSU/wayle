@@ -1,64 +1,64 @@
 .slider {
-  all: unset;
+    all: unset;
 
-  trough {
-    background: var(--bg-active);
-    border-radius: var(--rounding-element);
-    min-height: calc(0.5rem * #{$global-scale});
-    min-width: calc(10rem * #{$global-scale});
-
-    highlight {
-      background: var(--accent);
-      border-radius: var(--rounding-element);
-    }
-
-    slider {
-      background: var(--fg-default);
-      border-radius: var(--rounding-element);
-      min-width: calc(1rem * #{$global-scale});
-      min-height: calc(1rem * #{$global-scale});
-      margin: calc(-0.3125rem * #{$global-scale});
-      box-shadow: var(--shadow-sm);
-    }
-  }
-
-  marks {
-    color: var(--fg-subtle);
-    font-size: var(--text-sm);
-
-    mark {
-      indicator {
-        background: var(--fg-subtle);
-        min-width: calc(0.125rem * #{$global-scale});
+    trough {
+        background: var(--bg-active);
+        border-radius: var(--rounding-element);
         min-height: calc(0.5rem * #{$global-scale});
-      }
+        min-width: calc(10rem * #{$global-scale});
 
-      label {
-        color: var(--fg-subtle);
-        font-size: var(--text-md);
-        font-weight: var(--weight-semibold);
-      }
+        highlight {
+            background: var(--accent);
+            border-radius: var(--rounding-element);
+        }
+
+        slider {
+            background: var(--fg-default);
+            border-radius: var(--rounding-element);
+            min-width: calc(1rem * #{$global-scale});
+            min-height: calc(1rem * #{$global-scale});
+            margin: calc(-0.3125rem * #{$global-scale});
+            box-shadow: var(--shadow-sm);
+        }
     }
-  }
 
-  &.marks-after marks.bottom {
-    margin-top: var(--space-xs);
-  }
+    marks {
+        color: var(--fg-subtle);
+        font-size: var(--text-sm);
 
-  &.marks-before marks.top {
-    margin-bottom: var(--space-xs);
-  }
+        mark {
+            indicator {
+                background: var(--fg-subtle);
+                min-width: calc(0.125rem * #{$global-scale});
+                min-height: calc(0.5rem * #{$global-scale});
+            }
 
-  &:hover trough slider {
-    background: var(--fg-default);
-  }
+            label {
+                color: var(--fg-subtle);
+                font-size: var(--text-md);
+                font-weight: var(--weight-semibold);
+            }
+        }
+    }
 
-  &:disabled {
-    opacity: 0.5;
-  }
+    &.marks-after marks.bottom {
+        margin-top: var(--space-xs);
+    }
 
-  &:focus-visible {
-    outline: var(--focus-ring-width) solid var(--accent);
-    outline-offset: calc(0.125rem * #{$global-scale});
-  }
+    &.marks-before marks.top {
+        margin-bottom: var(--space-xs);
+    }
+
+    &:hover trough slider {
+        background: var(--fg-default);
+    }
+
+    &:disabled {
+        opacity: 0.5;
+    }
+
+    &:focus-visible {
+        outline: var(--focus-ring-width) solid var(--accent);
+        outline-offset: calc(0.125rem * #{$global-scale});
+    }
 }

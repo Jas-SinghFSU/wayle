@@ -4,9 +4,9 @@ Toggle switch for binary on/off states.
 
 ## Available
 
-| Template | CSS Classes | Use Case |
-|----------|-------------|----------|
-| `Switch` | `.switch` | Binary on/off toggles |
+| Template | CSS Classes | Use Case              |
+| -------- | ----------- | --------------------- |
+| `Switch` | `.switch`   | Binary on/off toggles |
 
 ## Import
 
@@ -29,7 +29,8 @@ view! {
 
 ### With Signal
 
-Use `connect_state_set` for toggle events. Return `glib::Propagation::Proceed` to allow the state change:
+Use `connect_state_set` for toggle events. Return `glib::Propagation::Proceed`
+to allow the state change:
 
 ```rust
 view! {

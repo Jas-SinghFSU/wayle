@@ -4,12 +4,12 @@ Composable container templates for dropdown panels.
 
 ## Available
 
-| Template | CSS Classes | Use Case |
-|----------|-------------|----------|
-| `Dropdown` | `.dropdown` | Main container |
-| `DropdownHeader` | `.dropdown-header` | Title bar with icon, label, actions |
-| `DropdownContent` | `.dropdown-content` | Main content area |
-| `DropdownFooter` | `.dropdown-footer` | Footer for links or secondary actions |
+| Template          | CSS Classes         | Use Case                              |
+| ----------------- | ------------------- | ------------------------------------- |
+| `Dropdown`        | `.dropdown`         | Main container                        |
+| `DropdownHeader`  | `.dropdown-header`  | Title bar with icon, label, actions   |
+| `DropdownContent` | `.dropdown-content` | Main content area                     |
+| `DropdownFooter`  | `.dropdown-footer`  | Footer for links or secondary actions |
 
 ## Import
 

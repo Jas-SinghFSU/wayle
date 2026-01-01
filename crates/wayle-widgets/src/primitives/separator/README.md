@@ -4,10 +4,10 @@ Visual dividers for separating content sections.
 
 ## Available
 
-| Template | CSS Classes | Use Case |
-|----------|-------------|----------|
-| `HorizontalSeparator` | `.separator` | Dividing stacked content |
-| `VerticalSeparator` | `.separator` | Dividing side-by-side content |
+| Template              | CSS Classes  | Use Case                      |
+| --------------------- | ------------ | ----------------------------- |
+| `HorizontalSeparator` | `.separator` | Dividing stacked content      |
+| `VerticalSeparator`   | `.separator` | Dividing side-by-side content |
 
 ## Import
 

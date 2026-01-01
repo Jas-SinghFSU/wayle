@@ -6,23 +6,23 @@ Status indicators, labels, and tags.
 
 ### Filled Badges
 
-| Template | CSS Classes | Use Case |
-|----------|-------------|----------|
-| `Badge` | `.badge` | Default accent-colored badge |
-| `SuccessBadge` | `.badge .success` | Positive status, completion |
-| `WarningBadge` | `.badge .warning` | Caution, pending states |
-| `ErrorBadge` | `.badge .error` | Errors, critical alerts |
-| `InfoBadge` | `.badge .info` | Informational, neutral |
+| Template       | CSS Classes       | Use Case                     |
+| -------------- | ----------------- | ---------------------------- |
+| `Badge`        | `.badge`          | Default accent-colored badge |
+| `SuccessBadge` | `.badge .success` | Positive status, completion  |
+| `WarningBadge` | `.badge .warning` | Caution, pending states      |
+| `ErrorBadge`   | `.badge .error`   | Errors, critical alerts      |
+| `InfoBadge`    | `.badge .info`    | Informational, neutral       |
 
 ### Subtle Badges
 
-| Template | CSS Classes | Use Case |
-|----------|-------------|----------|
-| `SubtleBadge` | `.badge-subtle` | Softer accent badge |
+| Template             | CSS Classes              | Use Case             |
+| -------------------- | ------------------------ | -------------------- |
+| `SubtleBadge`        | `.badge-subtle`          | Softer accent badge  |
 | `SubtleSuccessBadge` | `.badge-subtle .success` | Soft positive status |
-| `SubtleWarningBadge` | `.badge-subtle .warning` | Soft warning |
-| `SubtleErrorBadge` | `.badge-subtle .error` | Soft error indicator |
-| `SubtleInfoBadge` | `.badge-subtle .info` | Soft informational |
+| `SubtleWarningBadge` | `.badge-subtle .warning` | Soft warning         |
+| `SubtleErrorBadge`   | `.badge-subtle .error`   | Soft error indicator |
+| `SubtleInfoBadge`    | `.badge-subtle .info`    | Soft informational   |
 
 ## Import
 

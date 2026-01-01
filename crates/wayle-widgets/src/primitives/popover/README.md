@@ -4,11 +4,11 @@ Templates and factory component for popover menus.
 
 ## Available
 
-| Component | Type | Use Case |
-|-----------|------|----------|
-| `Popover` | Template | Container for popover content |
-| `PopoverHeader` | Template | Section header with label |
-| `PopoverItem` | FactoryComponent | Selectable list item |
+| Component       | Type             | Use Case                      |
+| --------------- | ---------------- | ----------------------------- |
+| `Popover`       | Template         | Container for popover content |
+| `PopoverHeader` | Template         | Section header with label     |
+| `PopoverItem`   | FactoryComponent | Selectable list item          |
 
 ## Import
 
@@ -85,10 +85,10 @@ item_list -> gtk::ListBox {
 
 ### PopoverItem Fields
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `icon` | `Option<String>` | Leading icon name |
-| `label` | `String` | Primary text |
-| `subtitle` | `Option<String>` | Secondary text |
+| Field         | Type             | Description              |
+| ------------- | ---------------- | ------------------------ |
+| `icon`        | `Option<String>` | Leading icon name        |
+| `label`       | `String`         | Primary text             |
+| `subtitle`    | `Option<String>` | Secondary text           |
 | `active_icon` | `Option<String>` | Selection indicator icon |
-| `is_active` | `bool` | Show active indicator |
+| `is_active`   | `bool`           | Show active indicator    |

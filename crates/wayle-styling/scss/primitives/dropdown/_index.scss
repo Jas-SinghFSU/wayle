@@ -1,49 +1,48 @@
 .dropdown {
-  all: unset;
-  background: var(--bg-surface);
-  border-radius: var(--rounding-container);
-  border: 1px solid var(--border-default);
-  box-shadow: var(--shadow);
-  min-width: calc(28rem * #{$global-scale});
+    all: unset;
+    background: var(--bg-surface);
+    border-radius: var(--rounding-container);
+    border: 1px solid var(--border-default);
+    box-shadow: var(--shadow);
+    min-width: calc(28rem * #{$global-scale});
 }
 
 .dropdown-header {
-  padding: calc(var(--space-sm) + var(--space-xs)) var(--space-md);
+    padding: calc(var(--space-sm) + var(--space-xs)) var(--space-md);
 
-  border-bottom: 1px solid var(--border-default);
-  border-top-left-radius: var(--rounding-container);
-  border-top-right-radius: var(--rounding-container);
+    border-bottom: 1px solid var(--border-default);
+    border-top-left-radius: var(--rounding-container);
+    border-top-right-radius: var(--rounding-container);
 
-  background: var(--bg-elevated);
+    background: var(--bg-elevated);
 
-  .dropdown-title {
-    font-size: var(--text-lg);
-    font-weight: var(--weight-bold);
-    color: var(--fg-default);
+    .dropdown-title {
+        font-size: var(--text-lg);
+        font-weight: var(--weight-bold);
+        color: var(--fg-default);
 
-    image {
-      -gtk-icon-size: var(--icon-lg);
-      color: var(--accent);
-      margin-right: var(--space-md);
+        image {
+            -gtk-icon-size: var(--icon-lg);
+            color: var(--accent);
+            margin-right: var(--space-md);
+        }
     }
-  }
 
-  .dropdown-actions {
-    margin-left: var(--space-sm);
-  }
+    .dropdown-actions {
+        margin-left: var(--space-sm);
+    }
 }
 
 .dropdown-content {
-  padding: calc(var(--space-sm) + var(--space-xs));
-  font-size: var(--text-lg);
-  color: var(--fg-muted);
+    padding: calc(var(--space-sm) + var(--space-xs));
+    font-size: var(--text-lg);
+    color: var(--fg-muted);
 }
 
-
 .dropdown-footer {
-  padding: var(--space-sm) var(--space-md);
-  border-top: 1px solid var(--border-default);
-  border-bottom-left-radius: var(--rounding-container);
-  border-bottom-right-radius: var(--rounding-container);
-  font-size: var(--text-md);
+    padding: var(--space-sm) var(--space-md);
+    border-top: 1px solid var(--border-default);
+    border-bottom-left-radius: var(--rounding-container);
+    border-bottom-right-radius: var(--rounding-container);
+    font-size: var(--text-md);
 }

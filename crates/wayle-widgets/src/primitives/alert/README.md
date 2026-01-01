@@ -4,13 +4,13 @@ Status messages and notifications.
 
 ## Available
 
-| Template | CSS Classes | Use Case |
-|----------|-------------|----------|
-| `Alert` | `.alert` | Neutral status messages |
-| `SuccessAlert` | `.alert .success` | Positive confirmations |
-| `WarningAlert` | `.alert .warning` | Caution messages |
-| `ErrorAlert` | `.alert .error` | Failure messages |
-| `InfoAlert` | `.alert .info` | Informational messages |
+| Template       | CSS Classes       | Use Case                |
+| -------------- | ----------------- | ----------------------- |
+| `Alert`        | `.alert`          | Neutral status messages |
+| `SuccessAlert` | `.alert .success` | Positive confirmations  |
+| `WarningAlert` | `.alert .warning` | Caution messages        |
+| `ErrorAlert`   | `.alert .error`   | Failure messages        |
+| `InfoAlert`    | `.alert .info`    | Informational messages  |
 
 ## Import
 

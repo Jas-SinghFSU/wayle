@@ -1,15 +1,19 @@
 # Wayle
 
-> **⚠️ Work in Progress**: Wayle is under active development. Core infrastructure is functional, but UI components and many services are not yet implemented. Not ready for daily use.
+> **⚠️ Work in Progress**: Wayle is under active development. Core
+> infrastructure is functional, but UI components and many services are not yet
+> implemented. Not ready for daily use.
 
-A fast, configurable desktop environment shell for Wayland compositors. Built in Rust with Relm4 and focused on performance, modularity, and a great user experience. A successor to HyprPanel without the pain or dependency on Hyprland.
+A fast, configurable desktop environment shell for Wayland compositors. Built in
+Rust with Relm4 and focused on performance, modularity, and a great user
+experience. A successor to HyprPanel without the pain or dependency on Hyprland.
 
 ## Progress
 
 ### Core Infrastructure
 
 - [x] **Configuration System** - Reactive TOML config with schema validation
-- [x] **CLI Interface** - Complete command-line management interface  
+- [x] **CLI Interface** - Complete command-line management interface
 - [x] **Documentation Generator** - Auto-generated config docs from schemas
 
 ### Services
@@ -22,7 +26,7 @@ A fast, configurable desktop environment shell for Wayland compositors. Built in
 - [x] **Notification Daemon**
 - [x] **Power Profiles**
 - [x] **System Tray**
-  - [x] GTK4 Adapter
+    - [x] GTK4 Adapter
 - [x] Hyprland
 - [x] **Cava**
 
@@ -30,32 +34,32 @@ A fast, configurable desktop environment shell for Wayland compositors. Built in
 
 - [ ] **Component Library (WIP)** - Base Relm4 widgets and containers
 - [ ] **Bar Modules**:
-  - [ ] Battery
-  - [ ] Dashboard
-  - [ ] Hyprland workspaces
-  - [ ] Window title
-  - [ ] Media
-  - [ ] Notification
-  - [ ] Volume
-  - [ ] Network
-  - [ ] Bluetooth
-  - [ ] Clock
-  - [ ] System tray
-  - [ ] World clock
-  - [ ] Separator
-  - [ ] Microphone
-  - [ ] RAM
-  - [ ] CPU
-  - [ ] CPU
-  - [ ] Storage
-  - [ ] Network
-  - [ ] Keyboard input
-  - [ ] Updates
-  - [ ] Weather
-  - [ ] Hyprland submap
-  - [ ] Hyprsunset
-  - [ ] Hypridle
-  - [ ] Power
+    - [ ] Battery
+    - [ ] Dashboard
+    - [ ] Hyprland workspaces
+    - [ ] Window title
+    - [ ] Media
+    - [ ] Notification
+    - [ ] Volume
+    - [ ] Network
+    - [ ] Bluetooth
+    - [ ] Clock
+    - [ ] System tray
+    - [ ] World clock
+    - [ ] Separator
+    - [ ] Microphone
+    - [ ] RAM
+    - [ ] CPU
+    - [ ] CPU
+    - [ ] Storage
+    - [ ] Network
+    - [ ] Keyboard input
+    - [ ] Updates
+    - [ ] Weather
+    - [ ] Hyprland submap
+    - [ ] Hyprsunset
+    - [ ] Hypridle
+    - [ ] Power
 
 ### Dropdown Interfaces
 
@@ -78,7 +82,8 @@ A fast, configurable desktop environment shell for Wayland compositors. Built in
 
 ## Configuration
 
-Configuration is managed through TOML files, UI or CLI with live reloading and imports:
+Configuration is managed through TOML files, UI or CLI with live reloading and
+imports:
 
 ```toml
 # main config.toml

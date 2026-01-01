@@ -4,8 +4,8 @@ Placeholder content when no data is available.
 
 ## Available
 
-| Template | CSS Classes | Use Case |
-|----------|-------------|----------|
+| Template     | CSS Classes    | Use Case                              |
+| ------------ | -------------- | ------------------------------------- |
 | `EmptyState` | `.empty-state` | Empty lists, no results, error states |
 
 ## Import

@@ -4,17 +4,17 @@ Loading indicator with animated rotation.
 
 ## Available
 
-| Template | CSS Classes | Use Case |
-|----------|-------------|----------|
-| `Spinner` | `.spinner` | Loading/processing state |
+| Template  | CSS Classes | Use Case                 |
+| --------- | ----------- | ------------------------ |
+| `Spinner` | `.spinner`  | Loading/processing state |
 
 ### Size Variants
 
-| Class | Size | Use Case |
-|-------|------|----------|
-| (default) | 2rem | Standard indicator |
-| `.sm` | 1.5rem | Inline, compact UI |
-| `.lg` | 2.5rem | Full-page loading |
+| Class     | Size   | Use Case           |
+| --------- | ------ | ------------------ |
+| (default) | 2rem   | Standard indicator |
+| `.sm`     | 1.5rem | Inline, compact UI |
+| `.lg`     | 2.5rem | Full-page loading  |
 
 ## Import
 

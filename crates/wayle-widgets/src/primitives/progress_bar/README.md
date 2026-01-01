@@ -4,18 +4,18 @@ Linear progress indicator for determinate progress.
 
 ## Available
 
-| Template | CSS Classes | Use Case |
-|----------|-------------|----------|
+| Template      | CSS Classes     | Use Case                          |
+| ------------- | --------------- | --------------------------------- |
 | `ProgressBar` | `.progress-bar` | Battery, brightness/volume levels |
 
 ### Status Variants
 
-| Class | Fill Color | Use Case |
-|-------|------------|----------|
-| (default) | `--accent` | Standard progress |
+| Class      | Fill Color         | Use Case             |
+| ---------- | ------------------ | -------------------- |
+| (default)  | `--accent`         | Standard progress    |
 | `.success` | `--status-success` | Completion indicator |
-| `.warning` | `--status-warning` | Caution state |
-| `.error` | `--status-error` | Critical |
+| `.warning` | `--status-warning` | Caution state        |
+| `.error`   | `--status-error`   | Critical             |
 
 ## Import
 

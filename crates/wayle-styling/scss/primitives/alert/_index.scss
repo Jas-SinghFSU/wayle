@@ -1,90 +1,90 @@
 .alert {
-  all: unset;
-  padding: var(--space-md);
-  border-radius: var(--rounding-container);
-  background: var(--bg-overlay);
-
-  .alert-icon {
-    margin-right: var(--space-sm);
-    color: var(--fg-subtle);
-    -gtk-icon-size: var(--icon-lg);
-  }
-
-  .alert-title {
-    font-size: var(--text-lg);
-    font-weight: var(--weight-bold);
-    color: var(--fg-default);
-  }
-
-  .alert-description {
-    font-size: var(--text-md);
-    font-weight: var(--weight-normal);
-    line-height: var(--leading-normal);
-    color: var(--fg-muted);
-    margin-top: var(--space-xs);
-  }
-
-  &.success {
-    background: var(--status-success-subtle);
+    all: unset;
+    padding: var(--space-md);
+    border-radius: var(--rounding-container);
+    background: var(--bg-overlay);
 
     .alert-icon {
-      color: var(--status-success);
+        margin-right: var(--space-sm);
+        color: var(--fg-subtle);
+        -gtk-icon-size: var(--icon-lg);
     }
 
     .alert-title {
-      color: var(--status-success);
+        font-size: var(--text-lg);
+        font-weight: var(--weight-bold);
+        color: var(--fg-default);
     }
 
     .alert-description {
-      color: var(--status-success);
-    }
-  }
-
-  &.warning {
-    background: var(--status-warning-subtle);
-
-    .alert-icon {
-      color: var(--status-warning);
+        font-size: var(--text-md);
+        font-weight: var(--weight-normal);
+        line-height: var(--leading-normal);
+        color: var(--fg-muted);
+        margin-top: var(--space-xs);
     }
 
-    .alert-title {
-      color: var(--status-warning);
+    &.success {
+        background: var(--status-success-subtle);
+
+        .alert-icon {
+            color: var(--status-success);
+        }
+
+        .alert-title {
+            color: var(--status-success);
+        }
+
+        .alert-description {
+            color: var(--status-success);
+        }
     }
 
-    .alert-description {
-      color: var(--status-warning);
-    }
-  }
+    &.warning {
+        background: var(--status-warning-subtle);
 
-  &.error {
-    background: var(--status-error-subtle);
+        .alert-icon {
+            color: var(--status-warning);
+        }
 
-    .alert-icon {
-      color: var(--status-error);
-    }
+        .alert-title {
+            color: var(--status-warning);
+        }
 
-    .alert-title {
-      color: var(--status-error);
-    }
-
-    .alert-description {
-      color: var(--status-error);
-    }
-  }
-
-  &.info {
-    background: var(--status-info-subtle);
-
-    .alert-icon {
-      color: var(--status-info);
+        .alert-description {
+            color: var(--status-warning);
+        }
     }
 
-    .alert-title {
-      color: var(--status-info);
+    &.error {
+        background: var(--status-error-subtle);
+
+        .alert-icon {
+            color: var(--status-error);
+        }
+
+        .alert-title {
+            color: var(--status-error);
+        }
+
+        .alert-description {
+            color: var(--status-error);
+        }
     }
 
-    .alert-description {
-      color: var(--status-info);
+    &.info {
+        background: var(--status-info-subtle);
+
+        .alert-icon {
+            color: var(--status-info);
+        }
+
+        .alert-title {
+            color: var(--status-info);
+        }
+
+        .alert-description {
+            color: var(--status-info);
+        }
     }
-  }
 }

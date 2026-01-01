@@ -4,14 +4,14 @@ Confirmation dialog for destructive or irreversible actions.
 
 ## Available
 
-| Export | Type | Purpose |
-|--------|------|---------|
-| `ConfirmModal` | Component | The modal dialog |
-| `ConfirmModalConfig` | Struct | Display configuration |
-| `ConfirmModalMsg` | Enum | Input: `Show`, `Hide`, `Confirm`, `Cancel` |
-| `ConfirmModalOutput` | Enum | Output: `Confirmed`, `Cancelled` |
-| `ModalIcon` | Enum | `Warning`, `Error`, `Success`, `Info`, `None` |
-| `ConfirmStyle` | Enum | `Danger`, `Primary` |
+| Export               | Type      | Purpose                                       |
+| -------------------- | --------- | --------------------------------------------- |
+| `ConfirmModal`       | Component | The modal dialog                              |
+| `ConfirmModalConfig` | Struct    | Display configuration                         |
+| `ConfirmModalMsg`    | Enum      | Input: `Show`, `Hide`, `Confirm`, `Cancel`    |
+| `ConfirmModalOutput` | Enum      | Output: `Confirmed`, `Cancelled`              |
+| `ModalIcon`          | Enum      | `Warning`, `Error`, `Success`, `Info`, `None` |
+| `ConfirmStyle`       | Enum      | `Danger`, `Primary`                           |
 
 ## Import
 
@@ -79,11 +79,11 @@ fn update(&mut self, msg: Msg, _sender: ComponentSender<Self>) {
 
 ## ConfirmModalConfig Fields
 
-| Field | Type | Purpose |
-|-------|------|---------|
-| `title` | `String` | Modal title |
-| `description` | `Option<String>` | Explanatory text |
-| `icon` | `ModalIcon` | Header icon style |
-| `confirm_label` | `String` | Confirm button text |
-| `confirm_style` | `ConfirmStyle` | `Danger` or `Primary` |
-| `cancel_label` | `Option<String>` | Cancel button text (default: "Cancel") |
+| Field           | Type             | Purpose                                |
+| --------------- | ---------------- | -------------------------------------- |
+| `title`         | `String`         | Modal title                            |
+| `description`   | `Option<String>` | Explanatory text                       |
+| `icon`          | `ModalIcon`      | Header icon style                      |
+| `confirm_label` | `String`         | Confirm button text                    |
+| `confirm_style` | `ConfirmStyle`   | `Danger` or `Primary`                  |
+| `cancel_label`  | `Option<String>` | Cancel button text (default: "Cancel") |

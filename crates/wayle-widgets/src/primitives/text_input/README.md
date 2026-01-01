@@ -4,16 +4,16 @@ Text entry field with Wayle styling.
 
 ## Available
 
-| Template | CSS Classes | Use Case |
-|----------|-------------|----------|
-| `TextInput` | `.input` | General text entry |
+| Template    | CSS Classes | Use Case           |
+| ----------- | ----------- | ------------------ |
+| `TextInput` | `.input`    | General text entry |
 
 ### State Classes
 
-| Class | Effect |
-|-------|--------|
-| `.error` | Red focus ring for validation errors |
-| `.warning` | Yellow focus ring for warnings |
+| Class      | Effect                               |
+| ---------- | ------------------------------------ |
+| `.error`   | Red focus ring for validation errors |
+| `.warning` | Yellow focus ring for warnings       |
 
 ## Import
 
