@@ -1,0 +1,30 @@
+.empty-state {
+  all: unset;
+
+  .icon {
+    color: var(--fg-subtle);
+    -gtk-icon-size: var(--icon-4xl);
+
+    &.sm {
+      -gtk-icon-size: var(--icon-2xl);
+    }
+
+    &.lg {
+      -gtk-icon-size: var(--icon-6xl);
+    }
+  }
+
+  .title {
+    font-size: var(--text-lg);
+    font-weight: var(--weight-bold);
+    color: var(--fg-muted);
+    margin-top: var(--space-sm);
+  }
+
+  .description {
+    font-size: var(--text-md);
+    font-weight: var(--weight-medium);
+    margin-top: var(--space-sm);
+    color: var(--fg-subtle);
+  }
+}

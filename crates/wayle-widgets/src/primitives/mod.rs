@@ -10,6 +10,8 @@ pub mod buttons;
 pub mod confirm_modal;
 /// Dropdown container with header, content, and footer.
 pub mod dropdown;
+/// An empty state display container for indicating absence of data.
+pub mod empty_state;
 /// Popover menus and list items.
 pub mod popover;
 /// Separator component
