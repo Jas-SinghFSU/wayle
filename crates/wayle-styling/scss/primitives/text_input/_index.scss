@@ -4,11 +4,12 @@ entry {
 
     background-color: var(--bg-overlay);
     border-radius: var(--rounding-element);
-    padding: var(--space-md) var(--space-md);
+    padding: 0px var(--space-md);
     font-size: var(--text-md);
     font-weight: var(--weight-medium);
 
     >text {
+      padding: var(--space-md) var(--space-xs);
       margin-left: var(--space-sm);
       margin-right: var(--space-sm);
 
