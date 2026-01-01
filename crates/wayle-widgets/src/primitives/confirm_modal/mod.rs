@@ -291,3 +291,58 @@ impl SimpleComponent for ConfirmModal {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn modal_icon_returns_correct_icon_names() {
+        assert_eq!(ModalIcon::Warning.icon_name(), Some("tb-alert-triangle-symbolic"));
+        assert_eq!(ModalIcon::Error.icon_name(), Some("tb-xbox-x-symbolic"));
+        assert_eq!(ModalIcon::Success.icon_name(), Some("tb-check-symbolic"));
+        assert_eq!(ModalIcon::Info.icon_name(), Some("tb-info-circle-symbolic"));
+        assert_eq!(ModalIcon::None.icon_name(), None);
+    }
+
+    #[test]
+    fn modal_icon_css_classes_always_include_base_class() {
+        for icon in [
+            ModalIcon::Warning,
+            ModalIcon::Error,
+            ModalIcon::Success,
+            ModalIcon::Info,
+            ModalIcon::None,
+        ] {
+            assert!(
+                icon.css_classes().contains(&"modal-icon"),
+                "{icon:?} missing base 'modal-icon' class"
+            );
+        }
+    }
+
+    #[test]
+    fn modal_icon_css_classes_include_variant_class() {
+        assert!(ModalIcon::Warning.css_classes().contains(&"warning"));
+        assert!(ModalIcon::Error.css_classes().contains(&"error"));
+        assert!(ModalIcon::Success.css_classes().contains(&"success"));
+        assert!(ModalIcon::Info.css_classes().contains(&"info"));
+    }
+
+    #[test]
+    fn modal_icon_none_has_only_base_class() {
+        let classes = ModalIcon::None.css_classes();
+        assert_eq!(classes.len(), 1);
+        assert_eq!(classes[0], "modal-icon");
+    }
+
+    #[test]
+    fn default_modal_icon_is_warning() {
+        assert!(matches!(ModalIcon::default(), ModalIcon::Warning));
+    }
+
+    #[test]
+    fn default_confirm_style_is_danger() {
+        assert!(matches!(ConfirmStyle::default(), ConfirmStyle::Danger));
+    }
+}

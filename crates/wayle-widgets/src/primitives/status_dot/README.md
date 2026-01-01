@@ -2,7 +2,7 @@
 
 Small circular indicators for inline status display.
 
-## Available Templates
+## Available
 
 | Template | CSS Classes | Use Case |
 |----------|-------------|----------|
@@ -15,9 +15,7 @@ Small circular indicators for inline status display.
 ## Import
 
 ```rust
-use wayle_widgets::primitives::status_dot::{
-    StatusDot, SuccessDot, WarningDot, ErrorDot, InfoDot,
-};
+use wayle_widgets::primitives::status_dot::{StatusDot, SuccessDot, WarningDot, ErrorDot, InfoDot};
 ```
 
 ## Usage
@@ -47,31 +45,3 @@ view! {
     }
 }
 ```
-
-### Connection Status Pattern
-
-```rust
-view! {
-    gtk::Box {
-        set_spacing: 8,
-
-        if model.is_connected {
-            #[template]
-            SuccessDot {}
-        } else {
-            #[template]
-            ErrorDot {}
-        }
-
-        gtk::Label {
-            #[watch]
-            set_label: if model.is_connected { "Connected" } else { "Disconnected" },
-        },
-    }
-}
-```
-
-## Notes
-
-Status dots are `gtk::Box` widgets with no children or interactive signals.
-They're purely visual indicators meant to accompany text labels.

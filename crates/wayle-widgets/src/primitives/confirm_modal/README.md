@@ -2,16 +2,16 @@
 
 Confirmation dialog for destructive or irreversible actions.
 
-## Exports
+## Available
 
 | Export | Type | Purpose |
 |--------|------|---------|
-| `ConfirmModal` | Component | The modal dialog component |
-| `ConfirmModalConfig` | Struct | Configuration for displaying the modal |
-| `ConfirmModalMsg` | Enum | Input messages (`Show`, `Hide`, `Confirm`, `Cancel`) |
-| `ConfirmModalOutput` | Enum | Output messages (`Confirmed`, `Cancelled`) |
-| `ModalIcon` | Enum | Icon variants (`Warning`, `Error`, `Success`, `Info`, `None`) |
-| `ConfirmStyle` | Enum | Confirm button style (`Danger`, `Primary`) |
+| `ConfirmModal` | Component | The modal dialog |
+| `ConfirmModalConfig` | Struct | Display configuration |
+| `ConfirmModalMsg` | Enum | Input: `Show`, `Hide`, `Confirm`, `Cancel` |
+| `ConfirmModalOutput` | Enum | Output: `Confirmed`, `Cancelled` |
+| `ModalIcon` | Enum | `Warning`, `Error`, `Success`, `Info`, `None` |
+| `ConfirmStyle` | Enum | `Danger`, `Primary` |
 
 ## Import
 
@@ -23,8 +23,6 @@ use wayle_widgets::primitives::confirm_modal::{
 ```
 
 ## Usage
-
-Create the modal once at component init, store the `Controller`, then send `Show(config)` messages to display.
 
 ### Setup
 
@@ -69,10 +67,10 @@ fn update(&mut self, msg: Msg, _sender: ComponentSender<Self>) {
     match msg {
         Msg::ModalResult(output) => match output {
             ConfirmModalOutput::Confirmed => {
-                // User confirmed the action
+                // User confirmed
             }
             ConfirmModalOutput::Cancelled => {
-                // User cancelled (button, ESC, or window close)
+                // User cancelled
             }
         },
     }
@@ -84,34 +82,8 @@ fn update(&mut self, msg: Msg, _sender: ComponentSender<Self>) {
 | Field | Type | Purpose |
 |-------|------|---------|
 | `title` | `String` | Modal title |
-| `description` | `Option<String>` | Explanatory text below title |
+| `description` | `Option<String>` | Explanatory text |
 | `icon` | `ModalIcon` | Header icon style |
 | `confirm_label` | `String` | Confirm button text |
-| `confirm_style` | `ConfirmStyle` | Confirm button styling (`Danger` or `Primary`) |
+| `confirm_style` | `ConfirmStyle` | `Danger` or `Primary` |
 | `cancel_label` | `Option<String>` | Cancel button text (default: "Cancel") |
-
-## Icon Variants
-
-| Variant | Icon | Background | Use Case |
-|---------|------|------------|----------|
-| `Warning` | `tb-alert-triangle-symbolic` | `--status-warning-subtle` | Destructive actions |
-| `Error` | `tb-x-symbolic` | `--status-error-subtle` | Error confirmations |
-| `Success` | `tb-check-symbolic` | `--status-success-subtle` | Success confirmations |
-| `Info` | `tb-info-circle-symbolic` | `--accent-subtle` | Informational prompts |
-| `None` | (hidden) | - | No icon |
-
-## CSS Classes
-
-| Class | Element |
-|-------|---------|
-| `.modal` | Root window |
-| `.modal-header` | Header container |
-| `.modal-icon` | Icon container (+ `.warning`, `.error`, `.success`, `.info`) |
-| `.modal-header-content` | Title/description container |
-| `.modal-title` | Title label |
-| `.modal-description` | Description label |
-| `.modal-footer` | Button container |
-
-## Keyboard
-
-- **ESC** - Cancels and closes the modal

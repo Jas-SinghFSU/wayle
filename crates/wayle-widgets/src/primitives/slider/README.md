@@ -1,20 +1,24 @@
-# Slider Template
+# Slider
 
-Widget template for range sliders with Wayle styling.
+Range sliders for value selection.
 
-## Available Templates
+## Available
 
-| Template | CSS Classes | Use Case |
-|----------|-------------|----------|
-| `Slider` | `.slider` | Volume, brightness, progress controls |
+| Type | Name | Use Case |
+|------|------|----------|
+| Template | `Slider` | Volume, brightness, continuous ranges |
+| Component | `SteppedSlider` | Discrete values with snapping |
 
 ## Import
 
 ```rust
 use wayle_widgets::primitives::slider::Slider;
+use wayle_widgets::primitives::slider::{
+    SteppedSlider, SteppedSliderInit, SteppedSliderMsg, SteppedSliderOutput, EmitMode,
+};
 ```
 
-## Usage
+## Slider Template
 
 ### Basic
 
@@ -28,49 +32,7 @@ view! {
 }
 ```
 
-### With Custom Range
-
-```rust
-view! {
-    #[template]
-    Slider {
-        set_range: (0.0, 1.0),
-        set_value: 0.75,
-    }
-}
-```
-
-### Disabled
-
-```rust
-view! {
-    #[template]
-    Slider {
-        set_range: (0.0, 100.0),
-        set_value: 25.0,
-        set_sensitive: false,
-    }
-}
-```
-
-## Signal Handling
-
-Use `connect_value_changed` for value updates:
-
-```rust
-view! {
-    #[template]
-    Slider {
-        set_range: (0.0, 100.0),
-        set_value: 50.0,
-        connect_value_changed[sender] => move |scale| {
-            sender.input(Msg::VolumeChanged(scale.value()));
-        },
-    }
-}
-```
-
-## Dynamic State
+### With Signal
 
 ```rust
 view! {
@@ -79,33 +41,62 @@ view! {
         set_range: (0.0, 100.0),
         #[watch]
         set_value: model.volume,
-        #[watch]
-        set_sensitive: !model.is_muted,
+        connect_value_changed[sender] => move |scale| {
+            sender.input(Msg::VolumeChanged(scale.value()));
+        },
     }
 }
 ```
 
-## CSS Structure
+## SteppedSlider Component
 
+### Setup
+
+```rust
+struct App {
+    stepped_slider: Controller<SteppedSlider>,
+}
+
+fn init(...) -> ComponentParts<Self> {
+    let stepped_slider = SteppedSlider::builder()
+        .launch(SteppedSliderInit {
+            range: (0.0, 100.0),
+            value: 50.0,
+            steps: vec![0.0, 25.0, 50.0, 75.0, 100.0],
+            show_labels: true,
+            emit_mode: EmitMode::Continuous,
+        })
+        .forward(sender.input_sender(), |output| match output {
+            SteppedSliderOutput::Changed(value) => Msg::StepChanged(value),
+        });
+
+    // ...
+}
 ```
-scale.slider            /* Root container */
-╰── trough              /* Track background */
-    ├── highlight       /* Filled portion (origin to value) */
-    ╰── slider          /* Draggable thumb */
+
+### SteppedSliderInit Fields
+
+| Field | Type | Default | Purpose |
+|-------|------|---------|---------|
+| `range` | `(f64, f64)` | `(0.0, 100.0)` | Value range |
+| `value` | `f64` | `50.0` | Initial value |
+| `steps` | `Vec<f64>` | 5 steps | Snap points |
+| `show_labels` | `bool` | `false` | Show step labels |
+| `emit_mode` | `EmitMode` | `Continuous` | When to emit changes |
+
+### EmitMode
+
+| Mode | Behavior |
+|------|----------|
+| `Continuous` | Emit on every drag |
+| `OnRelease` | Emit only on release |
+
+### Messages
+
+```rust
+// Set value externally
+self.stepped_slider.emit(SteppedSliderMsg::SetValue(75.0));
+
+// Enable/disable
+self.stepped_slider.emit(SteppedSliderMsg::SetSensitive(false));
 ```
-
-### States
-
-| Pseudo-class | Applies to |
-|--------------|------------|
-| `:hover` | Scale on mouse hover |
-| `:disabled` | Entire slider when insensitive |
-| `:focus-visible` | Scale on keyboard focus |
-
-## Template Defaults
-
-| Property | Value | Effect |
-|----------|-------|--------|
-| `set_draw_value` | `false` | Hides numeric value label |
-| `set_has_origin` | `true` | Shows filled highlight from origin |
-| `set_cursor_from_name` | `"pointer"` | Pointer cursor on hover |

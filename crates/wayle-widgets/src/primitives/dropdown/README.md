@@ -1,13 +1,13 @@
 # Dropdown Templates
 
-Composable container templates for dropdown panels with optional header and footer.
+Composable container templates for dropdown panels.
 
-## Available Templates
+## Available
 
 | Template | CSS Classes | Use Case |
 |----------|-------------|----------|
 | `Dropdown` | `.dropdown` | Main container |
-| `DropdownHeader` | `.dropdown-header` | Title bar with icon, label, and actions |
+| `DropdownHeader` | `.dropdown-header` | Title bar with icon, label, actions |
 | `DropdownContent` | `.dropdown-content` | Main content area |
 | `DropdownFooter` | `.dropdown-footer` | Footer for links or secondary actions |
 
@@ -77,13 +77,19 @@ view! {
             },
             #[template_child]
             label {
-                set_label: "Wi-Fi",
+                #[watch]
+                set_label: &model.network_name,
             },
             #[template_child]
             actions {
                 #[template]
                 Switch {
-                    set_active: true,
+                    #[watch]
+                    set_active: model.wifi_enabled,
+                    connect_state_set[sender] => move |_, state| {
+                        sender.input(Msg::WifiToggled(state));
+                        glib::Propagation::Proceed
+                    },
                 },
             },
         },
@@ -113,57 +119,6 @@ view! {
 
 ### DropdownHeader
 
-- **`icon`** - `gtk::Image`, hidden by default. Set `set_visible: true` to show.
-- **`label`** - `gtk::Label` for the header title.
-- **`actions`** - `gtk::Box` container for action widgets (switches, buttons).
-
-### DropdownContent
-
-No named children. Append content directly.
-
-### DropdownFooter
-
-No named children. Append content directly (typically a `LinkButton`).
-
-## Signal Handling
-
-```rust
-view! {
-    #[template]
-    DropdownHeader {
-        #[template_child]
-        actions {
-            #[template]
-            Switch {
-                connect_state_set[sender] => move |_, state| {
-                    sender.input(Msg::WifiToggled(state));
-                    glib::Propagation::Proceed
-                },
-            },
-        },
-    }
-}
-```
-
-## Dynamic State
-
-```rust
-view! {
-    #[template]
-    DropdownHeader {
-        #[template_child]
-        label {
-            #[watch]
-            set_label: &model.network_name,
-        },
-        #[template_child]
-        actions {
-            #[template]
-            Switch {
-                #[watch]
-                set_active: model.wifi_enabled,
-            },
-        },
-    }
-}
-```
+- **`icon`** - `gtk::Image`, hidden by default
+- **`label`** - `gtk::Label` for header title
+- **`actions`** - `gtk::Box` for action widgets

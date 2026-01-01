@@ -2,7 +2,7 @@
 
 Visual dividers for separating content sections.
 
-## Available Templates
+## Available
 
 | Template | CSS Classes | Use Case |
 |----------|-------------|----------|
@@ -17,7 +17,7 @@ use wayle_widgets::primitives::separator::{HorizontalSeparator, VerticalSeparato
 
 ## Usage
 
-### Horizontal Divider
+### Horizontal
 
 ```rust
 view! {
@@ -34,13 +34,11 @@ view! {
 }
 ```
 
-### Vertical Divider
+### Vertical
 
 ```rust
 view! {
     gtk::Box {
-        set_orientation: gtk::Orientation::Horizontal,
-
         gtk::Label { set_label: "Left" },
 
         #[template]

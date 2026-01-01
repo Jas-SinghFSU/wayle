@@ -1,8 +1,8 @@
 # Badge Templates
 
-Widget templates for status indicators, labels, and tags.
+Status indicators, labels, and tags.
 
-## Available Templates
+## Available
 
 ### Filled Badges
 
@@ -27,16 +27,12 @@ Widget templates for status indicators, labels, and tags.
 ## Import
 
 ```rust
-use wayle_widgets::primitives::badge::{
-    Badge, SuccessBadge, WarningBadge, ErrorBadge, InfoBadge,
-    SubtleBadge, SubtleSuccessBadge, SubtleWarningBadge, SubtleErrorBadge,
-    SubtleInfoBadge
-};
+use wayle_widgets::primitives::badge::{Badge, SuccessBadge, ErrorBadge, SubtleBadge};
 ```
 
 ## Usage
 
-### Basic Badge
+### Basic
 
 ```rust
 view! {
@@ -67,18 +63,7 @@ view! {
 }
 ```
 
-### Subtle Variants
-
-```rust
-view! {
-    #[template]
-    SubtleWarningBadge {
-        set_label: "Pending",
-    }
-}
-```
-
-## Dynamic State
+### Dynamic
 
 ```rust
 view! {
@@ -86,28 +71,6 @@ view! {
     SuccessBadge {
         #[watch]
         set_label: &model.count.to_string(),
-    }
-}
-```
-
-### Conditional Badge Type
-
-Use `if` expressions to switch badge types based on state:
-
-```rust
-view! {
-    gtk::Box {
-        if model.status == Status::Online {
-            #[template]
-            SuccessBadge {
-                set_label: "Online",
-            }
-        } else {
-            #[template]
-            ErrorBadge {
-                set_label: "Offline",
-            }
-        }
     }
 }
 ```

@@ -16,7 +16,7 @@ pub mod empty_state;
 pub mod popover;
 /// Separator component
 pub mod separator;
-/// Range slider for value selection.
+/// Range slider for value selection (continuous and stepped variants).
 pub mod slider;
 /// Spinner widget
 pub mod spinner;

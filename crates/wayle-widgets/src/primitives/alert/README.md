@@ -1,8 +1,8 @@
 # Alert Templates
 
-Widget templates for status messages and notifications.
+Status messages and notifications.
 
-## Available Templates
+## Available
 
 | Template | CSS Classes | Use Case |
 |----------|-------------|----------|
@@ -73,68 +73,6 @@ view! {
 
 ## Template Children
 
-All alert templates expose three named children:
-
-- **`icon`** - `gtk::Image`, displays status icon. Default icons vary by template.
-- **`title`** - `gtk::Label`, primary message text.
-- **`description`** - `gtk::Label`, hidden by default. Set `set_visible: true` to show.
-
-### Default Icons
-
-| Template | Default Icon |
-|----------|--------------|
-| `Alert` | `dialog-information-symbolic` |
-| `SuccessAlert` | `emblem-ok-symbolic` |
-| `WarningAlert` | `dialog-warning-symbolic` |
-| `ErrorAlert` | `dialog-error-symbolic` |
-| `InfoAlert` | `dialog-information-symbolic` |
-
-## Dynamic State
-
-```rust
-view! {
-    #[template]
-    InfoAlert {
-        #[template_child]
-        title {
-            #[watch]
-            set_label: &model.status_message,
-        },
-        #[template_child]
-        description {
-            #[watch]
-            set_visible: model.show_details,
-            #[watch]
-            set_label: &model.details,
-        },
-    }
-}
-```
-
-## Conditional Alert Type
-
-```rust
-view! {
-    gtk::Box {
-        if model.has_error {
-            #[template]
-            ErrorAlert {
-                #[template_child]
-                title {
-                    #[watch]
-                    set_label: &model.error_message,
-                },
-            }
-        } else if model.has_warning {
-            #[template]
-            WarningAlert {
-                #[template_child]
-                title {
-                    #[watch]
-                    set_label: &model.warning_message,
-                },
-            }
-        }
-    }
-}
-```
+- **`icon`** - `gtk::Image`, status icon (defaults vary by type)
+- **`title`** - `gtk::Label`, primary message
+- **`description`** - `gtk::Label`, hidden by default

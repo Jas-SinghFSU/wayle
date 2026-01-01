@@ -1,8 +1,8 @@
 # Button Templates
 
-Widget templates for consistent button styling across Wayle.
+Button variants for actions and navigation.
 
-## Available Templates
+## Available
 
 | Template | CSS Classes | Use Case |
 |----------|-------------|----------|
@@ -15,6 +15,7 @@ Widget templates for consistent button styling across Wayle.
 | `LinkButton` | `.btn-link` | Text links |
 | `MutedLinkButton` | `.btn-link .muted` | De-emphasized links |
 | `DangerLinkButton` | `.btn-link .danger` | Destructive text links |
+| `MenuButton` | `.btn-menu` | Dropdown menu trigger |
 
 ## Import
 
@@ -24,21 +25,22 @@ use wayle_widgets::primitives::buttons::{PrimaryButton, SecondaryButton, GhostBu
 
 ## Usage
 
-### Label Only
+### Text Button
 
 ```rust
 view! {
     #[template]
     PrimaryButton {
+        connect_clicked => Msg::Save,
         #[template_child]
         label {
-            set_label: "Save Changes",
+            set_label: "Save",
         },
     }
 }
 ```
 
-### Icon + Label
+### Icon + Text
 
 ```rust
 view! {
@@ -59,8 +61,6 @@ view! {
 
 ### Icon Only
 
-Use `IconButton` or `GhostIconButton` for icon-only buttons:
-
 ```rust
 view! {
     #[template]
@@ -70,44 +70,27 @@ view! {
 }
 ```
 
-## Template Children
-
-Templates with text support expose two named children:
-
-- **`icon`** - `gtk::Image`, hidden by default. Set `set_visible: true` to show.
-- **`label`** - `gtk::Label` for button text.
-
-`IconButton` and `GhostIconButton` have no children - use `set_icon_name`
-directly on the button.
-
-## Signal Handling
-
-```rust
-view! {
-    #[template]
-    PrimaryButton {
-        connect_clicked => Msg::SaveClicked,
-        #[template_child]
-        label {
-            set_label: "Save",
-        },
-    }
-}
-```
-
-## Dynamic State
+### Dynamic State
 
 ```rust
 view! {
     #[template]
     PrimaryButton {
         #[watch]
-        set_sensitive: !model.is_loading,
+        set_sensitive: !model.loading,
         #[template_child]
         label {
             #[watch]
-            set_label: if model.is_loading { "Saving..." } else { "Save" },
+            set_label: if model.loading { "Saving..." } else { "Save" },
         },
     }
 }
 ```
+
+## Template Children
+
+Text buttons expose:
+- **`icon`** - `gtk::Image`, hidden by default
+- **`label`** - `gtk::Label`
+
+`IconButton` and `GhostIconButton` use `set_icon_name` directly.
