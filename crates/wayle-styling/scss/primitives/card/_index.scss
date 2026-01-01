@@ -1,0 +1,22 @@
+.card {
+    all: unset;
+    background: var(--bg-elevated);
+    border-radius: var(--rounding-container);
+    padding: var(--space-sm);
+
+    &.bordered {
+        border: 1px solid var(--border-default);
+    }
+
+    &.compact {
+        padding: var(--space-xs);
+    }
+
+    &.spacious {
+        padding: var(--space-lg);
+    }
+
+    &.shadowed {
+        box-shadow: var(--shadow-sm);
+    }
+}
