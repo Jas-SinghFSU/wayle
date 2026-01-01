@@ -46,7 +46,7 @@
         }
     }
 
-    &.\32 xl {
+    &.xxl {
         min-width: calc(6rem * #{$global-scale});
         min-height: calc(6rem * #{$global-scale});
 
@@ -55,7 +55,7 @@
         }
     }
 
-    &.\33 xl {
+    &.xxxl {
         min-width: calc(7rem * #{$global-scale});
         min-height: calc(7rem * #{$global-scale});
 
@@ -99,11 +99,11 @@
         border-width: calc(5px * #{$global-scale});
     }
 
-    &.\32 xl {
+    &.xxl {
         border-width: calc(6px * #{$global-scale});
     }
 
-    &.\33 xl {
+    &.xxxl {
         border-width: calc(7px * #{$global-scale});
     }
 }

@@ -34,8 +34,8 @@ impl Size {
             Self::Md => "md",
             Self::Lg => "lg",
             Self::Xl => "xl",
-            Self::Xxl => "2xl",
-            Self::Xxxl => "3xl",
+            Self::Xxl => "xxl",
+            Self::Xxxl => "xxxl",
         }
     }
 }

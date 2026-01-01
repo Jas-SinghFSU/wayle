@@ -10,8 +10,8 @@ Circular progress indicator with optional center label.
 | Medium  | `Size::Md`   | 3rem       | 3px    |
 | Large   | `Size::Lg`   | 4rem       | 4px    |
 | XL      | `Size::Xl`   | 5rem       | 5px    |
-| 2XL     | `Size::Xxl`  | 6rem       | 6px    |
-| 3XL     | `Size::Xxxl` | 7rem       | 7px    |
+| XXL     | `Size::Xxl`  | 6rem       | 6px    |
+| XXXL    | `Size::Xxxl` | 7rem       | 7px    |
 
 ## Colors
 
