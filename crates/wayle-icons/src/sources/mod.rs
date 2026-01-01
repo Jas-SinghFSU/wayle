@@ -3,10 +3,12 @@
 //! Each source knows its CDN URL pattern and naming prefix.
 
 mod lucide;
+mod material;
 mod simple_icons;
 mod tabler;
 
 pub use lucide::Lucide;
+pub use material::Material;
 pub use simple_icons::SimpleIcons;
 pub use tabler::{Tabler, TablerFilled};
 
@@ -60,6 +62,7 @@ pub fn from_cli_name(name: &str) -> Result<Box<dyn IconSource>> {
         "tabler" => Ok(Box::new(Tabler)),
         "tabler-filled" => Ok(Box::new(TablerFilled)),
         "simple-icons" => Ok(Box::new(SimpleIcons)),
+        "material" => Ok(Box::new(Material)),
         "lucide" => Ok(Box::new(Lucide)),
         _ => Err(Error::InvalidSource {
             name: name.to_string(),
@@ -73,6 +76,7 @@ pub fn all() -> Vec<Box<dyn IconSource>> {
         Box::new(Tabler),
         Box::new(TablerFilled),
         Box::new(SimpleIcons),
+        Box::new(Material),
         Box::new(Lucide),
     ]
 }

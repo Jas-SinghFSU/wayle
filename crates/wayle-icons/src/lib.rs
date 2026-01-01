@@ -45,6 +45,6 @@ pub mod sources;
 pub mod transform;
 
 pub use error::{Error, Result};
-pub use manager::IconManager;
+pub use manager::{IconManager, InstallFailure, InstallResult};
 pub use registry::IconRegistry;
 pub use sources::IconSource;

@@ -14,6 +14,36 @@ use crate::{
     transform,
 };
 
+/// Result of a batch icon installation operation.
+#[derive(Debug, Clone, Default)]
+pub struct InstallResult {
+    /// Icons that were successfully installed.
+    pub installed: Vec<String>,
+    /// Icons that failed to install, with error messages.
+    pub failed: Vec<InstallFailure>,
+}
+
+/// A failed icon installation.
+#[derive(Debug, Clone)]
+pub struct InstallFailure {
+    /// The icon slug that failed.
+    pub slug: String,
+    /// The error message.
+    pub error: String,
+}
+
+impl InstallResult {
+    /// Returns true if all icons were installed successfully.
+    pub fn all_succeeded(&self) -> bool {
+        self.failed.is_empty()
+    }
+
+    /// Returns true if no icons were installed.
+    pub fn all_failed(&self) -> bool {
+        self.installed.is_empty()
+    }
+}
+
 /// Manages icon installation and removal.
 ///
 /// Uses [`IconRegistry`] to determine where icons are stored and provides
@@ -54,6 +84,9 @@ impl IconManager {
 
     /// Installs icons from a source by fetching from CDN.
     ///
+    /// Continues installing remaining icons even if some fail. Returns an
+    /// [`InstallResult`] containing both successful and failed installations.
+    ///
     /// # Arguments
     ///
     /// * `source` - The icon source (Tabler, SimpleIcons, etc.)
@@ -61,33 +94,34 @@ impl IconManager {
     ///
     /// # Errors
     ///
-    /// Returns error if:
-    /// - HTTP request fails
-    /// - Response is not valid SVG
-    /// - File write fails
-    pub async fn install(&self, source: &dyn IconSource, slugs: &[&str]) -> Result<Vec<String>> {
+    /// Returns error only if the icon directory cannot be created. Individual
+    /// icon failures are captured in [`InstallResult::failed`].
+    pub async fn install(&self, source: &dyn IconSource, slugs: &[&str]) -> Result<InstallResult> {
         let icons_dir = self.registry.icons_dir();
         fs::create_dir_all(&icons_dir).map_err(|err| Error::DirectoryError {
             path: icons_dir.clone(),
             details: err.to_string(),
         })?;
 
-        let mut installed = Vec::with_capacity(slugs.len());
+        let mut result = InstallResult::default();
 
         for slug in slugs {
             match self.install_single(source, slug, &icons_dir).await {
                 Ok(name) => {
                     info!(icon = %name, source = source.cli_name(), "Installed icon");
-                    installed.push(name);
+                    result.installed.push(name);
                 }
                 Err(err) => {
                     warn!(slug = %slug, source = source.cli_name(), error = %err, "Failed to install icon");
-                    return Err(err);
+                    result.failed.push(InstallFailure {
+                        slug: (*slug).to_string(),
+                        error: err.to_string(),
+                    });
                 }
             }
         }
 
-        Ok(installed)
+        Ok(result)
     }
 
     /// Installs a single icon from a source.
