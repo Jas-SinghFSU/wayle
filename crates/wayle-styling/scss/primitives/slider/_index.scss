@@ -22,6 +22,33 @@
     }
   }
 
+  marks {
+    color: var(--fg-subtle);
+    font-size: var(--text-sm);
+
+    mark {
+      indicator {
+        background: var(--fg-subtle);
+        min-width: calc(0.125rem * #{$global-scale});
+        min-height: calc(0.5rem * #{$global-scale});
+      }
+
+      label {
+        color: var(--fg-subtle);
+        font-size: var(--text-md);
+        font-weight: var(--weight-semibold);
+      }
+    }
+  }
+
+  &.marks-after marks.bottom {
+    margin-top: var(--space-xs);
+  }
+
+  &.marks-before marks.top {
+    margin-bottom: var(--space-xs);
+  }
+
   &:hover trough slider {
     background: var(--fg-default);
   }
