@@ -1,0 +1,109 @@
+.progress-ring {
+    all: unset;
+
+    min-width: calc(2.5rem * #{$global-scale});
+    min-height: calc(2.5rem * #{$global-scale});
+
+    .ring-text {
+        font-size: var(--text-sm);
+        font-weight: var(--weight-bold);
+        color: var(--fg-default);
+    }
+
+    &.sm {
+        min-width: calc(2rem * #{$global-scale});
+        min-height: calc(2rem * #{$global-scale});
+
+        .ring-text {
+            font-size: var(--text-xs);
+        }
+    }
+
+    &.md {
+        min-width: calc(3rem * #{$global-scale});
+        min-height: calc(3rem * #{$global-scale});
+
+        .ring-text {
+            font-size: var(--text-md);
+        }
+    }
+
+    &.lg {
+        min-width: calc(4rem * #{$global-scale});
+        min-height: calc(4rem * #{$global-scale});
+
+        .ring-text {
+            font-size: var(--text-md);
+        }
+    }
+
+    &.xl {
+        min-width: calc(5rem * #{$global-scale});
+        min-height: calc(5rem * #{$global-scale});
+
+        .ring-text {
+            font-size: var(--text-lg);
+        }
+    }
+
+    &.\32 xl {
+        min-width: calc(6rem * #{$global-scale});
+        min-height: calc(6rem * #{$global-scale});
+
+        .ring-text {
+            font-size: var(--text-lg);
+        }
+    }
+
+    &.\33 xl {
+        min-width: calc(7rem * #{$global-scale});
+        min-height: calc(7rem * #{$global-scale});
+
+        .ring-text {
+            font-size: var(--text-xl);
+        }
+    }
+}
+
+.progress-ring-canvas {
+    border-style: solid;
+    border-color: transparent;
+    border-width: calc(3px * #{$global-scale});
+    color: var(--accent);
+
+    &.success {
+        color: var(--status-success);
+    }
+
+    &.warning {
+        color: var(--status-warning);
+    }
+
+    &.error {
+        color: var(--status-error);
+    }
+
+    &.sm {
+        border-width: calc(2px * #{$global-scale});
+    }
+
+    &.md {
+        border-width: calc(3px * #{$global-scale});
+    }
+
+    &.lg {
+        border-width: calc(4px * #{$global-scale});
+    }
+
+    &.xl {
+        border-width: calc(5px * #{$global-scale});
+    }
+
+    &.\32 xl {
+        border-width: calc(6px * #{$global-scale});
+    }
+
+    &.\33 xl {
+        border-width: calc(7px * #{$global-scale});
+    }
+}

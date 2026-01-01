@@ -16,6 +16,8 @@ pub mod empty_state;
 pub mod popover;
 /// Linear progress indicator for determinate progress.
 pub mod progress_bar;
+/// Circular progress ring with customizable center content.
+pub mod progress_ring;
 /// Separator component
 pub mod separator;
 /// Range slider for value selection (continuous and stepped variants).
