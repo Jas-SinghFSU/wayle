@@ -70,8 +70,10 @@
     background: transparent;
 
     > arrow {
-        background: var(--bg-elevated);
-        border: 1px solid var(--border-default);
+        min-width: 0;
+        min-height: 0;
+        border: none;
+        background: none;
     }
 
     > contents {
