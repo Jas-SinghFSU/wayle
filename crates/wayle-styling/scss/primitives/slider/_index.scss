@@ -6,8 +6,10 @@ scale {
         border-radius: var(--rounding-element);
         min-height: calc(0.5rem * #{$global-scale});
         min-width: calc(10rem * #{$global-scale});
+        border: none;
 
         highlight {
+            border: none;
             background: var(--accent);
             border-radius: var(--rounding-element);
         }
@@ -18,6 +20,7 @@ scale {
             min-width: calc(1rem * #{$global-scale});
             min-height: calc(1rem * #{$global-scale});
             margin: calc(-0.3125rem * #{$global-scale});
+            border: none;
             box-shadow: var(--shadow-sm);
         }
     }

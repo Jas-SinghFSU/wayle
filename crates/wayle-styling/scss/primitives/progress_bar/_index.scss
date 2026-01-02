@@ -5,8 +5,10 @@
         background: var(--bg-active);
         border-radius: var(--rounding-element);
         min-height: calc(0.5rem * #{$global-scale});
+        border: none;
 
         progress {
+            border: none;
             background: var(--accent);
             border-radius: var(--rounding-element);
             min-height: calc(0.5rem * #{$global-scale});
