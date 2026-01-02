@@ -22,6 +22,8 @@ pub mod popover;
 pub mod progress_bar;
 /// Circular progress ring with customizable center content.
 pub mod progress_ring;
+/// Radio button group for single-select options.
+pub mod radio_group;
 /// Separator component
 pub mod separator;
 /// Range slider for value selection (continuous and stepped variants).

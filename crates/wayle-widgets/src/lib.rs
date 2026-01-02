@@ -31,6 +31,7 @@ pub mod prelude {
     pub use crate::primitives::popover::*;
     pub use crate::primitives::progress_bar::*;
     pub use crate::primitives::progress_ring::*;
+    pub use crate::primitives::radio_group::*;
     pub use crate::primitives::separator::*;
     pub use crate::primitives::slider::*;
     pub use crate::primitives::spinner::*;

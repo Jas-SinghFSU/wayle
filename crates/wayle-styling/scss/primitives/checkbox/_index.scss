@@ -11,7 +11,6 @@ checkbutton {
         background: transparent;
         transition: all var(--duration-fast);
 
-        -gtk-icon-source: none;
         -gtk-icon-size: calc(0.875rem * #{$global-scale});
     }
 
@@ -23,9 +22,10 @@ checkbutton {
     &:checked check {
         background: var(--accent);
         border-color: var(--accent);
+        color: var(--fg-on-accent);
+
         -gtk-icon-source: -gtk-icontheme("tb-check-symbolic");
         -gtk-icon-palette: success var(--fg-on-accent);
-        color: var(--fg-on-accent);
     }
 
     &:checked:hover check {
@@ -36,9 +36,10 @@ checkbutton {
     &:indeterminate check {
         background: var(--accent);
         border-color: var(--accent);
+        color: var(--fg-on-accent);
+
         -gtk-icon-source: -gtk-icontheme("tb-minus-symbolic");
         -gtk-icon-palette: success var(--fg-on-accent);
-        color: var(--fg-on-accent);
     }
 
     &:indeterminate:hover check {

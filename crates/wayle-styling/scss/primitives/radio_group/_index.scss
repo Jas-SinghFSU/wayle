@@ -1,0 +1,46 @@
+checkbutton {
+    radio {
+        all: unset;
+        min-width: calc(0.875rem * #{$global-scale});
+        min-height: calc(0.875rem * #{$global-scale});
+        border: 2px solid var(--fg-muted);
+        border-radius: var(--radius-full);
+        transition: all var(--duration-fast);
+
+        -gtk-icon-size: 0;
+    }
+
+    &:hover radio {
+        border-color: var(--fg-default);
+        background: var(--bg-hover);
+    }
+
+    &:checked radio {
+        background: transparent;
+        border-color: var(--accent);
+        color: var(--accent);
+
+        -gtk-icon-source: -gtk-icontheme("tbf-circle-symbolic");
+    }
+
+    &:checked:hover radio {
+        background: var(--bg-hover);
+        border-color: var(--accent-hover);
+        color: var(--accent-hover);
+
+        -gtk-icon-source: -gtk-icontheme("tbf-circle-symbolic");
+    }
+
+    &:focus-visible radio {
+        outline: var(--focus-ring-width) solid var(--accent);
+        outline-offset: calc(0.125rem * #{$global-scale});
+    }
+
+    &:disabled {
+        opacity: 0.5;
+    }
+}
+
+checkbutton.grouped:not(:last-child) {
+    margin-right: var(--space-md);
+}
