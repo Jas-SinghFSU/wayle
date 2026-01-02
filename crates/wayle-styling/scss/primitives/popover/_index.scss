@@ -1,3 +1,5 @@
+@import "mixins";
+
 .popover {
     all: unset;
     margin-top: var(--space-sm);
@@ -7,20 +9,11 @@
     }
 
     contents {
-        border-radius: var(--rounding-container);
-        background: var(--bg-surface);
-        border: 1px solid var(--bg-hover);
-        box-shadow: var(--shadow);
-        min-width: calc(20rem * #{$global-scale});
-        min-height: calc(2.5rem * #{$global-scale});
+        @include popover-contents;
     }
 
     .popover-header {
-        padding: var(--space-sm);
-        border-bottom: 1px solid var(--border-subtle);
-        font-size: var(--text-md);
-        font-weight: var(--weight-bold);
-        color: var(--fg-subtle);
+        @include popover-header;
 
         .popover-header-label {
             text-transform: uppercase;
@@ -28,53 +21,18 @@
     }
 
     .popover-item {
-        min-height: calc(4rem * #{$global-scale});
-
-        &:hover {
-            transition: background var(--duration-fast);
-            background: var(--bg-overlay);
-        }
-
-        &:focus-visible {
-            background: var(--bg-overlay);
-            outline: var(--focus-ring-width) solid var(--accent);
-            outline-offset: calc(-0.125rem * #{$global-scale});
-        }
+        @include popover-item;
 
         .icon {
-            margin-left: calc(var(--space-sm) + var(--space-xs));
-            margin-right: var(--space-sm);
-            background: var(--accent-subtle);
-            padding: var(--space-sm);
-            border-radius: var(--rounding-element);
-
-            image {
-                -gtk-icon-size: var(--icon-md);
-                color: var(--accent);
-            }
+            @include popover-item-icon;
         }
 
         .labels {
-            margin-left: calc(var(--space-sm) + var(--space-xs));
-
-            .label {
-                font-size: var(--text-md);
-                font-weight: var(--weight-medium);
-                color: var(--fg-default);
-            }
-
-            .subtitle {
-                font-size: var(--text-md);
-                font-weight: var(--weight-medium);
-                color: var(--fg-subtle);
-            }
+            @include popover-item-labels;
         }
 
         .active-icon {
-            -gtk-icon-size: var(--icon-md);
-            margin-right: calc(var(--space-sm) + var(--space-xs));
-            margin-left: var(--space-md);
-            color: var(--accent);
+            @include popover-item-active-icon;
         }
     }
 }

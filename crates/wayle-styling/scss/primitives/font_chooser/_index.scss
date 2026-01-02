@@ -1,0 +1,275 @@
+@import "../buttons/mixins";
+@import "../text_input/mixins";
+@import "../slider/mixins";
+@import "../popover/mixins";
+
+window.fontchooser {
+    background: var(--bg-surface);
+    border: none;
+    min-height: calc(31rem * #{$global-scale});
+    min-width: calc(25rem * #{$global-scale});
+
+    headerbar {
+        background: var(--bg-surface);
+        border-bottom: 0.5px solid var(--border-subtle);
+        min-height: calc(2.5rem * #{$global-scale});
+        padding: var(--space-sm);
+
+        label {
+            font-size: var(--text-lg);
+            font-weight: var(--weight-semibold);
+            color: var(--fg-default);
+        }
+
+        button {
+            @include button-base;
+            @include button-ghost;
+
+            label {
+                color: inherit;
+                font-size: var(--text-md);
+                font-weight: var(--weight-medium);
+            }
+
+            &:active {
+                background: var(--bg-active);
+            }
+        }
+
+        .suggested-action {
+            @include button-primary;
+
+            label {
+                color: var(--fg-on-accent);
+            }
+        }
+    }
+
+    fontchooser {
+        padding: var(--space-sm);
+    }
+
+    box.linked {
+        border-radius: var(--rounding-element);
+
+        > menubutton > button.toggle {
+            margin-left: var(--space-md);
+        }
+    }
+
+    entry.search {
+        @include entry-base;
+        min-height: calc(2.25rem * #{$global-scale});
+
+        > text {
+            padding: var(--space-sm) var(--space-xs);
+
+            placeholder {
+                color: var(--fg-subtle);
+            }
+        }
+
+        image {
+            -gtk-icon-size: var(--icon-md);
+            color: var(--fg-subtle);
+            margin: 0 var(--space-xs);
+        }
+    }
+
+    menubutton {
+        all: unset;
+
+        > button.toggle {
+            all: unset;
+            background: var(--bg-overlay);
+            padding: var(--space-sm);
+            min-height: calc(2.25rem * #{$global-scale});
+            min-width: calc(2.25rem * #{$global-scale});
+            transition: background var(--duration-fast);
+
+            &:hover {
+                background: var(--bg-hover);
+            }
+
+            &:checked {
+                background: var(--bg-active);
+            }
+
+            image {
+                -gtk-icon-size: var(--icon-md);
+                color: var(--fg-muted);
+            }
+
+            &:focus-visible {
+                outline: var(--focus-ring-width) solid var(--accent);
+                outline-offset: calc(-0.125rem * #{$global-scale});
+            }
+        }
+    }
+
+    scrolledwindow.frame {
+        background: var(--bg-overlay);
+        border-radius: var(--rounding-container);
+        border: 1px solid var(--border-default);
+
+        listview {
+            background: transparent;
+
+            > row {
+                transition: background var(--duration-fast);
+
+                &:hover {
+                    background: var(--bg-hover);
+                }
+
+                &:selected {
+                    background: var(--bg-selected);
+                }
+
+                &:focus-visible {
+                    outline: var(--focus-ring-width) solid var(--accent);
+                    outline-offset: calc(-0.125rem * #{$global-scale});
+                }
+
+                label {
+                    color: var(--fg-default);
+                    font-size: var(--text-md);
+                }
+            }
+        }
+    }
+
+    entry {
+        @include entry-base;
+        min-height: calc(2.5rem * #{$global-scale});
+        background: var(--bg-overlay);
+        border: 1px solid var(--border-default);
+
+        > text {
+            padding: var(--space-sm) var(--space-md);
+            color: var(--fg-default);
+            font-size: var(--text-md);
+
+            placeholder {
+                color: var(--fg-subtle);
+            }
+
+            selection {
+                background: var(--accent);
+                color: var(--fg-on-accent);
+            }
+        }
+
+        &:focus-within {
+            border-color: transparent;
+        }
+    }
+
+    label {
+        color: var(--fg-muted);
+        font-size: var(--text-md);
+    }
+
+    scale {
+        @include scale-base;
+    }
+
+    spinbutton {
+        all: unset;
+        background: var(--bg-overlay);
+        border-radius: var(--rounding-element);
+        border: 1px solid var(--border-default);
+        min-width: calc(4rem * #{$global-scale});
+
+        > text {
+            padding: var(--space-sm) var(--space-sm);
+            color: var(--fg-default);
+            font-size: var(--text-md);
+            font-weight: var(--weight-medium);
+            min-width: calc(2rem * #{$global-scale});
+        }
+
+        button {
+            all: unset;
+            padding: var(--space-xs);
+            color: var(--fg-muted);
+            transition: background var(--duration-fast);
+
+            &:hover {
+                background: var(--bg-hover);
+                color: var(--fg-default);
+            }
+
+            &:active {
+                background: var(--bg-active);
+            }
+
+            image {
+                -gtk-icon-size: var(--icon-sm);
+            }
+        }
+
+        &:focus-within {
+            box-shadow: 0 0 0 var(--focus-ring-width) var(--accent);
+            border-color: transparent;
+        }
+
+        &:disabled {
+            opacity: 0.5;
+        }
+    }
+
+    grid.dim-label {
+        image {
+            -gtk-icon-size: var(--icon-4xl);
+            color: var(--fg-subtle);
+        }
+
+        label {
+            color: var(--fg-subtle);
+            font-size: var(--text-lg);
+            font-weight: var(--weight-semibold);
+        }
+    }
+
+    popover {
+        @include popover-base;
+
+        .title-4 {
+            @include popover-title;
+        }
+
+        checkbutton {
+            @include popover-checkbutton;
+        }
+
+        frame {
+            background: transparent;
+            padding: 0;
+            border-radius: var(--radius-sm);
+            margin-left: -1rem;
+            margin-right: -0.25rem;
+
+            entry.search {
+                min-height: calc(2rem * #{$global-scale});
+                margin-bottom: var(--space-sm);
+            }
+
+            scrolledwindow {
+                background: var(--bg-overlay);
+                border: 1px solid var(--border-subtle);
+                min-height: calc(12rem * #{$global-scale});
+                margin-left: 0rem;
+
+                listview {
+                    @include popover-listview;
+                    padding: var(--space-sm);
+                }
+            }
+        }
+    }
+
+    .dialog-vbox.vertical {
+        padding: var(--space-sm);
+    }
+}

@@ -1,0 +1,165 @@
+@mixin popover-contents {
+    border-radius: var(--rounding-container);
+    background: var(--bg-surface);
+    border: 1px solid var(--bg-hover);
+    box-shadow: var(--shadow);
+    min-width: calc(20rem * #{$global-scale});
+    min-height: calc(2.5rem * #{$global-scale});
+}
+
+@mixin popover-header {
+    padding: var(--space-sm);
+    border-bottom: 1px solid var(--border-subtle);
+    font-size: var(--text-md);
+    font-weight: var(--weight-bold);
+    color: var(--fg-subtle);
+}
+
+@mixin popover-item {
+    min-height: calc(4rem * #{$global-scale});
+
+    &:hover {
+        transition: background var(--duration-fast);
+        background: var(--bg-overlay);
+    }
+
+    &:focus-visible {
+        background: var(--bg-overlay);
+        outline: var(--focus-ring-width) solid var(--accent);
+        outline-offset: calc(-0.125rem * #{$global-scale});
+    }
+}
+
+@mixin popover-item-icon {
+    margin-left: calc(var(--space-sm) + var(--space-xs));
+    margin-right: var(--space-sm);
+    background: var(--accent-subtle);
+    padding: var(--space-sm);
+    border-radius: var(--rounding-element);
+
+    image {
+        -gtk-icon-size: var(--icon-md);
+        color: var(--accent);
+    }
+}
+
+@mixin popover-item-labels {
+    margin-left: calc(var(--space-sm) + var(--space-xs));
+
+    .label {
+        font-size: var(--text-md);
+        font-weight: var(--weight-medium);
+        color: var(--fg-default);
+    }
+
+    .subtitle {
+        font-size: var(--text-md);
+        font-weight: var(--weight-medium);
+        color: var(--fg-subtle);
+    }
+}
+
+@mixin popover-item-active-icon {
+    -gtk-icon-size: var(--icon-md);
+    margin-right: calc(var(--space-sm) + var(--space-xs));
+    margin-left: var(--space-md);
+    color: var(--accent);
+}
+
+@mixin popover-base {
+    background: transparent;
+
+    > arrow {
+        background: var(--bg-elevated);
+        border: 1px solid var(--border-default);
+    }
+
+    > contents {
+        background: var(--bg-elevated);
+        border-radius: var(--rounding-container);
+        border: 1px solid var(--border-default);
+        box-shadow: var(--shadow);
+        padding: var(--space-sm);
+    }
+}
+
+@mixin popover-checkbutton {
+    padding: var(--space-xs) 0;
+
+    check {
+        min-width: calc(1.125rem * #{$global-scale});
+        min-height: calc(1.125rem * #{$global-scale});
+        border-radius: var(--rounding-element);
+        background: var(--bg-overlay);
+        border: 1px solid var(--border-strong);
+        transition: background var(--duration-fast);
+
+        &:checked {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: var(--fg-on-accent);
+        }
+    }
+
+    label {
+        color: var(--fg-default);
+        font-size: var(--text-md);
+    }
+
+    &:hover check {
+        background: var(--bg-hover);
+
+        &:checked {
+            background: var(--accent-hover);
+        }
+    }
+
+    &:focus-visible check {
+        outline: var(--focus-ring-width) solid var(--accent);
+        outline-offset: calc(0.125rem * #{$global-scale});
+    }
+}
+
+@mixin popover-title {
+    font-size: var(--text-md);
+    font-weight: var(--weight-semibold);
+    color: var(--fg-default);
+    margin-bottom: var(--space-sm);
+}
+
+@mixin popover-frame {
+    border: 1px solid var(--border-default);
+    border-radius: var(--rounding-element);
+    background: var(--bg-overlay);
+    padding: var(--space-sm);
+}
+
+@mixin popover-listview {
+    background: transparent;
+    padding: var(--space-xs);
+
+    > row {
+        padding: var(--space-xs) var(--space-sm);
+        border-radius: var(--rounding-element);
+        min-height: calc(1.75rem * #{$global-scale});
+        transition: background var(--duration-fast);
+
+        &:hover {
+            background: var(--bg-hover);
+        }
+
+        &:selected {
+            background: var(--bg-selected);
+        }
+
+        &:focus-visible {
+            outline: var(--focus-ring-width) solid var(--accent);
+            outline-offset: calc(-0.125rem * #{$global-scale});
+        }
+
+        label {
+            color: var(--fg-default);
+            font-size: var(--text-sm);
+        }
+    }
+}
