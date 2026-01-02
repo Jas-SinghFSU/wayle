@@ -33,31 +33,25 @@ popover.emoji-picker {
         }
     }
 
-    scrolledwindow.view {
+    scrolledwindow {
         background: transparent;
         border: none;
 
-        > viewport > box {
-            padding: var(--space-sm);
-        }
-    }
-
-    flowbox {
-        background: transparent;
-
-        > flowboxchild {
+        emoji {
             padding: var(--space-xs);
             border-radius: var(--rounding-element);
             min-width: calc(2.25rem * #{$global-scale});
             min-height: calc(2.25rem * #{$global-scale});
-            transition: background var(--duration-fast);
+            transition: transform var(--duration-fast);
 
             &:hover {
-                background: var(--bg-hover);
+                transform: scale(1.5);
+                transition: transform var(--duration-super-fast);
+                background: none;
             }
 
             &:active {
-                background: var(--bg-active);
+                transform: scale(1.2);
             }
 
             &:focus-visible {
