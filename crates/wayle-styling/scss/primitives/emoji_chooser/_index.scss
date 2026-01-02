@@ -1,0 +1,143 @@
+@import "../popover/mixins";
+@import "../text_input/mixins";
+
+popover.emoji-picker {
+    @include popover-base;
+
+    > contents {
+        min-width: calc(30rem * #{$global-scale});
+        padding: 0;
+    }
+
+    box.emoji-searchbar {
+        padding: var(--space-sm);
+        border-bottom: 1px solid var(--border-subtle);
+
+        entry {
+            @include entry-base;
+            min-height: calc(2.25rem * #{$global-scale});
+
+            > text {
+                padding: var(--space-sm) var(--space-xs);
+
+                placeholder {
+                    color: var(--fg-subtle);
+                }
+            }
+
+            image {
+                -gtk-icon-size: var(--icon-md);
+                color: var(--fg-subtle);
+                margin: 0 var(--space-xs);
+            }
+        }
+    }
+
+    scrolledwindow.view {
+        background: transparent;
+        border: none;
+
+        > viewport > box {
+            padding: var(--space-sm);
+        }
+    }
+
+    flowbox {
+        background: transparent;
+
+        > flowboxchild {
+            padding: var(--space-xs);
+            border-radius: var(--rounding-element);
+            min-width: calc(2.25rem * #{$global-scale});
+            min-height: calc(2.25rem * #{$global-scale});
+            transition: background var(--duration-fast);
+
+            &:hover {
+                background: var(--bg-hover);
+            }
+
+            &:active {
+                background: var(--bg-active);
+            }
+
+            &:focus-visible {
+                outline: var(--focus-ring-width) solid var(--accent);
+                outline-offset: calc(-0.125rem * #{$global-scale});
+            }
+
+            > label {
+                font-size: calc(1.5rem * #{$global-scale});
+            }
+        }
+    }
+
+    > contents > box > stack > box > box > label {
+        font-size: var(--text-sm);
+        font-weight: var(--weight-semibold);
+        color: var(--fg-muted);
+        padding: var(--space-sm) var(--space-xs);
+        margin-top: var(--space-sm);
+    }
+
+    flowbox.emoji-toolbar {
+        background: var(--bg-overlay);
+        border-top: 1px solid var(--border-subtle);
+        padding: var(--space-xs);
+
+        > flowboxchild {
+            min-width: calc(2rem * #{$global-scale});
+            min-height: calc(2rem * #{$global-scale});
+            padding: var(--space-xs);
+
+            > button.emoji-section {
+                all: unset;
+                min-width: calc(1.75rem * #{$global-scale});
+                min-height: calc(1.75rem * #{$global-scale});
+                padding: var(--space-xs);
+                border-radius: var(--rounding-element);
+                transition: background var(--duration-fast);
+
+                &:hover {
+                    background: var(--bg-hover);
+                }
+
+                &:active {
+                    background: var(--bg-active);
+                }
+
+                &:checked {
+                    background: var(--bg-selected);
+                }
+
+                &:focus-visible {
+                    outline: var(--focus-ring-width) solid var(--accent);
+                    outline-offset: calc(-0.125rem * #{$global-scale});
+                }
+
+                > label {
+                    font-size: calc(1.125rem * #{$global-scale});
+                }
+            }
+        }
+    }
+
+    grid.dim-label {
+        padding: var(--space-lg);
+
+        image {
+            -gtk-icon-size: var(--icon-4xl);
+            color: var(--fg-subtle);
+            margin-bottom: var(--space-md);
+        }
+
+        label {
+            color: var(--fg-subtle);
+            font-size: var(--text-md);
+
+            &:first-child {
+                font-size: var(--text-lg);
+                font-weight: var(--weight-semibold);
+            }
+        }
+    }
+}

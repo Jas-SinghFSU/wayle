@@ -247,8 +247,8 @@ window.fontchooser {
             background: transparent;
             padding: 0;
             border-radius: var(--radius-sm);
-            margin-left: -1rem;
-            margin-right: -0.25rem;
+            margin-left: calc(-1rem * #{$global-scale});
+            margin-right: calc(-0.25rem * #{$global-scale});
 
             entry.search {
                 min-height: calc(2rem * #{$global-scale});
@@ -259,7 +259,7 @@ window.fontchooser {
                 background: var(--bg-overlay);
                 border: 1px solid var(--border-subtle);
                 min-height: calc(12rem * #{$global-scale});
-                margin-left: 0rem;
+                margin-left: 0;
 
                 listview {
                     @include popover-listview;
