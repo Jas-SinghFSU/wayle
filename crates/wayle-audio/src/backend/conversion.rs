@@ -263,7 +263,7 @@ pub(crate) fn create_stream_info_from_sink_input(sink_input_info: &SinkInputInfo
     let name = sink_input_info.name.clone().unwrap_or_default().to_string();
 
     let application_name = sink_input_info.proplist.get_str("application.name");
-    let binary = sink_input_info.proplist.get_str("application.binary");
+    let binary = sink_input_info.proplist.get_str("application.process.binary");
     let pid = sink_input_info
         .proplist
         .get_str("application.process.id")
@@ -337,7 +337,7 @@ pub(crate) fn create_stream_info_from_source_output(
         .to_string();
 
     let application_name = source_output_info.proplist.get_str("application.name");
-    let binary = source_output_info.proplist.get_str("application.binary");
+    let binary = source_output_info.proplist.get_str("application.process.binary");
     let pid = source_output_info
         .proplist
         .get_str("application.process.id")
