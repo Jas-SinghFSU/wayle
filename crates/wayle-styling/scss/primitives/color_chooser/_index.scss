@@ -1,0 +1,192 @@
+@import "../buttons/mixins";
+
+window.colorchooser {
+    background: var(--bg-surface);
+    border: none;
+    min-height: calc(34rem * #{$global-scale});
+    min-width: calc(36rem * #{$global-scale});
+
+    button {
+        @include button-base;
+        @include button-ghost;
+
+        label {
+            color: inherit;
+            font-size: var(--text-lg);
+        }
+
+        &:active {
+            background: var(--bg-active);
+        }
+    }
+
+    headerbar {
+        background: var(--bg-surface);
+        border-bottom: 0.5px solid var(--border-subtle);
+        min-height: calc(2.5rem * #{$global-scale});
+        padding: var(--space-sm);
+
+        label {
+            font-size: var(--text-lg);
+        }
+
+        .suggested-action {
+            @include button-primary;
+
+            label {
+                color: var(--fg-on-accent);
+            }
+        }
+    }
+
+    colorswatch {
+        border-radius: var(--rounding-element);
+        transition: transform var(--duration-fast);
+        min-height: calc(3.75rem * #{$global-scale});
+        min-width: calc(3.6rem * #{$global-scale});
+        margin-bottom: var(--space-xs);
+
+        &:hover {
+            transform: scale(1.1);
+            box-shadow: var(--shadow-sm);
+        }
+
+        &:focus-visible {
+            outline: var(--focus-ring-width) solid var(--accent);
+            outline-offset: calc(0.125rem * #{$global-scale});
+        }
+
+        overlay {
+            border: none;
+            box-shadow: none;
+        }
+    }
+
+    #add-color-button,
+    colorswatch#add-color-button {
+        background: var(--bg-overlay);
+        border: 1px dashed var(--border-default);
+        transition: background var(--duration-fast);
+
+        overlay {
+            background: transparent;
+
+            image {
+                -gtk-icon-size: var(--icon-md);
+                color: var(--fg-subtle);
+            }
+        }
+
+        &:hover {
+            background: var(--bg-hover);
+            border-style: solid;
+        }
+
+        &:focus-visible {
+            outline: var(--focus-ring-width) solid var(--accent);
+            outline-offset: calc(0.125rem * #{$global-scale});
+        }
+    }
+
+    entry {
+        all: unset;
+        background: var(--bg-overlay);
+        border-radius: var(--rounding-element);
+        padding: var(--space-sm) var(--space-md);
+        font-size: var(--text-md);
+        min-width: calc(5rem * #{$global-scale});
+        border: 1px solid var(--border-default);
+
+        > text {
+            all: unset;
+            color: var(--fg-default);
+            padding: var(--space-xs);
+            font-size: var(--text-lg);
+            font-weight: var(--weight-semibold);
+
+            placeholder {
+                color: var(--fg-subtle);
+            }
+
+            selection {
+                background: var(--accent);
+                color: var(--fg-on-accent);
+            }
+        }
+
+        &:focus-within {
+            box-shadow: 0 0 0 var(--focus-ring-width) var(--accent);
+            border-color: transparent;
+        }
+    }
+
+    scale {
+        &.vertical {
+            min-width: calc(1.5rem * #{$global-scale});
+
+            trough {
+                min-width: calc(2.5rem * #{$global-scale});
+                border-radius: 0px;
+            }
+
+            slider {
+                min-width: calc(2.5rem * #{$global-scale});
+                min-height: calc(0.5rem * #{$global-scale});
+                margin-left: calc(-0.125rem * #{$global-scale});
+                margin-right: calc(-0.125rem * #{$global-scale});
+                border-radius: 0px;
+                box-shadow: var(--shadow-sm);
+                border: 2px solid var(--accent);
+                background: var(--fg-on-accent);
+            }
+        }
+
+        &.horizontal {
+            trough {
+                min-height: calc(0.75rem * #{$global-scale});
+                border-radius: 0px;
+            }
+
+            slider {
+                min-width: calc(0.5rem * #{$global-scale});
+                min-height: calc(2rem * #{$global-scale});
+                background: var(--bg-elevated);
+                border-radius: 0px;
+                box-shadow: var(--shadow-sm);
+                border: 2px solid var(--accent);
+                background: var(--fg-on-accent);
+            }
+        }
+
+        &:focus-visible slider {
+            outline: var(--focus-ring-width) solid var(--accent);
+        }
+    }
+
+    #sv {
+        min-width: calc(25rem * #{$global-scale});
+        min-height: calc(22rem * #{$global-scale});
+    }
+
+    overlay {
+        border-radius: var(--rounding-element);
+    }
+
+    image {
+        -gtk-icon-size: var(--icon-lg);
+    }
+
+    label {
+        color: var(--fg-muted);
+        font-size: var(--text-md);
+    }
+
+    .dialog-vbox.vertical {
+        min-width: calc(36.25rem * #{$global-scale});
+    }
+
+    #editor-color-sample {
+        min-height: calc(2.5rem * #{$global-scale});
+        min-width: calc(4rem * #{$global-scale});
+    }
+}

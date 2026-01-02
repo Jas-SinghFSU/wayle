@@ -1,0 +1,65 @@
+@mixin checkbox-base {
+    all: unset;
+    font-size: var(--text-base);
+
+    check {
+        all: unset;
+        min-width: calc(1.125rem * #{$global-scale});
+        min-height: calc(1.125rem * #{$global-scale});
+        border: 2px solid var(--fg-muted);
+        border-radius: var(--radius-sm);
+        background: transparent;
+        transition: all var(--duration-fast);
+
+        -gtk-icon-size: calc(0.875rem * #{$global-scale});
+    }
+
+    &:hover check {
+        border-color: var(--fg-default);
+        background: var(--bg-hover);
+    }
+
+    &:checked check {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: var(--fg-on-accent);
+
+        -gtk-icon-source: -gtk-icontheme("tb-check-symbolic");
+        -gtk-icon-palette: success var(--fg-on-accent);
+    }
+
+    &:checked:hover check {
+        background: var(--accent-hover);
+        border-color: var(--accent-hover);
+    }
+
+    &:indeterminate check {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: var(--fg-on-accent);
+
+        -gtk-icon-source: -gtk-icontheme("tb-minus-symbolic");
+        -gtk-icon-palette: success var(--fg-on-accent);
+    }
+
+    &:indeterminate:hover check {
+        background: var(--accent-hover);
+        border-color: var(--accent-hover);
+    }
+
+    &:disabled {
+        opacity: 0.5;
+    }
+
+    &:focus-visible check {
+        outline: var(--focus-ring-width) solid var(--accent);
+        outline-offset: calc(0.125rem * #{$global-scale});
+    }
+
+    label {
+        margin-left: var(--space-sm);
+        font-size: var(--space-md);
+        font-weight: var(--weight-medium);
+        color: var(--fg-default);
+    }
+}

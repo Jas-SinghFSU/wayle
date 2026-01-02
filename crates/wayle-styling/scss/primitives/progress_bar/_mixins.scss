@@ -1,0 +1,55 @@
+@mixin progress-bar-base {
+    all: unset;
+
+    trough {
+        background: var(--bg-active);
+        border-radius: var(--rounding-element);
+        min-height: calc(0.5rem * #{$global-scale});
+        border: none;
+
+        progress {
+            border: none;
+            background: var(--accent);
+            border-radius: var(--rounding-element);
+            min-height: calc(0.5rem * #{$global-scale});
+        }
+    }
+}
+
+@mixin progress-bar-sm {
+    trough {
+        min-height: calc(0.25rem * #{$global-scale});
+
+        progress {
+            min-height: calc(0.25rem * #{$global-scale});
+        }
+    }
+}
+
+@mixin progress-bar-lg {
+    trough {
+        min-height: calc(0.75rem * #{$global-scale});
+
+        progress {
+            min-height: calc(0.75rem * #{$global-scale});
+        }
+    }
+}
+
+@mixin progress-bar-success {
+    trough progress {
+        background: var(--status-success);
+    }
+}
+
+@mixin progress-bar-warning {
+    trough progress {
+        background: var(--status-warning);
+    }
+}
+
+@mixin progress-bar-error {
+    trough progress {
+        background: var(--status-error);
+    }
+}

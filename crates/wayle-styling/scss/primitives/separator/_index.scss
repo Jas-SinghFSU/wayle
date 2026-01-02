@@ -1,11 +1,13 @@
+@import "mixins";
+
 separator {
-    background: var(--border-default);
+    @include separator-base;
 
     &.horizontal {
-        min-height: 1px;
+        @include separator-horizontal;
     }
 
     &.vertical {
-        min-width: 1px;
+        @include separator-vertical;
     }
 }

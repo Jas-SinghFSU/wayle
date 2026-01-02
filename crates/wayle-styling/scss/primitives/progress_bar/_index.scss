@@ -1,49 +1,25 @@
+@import "mixins";
+
 .progress-bar {
-    all: unset;
-
-    trough {
-        background: var(--bg-active);
-        border-radius: var(--rounding-element);
-        min-height: calc(0.5rem * #{$global-scale});
-        border: none;
-
-        progress {
-            border: none;
-            background: var(--accent);
-            border-radius: var(--rounding-element);
-            min-height: calc(0.5rem * #{$global-scale});
-        }
-    }
+    @include progress-bar-base;
 
     &.sm {
-        trough {
-            min-height: calc(0.25rem * #{$global-scale});
-
-            progress {
-                min-height: calc(0.25rem * #{$global-scale});
-            }
-        }
+        @include progress-bar-sm;
     }
 
     &.lg {
-        trough {
-            min-height: calc(0.75rem * #{$global-scale});
-
-            progress {
-                min-height: calc(0.75rem * #{$global-scale});
-            }
-        }
+        @include progress-bar-lg;
     }
 
-    &.success trough progress {
-        background: var(--status-success);
+    &.success {
+        @include progress-bar-success;
     }
 
-    &.warning trough progress {
-        background: var(--status-warning);
+    &.warning {
+        @include progress-bar-warning;
     }
 
-    &.error trough progress {
-        background: var(--status-error);
+    &.error {
+        @include progress-bar-error;
     }
 }

@@ -1,0 +1,211 @@
+@mixin button-base {
+    all: unset;
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--rounding-element);
+    font-size: var(--text-md);
+    font-weight: var(--weight-medium);
+
+    image {
+        -gtk-icon-size: var(--icon-md);
+    }
+
+    &:hover {
+        transition: background var(--duration-fast);
+    }
+}
+
+@mixin button-ghost {
+    background: transparent;
+    color: var(--fg-muted);
+
+    &:hover {
+        background: var(--bg-hover);
+        color: var(--fg-default);
+    }
+
+    &:disabled {
+        opacity: 0.5;
+    }
+
+    &:focus-visible {
+        outline: var(--focus-ring-width) solid var(--fg-muted);
+        outline-offset: calc(0.125rem * #{$global-scale});
+    }
+}
+
+@mixin button-ghost-icon {
+    background: transparent;
+    color: var(--fg-subtle);
+
+    &:hover {
+        background: var(--bg-hover);
+        color: var(--fg-default);
+    }
+
+    &:disabled {
+        opacity: 0.5;
+    }
+
+    &:focus-visible {
+        outline: var(--focus-ring-width) solid var(--fg-subtle);
+        outline-offset: calc(0.125rem * #{$global-scale});
+    }
+}
+
+@mixin button-primary {
+    background: var(--accent);
+    color: var(--fg-on-accent);
+
+    &:hover {
+        background: var(--accent-hover);
+    }
+
+    &:disabled {
+        opacity: 0.5;
+    }
+
+    &:focus-visible {
+        outline: var(--focus-ring-width) solid var(--accent);
+        outline-offset: calc(0.125rem * #{$global-scale});
+    }
+}
+
+@mixin button-secondary {
+    background: var(--bg-overlay);
+    color: var(--fg-muted);
+
+    &:hover {
+        background: var(--bg-active);
+        color: var(--fg-default);
+    }
+
+    &:disabled {
+        opacity: 0.5;
+    }
+
+    &:focus-visible {
+        outline: var(--focus-ring-width) solid var(--fg-muted);
+        outline-offset: calc(0.125rem * #{$global-scale});
+    }
+}
+
+@mixin button-icon {
+    background: var(--bg-overlay);
+    color: var(--fg-subtle);
+
+    &:hover {
+        background: var(--bg-active);
+    }
+
+    &:disabled {
+        opacity: 0.5;
+    }
+
+    &:focus-visible {
+        outline: var(--focus-ring-width) solid var(--fg-subtle);
+        outline-offset: calc(0.125rem * #{$global-scale});
+    }
+}
+
+@mixin button-danger {
+    background: var(--status-error);
+    color: var(--fg-on-accent);
+
+    &:hover {
+        background: var(--status-error-hover);
+    }
+
+    &:disabled {
+        opacity: 0.5;
+    }
+
+    &:focus-visible {
+        outline: var(--focus-ring-width) solid var(--status-error);
+        outline-offset: calc(0.125rem * #{$global-scale});
+    }
+}
+
+@mixin button-link {
+    background: none;
+    color: var(--accent);
+    text-decoration: none;
+    padding: var(--space-xs) var(--space-sm);
+
+    &:hover label {
+        text-decoration: underline;
+    }
+
+    &:disabled {
+        opacity: 0.5;
+    }
+
+    &:focus-visible {
+        outline: var(--focus-ring-width) solid var(--accent);
+        outline-offset: calc(0.125rem * #{$global-scale});
+    }
+}
+
+@mixin button-link-muted {
+    color: var(--fg-muted);
+
+    &:focus-visible {
+        outline-color: var(--fg-muted);
+    }
+}
+
+@mixin button-link-danger {
+    color: var(--status-error);
+
+    &:focus-visible {
+        outline-color: var(--status-error);
+    }
+}
+
+@mixin menubutton-base {
+    all: unset;
+
+    > button.toggle {
+        arrow {
+            -gtk-icon-size: var(--icon-sm);
+            color: var(--fg-subtle);
+            transition: -gtk-icon-transform var(--duration-super-fast);
+            -gtk-icon-transform: rotate(0turn);
+        }
+
+        &:checked arrow {
+            -gtk-icon-transform: rotate(-0.5turn);
+        }
+    }
+}
+
+@mixin menubutton-menu {
+    > button.toggle {
+        all: unset;
+        min-width: calc(10rem * #{$global-scale});
+        padding: var(--space-sm) var(--space-sm);
+
+        font-size: var(--text-md);
+        font-weight: var(--weight-semibold);
+
+        background: var(--bg-overlay);
+        transition: background var(--duration-fast);
+        color: var(--fg-muted);
+
+        border-radius: var(--rounding-element);
+        border: 1px solid var(--border-strong);
+
+        &:hover {
+            background: var(--bg-active);
+            transition: background var(--duration-fast);
+        }
+
+        &:checked {
+            background: var(--bg-active);
+        }
+
+        &:focus-visible {
+            outline: var(--focus-ring-width) solid var(--border-strong);
+            outline-offset: calc(0.125rem * #{$global-scale});
+        }
+    }
+}

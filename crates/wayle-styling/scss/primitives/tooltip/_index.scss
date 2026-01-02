@@ -1,10 +1,5 @@
-tooltip {
-    background: var(--bg-active);
-    padding: var(--space-xs) var(--space-sm);
-    border-radius: var(--rounding-container);
+@import "mixins";
 
-    label {
-        color: var(--fg-default);
-        font-size: var(--text-md);
-    }
+tooltip {
+    @include tooltip-base;
 }

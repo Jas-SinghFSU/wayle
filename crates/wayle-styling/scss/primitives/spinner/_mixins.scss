@@ -1,0 +1,23 @@
+@mixin spinner-base {
+    all: unset;
+    opacity: 0;
+    -gtk-icon-source: -gtk-icontheme("tb-loader-2-symbolic");
+    -gtk-icon-size: var(--icon-xl);
+
+    &:checked {
+        opacity: 1;
+        animation: spin 1s linear infinite;
+
+        &:disabled {
+            opacity: 0.5;
+        }
+    }
+}
+
+@mixin spinner-sm {
+    -gtk-icon-size: var(--icon-md);
+}
+
+@mixin spinner-lg {
+    -gtk-icon-size: var(--icon-2xl);
+}

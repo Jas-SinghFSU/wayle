@@ -1,0 +1,11 @@
+@mixin separator-base {
+    background: var(--border-default);
+}
+
+@mixin separator-horizontal {
+    min-height: 1px;
+}
+
+@mixin separator-vertical {
+    min-width: 1px;
+}
