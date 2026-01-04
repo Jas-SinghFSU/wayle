@@ -26,40 +26,40 @@ experience. A successor to HyprPanel without the pain or dependency on Hyprland.
 - [x] **Notification Daemon**
 - [x] **Power Profiles**
 - [x] **System Tray**
-    - [x] GTK4 Adapter
+  - [x] GTK4 Adapter
 - [x] Hyprland
 - [x] **Cava**
 
 ### UI Components
 
-- [ ] **Component Library (WIP)** - Base Relm4 widgets and containers
-- [ ] **Bar Modules**:
-    - [ ] Battery
-    - [ ] Dashboard
-    - [ ] Hyprland workspaces
-    - [ ] Window title
-    - [ ] Media
-    - [ ] Notification
-    - [ ] Volume
-    - [ ] Network
-    - [ ] Bluetooth
-    - [ ] Clock
-    - [ ] System tray
-    - [ ] World clock
-    - [ ] Separator
-    - [ ] Microphone
-    - [ ] RAM
-    - [ ] CPU
-    - [ ] CPU
-    - [ ] Storage
-    - [ ] Network
-    - [ ] Keyboard input
-    - [ ] Updates
-    - [ ] Weather
-    - [ ] Hyprland submap
-    - [ ] Hyprsunset
-    - [ ] Hypridle
-    - [ ] Power
+- [x] **Component Library** - Base Relm4 widgets and containers
+- [ ] **Bar Modules (WIP)**:
+  - [ ] Battery
+  - [ ] Dashboard
+  - [ ] Hyprland workspaces
+  - [ ] Window title
+  - [ ] Media
+  - [ ] Notification
+  - [ ] Volume
+  - [ ] Network
+  - [ ] Bluetooth
+  - [ ] Clock
+  - [ ] System tray
+  - [ ] World clock
+  - [ ] Separator
+  - [ ] Microphone
+  - [ ] RAM
+  - [ ] CPU
+  - [ ] CPU
+  - [ ] Storage
+  - [ ] Network
+  - [ ] Keyboard input
+  - [ ] Updates
+  - [ ] Weather
+  - [ ] Hyprland submap
+  - [ ] Hyprsunset
+  - [ ] Hypridle
+  - [ ] Power
 
 ### Dropdown Interfaces
 
