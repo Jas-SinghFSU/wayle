@@ -9,9 +9,12 @@ repository.workspace = true
 rust-version.workspace = true
 
 [dependencies]
+futures.workspace = true
+glib.workspace = true
 gtk4 = { workspace = true, features = ["v4_10"] }
 relm4.workspace = true
-glib.workspace = true
+wayle-common.workspace = true
+wayle-config = { workspace = true, features = ["schema"] }
 
 [lints]
 workspace = true

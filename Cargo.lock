@@ -3473,6 +3473,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tempfile",
+ "thiserror 2.0.17",
  "tokio",
  "tokio-stream",
  "toml 0.9.7",
@@ -3621,6 +3622,7 @@ dependencies = [
  "grass",
  "gtk4",
  "thiserror 2.0.17",
+ "tracing",
  "wayle-config",
 ]
 
@@ -3655,9 +3657,12 @@ version = "0.1.0"
 name = "wayle-widgets"
 version = "0.1.0"
 dependencies = [
+ "futures",
  "glib",
  "gtk4",
  "relm4",
+ "wayle-common",
+ "wayle-config",
 ]
 
 [[package]]

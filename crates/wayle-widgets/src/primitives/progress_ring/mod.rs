@@ -1,12 +1,8 @@
 //! Circular progress ring with customizable center content.
 
-use std::cell::Cell;
-use std::f64::consts::PI;
-use std::rc::Rc;
+use std::{cell::Cell, f64::consts::PI, rc::Rc};
 
-use gtk::cairo;
-use gtk::gdk::RGBA;
-use gtk::prelude::*;
+use gtk::{cairo, gdk::RGBA, prelude::*};
 use relm4::prelude::*;
 
 /// Size variants for the progress ring.
@@ -75,7 +71,6 @@ pub struct ProgressRingInit {
     /// Color variant for semantic meaning.
     pub color: ColorVariant,
 }
-
 
 /// Messages for updating the progress ring state.
 #[derive(Debug)]

@@ -1,0 +1,183 @@
+// Sizing modifier classes applied by Rust based on config values.
+// All selectors nest under menubutton.bar-button for proper specificity.
+
+menubutton.bar-button {
+    // Icon size classes
+    &.icon-sm image {
+        -gtk-icon-size: var(--bar-icon-sm);
+    }
+    &.icon-md image {
+        -gtk-icon-size: var(--bar-icon-md);
+    }
+    &.icon-lg image {
+        -gtk-icon-size: var(--bar-icon-lg);
+    }
+    &.icon-xl image {
+        -gtk-icon-size: var(--bar-icon-xl);
+    }
+
+    // Text size classes
+    &.text-xs .bar-button-label {
+        font-size: var(--bar-text-xs);
+    }
+    &.text-sm .bar-button-label {
+        font-size: var(--bar-text-sm);
+    }
+    &.text-md .bar-button-label {
+        font-size: var(--bar-text-md);
+    }
+    &.text-lg .bar-button-label {
+        font-size: var(--bar-text-lg);
+    }
+    &.text-xl .bar-button-label {
+        font-size: var(--bar-text-xl);
+    }
+
+    // Button padding classes (applied to content box, not button.toggle)
+    // Padding on button.toggle causes blurry edges in GTK4 CSS rendering.
+    &.padding-x-xs .bar-button-content {
+        padding-left: var(--bar-space-xs);
+        padding-right: var(--bar-space-xs);
+    }
+    &.padding-x-sm .bar-button-content {
+        padding-left: var(--bar-space-sm);
+        padding-right: var(--bar-space-sm);
+    }
+    &.padding-x-md .bar-button-content {
+        padding-left: var(--bar-space-md);
+        padding-right: var(--bar-space-md);
+    }
+    &.padding-x-lg .bar-button-content {
+        padding-left: var(--bar-space-lg);
+        padding-right: var(--bar-space-lg);
+    }
+    &.padding-x-xl .bar-button-content {
+        padding-left: var(--bar-space-xl);
+        padding-right: var(--bar-space-xl);
+    }
+
+    &.padding-y-xs .bar-button-content {
+        padding-top: var(--bar-space-xs);
+        padding-bottom: var(--bar-space-xs);
+    }
+    &.padding-y-sm .bar-button-content {
+        padding-top: var(--bar-space-sm);
+        padding-bottom: var(--bar-space-sm);
+    }
+    &.padding-y-md .bar-button-content {
+        padding-top: var(--bar-space-md);
+        padding-bottom: var(--bar-space-md);
+    }
+    &.padding-y-lg .bar-button-content {
+        padding-top: var(--bar-space-lg);
+        padding-bottom: var(--bar-space-lg);
+    }
+    &.padding-y-xl .bar-button-content {
+        padding-top: var(--bar-space-xl);
+        padding-bottom: var(--bar-space-xl);
+    }
+
+    // Gap classes for Basic and IconSquare (horizontal orientation)
+    // These variants have .bar-button-label as direct child of content box
+    &.basic.gap-xs .bar-button-label,
+    &.icon-square.gap-xs .bar-button-label {
+        margin-left: var(--bar-space-xs);
+    }
+    &.basic.gap-sm .bar-button-label,
+    &.icon-square.gap-sm .bar-button-label {
+        margin-left: var(--bar-space-sm);
+    }
+    &.basic.gap-md .bar-button-label,
+    &.icon-square.gap-md .bar-button-label {
+        margin-left: var(--bar-space-md);
+    }
+    &.basic.gap-lg .bar-button-label,
+    &.icon-square.gap-lg .bar-button-label {
+        margin-left: var(--bar-space-lg);
+    }
+
+    // BlockPrefix: gap is handled by label_padding_x/y since both containers have backgrounds
+    // No separate gap modifier needed - the label container's padding provides the visual spacing
+
+    // Gap classes (vertical orientation) - Basic and IconSquare
+    &.basic.vertical.gap-xs .bar-button-label,
+    &.icon-square.vertical.gap-xs .bar-button-label {
+        margin-left: 0;
+        margin-top: var(--bar-space-xs);
+    }
+    &.basic.vertical.gap-sm .bar-button-label,
+    &.icon-square.vertical.gap-sm .bar-button-label {
+        margin-left: 0;
+        margin-top: var(--bar-space-sm);
+    }
+    &.basic.vertical.gap-md .bar-button-label,
+    &.icon-square.vertical.gap-md .bar-button-label {
+        margin-left: 0;
+        margin-top: var(--bar-space-md);
+    }
+    &.basic.vertical.gap-lg .bar-button-label,
+    &.icon-square.vertical.gap-lg .bar-button-label {
+        margin-left: 0;
+        margin-top: var(--bar-space-lg);
+    }
+
+
+    // Container padding classes
+    // .icon-container uses margin on child image (padding causes blurry edges)
+    // .label-container uses padding directly
+    @each $size in (xs, sm, md, lg, xl) {
+        .icon-container.padding-x-#{$size} image {
+            margin-left: var(--bar-space-#{$size});
+            margin-right: var(--bar-space-#{$size});
+        }
+
+        .icon-container.padding-y-#{$size} image {
+            margin-top: var(--bar-space-#{$size});
+            margin-bottom: var(--bar-space-#{$size});
+        }
+
+        .label-container.padding-x-#{$size} {
+            padding-left: var(--bar-space-#{$size});
+            padding-right: var(--bar-space-#{$size});
+        }
+
+        .label-container.padding-y-#{$size} {
+            padding-top: var(--bar-space-#{$size});
+            padding-bottom: var(--bar-space-#{$size});
+        }
+    }
+
+    // Label weight classes
+    &.weight-normal .bar-button-label {
+        font-weight: var(--weight-normal);
+    }
+    &.weight-medium .bar-button-label {
+        font-weight: var(--weight-medium);
+    }
+    &.weight-semibold .bar-button-label {
+        font-weight: var(--weight-semibold);
+    }
+    &.weight-bold .bar-button-label {
+        font-weight: var(--weight-bold);
+    }
+
+    // Button rounding classes (overrides --rounding-element)
+    &.radius-none > button.toggle {
+        border-radius: var(--radius-none);
+    }
+    &.radius-sm > button.toggle {
+        border-radius: var(--bar-radius-sm);
+    }
+    &.radius-md > button.toggle {
+        border-radius: var(--bar-radius-md);
+    }
+    &.radius-lg > button.toggle {
+        border-radius: var(--bar-radius-lg);
+    }
+    &.radius-xl > button.toggle {
+        border-radius: var(--bar-radius-xl);
+    }
+    &.radius-full > button.toggle {
+        border-radius: var(--radius-full);
+    }
+}

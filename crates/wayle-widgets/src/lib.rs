@@ -14,28 +14,20 @@
 //!
 //! ```ignore
 //! use wayle_widgets::primitives::card::{Card, CardClass};
+//! use wayle_widgets::components::bar_buttons::{BarButton, BarButtonOutput};
 //! ```
 
+pub mod components;
 pub mod primitives;
 
 /// Convenient re-exports of all widget templates and class constants.
 pub mod prelude {
-    pub use crate::primitives::alert::*;
-    pub use crate::primitives::badge::*;
-    pub use crate::primitives::buttons::*;
-    pub use crate::primitives::card::*;
-    pub use crate::primitives::checkbox::*;
-    pub use crate::primitives::confirm_modal::*;
-    pub use crate::primitives::dropdown::*;
-    pub use crate::primitives::empty_state::*;
-    pub use crate::primitives::popover::*;
-    pub use crate::primitives::progress_bar::*;
-    pub use crate::primitives::progress_ring::*;
-    pub use crate::primitives::radio_group::*;
-    pub use crate::primitives::separator::*;
-    pub use crate::primitives::slider::*;
-    pub use crate::primitives::spinner::*;
-    pub use crate::primitives::status_dot::*;
-    pub use crate::primitives::switch::*;
-    pub use crate::primitives::text_input::*;
+    pub use crate::{
+        components::bar_buttons::*,
+        primitives::{
+            alert::*, badge::*, buttons::*, card::*, checkbox::*, confirm_modal::*, dropdown::*,
+            empty_state::*, popover::*, progress_bar::*, progress_ring::*, radio_group::*,
+            separator::*, slider::*, spinner::*, status_dot::*, switch::*, text_input::*,
+        },
+    };
 }

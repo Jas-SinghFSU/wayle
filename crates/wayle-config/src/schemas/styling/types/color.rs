@@ -1,49 +1,21 @@
-use std::{fmt, str::FromStr};
+//! Color-related styling types.
+//!
+//! Palette colors and color values for theming.
+
+use std::{borrow::Cow, fmt, str::FromStr};
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::infrastructure::themes::Palette;
 
-/// Global rounding preference for UI components.
-///
-/// Controls how rounded corners appear throughout the shell. A single setting
-/// applies proportionally to both interactive elements and containers.
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "lowercase")]
-pub enum RoundingLevel {
-    /// Sharp corners (no rounding).
-    None,
-    /// Subtle rounding.
-    Sm,
-    /// Moderate rounding (default).
-    #[default]
-    Md,
-    /// Pronounced rounding.
-    Lg,
-}
-
-impl RoundingLevel {
-    /// Returns the CSS variable references for element and container rounding.
-    ///
-    /// Elements get the base level, containers get one step larger for
-    /// perceptual consistency on larger surfaces.
-    pub fn to_css_values(self) -> (&'static str, &'static str) {
-        match self {
-            Self::None => ("var(--radius-none)", "var(--radius-none)"),
-            Self::Sm => ("var(--radius-sm)", "var(--radius-md)"),
-            Self::Md => ("var(--radius-md)", "var(--radius-lg)"),
-            Self::Lg => ("var(--radius-lg)", "var(--radius-xl)"),
-        }
-    }
-}
-
 /// Semantic color names from the palette.
 ///
 /// These map to the 10 palette colors that drive the visual theme.
 /// Using an enum ensures compile-time validation and catches invalid
 /// color names at config parse time rather than silently falling back.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
 pub enum PaletteColor {
     /// Base background color (darkest).
     Bg,
@@ -65,6 +37,26 @@ pub enum PaletteColor {
     Green,
     /// Blue semantic color.
     Blue,
+}
+
+impl PaletteColor {
+    /// Returns the CSS variable reference for this palette color.
+    ///
+    /// Used when generating inline CSS that references theme colors.
+    pub fn css_var(self) -> &'static str {
+        match self {
+            Self::Bg => "var(--palette-bg)",
+            Self::Surface => "var(--palette-surface)",
+            Self::Elevated => "var(--palette-elevated)",
+            Self::Fg => "var(--palette-fg)",
+            Self::FgMuted => "var(--palette-fg-muted)",
+            Self::Primary => "var(--palette-primary)",
+            Self::Red => "var(--palette-red)",
+            Self::Yellow => "var(--palette-yellow)",
+            Self::Green => "var(--palette-green)",
+            Self::Blue => "var(--palette-blue)",
+        }
+    }
 }
 
 impl fmt::Display for PaletteColor {
@@ -119,8 +111,8 @@ impl FromStr for PaletteColor {
 /// # Serialization
 ///
 /// Serializes to a plain string. The `#` prefix distinguishes custom values:
-/// - `"surface"` → Palette
-/// - `"#414868"` → Custom
+/// - `"surface"` -> Palette
+/// - `"#414868"` -> Custom
 #[derive(Debug, Clone, PartialEq)]
 pub enum ColorValue {
     /// References a color from the user's palette.
@@ -136,7 +128,24 @@ pub enum ColorValue {
     Custom(String),
 }
 
+impl Default for ColorValue {
+    fn default() -> Self {
+        Self::Palette(PaletteColor::Fg)
+    }
+}
+
 impl ColorValue {
+    /// Returns the CSS value for inline style generation.
+    ///
+    /// Palette colors return CSS variable references (e.g., `var(--primary)`).
+    /// Custom colors return the hex value directly.
+    pub fn to_css(&self) -> Cow<'static, str> {
+        match self {
+            ColorValue::Palette(color) => Cow::Borrowed(color.css_var()),
+            ColorValue::Custom(hex) => Cow::Owned(hex.clone()),
+        }
+    }
+
     /// Resolves the color value to a hex string using the given palette.
     ///
     /// Palette references are looked up by name. Custom values pass through unchanged.
@@ -197,4 +206,22 @@ impl schemars::JsonSchema for ColorValue {
     fn json_schema(generator: &mut schemars::SchemaGenerator) -> schemars::Schema {
         String::json_schema(generator)
     }
+}
+
+/// Determines the source of color palette values.
+///
+/// When set to a dynamic provider (Matugen, Pywal, Wallust), user-configured
+/// custom colors are ignored and palette tokens from the provider are used instead.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum ThemeProvider {
+    /// Static theming using Wayle's built-in palettes. User color overrides are respected.
+    #[default]
+    Wayle,
+    /// Dynamic theming via Matugen. Palette tokens are injected at runtime.
+    Matugen,
+    /// Dynamic theming via Pywal. Palette tokens are injected at runtime.
+    Pywal,
+    /// Dynamic theming via Wallust. Palette tokens are injected at runtime.
+    Wallust,
 }

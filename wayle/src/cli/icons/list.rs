@@ -1,5 +1,7 @@
-use std::io::Write;
-use std::process::{Command, Stdio};
+use std::{
+    io::Write,
+    process::{Command, Stdio},
+};
 
 use wayle_icons::IconManager;
 

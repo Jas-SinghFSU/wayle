@@ -1,0 +1,18 @@
+// IconSquare variant: Icon in colored square inside button padding.
+// button.toggle styles inherited from _base.scss.
+
+menubutton.bar-button.icon-square {
+    .icon-container {
+        background-color: var(--bar-btn-icon-bg);
+        border-radius: var(--bar-rounding-element);
+        transition: background-color var(--duration-fast);
+
+        image {
+            color: var(--bar-btn-icon-color);
+        }
+    }
+
+    > button.toggle:hover .icon-container {
+        filter: brightness(1.2);
+    }
+}

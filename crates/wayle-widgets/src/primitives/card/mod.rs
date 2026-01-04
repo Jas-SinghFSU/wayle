@@ -2,7 +2,7 @@
 #![allow(missing_docs)]
 
 use gtk4::prelude::WidgetExt;
-use relm4::{gtk, WidgetTemplate};
+use relm4::{WidgetTemplate, gtk};
 
 /// CSS class constants for Card variants.
 ///

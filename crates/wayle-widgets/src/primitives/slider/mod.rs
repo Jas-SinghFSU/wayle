@@ -4,8 +4,7 @@
 mod stepped;
 
 use gtk4::prelude::*;
-use relm4::{gtk, WidgetTemplate};
-
+use relm4::{WidgetTemplate, gtk};
 pub use stepped::{
     EmitMode, SteppedSlider, SteppedSliderInit, SteppedSliderMsg, SteppedSliderOutput,
 };

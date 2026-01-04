@@ -28,7 +28,10 @@ pub async fn execute(command: IconsCommands) -> CliAction {
         IconsCommands::Install { source, slugs } => install::execute(source, slugs).await,
         IconsCommands::Remove { names } => remove::execute(names),
         IconsCommands::Sources => sources::execute(),
-        IconsCommands::List { source, interactive } => list::execute(source, interactive),
+        IconsCommands::List {
+            source,
+            interactive,
+        } => list::execute(source, interactive),
         IconsCommands::Open => open::execute(),
     }
 }

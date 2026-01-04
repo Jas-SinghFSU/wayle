@@ -1,0 +1,33 @@
+// BlockPrefix variant: Icon in colored container bleeding to button edge.
+// button.toggle has label background, icon-container overlays with icon background.
+// Both icon-container and label-container use vexpand+valign:Fill in Rust to match heights.
+
+menubutton.bar-button.block-prefix {
+    .icon-container {
+        background-color: var(--bar-btn-icon-bg);
+        border-top-left-radius: var(--bar-rounding-element);
+        border-bottom-left-radius: var(--bar-rounding-element);
+    }
+
+    .icon-container image {
+        color: var(--bar-btn-icon-color);
+    }
+
+    .bar-button-label {
+        color: var(--bar-btn-label-color);
+    }
+
+    &.vertical .icon-container {
+        border-radius: 0;
+        border-top-left-radius: var(--bar-rounding-element);
+        border-top-right-radius: var(--bar-rounding-element);
+    }
+
+    &.icon-only .icon-container {
+        border-radius: var(--bar-rounding-element);
+    }
+
+    > button.toggle:hover .icon-container {
+        filter: brightness(1.1);
+    }
+}

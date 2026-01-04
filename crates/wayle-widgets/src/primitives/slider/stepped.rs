@@ -1,8 +1,7 @@
 //! Stepped slider component with discrete value snapping.
 #![allow(missing_docs)]
 
-use gtk::glib;
-use gtk::prelude::*;
+use gtk::{glib, prelude::*};
 use relm4::prelude::*;
 
 /// Controls when the slider emits value changes.

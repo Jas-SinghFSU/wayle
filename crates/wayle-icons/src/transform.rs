@@ -17,8 +17,10 @@
 
 use std::fmt::Write;
 
-use usvg::tiny_skia_path::{PathSegment, Transform};
-use usvg::{Node, Options, Tree};
+use usvg::{
+    Node, Options, Tree,
+    tiny_skia_path::{PathSegment, Transform},
+};
 
 const TARGET_SIZE: f32 = 16.0;
 

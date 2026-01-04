@@ -1,0 +1,38 @@
+// Base bar button styles shared by all variants.
+
+menubutton.bar-button {
+    all: unset;
+
+    > button.toggle {
+        background-color: var(--bar-btn-bg);
+        border-radius: var(--bar-rounding-element);
+        padding: 0;
+        margin: 0;
+    }
+
+    &:hover > button.toggle {
+        filter: brightness(1.15);
+    }
+
+    &:active > button.toggle {
+        filter: brightness(0.92);
+    }
+
+    &:checked > button.toggle {
+        filter: brightness(0.95);
+    }
+
+    &:focus-visible > button.toggle {
+        outline: var(--focus-ring-width) solid var(--fg-muted);
+        outline-offset: calc(0.125rem * #{$bar-scale});
+    }
+
+    .bar-button-label {
+        color: var(--bar-btn-label-color);
+    }
+
+    image {
+        all: unset;
+        color: var(--bar-btn-icon-color);
+    }
+}

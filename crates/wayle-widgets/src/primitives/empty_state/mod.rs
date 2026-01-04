@@ -1,3 +1,4 @@
+//! Empty state placeholder for absent or loading content.
 #![allow(missing_docs)]
 
 use gtk4::prelude::{OrientableExt, WidgetExt};

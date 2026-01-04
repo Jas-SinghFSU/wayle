@@ -3,14 +3,16 @@
 //! This crate handles runtime CSS generation from theme configuration.
 //! It compiles embedded SCSS files with user-provided palette values.
 
-mod error;
+mod errors;
+mod palette_provider;
 
 use std::{fs, io::Write, path::PathBuf};
 
-pub use error::Error;
+pub use errors::Error;
+use tracing::{error, info};
 use wayle_config::{
     infrastructure::themes::Palette,
-    schemas::styling::{FontConfig, RoundingLevel},
+    schemas::styling::{FontConfig, RoundingLevel, ThemeProvider},
 };
 
 fn scss_dir() -> PathBuf {
@@ -27,6 +29,7 @@ fn scss_dir() -> PathBuf {
 /// * `palette` - Color palette for the theme
 /// * `fonts` - Font configuration for sans and mono families
 /// * `scale` - Global UI scale multiplier (1.0 = default)
+/// * `bar_scale` - Bar-specific scale multiplier (1.0 = default)
 /// * `rounding` - Global rounding preference
 ///
 /// # Errors
@@ -36,13 +39,25 @@ pub fn compile(
     palette: &Palette,
     fonts: &FontConfig,
     scale: f32,
+    bar_scale: f32,
     rounding: RoundingLevel,
+    theme_provider: ThemeProvider,
 ) -> Result<String, Error> {
+    let resolved_palette = match resolve_palette(palette, &theme_provider) {
+        Ok(palette) => palette,
+        Err(e) => {
+            error!("Failed to resolve palette from provider '{theme_provider:#?}': {e}");
+            info!("Falling back to Wayle styling");
+
+            palette
+        }
+    };
+
     let variables = format!(
         "{}\n{}\n{}\n{}\n",
-        palette_to_scss(palette),
+        palette_to_scss(resolved_palette),
         fonts_to_scss(fonts),
-        scale_to_scss(scale),
+        scale_to_scss(scale, bar_scale),
         rounding_to_scss(rounding)
     );
 
@@ -58,6 +73,18 @@ pub fn compile(
     let options = grass::Options::default().load_path(&scss_path);
 
     grass::from_path(&main_path, &options).map_err(Error::Compilation)
+}
+
+fn resolve_palette<'a>(
+    fallback: &'a Palette,
+    theme_provider: &ThemeProvider,
+) -> Result<&'a Palette, Error> {
+    match theme_provider {
+        ThemeProvider::Wayle => Ok(fallback),
+        ThemeProvider::Matugen | ThemeProvider::Pywal | ThemeProvider::Wallust => {
+            Err(Error::ProviderNotImplemented(*theme_provider))
+        }
+    }
 }
 
 fn palette_to_scss(palette: &Palette) -> String {
@@ -96,15 +123,17 @@ $font-mono: "{}";
     )
 }
 
-fn scale_to_scss(scale: f32) -> String {
-    format!("$global-scale: {};\n", scale)
+fn scale_to_scss(scale: f32, bar_scale: f32) -> String {
+    format!("$global-scale: {};\n$bar-scale: {};\n", scale, bar_scale)
 }
 
 fn rounding_to_scss(rounding: RoundingLevel) -> String {
-    let (element, container) = rounding.to_css_values();
+    let global = rounding.to_css_values();
+    let bar = rounding.to_bar_css_values();
     format!(
-        "$rounding-element: {};\n$rounding-container: {};\n",
-        element, container
+        "$rounding-element: {};\n$rounding-container: {};\n\
+         $bar-rounding-element: {};\n$bar-rounding-container: {};\n",
+        global.element, global.container, bar.element, bar.container
     )
 }
 
@@ -120,7 +149,15 @@ mod tests {
 
         let palette = palettes::builtins().into_iter().next().unwrap();
         let fonts = FontConfig::default();
-        let css = compile(&palette, &fonts, 1.0, RoundingLevel::default()).unwrap();
+        let css = compile(
+            &palette,
+            &fonts,
+            1.0,
+            1.0,
+            RoundingLevel::default(),
+            ThemeProvider::default(),
+        )
+        .unwrap();
 
         let provider = gtk4::CssProvider::new();
         provider.load_from_string(&css);
@@ -130,7 +167,15 @@ mod tests {
     fn debug_print_css() {
         let palette = palettes::builtins().into_iter().next().unwrap();
         let fonts = FontConfig::default();
-        let css = compile(&palette, &fonts, 1.0, RoundingLevel::default()).unwrap();
+        let css = compile(
+            &palette,
+            &fonts,
+            1.0,
+            1.0,
+            RoundingLevel::default(),
+            ThemeProvider::default(),
+        )
+        .unwrap();
 
         println!("\n=== COMPILED CSS ===\n{}\n=== END ===", css);
     }

@@ -1,7 +1,7 @@
 //! Spinner widget template.
 #![allow(missing_docs)]
 
-use relm4::{gtk, WidgetTemplate};
+use relm4::{WidgetTemplate, gtk};
 
 /// CSS class constants for Spinner sizes.
 ///

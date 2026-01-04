@@ -1,9 +1,4 @@
-//! Confirmation modal for destructive/irreversible actions.
-//!
-//! Use sparingly - only for actions that cannot be undone. Prefer inline
-//! feedback in dropdowns and panel state indicators for recoverable actions.
-//!
-//! Generally, modern design is kinda averse to modal and prefers better patterns.
+//! Confirmation modal for destructive or irreversible actions.
 #![allow(missing_docs)]
 
 use gtk::prelude::*;
@@ -298,7 +293,10 @@ mod tests {
 
     #[test]
     fn modal_icon_returns_correct_icon_names() {
-        assert_eq!(ModalIcon::Warning.icon_name(), Some("tb-alert-triangle-symbolic"));
+        assert_eq!(
+            ModalIcon::Warning.icon_name(),
+            Some("tb-alert-triangle-symbolic")
+        );
         assert_eq!(ModalIcon::Error.icon_name(), Some("tb-xbox-x-symbolic"));
         assert_eq!(ModalIcon::Success.icon_name(), Some("tb-check-symbolic"));
         assert_eq!(ModalIcon::Info.icon_name(), Some("tb-info-circle-symbolic"));

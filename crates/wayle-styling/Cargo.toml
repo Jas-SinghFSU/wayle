@@ -11,6 +11,7 @@ description = "SCSS compilation and theming for Wayle"
 [dependencies]
 grass.workspace = true
 thiserror.workspace = true
+tracing.workspace = true
 wayle-config = { path = "../wayle-config", features = ["schema"] }
 
 [dev-dependencies]
