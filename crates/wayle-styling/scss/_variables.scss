@@ -13,7 +13,10 @@ $font-sans: "Inter";
 $font-mono: "JetBrains Mono";
 
 $global-scale: 1;
+$bar-scale: 1;
 
 $rounding-element: var(--radius-sm);
 $rounding-container: var(--radius-md);
+$bar-rounding-element: var(--bar-radius-sm);
+$bar-rounding-container: var(--bar-radius-md);
 
