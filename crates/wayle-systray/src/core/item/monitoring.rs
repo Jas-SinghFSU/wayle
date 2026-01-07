@@ -28,13 +28,13 @@ impl ModelMonitoring for TrayItem {
         };
 
         let bus_name = self.bus_name.get();
-        let (service, path) = Self::parse_service_identifier(&bus_name);
-        let service = service.to_string();
-        let path = path.to_string();
+        let id = Self::parse_service_identifier(&bus_name);
+        let service = id.service.to_string();
+        let path = id.path.to_string();
 
         let item_proxy = StatusNotifierItemProxy::builder(&self.zbus_connection)
             .destination(service.clone())?
-            .path(path)?
+            .path(path.clone())?
             .cache_properties(CacheProperties::No)
             .build()
             .await?;

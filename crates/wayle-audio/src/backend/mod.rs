@@ -41,6 +41,14 @@ impl BackendState {
     }
 }
 
+/// Components spawned by the context handler.
+struct ContextHandlerComponents {
+    /// The PulseAudio main loop running on Tokio.
+    mainloop: TokioMain,
+    /// Handle to the spawned context handling task.
+    task_handle: tokio::task::JoinHandle<()>,
+}
+
 /// PulseAudio backend implementation
 pub(crate) struct PulseBackend {
     state: BackendState,
@@ -297,12 +305,12 @@ impl PulseBackend {
         mut external_rx: mpsc::UnboundedReceiver<ExternalCommand>,
         event_tx: EventSender,
         cancellation_token: CancellationToken,
-    ) -> (TokioMain, tokio::task::JoinHandle<()>) {
+    ) -> ContextHandlerComponents {
         let mut context = self.context;
         let state = self.state;
         let rate_limiter = VolumeRateLimiter::new();
 
-        let handle = tokio::spawn(async move {
+        let task_handle = tokio::spawn(async move {
             loop {
                 tokio::select! {
                     _ = cancellation_token.cancelled() => {
@@ -332,7 +340,10 @@ impl PulseBackend {
             }
         });
 
-        (self.mainloop, handle)
+        ContextHandlerComponents {
+            mainloop: self.mainloop,
+            task_handle,
+        }
     }
 
     async fn run(
@@ -351,7 +362,10 @@ impl PulseBackend {
         let command_handle =
             self.spawn_command_processor(command_rx, external_tx, cancellation_token.child_token());
 
-        let (mut mainloop, context_handle) = self.spawn_context_handler(
+        let ContextHandlerComponents {
+            mut mainloop,
+            task_handle: context_handle,
+        } = self.spawn_context_handler(
             internal_command_rx,
             external_rx,
             event_tx.clone(),

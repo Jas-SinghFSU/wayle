@@ -28,6 +28,12 @@ use crate::{
 type SsidStream = PropertyStream<'static, Vec<u8>>;
 type StrengthStream = PropertyStream<'static, u8>;
 
+/// Streams for monitoring active access point property changes.
+struct ActiveAccessPointStreams {
+    ssid: Option<SsidStream>,
+    strength: Option<StrengthStream>,
+}
+
 impl ModelMonitoring for Wifi {
     type Error = Error;
 
@@ -136,7 +142,10 @@ async fn monitor_wifi(
     let mut access_point_changed = wireless_proxy.receive_active_access_point_changed().await;
     let mut connectivity_changed = device_proxy.receive_state_changed().await;
 
-    let (mut ap_ssid_stream, mut ap_strength_stream) = {
+    let ActiveAccessPointStreams {
+        ssid: mut ap_ssid_stream,
+        strength: mut ap_strength_stream,
+    } = {
         let Some(wifi) = weak_wifi.upgrade() else {
             error!("Failed to upgrade weak wifi reference.");
             error!("Access Point monitoring may be degraded");
@@ -195,16 +204,15 @@ async fn monitor_wifi(
                         continue;
                     };
 
-                    let (new_ssid_stream, new_strength_stream) =
-                        handle_access_point_changed(
-                            &wifi.device.core.connection,
-                            new_ap_path,
-                            &wifi.ssid,
-                            &wifi.strength
-                        ).await;
+                    let streams = handle_access_point_changed(
+                        &wifi.device.core.connection,
+                        new_ap_path,
+                        &wifi.ssid,
+                        &wifi.strength
+                    ).await;
 
-                    ap_ssid_stream = new_ssid_stream;
-                    ap_strength_stream = new_strength_stream;
+                    ap_ssid_stream = streams.ssid;
+                    ap_strength_stream = streams.strength;
                 }
 
                 Some(change) = async { ap_ssid_stream.as_mut()?.next().await } => {
@@ -264,11 +272,14 @@ async fn handle_access_point_changed(
     new_ap_path: OwnedObjectPath,
     ssid_prop: &Property<Option<String>>,
     strength_prop: &Property<Option<u8>>,
-) -> (Option<SsidStream>, Option<StrengthStream>) {
+) -> ActiveAccessPointStreams {
     if new_ap_path.is_empty() || new_ap_path == OwnedObjectPath::default() {
         ssid_prop.set(None);
         strength_prop.set(None);
-        return (None, None);
+        return ActiveAccessPointStreams {
+            ssid: None,
+            strength: None,
+        };
     }
 
     match AccessPointProxy::new(connection, new_ap_path).await {
@@ -281,15 +292,18 @@ async fn handle_access_point_changed(
                 strength_prop.set(Some(strength));
             }
 
-            (
-                Some(ap_proxy.receive_ssid_changed().await),
-                Some(ap_proxy.receive_strength_changed().await),
-            )
+            ActiveAccessPointStreams {
+                ssid: Some(ap_proxy.receive_ssid_changed().await),
+                strength: Some(ap_proxy.receive_strength_changed().await),
+            }
         }
         Err(_) => {
             ssid_prop.set(None);
             strength_prop.set(None);
-            (None, None)
+            ActiveAccessPointStreams {
+                ssid: None,
+                strength: None,
+            }
         }
     }
 }

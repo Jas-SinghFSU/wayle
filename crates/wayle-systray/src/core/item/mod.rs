@@ -14,7 +14,7 @@ use wayle_traits::{ModelMonitoring, Reactive};
 use zbus::{
     Connection,
     proxy::CacheProperties,
-    zvariant::{ObjectPath, OwnedObjectPath, OwnedValue},
+    zvariant::{OwnedObjectPath, OwnedValue},
 };
 
 use crate::{
@@ -26,6 +26,14 @@ use crate::{
         menu::{MenuEvent, MenuItem, RawMenuItemsPropsList},
     },
 };
+
+/// Parsed D-Bus service identifier with separate service name and object path.
+struct ServiceIdentifier<'a> {
+    /// The D-Bus service/bus name (e.g., ":1.234" or "org.kde.StatusNotifierItem-4077-1").
+    service: &'a str,
+    /// The object path (e.g., "/StatusNotifierItem" or "/some/nested/path").
+    path: &'a str,
+}
 
 /// StatusNotifierItem representation with associated DBusMenu.
 ///
@@ -177,8 +185,8 @@ impl TrayItem {
     )]
     pub async fn context_menu(&self, coords: Coordinates) -> Result<(), Error> {
         let bus_name = self.bus_name.get();
-        let (service, _) = Self::parse_service_identifier(&bus_name);
-        TrayItemController::context_menu(&self.zbus_connection, service, coords.x, coords.y).await
+        let id = Self::parse_service_identifier(&bus_name);
+        TrayItemController::context_menu(&self.zbus_connection, id.service, coords.x, coords.y).await
     }
 
     /// Asks the status notifier item for activation, this is typically a consequence of user
@@ -198,8 +206,8 @@ impl TrayItem {
     )]
     pub async fn activate(&self, coords: Coordinates) -> Result<(), Error> {
         let bus_name = self.bus_name.get();
-        let (service, _) = Self::parse_service_identifier(&bus_name);
-        TrayItemController::activate(&self.zbus_connection, service, coords.x, coords.y).await
+        let id = Self::parse_service_identifier(&bus_name);
+        TrayItemController::activate(&self.zbus_connection, id.service, coords.x, coords.y).await
     }
 
     /// Is to be considered a secondary and less important form of activation compared to
@@ -220,8 +228,8 @@ impl TrayItem {
     )]
     pub async fn secondary_activate(&self, coords: Coordinates) -> Result<(), Error> {
         let bus_name = self.bus_name.get();
-        let (service, _) = Self::parse_service_identifier(&bus_name);
-        TrayItemController::secondary_activate(&self.zbus_connection, service, coords.x, coords.y)
+        let id = Self::parse_service_identifier(&bus_name);
+        TrayItemController::secondary_activate(&self.zbus_connection, id.service, coords.x, coords.y)
             .await
     }
 
@@ -242,8 +250,8 @@ impl TrayItem {
     )]
     pub async fn scroll(&self, delta: i32, orientation: &str) -> Result<(), Error> {
         let bus_name = self.bus_name.get();
-        let (service, _) = Self::parse_service_identifier(&bus_name);
-        TrayItemController::scroll(&self.zbus_connection, service, delta, orientation).await
+        let id = Self::parse_service_identifier(&bus_name);
+        TrayItemController::scroll(&self.zbus_connection, id.service, delta, orientation).await
     }
 
     /// Refreshes the root menu by calling AboutToShow on the menu root.
@@ -258,10 +266,10 @@ impl TrayItem {
     pub async fn refresh_menu(&self) -> Result<bool, Error> {
         const MENU_ID: i32 = 0;
         let bus_name = self.bus_name.get();
-        let (service, _) = Self::parse_service_identifier(&bus_name);
+        let service_id = Self::parse_service_identifier(&bus_name);
         TrayItemController::menu_about_to_show(
             &self.zbus_connection,
-            service,
+            service_id.service,
             self.menu_path.get().as_str(),
             MENU_ID,
         )
@@ -285,10 +293,10 @@ impl TrayItem {
     #[instrument(skip(self), fields(bus_name = %self.bus_name.get(), id), err)]
     pub async fn menu_about_to_show(&self, id: i32) -> Result<bool, Error> {
         let bus_name = self.bus_name.get();
-        let (service, _) = Self::parse_service_identifier(&bus_name);
+        let service_id = Self::parse_service_identifier(&bus_name);
         TrayItemController::menu_about_to_show(
             &self.zbus_connection,
-            service,
+            service_id.service,
             self.menu_path.get().as_str(),
             id,
         )
@@ -312,10 +320,10 @@ impl TrayItem {
     )]
     pub async fn menu_event(&self, id: i32, event: MenuEvent, timestamp: u32) -> Result<(), Error> {
         let bus_name = self.bus_name.get();
-        let (service, _) = Self::parse_service_identifier(&bus_name);
+        let service_id = Self::parse_service_identifier(&bus_name);
         TrayItemController::menu_event(
             &self.zbus_connection,
-            service,
+            service_id.service,
             self.menu_path.get().as_str(),
             id,
             &event.to_string(),
@@ -443,10 +451,10 @@ impl TrayItem {
     /// Returns error if D-Bus proxy creation fails.
     pub async fn new_title_signal(&self) -> Result<impl Stream<Item = ()>, Error> {
         let bus_name = &self.bus_name.get();
-        let (service, path) = Self::parse_service_identifier(bus_name);
+        let id = Self::parse_service_identifier(bus_name);
         let proxy = StatusNotifierItemProxy::builder(&self.zbus_connection)
-            .destination(service)?
-            .path(path)?
+            .destination(id.service)?
+            .path(id.path)?
             .build()
             .await?;
         let stream = proxy.receive_new_title().await?;
@@ -460,10 +468,10 @@ impl TrayItem {
     /// Returns error if D-Bus proxy creation fails.
     pub async fn new_icon_signal(&self) -> Result<impl Stream<Item = ()>, Error> {
         let bus_name = &self.bus_name.get();
-        let (service, path) = Self::parse_service_identifier(bus_name);
+        let id = Self::parse_service_identifier(bus_name);
         let proxy = StatusNotifierItemProxy::builder(&self.zbus_connection)
-            .destination(service)?
-            .path(path)?
+            .destination(id.service)?
+            .path(id.path)?
             .build()
             .await?;
         let stream = proxy.receive_new_icon().await?;
@@ -478,10 +486,10 @@ impl TrayItem {
     /// Returns error if D-Bus proxy creation fails.
     pub async fn new_attention_icon_signal(&self) -> Result<impl Stream<Item = ()>, Error> {
         let bus_name = &self.bus_name.get();
-        let (service, path) = Self::parse_service_identifier(bus_name);
+        let id = Self::parse_service_identifier(bus_name);
         let proxy = StatusNotifierItemProxy::builder(&self.zbus_connection)
-            .destination(service)?
-            .path(path)?
+            .destination(id.service)?
+            .path(id.path)?
             .build()
             .await?;
         let stream = proxy.receive_new_attention_icon().await?;
@@ -496,10 +504,10 @@ impl TrayItem {
     /// Returns error if D-Bus proxy creation fails.
     pub async fn new_overlay_icon_signal(&self) -> Result<impl Stream<Item = ()>, Error> {
         let bus_name = &self.bus_name.get();
-        let (service, path) = Self::parse_service_identifier(bus_name);
+        let id = Self::parse_service_identifier(bus_name);
         let proxy = StatusNotifierItemProxy::builder(&self.zbus_connection)
-            .destination(service)?
-            .path(path)?
+            .destination(id.service)?
+            .path(id.path)?
             .build()
             .await?;
         let stream = proxy.receive_new_overlay_icon().await?;
@@ -513,10 +521,10 @@ impl TrayItem {
     /// Returns error if D-Bus proxy creation fails.
     pub async fn new_tool_tip_signal(&self) -> Result<impl Stream<Item = ()>, Error> {
         let bus_name = &self.bus_name.get();
-        let (service, path) = Self::parse_service_identifier(bus_name);
+        let id = Self::parse_service_identifier(bus_name);
         let proxy = StatusNotifierItemProxy::builder(&self.zbus_connection)
-            .destination(service)?
-            .path(path)?
+            .destination(id.service)?
+            .path(id.path)?
             .build()
             .await?;
         let stream = proxy.receive_new_tool_tip().await?;
@@ -530,10 +538,10 @@ impl TrayItem {
     /// Returns error if D-Bus proxy creation fails.
     pub async fn new_status_signal(&self) -> Result<impl Stream<Item = Status>, Error> {
         let bus_name = &self.bus_name.get();
-        let (service, path) = Self::parse_service_identifier(bus_name);
+        let id = Self::parse_service_identifier(bus_name);
         let proxy = StatusNotifierItemProxy::builder(&self.zbus_connection)
-            .destination(service)?
-            .path(path)?
+            .destination(id.service)?
+            .path(id.path)?
             .build()
             .await?;
         let stream = proxy.receive_new_status().await?;
@@ -551,14 +559,17 @@ impl TrayItem {
     /// Handles two formats:
     /// - Bus name only: "org.kde.StatusNotifierItem-4077-1" -> uses default path
     /// - Bus name with path: ":1.234/StatusNotifierItem" -> splits at /
-    fn parse_service_identifier(bus_name: &str) -> (&str, &str) {
+    fn parse_service_identifier(bus_name: &str) -> ServiceIdentifier<'_> {
         if let Some(slash_pos) = bus_name.find('/') {
-            let service_part = &bus_name[..slash_pos];
-            let path_part = &bus_name[slash_pos..];
-
-            (service_part, path_part)
+            ServiceIdentifier {
+                service: &bus_name[..slash_pos],
+                path: &bus_name[slash_pos..],
+            }
         } else {
-            (bus_name, "/StatusNotifierItem")
+            ServiceIdentifier {
+                service: bus_name,
+                path: "/StatusNotifierItem",
+            }
         }
     }
 
@@ -567,12 +578,11 @@ impl TrayItem {
         connection: &Connection,
         bus_name: &str,
     ) -> Result<TrayItemProperties, Error> {
-        let (service, path) = Self::parse_service_identifier(bus_name);
-        let path = ObjectPath::try_from(path)?;
+        let service_id = Self::parse_service_identifier(bus_name);
 
         let item_proxy = StatusNotifierItemProxy::builder(connection)
-            .destination(service)?
-            .path(path)?
+            .destination(service_id.service)?
+            .path(service_id.path)?
             .build()
             .await?;
 
@@ -593,8 +603,7 @@ impl TrayItem {
         let tooltip = item_proxy.tool_tip().await;
         let menu_path = item_proxy.menu().await.unwrap_or_default();
 
-        let (service, _) = Self::parse_service_identifier(bus_name);
-        let service = service.to_string();
+        let service = service_id.service.to_string();
         let menu_proxy = DBusMenuProxy::builder(connection)
             .destination(service)?
             .path(menu_path.clone())?
@@ -681,26 +690,25 @@ mod tests {
 
     #[test]
     fn parse_service_identifier_with_slash_splits_correctly() {
-        let (service, path) = TrayItem::parse_service_identifier(":1.234/StatusNotifierItem");
+        let id = TrayItem::parse_service_identifier(":1.234/StatusNotifierItem");
 
-        assert_eq!(service, ":1.234");
-        assert_eq!(path, "/StatusNotifierItem");
+        assert_eq!(id.service, ":1.234");
+        assert_eq!(id.path, "/StatusNotifierItem");
     }
 
     #[test]
     fn parse_service_identifier_without_slash_uses_default_path() {
-        let (service, path) =
-            TrayItem::parse_service_identifier("org.kde.StatusNotifierItem-4077-1");
+        let id = TrayItem::parse_service_identifier("org.kde.StatusNotifierItem-4077-1");
 
-        assert_eq!(service, "org.kde.StatusNotifierItem-4077-1");
-        assert_eq!(path, "/StatusNotifierItem");
+        assert_eq!(id.service, "org.kde.StatusNotifierItem-4077-1");
+        assert_eq!(id.path, "/StatusNotifierItem");
     }
 
     #[test]
     fn parse_service_identifier_with_multiple_slashes_splits_at_first() {
-        let (service, path) = TrayItem::parse_service_identifier(":1.234/some/nested/path");
+        let id = TrayItem::parse_service_identifier(":1.234/some/nested/path");
 
-        assert_eq!(service, ":1.234");
-        assert_eq!(path, "/some/nested/path");
+        assert_eq!(id.service, ":1.234");
+        assert_eq!(id.path, "/some/nested/path");
     }
 }

@@ -15,6 +15,15 @@ use crate::{
     types::menu::{MenuEvent, MenuItem, MenuItemType, ToggleState, ToggleType},
 };
 
+/// GTK4 menu model components for a tray item.
+#[derive(Debug)]
+pub struct TrayMenuModel {
+    /// The GTK Menu model representing the tray item's menu structure.
+    pub menu: Menu,
+    /// Action group containing all menu item actions.
+    pub actions: SimpleActionGroup,
+}
+
 /// GTK4 adapter for system tray menus.
 ///
 /// Converts SystemTray Service items into native GTK4 menu widgets.
@@ -25,22 +34,17 @@ impl Adapter {
     ///
     /// Creates a menu structure with sections separated by separators,
     /// and registers actions for each menu item including checkboxes and radio buttons.
-    pub fn build_model(tray_item: &TrayItem) -> (Menu, SimpleActionGroup) {
-        let menu_model = Menu::new();
-        let action_group = SimpleActionGroup::new();
+    pub fn build_model(tray_item: &TrayItem) -> TrayMenuModel {
+        let menu = Menu::new();
+        let actions = SimpleActionGroup::new();
 
         let Some(menu_item) = tray_item.menu.get() else {
-            return (menu_model, action_group);
+            return TrayMenuModel { menu, actions };
         };
 
-        Self::append_items_with_sections(
-            &menu_item.children,
-            &menu_model,
-            &action_group,
-            tray_item,
-        );
+        Self::append_items_with_sections(&menu_item.children, &menu, &actions, tray_item);
 
-        (menu_model, action_group)
+        TrayMenuModel { menu, actions }
     }
 
     /// Builds a GTK PopoverMenu widget from a tray item.
@@ -48,9 +52,9 @@ impl Adapter {
     /// Creates a complete popover menu ready to display, with all actions
     /// configured and registered to the "app" action group.
     pub fn build_popover(tray_item: &TrayItem) -> PopoverMenu {
-        let (model, actions) = Self::build_model(tray_item);
+        let TrayMenuModel { menu, actions } = Self::build_model(tray_item);
 
-        let popover = PopoverMenu::from_model(Some(&model));
+        let popover = PopoverMenu::from_model(Some(&menu));
         popover.insert_action_group("app", Some(&actions));
 
         popover
