@@ -10,6 +10,8 @@ pub mod media;
 pub mod panel;
 /// ANSI styling for help output
 pub mod style;
+/// Wallpaper control commands
+pub mod wallpaper;
 
 /// Result type for CLI operations that return output text
 pub type CliResult = Result<String, String>;

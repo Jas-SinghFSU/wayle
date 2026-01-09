@@ -50,6 +50,7 @@ wayle-network.workspace = true
 wayle-notification.workspace = true
 wayle-power-profiles.workspace = true
 wayle-systray.workspace = true
+wayle-wallpaper.workspace = true
 
 [lints]
 workspace = true

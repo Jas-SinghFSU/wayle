@@ -24,6 +24,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
         Commands::Config { command } => wayle::cli::config::execute(command).await,
         Commands::Icons { command } => wayle::cli::icons::execute(command).await,
         Commands::Media { command } => wayle::cli::media::execute(command).await,
+        Commands::Wallpaper { command } => wayle::cli::wallpaper::execute(command).await,
     };
 
     if let Err(e) = result {

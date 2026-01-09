@@ -6,6 +6,7 @@ use clap::{
 use crate::cli::{
     config::commands::ConfigCommands, icons::commands::IconsCommands,
     media::commands::MediaCommands, panel::commands::PanelCommands,
+    wallpaper::commands::WallpaperCommands,
 };
 
 fn get_styles() -> Styles {
@@ -55,5 +56,11 @@ pub enum Commands {
         /// Media subcommand to execute.
         #[command(subcommand)]
         command: MediaCommands,
+    },
+    /// Wallpaper control commands
+    Wallpaper {
+        /// Wallpaper subcommand to execute.
+        #[command(subcommand)]
+        command: WallpaperCommands,
     },
 }
