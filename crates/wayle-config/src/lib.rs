@@ -44,6 +44,7 @@ pub mod infrastructure {
 
 pub use infrastructure::{
     error::Error,
+    paths::ConfigPaths,
     persistence::PersistenceWatcher,
     service::{ConfigService, ConfigServiceCli},
     watcher::FileWatcher,

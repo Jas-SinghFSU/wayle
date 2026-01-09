@@ -10,6 +10,7 @@
 /// These adapters enable integration with various GUI toolkits,
 /// allowing systray menus to be displayed natively in different frameworks.
 pub mod adapters;
+mod builder;
 /// Core types and functionality for system tray items
 pub mod core;
 mod discovery;
@@ -24,4 +25,5 @@ pub mod service;
 pub mod types;
 mod watcher;
 
-pub use service::{SystemTrayService, SystemTrayServiceBuilder};
+pub use builder::SystemTrayServiceBuilder;
+pub use service::SystemTrayService;

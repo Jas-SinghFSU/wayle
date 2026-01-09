@@ -186,7 +186,8 @@ impl TrayItem {
     pub async fn context_menu(&self, coords: Coordinates) -> Result<(), Error> {
         let bus_name = self.bus_name.get();
         let id = Self::parse_service_identifier(&bus_name);
-        TrayItemController::context_menu(&self.zbus_connection, id.service, coords.x, coords.y).await
+        TrayItemController::context_menu(&self.zbus_connection, id.service, coords.x, coords.y)
+            .await
     }
 
     /// Asks the status notifier item for activation, this is typically a consequence of user
@@ -229,8 +230,13 @@ impl TrayItem {
     pub async fn secondary_activate(&self, coords: Coordinates) -> Result<(), Error> {
         let bus_name = self.bus_name.get();
         let id = Self::parse_service_identifier(&bus_name);
-        TrayItemController::secondary_activate(&self.zbus_connection, id.service, coords.x, coords.y)
-            .await
+        TrayItemController::secondary_activate(
+            &self.zbus_connection,
+            id.service,
+            coords.x,
+            coords.y,
+        )
+        .await
     }
 
     /// The user asked for a scroll action. This is caused from input such as mouse wheel over

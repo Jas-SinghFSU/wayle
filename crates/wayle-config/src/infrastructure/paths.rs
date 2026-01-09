@@ -116,4 +116,44 @@ impl ConfigPaths {
             }
         }
     }
+
+    /// Returns the cache directory path for the application.
+    ///
+    /// Follows XDG Base Directory specification:
+    /// - First checks `XDG_CACHE_HOME`
+    /// - Falls back to `$HOME/.cache`
+    /// - Appends "wayle" to the base cache directory
+    ///
+    /// Creates the directory if it doesn't exist.
+    ///
+    /// # Errors
+    ///
+    /// Returns error if environment variables are not set or directory cannot be created.
+    pub fn cache_dir() -> Result<PathBuf, Error> {
+        let cache_home = env::var("XDG_CACHE_HOME")
+            .or_else(|_| env::var("HOME").map(|home| format!("{home}/.cache")))
+            .map_err(|e| {
+                Error::new(
+                    ErrorKind::NotFound,
+                    format!("Neither XDG_CACHE_HOME nor HOME environment variable found: {e}"),
+                )
+            })?;
+
+        let cache_dir = PathBuf::from(cache_home).join("wayle");
+
+        if !cache_dir.exists() {
+            fs::create_dir_all(&cache_dir)?;
+        }
+
+        Ok(cache_dir)
+    }
+
+    /// Returns the path where matugen colors are cached.
+    ///
+    /// # Errors
+    ///
+    /// Returns error if cache directory cannot be determined or created.
+    pub fn matugen_colors() -> Result<PathBuf, Error> {
+        Ok(Self::cache_dir()?.join("matugen-colors.json"))
+    }
 }

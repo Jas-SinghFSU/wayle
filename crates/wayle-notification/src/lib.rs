@@ -5,6 +5,7 @@
 //! notification display, persistence, and provides reactive streams for
 //! notification events and state changes.
 
+mod builder;
 /// Core notification functionality.
 pub mod core;
 pub(crate) mod daemon;
@@ -19,5 +20,6 @@ pub mod service;
 /// Type definitions for notifications.
 pub mod types;
 
+pub use builder::NotificationServiceBuilder;
 pub use error::Error;
 pub use service::NotificationService;
