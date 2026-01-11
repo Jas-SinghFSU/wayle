@@ -20,13 +20,17 @@ pub async fn execute() -> CliAction {
 
     println!("System tray items:");
     for (id, title, icon_name, status) in &items {
-        let display_name = if title.is_empty() { id } else { title };
-        let icon_info = if icon_name.is_empty() {
+        let title_part = if title.is_empty() || title == id {
+            String::new()
+        } else {
+            format!(" \"{title}\"")
+        };
+        let icon_part = if icon_name.is_empty() {
             String::new()
         } else {
             format!(" ({icon_name})")
         };
-        println!("  {display_name}{icon_info} [{status}]");
+        println!("  {id}{title_part}{icon_part} [{status}]");
     }
 
     Ok(())

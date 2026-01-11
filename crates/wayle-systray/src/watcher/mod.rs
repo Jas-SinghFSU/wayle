@@ -8,7 +8,7 @@ use tokio::sync::{RwLock, broadcast};
 use tokio_util::sync::CancellationToken;
 use tracing::{info, instrument};
 use wayle_traits::ServiceMonitoring;
-use zbus::{Connection, fdo, object_server::SignalEmitter};
+use zbus::{Connection, fdo, message::Header, object_server::SignalEmitter};
 
 use super::{error::Error, events::TrayEvent, types::PROTOCOL_VERSION};
 
@@ -33,24 +33,35 @@ impl StatusNotifierWatcher {
     /// Register a StatusNotifierItem into the watcher.
     ///
     /// The service string can be either a bus name (searched at /StatusNotifierItem)
-    /// or a full object path.
-    #[instrument(skip(self, ctx), fields(service = %service))]
+    /// or a full object path. When a full object path is provided, the sender's bus
+    /// name is prepended to form the complete identifier.
+    #[instrument(skip(self, ctx, header), fields(service = %service))]
     async fn register_status_notifier_item(
         &mut self,
         #[zbus(signal_context)] ctx: SignalEmitter<'_>,
+        #[zbus(header)] header: Header<'_>,
         service: String,
     ) -> fdo::Result<()> {
-        info!("Registering StatusNotifierItem: {}", service);
+        let full_service = if service.starts_with('/') {
+            let sender = header
+                .sender()
+                .ok_or_else(|| fdo::Error::Failed("No sender in D-Bus message header".into()))?;
+            format!("{sender}{service}")
+        } else {
+            service
+        };
+
+        info!("Registering StatusNotifierItem: {}", full_service);
 
         let mut items = self.registered_items.write().await;
-        if !items.contains(&service) {
-            items.push(service.clone());
+        if !items.contains(&full_service) {
+            items.push(full_service.clone());
             drop(items);
 
             let _ = self
                 .event_tx
-                .send(TrayEvent::ItemRegistered(service.clone()));
-            Self::status_notifier_item_registered(&ctx, service).await?;
+                .send(TrayEvent::ItemRegistered(full_service.clone()));
+            Self::status_notifier_item_registered(&ctx, full_service).await?;
         }
         Ok(())
     }

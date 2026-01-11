@@ -186,8 +186,14 @@ impl TrayItem {
     pub async fn context_menu(&self, coords: Coordinates) -> Result<(), Error> {
         let bus_name = self.bus_name.get();
         let id = Self::parse_service_identifier(&bus_name);
-        TrayItemController::context_menu(&self.zbus_connection, id.service, coords.x, coords.y)
-            .await
+        TrayItemController::context_menu(
+            &self.zbus_connection,
+            id.service,
+            id.path,
+            coords.x,
+            coords.y,
+        )
+        .await
     }
 
     /// Asks the status notifier item for activation, this is typically a consequence of user
@@ -208,7 +214,14 @@ impl TrayItem {
     pub async fn activate(&self, coords: Coordinates) -> Result<(), Error> {
         let bus_name = self.bus_name.get();
         let id = Self::parse_service_identifier(&bus_name);
-        TrayItemController::activate(&self.zbus_connection, id.service, coords.x, coords.y).await
+        TrayItemController::activate(
+            &self.zbus_connection,
+            id.service,
+            id.path,
+            coords.x,
+            coords.y,
+        )
+        .await
     }
 
     /// Is to be considered a secondary and less important form of activation compared to
@@ -233,6 +246,7 @@ impl TrayItem {
         TrayItemController::secondary_activate(
             &self.zbus_connection,
             id.service,
+            id.path,
             coords.x,
             coords.y,
         )
@@ -257,7 +271,14 @@ impl TrayItem {
     pub async fn scroll(&self, delta: i32, orientation: &str) -> Result<(), Error> {
         let bus_name = self.bus_name.get();
         let id = Self::parse_service_identifier(&bus_name);
-        TrayItemController::scroll(&self.zbus_connection, id.service, delta, orientation).await
+        TrayItemController::scroll(
+            &self.zbus_connection,
+            id.service,
+            id.path,
+            delta,
+            orientation,
+        )
+        .await
     }
 
     /// Refreshes the root menu by calling AboutToShow on the menu root.

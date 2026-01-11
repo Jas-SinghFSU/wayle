@@ -10,14 +10,19 @@ use crate::{
 pub(super) struct TrayItemController;
 
 impl TrayItemController {
-    #[instrument(skip(connection), fields(bus_name = %bus_name, x, y), err)]
+    #[instrument(skip(connection), fields(service = %service, path = %path, x, y), err)]
     pub async fn context_menu(
         connection: &Connection,
-        bus_name: &str,
+        service: &str,
+        path: &str,
         x: i32,
         y: i32,
     ) -> Result<(), Error> {
-        let proxy = StatusNotifierItemProxy::new(connection, bus_name).await?;
+        let proxy = StatusNotifierItemProxy::builder(connection)
+            .destination(service)?
+            .path(path)?
+            .build()
+            .await?;
 
         proxy
             .context_menu(x, y)
@@ -28,32 +33,48 @@ impl TrayItemController {
             })
     }
 
-    #[instrument(skip(connection), fields(bus_name = %bus_name, x, y), err)]
+    #[instrument(skip(connection), fields(service = %service, path = %path, x, y), err)]
     pub async fn activate(
         connection: &Connection,
-        bus_name: &str,
+        service: &str,
+        path: &str,
         x: i32,
         y: i32,
     ) -> Result<(), Error> {
-        let proxy = StatusNotifierItemProxy::new(connection, bus_name).await?;
+        let proxy = StatusNotifierItemProxy::builder(connection)
+            .destination(service)?
+            .path(path)?
+            .build()
+            .await?;
 
-        proxy
-            .activate(x, y)
-            .await
-            .map_err(|err| Error::OperationFailed {
+        proxy.activate(x, y).await.map_err(|err| {
+            const UNKNOWN_METHOD: &str = "org.freedesktop.DBus.Error.UnknownMethod";
+            let reason = match &err {
+                zbus::Error::MethodError(name, _, _) if name.as_str() == UNKNOWN_METHOD => {
+                    "Item does not support Activate. Use its menu instead.".to_string()
+                }
+                _ => err.to_string(),
+            };
+            Error::OperationFailed {
                 operation: "activate",
-                reason: err.to_string(),
-            })
+                reason,
+            }
+        })
     }
 
-    #[instrument(skip(connection), fields(bus_name = %bus_name, x, y), err)]
+    #[instrument(skip(connection), fields(service = %service, path = %path, x, y), err)]
     pub async fn secondary_activate(
         connection: &Connection,
-        bus_name: &str,
+        service: &str,
+        path: &str,
         x: i32,
         y: i32,
     ) -> Result<(), Error> {
-        let proxy = StatusNotifierItemProxy::new(connection, bus_name).await?;
+        let proxy = StatusNotifierItemProxy::builder(connection)
+            .destination(service)?
+            .path(path)?
+            .build()
+            .await?;
 
         proxy
             .secondary_activate(x, y)
@@ -66,16 +87,21 @@ impl TrayItemController {
 
     #[instrument(
         skip(connection),
-        fields(bus_name = %bus_name, delta, orientation = %orientation),
+        fields(service = %service, path = %path, delta, orientation = %orientation),
         err
     )]
     pub async fn scroll(
         connection: &Connection,
-        bus_name: &str,
+        service: &str,
+        path: &str,
         delta: i32,
         orientation: &str,
     ) -> Result<(), Error> {
-        let proxy = StatusNotifierItemProxy::new(connection, bus_name).await?;
+        let proxy = StatusNotifierItemProxy::builder(connection)
+            .destination(service)?
+            .path(path)?
+            .build()
+            .await?;
 
         proxy
             .scroll(delta, orientation)

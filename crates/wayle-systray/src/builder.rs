@@ -97,20 +97,20 @@ impl SystemTrayServiceBuilder {
                 .object_server()
                 .at(WATCHER_OBJECT_PATH, watcher)
                 .await?;
-        } else {
-            let unique_name = service
-                .connection
-                .unique_name()
-                .ok_or_else(|| {
-                    Error::ServiceInitializationFailed(
-                        "Failed to get D-Bus unique name - connection may not be established"
-                            .to_string(),
-                    )
-                })?
-                .to_string();
-
-            SystemTrayServiceDiscovery::register_as_host(&service.connection, &unique_name).await?;
         }
+
+        let unique_name = service
+            .connection
+            .unique_name()
+            .ok_or_else(|| {
+                Error::ServiceInitializationFailed(
+                    "Failed to get D-Bus unique name - connection may not be established"
+                        .to_string(),
+                )
+            })?
+            .to_string();
+
+        SystemTrayServiceDiscovery::register_as_host(&service.connection, &unique_name).await?;
 
         service.start_monitoring().await?;
 
