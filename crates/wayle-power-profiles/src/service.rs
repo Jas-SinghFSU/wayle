@@ -3,13 +3,9 @@ use std::sync::Arc;
 use derive_more::Debug;
 use tokio_util::sync::CancellationToken;
 use tracing::instrument;
-use wayle_traits::Reactive;
 use zbus::Connection;
 
-use super::{
-    core::{PowerProfiles, types::LivePowerProfilesParams},
-    error::Error,
-};
+use crate::{builder::PowerProfilesServiceBuilder, core::PowerProfiles, error::Error};
 
 /// Power profiles service for managing system power profiles and monitoring changes.
 ///
@@ -20,40 +16,36 @@ use super::{
 pub struct PowerProfilesService {
     #[debug(skip)]
     pub(crate) cancellation_token: CancellationToken,
+    #[debug(skip)]
+    pub(crate) _connection: Option<Connection>,
 
     /// The power profiles D-Bus proxy for system power management operations.
     pub power_profiles: Arc<PowerProfiles>,
 }
 
 impl PowerProfilesService {
-    /// Creates a new power profiles service instance.
+    /// Creates a new power profiles service instance with default configuration.
     ///
     /// Establishes a connection to the system D-Bus and initializes live monitoring
     /// of power profile changes. The service will automatically track profile state
     /// changes and provide reactive access to current profile information.
     ///
+    /// For more control over initialization, use [`Self::builder()`].
+    ///
     /// # Errors
     ///
-    /// Returns `PowerProfilesError::ServiceInitializationFailed` if service initialization
-    /// fails.
+    /// Returns error if D-Bus connection fails or service initialization fails.
     #[instrument]
-    pub async fn new() -> Result<Self, Error> {
-        let connection = Connection::system().await.map_err(|err| {
-            Error::ServiceInitializationFailed(format!("D-Bus connection failed: {err}"))
-        })?;
+    pub async fn new() -> Result<Arc<Self>, Error> {
+        Self::builder().build().await
+    }
 
-        let cancellation_token = CancellationToken::new();
-
-        let power_profiles = PowerProfiles::get_live(LivePowerProfilesParams {
-            connection: &connection,
-            cancellation_token: &cancellation_token,
-        })
-        .await?;
-
-        Ok(Self {
-            power_profiles,
-            cancellation_token,
-        })
+    /// Returns a builder for configuring the power profiles service.
+    ///
+    /// Use this for advanced configuration like enabling D-Bus daemon registration
+    /// for CLI control.
+    pub fn builder() -> PowerProfilesServiceBuilder {
+        PowerProfilesServiceBuilder::new()
     }
 }
 

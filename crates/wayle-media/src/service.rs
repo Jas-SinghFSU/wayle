@@ -41,7 +41,7 @@ impl MediaService {
     ///
     /// Returns `MediaError::InitializationFailed` if D-Bus connection fails
     #[instrument]
-    pub async fn new() -> Result<Self, Error> {
+    pub async fn new() -> Result<Arc<Self>, Error> {
         Self::builder().build().await
     }
 

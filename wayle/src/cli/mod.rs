@@ -1,15 +1,25 @@
 /// CLI application structure and parsing
 pub mod app;
+/// Audio control commands
+pub mod audio;
 /// Configuration management commands
 pub mod config;
+/// Shared D-Bus utilities
+mod dbus;
 /// Icon management commands
 pub mod icons;
 /// Media control commands
 pub mod media;
+/// Notification control commands
+pub mod notify;
 /// Panel management commands
 pub mod panel;
+/// Power profile commands
+pub mod power;
 /// ANSI styling for help output
 pub mod style;
+/// System tray commands
+pub mod systray;
 /// Wallpaper control commands
 pub mod wallpaper;
 

@@ -1,30 +1,30 @@
-use wayle_media::{MediaService, types::LoopMode};
-
-use super::{commands::LoopModeArg, utils::get_player_or_active};
+use super::{
+    commands::LoopModeArg,
+    proxy::{connect, format_error},
+    resolve::resolve_player,
+};
 use crate::cli::CliAction;
 
 /// Execute the command
 ///
 /// # Errors
-/// Returns error if service communication fails or player is not found.
+/// Returns error if D-Bus communication fails or player is not found.
 pub async fn execute(mode: LoopModeArg, player: Option<String>) -> CliAction {
-    let service = MediaService::new()
-        .await
-        .map_err(|e| format!("Failed to connect to media service: {e}"))?;
+    let (_connection, proxy) = connect().await?;
 
-    let player = get_player_or_active(&service, player.as_ref()).await?;
+    let resolved = resolve_player(&proxy, player).await?;
 
-    let loop_mode = match mode {
-        LoopModeArg::None => LoopMode::None,
-        LoopModeArg::Track => LoopMode::Track,
-        LoopModeArg::Playlist => LoopMode::Playlist,
+    let mode_str = match mode {
+        LoopModeArg::None => "none",
+        LoopModeArg::Track => "track",
+        LoopModeArg::Playlist => "playlist",
     };
 
-    player
-        .set_loop_mode(loop_mode)
+    proxy
+        .set_loop_status(resolved, mode_str.to_string())
         .await
-        .map_err(|e| format!("Failed to set loop mode: {e}"))?;
+        .map_err(|e| format_error("set loop mode", e))?;
 
-    println!("Loop mode set to {loop_mode:?}");
+    println!("Loop mode set to {mode_str}");
     Ok(())
 }

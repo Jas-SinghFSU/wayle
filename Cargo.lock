@@ -934,6 +934,7 @@ dependencies = [
  "gdk-pixbuf",
  "gdk4-sys",
  "gio",
+ "gl",
  "glib",
  "libc",
  "pango",
@@ -1017,6 +1018,26 @@ dependencies = [
  "libc",
  "system-deps",
  "windows-sys 0.60.2",
+]
+
+[[package]]
+name = "gl"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a94edab108827d67608095e269cf862e60d920f144a5026d3dbcfd8b877fb404"
+dependencies = [
+ "gl_generator",
+]
+
+[[package]]
+name = "gl_generator"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1a95dfc23a2b4a9a2f5ab41d194f8bfda3cabec42af4e39f08c339eb2a0c124d"
+dependencies = [
+ "khronos_api",
+ "log",
+ "xml-rs",
 ]
 
 [[package]]
@@ -1172,6 +1193,34 @@ dependencies = [
  "gtk4-sys",
  "libc",
  "pango",
+]
+
+[[package]]
+name = "gtk4-layer-shell"
+version = "0.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c1d422cce9367945916b7a5083eedf67b0a5380d326af1943a0b5cef9afb6e48"
+dependencies = [
+ "bitflags 2.9.4",
+ "gdk4",
+ "glib",
+ "glib-sys",
+ "gtk4",
+ "gtk4-layer-shell-sys",
+ "libc",
+]
+
+[[package]]
+name = "gtk4-layer-shell-sys"
+version = "0.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e386481f3d83ab32e4ee457d9706d4ebbafa29ea013f9ae5066070713d2efacc"
+dependencies = [
+ "gdk4-sys",
+ "glib-sys",
+ "gtk4-sys",
+ "libc",
+ "system-deps",
 ]
 
 [[package]]
@@ -1562,6 +1611,12 @@ dependencies = [
  "once_cell",
  "wasm-bindgen",
 ]
+
+[[package]]
+name = "khronos_api"
+version = "3.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e2db585e1d738fc771bf08a151420d3ed193d9d895a36df7f6f8a9456b911ddc"
 
 [[package]]
 name = "kqueue"
@@ -3573,34 +3628,27 @@ dependencies = [
 name = "wayle"
 version = "0.1.0"
 dependencies = [
- "async-trait",
  "chrono",
  "clap",
- "derive_more",
  "futures",
+ "reqwest",
  "schemars",
  "serde",
  "serde_json",
  "thiserror 2.0.17",
  "tokio",
- "tokio-util",
  "toml 0.9.7",
  "tracing",
  "tracing-appender",
  "tracing-subscriber",
  "wayle-audio",
- "wayle-battery",
- "wayle-bluetooth",
  "wayle-common",
  "wayle-config",
- "wayle-derive",
  "wayle-icons",
  "wayle-media",
- "wayle-network",
  "wayle-notification",
  "wayle-power-profiles",
  "wayle-systray",
- "wayle-traits",
  "wayle-wallpaper",
  "zbus",
 ]
@@ -3621,6 +3669,7 @@ dependencies = [
  "tracing",
  "wayle-common",
  "wayle-traits",
+ "zbus",
 ]
 
 [[package]]
@@ -3688,6 +3737,7 @@ dependencies = [
  "tokio-stream",
  "toml 0.9.7",
  "tracing",
+ "zbus",
 ]
 
 [[package]]
@@ -3826,6 +3876,36 @@ dependencies = [
 ]
 
 [[package]]
+name = "wayle-shell"
+version = "0.1.0"
+dependencies = [
+ "futures",
+ "gdk4",
+ "gtk4",
+ "gtk4-layer-shell",
+ "relm4",
+ "tokio",
+ "tokio-stream",
+ "tracing",
+ "tracing-appender",
+ "tracing-subscriber",
+ "wayle-audio",
+ "wayle-battery",
+ "wayle-bluetooth",
+ "wayle-cava",
+ "wayle-common",
+ "wayle-config",
+ "wayle-hyprland",
+ "wayle-media",
+ "wayle-network",
+ "wayle-notification",
+ "wayle-power-profiles",
+ "wayle-styling",
+ "wayle-systray",
+ "wayle-wallpaper",
+]
+
+[[package]]
 name = "wayle-styling"
 version = "0.1.0"
 dependencies = [
@@ -3875,6 +3955,7 @@ dependencies = [
  "smithay-client-toolkit",
  "thiserror 2.0.17",
  "tokio",
+ "tokio-stream",
  "tokio-util",
  "tracing",
  "wayle-common",
@@ -4224,6 +4305,12 @@ checksum = "b9cc00251562a284751c9973bace760d86c0276c471b4be569fe6b068ee97a56"
 dependencies = [
  "bytemuck",
 ]
+
+[[package]]
+name = "xml-rs"
+version = "0.8.28"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3ae8337f8a065cfc972643663ea4279e04e7256de865aa66fe25cec5fb912d3f"
 
 [[package]]
 name = "xmlwriter"

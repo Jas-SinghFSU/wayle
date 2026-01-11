@@ -36,4 +36,8 @@ pub enum Error {
     /// Monitoring not initialized - missing required components for live monitoring
     #[error("Monitoring not initialized: {0:#?}")]
     MonitoringNotInitialized(String),
+
+    /// Service initialization failed
+    #[error("Initialization failed: {0}")]
+    InitializationFailed(String),
 }

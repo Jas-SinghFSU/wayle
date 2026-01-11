@@ -19,7 +19,10 @@ pub(crate) mod proxy;
 pub mod service;
 /// Type definitions for notifications.
 pub mod types;
+pub(crate) mod wayle_daemon;
+mod wayle_proxy;
 
 pub use builder::NotificationServiceBuilder;
 pub use error::Error;
 pub use service::NotificationService;
+pub use wayle_proxy::WayleNotificationsProxy;

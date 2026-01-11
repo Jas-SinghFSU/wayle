@@ -1,67 +1,100 @@
-use wayle_media::MediaService;
-
-use super::utils::get_player_or_active;
+use super::{
+    proxy::{connect, format_error},
+    resolve::resolve_player,
+};
 use crate::cli::CliAction;
 
 /// Execute the command
 ///
 /// # Errors
-/// Returns error if service communication fails or player is not found.
+/// Returns error if D-Bus communication fails or player is not found.
 pub async fn execute(player: Option<String>) -> CliAction {
-    let service = MediaService::new()
+    let (_connection, proxy) = connect().await?;
+
+    let resolved = resolve_player(&proxy, player).await?;
+
+    let info = proxy
+        .get_player_info(resolved)
         .await
-        .map_err(|e| format!("Failed to start media service: {e}"))?;
+        .map_err(|e| format_error("get player info", e))?;
 
-    let player = get_player_or_active(&service, player.as_ref()).await?;
-
-    let mut info = vec![
-        format!("Player: {}", player.identity.get()),
-        format!("Status: {:?}", player.playback_state.get()),
+    let mut output = vec![
+        format!(
+            "Player: {}",
+            info.get("identity")
+                .map(String::as_str)
+                .unwrap_or("Unknown")
+        ),
+        format!(
+            "Status: {}",
+            info.get("playback_state")
+                .map(String::as_str)
+                .unwrap_or("Unknown")
+        ),
     ];
 
-    info.push(format!("Title: {}", player.metadata.title.get()));
-    info.push(format!("Artist: {}", player.metadata.artist.get()));
-    info.push(format!("Album: {}", player.metadata.album.get()));
-
-    if let Ok(position) = player.position().await {
-        let pos_mins = position.as_secs() / 60;
-        let pos_secs = position.as_secs() % 60;
-
-        if let Some(length) = player.metadata.length.get() {
-            let len_mins = length.as_secs() / 60;
-            let len_secs = length.as_secs() % 60;
-            info.push(format!(
-                "Position: {pos_mins:02}:{pos_secs:02} / {len_mins:02}:{len_secs:02}"
-            ));
-        } else {
-            info.push(format!("Position: {pos_mins:02}:{pos_secs:02}"));
-        }
-    }
-
-    info.push(format!(
-        "Volume: {:.0}%",
-        player.volume.get().as_percentage()
+    output.push(format!(
+        "Title: {}",
+        info.get("title").map(String::as_str).unwrap_or("Unknown")
     ));
-    info.push(format!("Shuffle: {:?}", player.shuffle_mode.get()));
-    info.push(format!("Loop: {:?}", player.loop_mode.get()));
+    output.push(format!(
+        "Artist: {}",
+        info.get("artist").map(String::as_str).unwrap_or("Unknown")
+    ));
+    output.push(format!(
+        "Album: {}",
+        info.get("album").map(String::as_str).unwrap_or("Unknown")
+    ));
 
-    if player.can_play.get() {
-        let mut capabilities = vec![];
-        if player.can_seek.get() {
-            capabilities.push("Seek");
-        }
-        if player.can_go_next.get() {
-            capabilities.push("Next");
-        }
-        if player.can_go_previous.get() {
-            capabilities.push("Previous");
-        }
-        if !capabilities.is_empty() {
-            info.push(format!("Capabilities: {}", capabilities.join(", ")));
+    if let Some(length_us) = info.get("length_us") {
+        if let Ok(us) = length_us.parse::<u64>() {
+            let secs = us / 1_000_000;
+            let len_mins = secs / 60;
+            let len_secs = secs % 60;
+            output.push(format!("Length: {len_mins:02}:{len_secs:02}"));
         }
     }
 
-    println!("{}", info.join("\n"));
+    output.push(format!(
+        "Volume: {}%",
+        info.get("volume").map(String::as_str).unwrap_or("0")
+    ));
+    output.push(format!(
+        "Shuffle: {}",
+        info.get("shuffle_mode")
+            .map(String::as_str)
+            .unwrap_or("Unknown")
+    ));
+    output.push(format!(
+        "Loop: {}",
+        info.get("loop_mode")
+            .map(String::as_str)
+            .unwrap_or("Unknown")
+    ));
+
+    let mut capabilities = vec![];
+    if info.get("can_seek").map(|s| s == "true").unwrap_or(false) {
+        capabilities.push("Seek");
+    }
+    if info
+        .get("can_go_next")
+        .map(|s| s == "true")
+        .unwrap_or(false)
+    {
+        capabilities.push("Next");
+    }
+    if info
+        .get("can_go_previous")
+        .map(|s| s == "true")
+        .unwrap_or(false)
+    {
+        capabilities.push("Previous");
+    }
+    if !capabilities.is_empty() {
+        output.push(format!("Capabilities: {}", capabilities.join(", ")));
+    }
+
+    println!("{}", output.join("\n"));
 
     Ok(())
 }

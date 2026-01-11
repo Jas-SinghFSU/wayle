@@ -1,12 +1,14 @@
-//! Wayle - Compositor-agnostic desktop environment framework.
+//! Wayle CLI - Compositor-agnostic desktop environment CLI.
 //!
-//! Wayle provides a unified framework for building desktop environment components
-//! that work across different Wayland compositors. The main features include:
+//! This crate provides CLI commands for managing Wayle services:
 //!
-//! - Reactive configuration system with TOML imports
-//! - CLI interface for configuration management
-//! - Compositor abstraction layer
-//! - Panel and widget system
+//! - `wayle panel` - Start/stop/control the panel GUI
+//! - `wayle media` - Control media players
+//! - `wayle wallpaper` - Manage wallpapers
+//! - `wayle config` - Query/set configuration
+//! - `wayle icons` - Manage icon packs
+//!
+//! The GUI panel itself is provided by the `wayle-shell` binary.
 
 /// Configuration schema definitions and validation.
 pub use wayle_config as config;
@@ -14,7 +16,7 @@ pub use wayle_config as config;
 /// Documentation generation for configuration schemas.
 pub mod docs;
 
-/// Command-line interface for configuration management.
+/// Command-line interface.
 pub mod cli;
 
 /// Core runtime infrastructure.

@@ -2,6 +2,7 @@
 
 use std::{collections::HashMap, sync::Arc};
 
+use tokio::sync::broadcast;
 use tokio_util::sync::CancellationToken;
 use tracing::info;
 use wayle_common::Property;
@@ -60,11 +61,13 @@ impl WallpaperServiceBuilder {
         })?;
 
         let cancellation_token = CancellationToken::new();
+        let (extraction_complete, _) = broadcast::channel(16);
 
         let service = Arc::new(WallpaperService {
             cancellation_token,
             _connection: connection.clone(),
             last_extracted_wallpaper: Property::new(None),
+            extraction_complete,
             fit_mode: Property::new(self.fit_mode),
             theming_monitor: Property::new(None),
             cycling: Property::new(None),
@@ -82,11 +85,15 @@ impl WallpaperServiceBuilder {
             .at(SERVICE_PATH, daemon)
             .await
             .map_err(|err| {
-                Error::ServiceInitializationFailed(format!("Failed to register daemon: {err}"))
+                Error::ServiceInitializationFailed(format!(
+                    "Failed to register D-Bus object at '{SERVICE_PATH}': {err}"
+                ))
             })?;
 
         connection.request_name(SERVICE_NAME).await.map_err(|err| {
-            Error::ServiceInitializationFailed(format!("Failed to acquire name: {err}"))
+            Error::ServiceInitializationFailed(format!(
+                "Failed to acquire D-Bus name '{SERVICE_NAME}': {err}"
+            ))
         })?;
 
         info!("Wallpaper service registered at {SERVICE_NAME}");

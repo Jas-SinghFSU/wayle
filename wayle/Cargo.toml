@@ -6,28 +6,22 @@ license.workspace = true
 authors.workspace = true
 repository.workspace = true
 rust-version.workspace = true
-description = "Wayland services orchestrator"
-
-[lib]
-name = "wayle"
-path = "src/lib.rs"
+description = "Wayland services CLI"
 
 [[bin]]
 name = "wayle"
 path = "src/main.rs"
 
 [dependencies]
-async-trait.workspace = true
 chrono.workspace = true
 clap.workspace = true
-derive_more.workspace = true
 futures.workspace = true
+reqwest.workspace = true
 schemars.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
 tokio = { workspace = true, features = ["full"] }
-tokio-util.workspace = true
 toml.workspace = true
 tracing.workspace = true
 tracing-appender.workspace = true
@@ -37,16 +31,11 @@ zbus.workspace = true
 # Common dependencies
 wayle-common = { workspace = true, features = ["schema"] }
 wayle-config = { workspace = true, features = ["schema"] }
-wayle-derive.workspace = true
-wayle-traits.workspace = true
 
-# Service dependencies
+# Service dependencies (for CLI commands)
 wayle-audio.workspace = true
-wayle-battery.workspace = true
-wayle-bluetooth.workspace = true
 wayle-icons.workspace = true
 wayle-media.workspace = true
-wayle-network.workspace = true
 wayle-notification.workspace = true
 wayle-power-profiles.workspace = true
 wayle-systray.workspace = true

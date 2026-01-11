@@ -4,9 +4,10 @@ use tracing::{info, instrument};
 
 use crate::config::infrastructure::paths::ConfigPaths;
 
-/// Ensures all required Wayle directories exist, creating them if necessary
+/// Ensures all required Wayle directories exist, creating them if necessary.
 ///
 /// # Errors
+///
 /// Returns error if directory creation fails.
 #[instrument]
 pub fn ensure_directories() -> Result<(), Box<dyn Error>> {

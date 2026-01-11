@@ -1,17 +1,17 @@
-use wayle_media::{MediaService, types::PlaybackState};
-
+use super::proxy::{connect, format_error};
 use crate::cli::CliAction;
 
 /// Execute the command
 ///
 /// # Errors
-/// Returns error if service communication fails.
+/// Returns error if D-Bus communication fails.
 pub async fn execute() -> CliAction {
-    let service = MediaService::new()
-        .await
-        .map_err(|e| format!("Failed to start media service: {e}"))?;
+    let (_connection, proxy) = connect().await?;
 
-    let players = service.players();
+    let players = proxy
+        .list_players()
+        .await
+        .map_err(|e| format_error("list players", e))?;
 
     if players.is_empty() {
         println!("No media players found");
@@ -20,20 +20,14 @@ pub async fn execute() -> CliAction {
 
     println!("Available media players:");
 
-    for (index, player) in players.iter().enumerate() {
-        let status = match player.playback_state.get() {
-            PlaybackState::Playing => "▶ Playing",
-            PlaybackState::Paused => "⏸ Paused",
-            PlaybackState::Stopped => "⏹ Stopped",
+    for (index, (id, identity, state)) in players.iter().enumerate() {
+        let status = match state.as_str() {
+            "Playing" => "Playing",
+            "Paused" => "Paused",
+            _ => "Stopped",
         };
 
-        println!(
-            "  {}. {} - {} [{}]",
-            index + 1,
-            player.identity.get(),
-            player.metadata.title.get(),
-            status
-        );
+        println!("  {}. {} ({}) [{}]", index + 1, identity, id, status);
     }
 
     Ok(())

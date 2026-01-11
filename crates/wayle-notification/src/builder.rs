@@ -16,7 +16,8 @@ use crate::{
     error::Error,
     persistence::NotificationStore,
     service::NotificationService,
-    types::dbus::{SERVICE_NAME, SERVICE_PATH},
+    types::dbus::{SERVICE_NAME, SERVICE_PATH, WAYLE_SERVICE_NAME, WAYLE_SERVICE_PATH},
+    wayle_daemon::WayleDaemon,
 };
 
 /// Builder for configuring and creating a NotificationService instance.
@@ -28,7 +29,7 @@ pub struct NotificationServiceBuilder {
     popup_duration: Property<u32>,
     dnd: Property<bool>,
     remove_expired: Property<bool>,
-    register_daemon: bool,
+    register_wayle_daemon: bool,
 }
 
 impl Default for NotificationServiceBuilder {
@@ -37,7 +38,7 @@ impl Default for NotificationServiceBuilder {
             popup_duration: Property::new(5000),
             dnd: Property::new(false),
             remove_expired: Property::new(true),
-            register_daemon: true,
+            register_wayle_daemon: false,
         }
     }
 }
@@ -68,10 +69,12 @@ impl NotificationServiceBuilder {
         self
     }
 
-    /// Sets whether to register as the D-Bus notification daemon.
-    /// Set to false when creating a client that shouldn't own the service name.
-    pub fn register_daemon(mut self, register: bool) -> Self {
-        self.register_daemon = register;
+    /// Enables the Wayle D-Bus daemon for CLI control.
+    ///
+    /// When enabled, the service registers at `com.wayle.Notifications1`,
+    /// allowing CLI tools to control notifications (dismiss, toggle DND, etc.).
+    pub fn with_daemon(mut self) -> Self {
+        self.register_wayle_daemon = true;
         self
     }
 
@@ -83,7 +86,7 @@ impl NotificationServiceBuilder {
     /// # Errors
     /// Returns error if D-Bus connection fails, service registration fails,
     /// or monitoring cannot be started.
-    pub async fn build(self) -> Result<NotificationService, Error> {
+    pub async fn build(self) -> Result<Arc<NotificationService>, Error> {
         let connection = Connection::session().await.map_err(|err| {
             Error::ServiceInitializationFailed(format!("D-Bus connection failed: {err}"))
         })?;
@@ -132,39 +135,70 @@ impl NotificationServiceBuilder {
 
         let max_id = stored_notifications.iter().map(|n| n.id).max().unwrap_or(0);
         let counter = AtomicU32::new(max_id + 1);
-        let daemon = NotificationDaemon {
+        let freedesktop_daemon = NotificationDaemon {
             counter,
             zbus_connection: connection.clone(),
             notif_tx: notif_tx.clone(),
         };
 
-        if self.register_daemon {
-            connection
-                .object_server()
-                .at(SERVICE_PATH, daemon)
-                .await
-                .map_err(|err| {
-                    Error::ServiceInitializationFailed(format!("Failed to register daemon: {err}"))
-                })?;
-
-            connection.request_name(SERVICE_NAME).await.map_err(|err| {
-                Error::ServiceInitializationFailed(format!("Failed to acquire name: {err}"))
+        connection
+            .object_server()
+            .at(SERVICE_PATH, freedesktop_daemon)
+            .await
+            .map_err(|err| {
+                Error::ServiceInitializationFailed(format!(
+                    "Failed to register D-Bus object at '{SERVICE_PATH}': {err}"
+                ))
             })?;
-        }
 
-        let service = NotificationService {
+        connection.request_name(SERVICE_NAME).await.map_err(|err| {
+            Error::ServiceInitializationFailed(format!(
+                "Failed to acquire D-Bus name '{SERVICE_NAME}': {err}"
+            ))
+        })?;
+
+        info!("Notification daemon registered at {SERVICE_NAME}");
+
+        let service = Arc::new(NotificationService {
             cancellation_token,
             notif_tx,
             store,
-            connection,
+            connection: connection.clone(),
             notifications: Property::new(stored_notifications),
             popups: Property::new(vec![]),
             popup_duration: self.popup_duration,
             dnd: self.dnd,
             remove_expired: self.remove_expired,
-        };
+        });
 
         service.start_monitoring().await?;
+
+        if self.register_wayle_daemon {
+            let wayle_daemon = WayleDaemon {
+                service: Arc::clone(&service),
+            };
+
+            connection
+                .object_server()
+                .at(WAYLE_SERVICE_PATH, wayle_daemon)
+                .await
+                .map_err(|err| {
+                    Error::ServiceInitializationFailed(format!(
+                        "Failed to register D-Bus object at '{WAYLE_SERVICE_PATH}': {err}"
+                    ))
+                })?;
+
+            connection
+                .request_name(WAYLE_SERVICE_NAME)
+                .await
+                .map_err(|err| {
+                    Error::ServiceInitializationFailed(format!(
+                        "Failed to acquire D-Bus name '{WAYLE_SERVICE_NAME}': {err}"
+                    ))
+                })?;
+
+            info!("Wayle notification extensions registered at {WAYLE_SERVICE_NAME}");
+        }
 
         Ok(service)
     }

@@ -42,7 +42,7 @@ impl NotificationService {
     /// # Errors
     /// Returns error if D-Bus connection fails or service registration fails.
     #[instrument(name = "NotificationService::new", err)]
-    pub async fn new() -> Result<Self, Error> {
+    pub async fn new() -> Result<Arc<Self>, Error> {
         Self::builder().build().await
     }
 

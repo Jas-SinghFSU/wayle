@@ -3,6 +3,9 @@
 use std::{collections::HashMap, path::PathBuf, sync::Arc, time::Duration};
 
 use derive_more::Debug;
+use futures::stream::{Stream, StreamExt};
+use tokio::sync::broadcast;
+use tokio_stream::wrappers::BroadcastStream;
 use tokio_util::sync::CancellationToken;
 use tracing::{info, instrument};
 use wayle_common::Property;
@@ -28,6 +31,8 @@ pub struct WallpaperService {
     pub(crate) _connection: Connection,
     #[debug(skip)]
     pub(crate) last_extracted_wallpaper: Property<Option<PathBuf>>,
+    #[debug(skip)]
+    pub(crate) extraction_complete: broadcast::Sender<()>,
 
     /// Shared fit mode for all monitors.
     pub fit_mode: Property<FitMode>,
@@ -244,7 +249,10 @@ impl WallpaperService {
         };
 
         let extractor = self.color_extractor.get();
-        extractor.extract(&path).await
+        extractor.extract(&path).await?;
+
+        let _ = self.extraction_complete.send(());
+        Ok(())
     }
 
     /// Sets which monitor's wallpaper to use for color extraction.
@@ -258,6 +266,14 @@ impl WallpaperService {
     /// Returns all known monitor names.
     pub fn monitor_names(&self) -> Vec<String> {
         self.monitors.get().keys().cloned().collect()
+    }
+
+    /// Returns a stream that emits when color extraction completes.
+    ///
+    /// Use this to react to palette changes from matugen, wallust, or pywal.
+    pub fn watch_extraction(&self) -> impl Stream<Item = ()> + Send + 'static {
+        BroadcastStream::new(self.extraction_complete.subscribe())
+            .filter_map(|result| async { result.ok() })
     }
 
     /// Registers a monitor.

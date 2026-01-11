@@ -4,8 +4,10 @@ use clap::{
 };
 
 use crate::cli::{
-    config::commands::ConfigCommands, icons::commands::IconsCommands,
-    media::commands::MediaCommands, panel::commands::PanelCommands,
+    audio::commands::AudioCommands, config::commands::ConfigCommands,
+    icons::commands::IconsCommands, media::commands::MediaCommands,
+    notify::commands::NotifyCommands, panel::commands::PanelCommands,
+    power::commands::PowerCommands, systray::commands::SystrayCommands,
     wallpaper::commands::WallpaperCommands,
 };
 
@@ -33,11 +35,11 @@ pub struct Cli {
 /// Available CLI commands.
 #[derive(Subcommand, Debug)]
 pub enum Commands {
-    /// Panel management commands
-    Panel {
-        /// Panel subcommand to execute.
+    /// Audio control commands
+    Audio {
+        /// Audio subcommand to execute.
         #[command(subcommand)]
-        command: PanelCommands,
+        command: AudioCommands,
     },
     /// Configuration management commands
     Config {
@@ -56,6 +58,30 @@ pub enum Commands {
         /// Media subcommand to execute.
         #[command(subcommand)]
         command: MediaCommands,
+    },
+    /// Notification control commands
+    Notify {
+        /// Notification subcommand to execute.
+        #[command(subcommand)]
+        command: NotifyCommands,
+    },
+    /// Panel management commands
+    Panel {
+        /// Panel subcommand to execute.
+        #[command(subcommand)]
+        command: PanelCommands,
+    },
+    /// Power profile commands
+    Power {
+        /// Power subcommand to execute.
+        #[command(subcommand)]
+        command: PowerCommands,
+    },
+    /// System tray commands
+    Systray {
+        /// Systray subcommand to execute.
+        #[command(subcommand)]
+        command: SystrayCommands,
     },
     /// Wallpaper control commands
     Wallpaper {

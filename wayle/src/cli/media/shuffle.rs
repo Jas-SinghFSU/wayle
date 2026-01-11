@@ -1,32 +1,29 @@
-use wayle_media::{MediaService, types::ShuffleMode};
-
-use super::{commands::ShuffleModeArg, utils::get_player_or_active};
+use super::{
+    commands::ShuffleModeArg,
+    proxy::{connect, format_error},
+    resolve::resolve_player,
+};
 use crate::cli::CliAction;
 
 /// Execute the command
 ///
 /// # Errors
-/// Returns error if service communication fails or player is not found.
+/// Returns error if D-Bus communication fails or player is not found.
 pub async fn execute(state: Option<ShuffleModeArg>, player: Option<String>) -> CliAction {
-    let service = MediaService::new()
-        .await
-        .map_err(|e| format!("Failed to start media service: {e}"))?;
+    let (_connection, proxy) = connect().await?;
 
-    let player = get_player_or_active(&service, player.as_ref()).await?;
+    let resolved = resolve_player(&proxy, player).await?;
 
-    let new_mode = match state {
-        Some(ShuffleModeArg::On) => ShuffleMode::On,
-        Some(ShuffleModeArg::Off) => ShuffleMode::Off,
-        Some(ShuffleModeArg::Toggle) | None => match player.shuffle_mode.get() {
-            ShuffleMode::On => ShuffleMode::Off,
-            ShuffleMode::Off | ShuffleMode::Unsupported => ShuffleMode::On,
-        },
+    let state_str = match state {
+        Some(ShuffleModeArg::On) => "on",
+        Some(ShuffleModeArg::Off) => "off",
+        Some(ShuffleModeArg::Toggle) | None => "toggle",
     };
 
-    player
-        .set_shuffle_mode(new_mode)
+    proxy
+        .set_shuffle(resolved, state_str.to_string())
         .await
-        .map_err(|e| format!("Failed to set shuffle: {e}"))?;
+        .map_err(|e| format_error("set shuffle", e))?;
 
     Ok(())
 }

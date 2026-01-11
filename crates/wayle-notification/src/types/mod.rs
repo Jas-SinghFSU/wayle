@@ -4,14 +4,20 @@ pub use notification::*;
 
 /// D-Bus interface constants for the notification service.
 pub mod dbus {
-    /// The D-Bus service name for notifications.
+    /// The D-Bus service name for notifications (freedesktop).
     pub const SERVICE_NAME: &str = "org.freedesktop.Notifications";
 
-    /// The D-Bus object path for notifications.
+    /// The D-Bus object path for notifications (freedesktop).
     pub const SERVICE_PATH: &str = "/org/freedesktop/Notifications";
 
-    /// The D-Bus interface name for notifications.
+    /// The D-Bus interface name for notifications (freedesktop).
     pub const SERVICE_INTERFACE: &str = "org.freedesktop.Notifications";
+
+    /// Wayle extensions D-Bus service name.
+    pub const WAYLE_SERVICE_NAME: &str = "com.wayle.Notifications1";
+
+    /// Wayle extensions D-Bus object path.
+    pub const WAYLE_SERVICE_PATH: &str = "/com/wayle/Notifications";
 }
 
 pub(crate) type Name = String;

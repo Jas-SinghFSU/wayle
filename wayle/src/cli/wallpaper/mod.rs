@@ -8,6 +8,8 @@ pub mod control;
 pub mod cycle;
 /// Info command
 pub mod info;
+/// D-Bus proxy utilities
+mod proxy;
 /// Set wallpaper command
 pub mod set;
 

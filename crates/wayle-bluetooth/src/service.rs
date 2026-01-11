@@ -83,7 +83,7 @@ impl BluetoothService {
         let agent = BluetoothAgent {
             service_tx: agent_tx.clone(),
         };
-        let agent_path = OwnedObjectPath::try_from("/org/wayle/BluetoothAgent").map_err(|err| {
+        let agent_path = OwnedObjectPath::try_from("/com/wayle/BluetoothAgent").map_err(|err| {
             Error::AgentRegistrationFailed(format!("Failed to construct agent path: {err}"))
         })?;
 

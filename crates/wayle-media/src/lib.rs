@@ -7,6 +7,7 @@
 mod builder;
 /// Core media domain models
 pub mod core;
+mod dbus;
 mod error;
 mod monitoring;
 mod proxy;
@@ -15,5 +16,6 @@ mod service;
 pub mod types;
 
 pub use builder::MediaServiceBuilder;
+pub use dbus::{MediaProxy, SERVICE_NAME, SERVICE_PATH};
 pub use error::Error;
 pub use service::MediaService;

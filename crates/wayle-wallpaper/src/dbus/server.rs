@@ -23,7 +23,7 @@ impl WallpaperDaemon {
     }
 }
 
-#[zbus::interface(name = "org.wayle.Wallpaper1")]
+#[zbus::interface(name = "com.wayle.Wallpaper1")]
 impl WallpaperDaemon {
     /// Sets the wallpaper for a specific monitor or all monitors.
     ///

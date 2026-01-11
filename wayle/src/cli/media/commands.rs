@@ -27,15 +27,6 @@ pub enum MediaCommands {
         player: Option<String>,
     },
 
-    /// Seek to a position in the current track
-    Seek {
-        /// Target position (seconds, mm:ss, percentage%, or relative +/-seconds)
-        position: String,
-        /// Player identifier (number or partial name match)
-        #[arg(value_name = "PLAYER_ID")]
-        player: Option<String>,
-    },
-
     /// Toggle or set shuffle mode
     Shuffle {
         /// Shuffle state

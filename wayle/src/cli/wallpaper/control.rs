@@ -1,6 +1,6 @@
-use wayle_wallpaper::WallpaperProxy;
-use zbus::Connection;
+//! Wallpaper control commands (stop, next, previous).
 
+use super::proxy::{connect, format_error};
 use crate::cli::CliAction;
 
 /// Executes the stop command.
@@ -9,11 +9,11 @@ use crate::cli::CliAction;
 ///
 /// Returns error if D-Bus connection fails.
 pub async fn stop() -> CliAction {
-    let proxy = connect_proxy().await?;
+    let (_connection, proxy) = connect().await?;
     proxy
         .stop_cycling()
         .await
-        .map_err(|err| format!("Failed to stop cycling: {err}"))?;
+        .map_err(|e| format_error("stop cycling", e))?;
 
     println!("Wallpaper cycling stopped");
     Ok(())
@@ -25,11 +25,11 @@ pub async fn stop() -> CliAction {
 ///
 /// Returns error if D-Bus connection fails.
 pub async fn next() -> CliAction {
-    let proxy = connect_proxy().await?;
+    let (_connection, proxy) = connect().await?;
     proxy
         .next()
         .await
-        .map_err(|err| format!("Failed to advance: {err}"))?;
+        .map_err(|e| format_error("advance wallpaper", e))?;
 
     println!("Advanced to next wallpaper");
     Ok(())
@@ -41,22 +41,12 @@ pub async fn next() -> CliAction {
 ///
 /// Returns error if D-Bus connection fails.
 pub async fn previous() -> CliAction {
-    let proxy = connect_proxy().await?;
+    let (_connection, proxy) = connect().await?;
     proxy
         .previous()
         .await
-        .map_err(|err| format!("Failed to go back: {err}"))?;
+        .map_err(|e| format_error("go to previous wallpaper", e))?;
 
     println!("Went back to previous wallpaper");
     Ok(())
-}
-
-async fn connect_proxy() -> Result<WallpaperProxy<'static>, String> {
-    let connection = Connection::session()
-        .await
-        .map_err(|err| format!("Failed to connect to D-Bus: {err}"))?;
-
-    WallpaperProxy::new(&connection)
-        .await
-        .map_err(|err| format!("Failed to connect to wallpaper service: {err}"))
 }

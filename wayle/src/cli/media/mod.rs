@@ -14,12 +14,12 @@ pub mod next;
 pub mod play_pause;
 /// Previous track command
 pub mod previous;
-/// Seek command
-pub mod seek;
+/// D-Bus proxy utilities
+mod proxy;
+/// Player resolution helper
+mod resolve;
 /// Shuffle command
 pub mod shuffle;
-/// Media command utilities
-pub mod utils;
 
 use commands::MediaCommands;
 
@@ -29,14 +29,12 @@ use super::CliAction;
 ///
 /// # Errors
 /// Returns error if the command execution fails.
-/// Execute the command
 pub async fn execute(command: commands::MediaCommands) -> CliAction {
     match command {
         MediaCommands::List => list::execute().await,
         MediaCommands::PlayPause { player } => play_pause::execute(player).await,
         MediaCommands::Next { player } => next::execute(player).await,
         MediaCommands::Previous { player } => previous::execute(player).await,
-        MediaCommands::Seek { position, player } => seek::execute(position, player).await,
         MediaCommands::Shuffle { state, player } => shuffle::execute(state, player).await,
         MediaCommands::Loop { mode, player } => loop_mode::execute(mode, player).await,
         MediaCommands::Active { player } => active::execute(player).await,

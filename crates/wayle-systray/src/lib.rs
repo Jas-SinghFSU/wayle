@@ -13,6 +13,8 @@ pub mod adapters;
 mod builder;
 /// Core types and functionality for system tray items
 pub mod core;
+/// D-Bus interface for external control.
+pub mod dbus;
 mod discovery;
 /// Error types for the system tray service
 pub mod error;
@@ -26,4 +28,5 @@ pub mod types;
 mod watcher;
 
 pub use builder::SystemTrayServiceBuilder;
+pub use dbus::SystemTrayWayleProxy;
 pub use service::SystemTrayService;

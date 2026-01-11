@@ -44,19 +44,24 @@ pub struct SystemTrayService {
 }
 
 impl SystemTrayService {
-    /// Creates a new system tray service.
+    /// Creates a new system tray service with default configuration.
     ///
     /// Automatically detects whether to act as StatusNotifierWatcher
     /// or connect to an existing one.
     ///
+    /// For more control over initialization, use [`Self::builder()`].
+    ///
     /// # Errors
     /// Returns error if D-Bus connection fails or service initialization fails.
     #[instrument(name = "SystemTrayService::new", err)]
-    pub async fn new() -> Result<Self, Error> {
+    pub async fn new() -> Result<Arc<Self>, Error> {
         Self::builder().build().await
     }
 
-    /// Creates a builder for configuring a SystemTrayService.
+    /// Returns a builder for configuring the system tray service.
+    ///
+    /// Use this for advanced configuration like enabling D-Bus daemon registration
+    /// for CLI control.
     pub fn builder() -> SystemTrayServiceBuilder {
         SystemTrayServiceBuilder::new()
     }

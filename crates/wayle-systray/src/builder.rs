@@ -1,5 +1,7 @@
 //! Builder for configuring a SystemTrayService.
 
+use std::sync::Arc;
+
 use tokio::sync::broadcast;
 use tokio_util::sync::CancellationToken;
 use tracing::{info, instrument};
@@ -8,6 +10,7 @@ use wayle_traits::ServiceMonitoring;
 use zbus::Connection;
 
 use crate::{
+    dbus::{SERVICE_NAME, SERVICE_PATH, SystemTrayDaemon},
     discovery::SystemTrayServiceDiscovery,
     error::Error,
     proxy::status_notifier_watcher::StatusNotifierWatcherProxy,
@@ -19,6 +22,7 @@ use crate::{
 /// Builder for configuring a SystemTrayService.
 pub struct SystemTrayServiceBuilder {
     mode: TrayMode,
+    register_daemon: bool,
 }
 
 impl SystemTrayServiceBuilder {
@@ -26,6 +30,7 @@ impl SystemTrayServiceBuilder {
     pub fn new() -> Self {
         Self {
             mode: TrayMode::Auto,
+            register_daemon: false,
         }
     }
 
@@ -39,12 +44,21 @@ impl SystemTrayServiceBuilder {
         self
     }
 
+    /// Enables the Wayle D-Bus daemon for CLI control.
+    ///
+    /// When enabled, the service registers at `com.wayle.SystemTray1`,
+    /// allowing CLI tools to list and activate tray items.
+    pub fn with_daemon(mut self) -> Self {
+        self.register_daemon = true;
+        self
+    }
+
     /// Builds the SystemTrayService.
     ///
     /// # Errors
     /// Returns error if service initialization fails.
     #[instrument(skip(self), fields(mode = ?self.mode), err)]
-    pub async fn build(self) -> Result<SystemTrayService, Error> {
+    pub async fn build(self) -> Result<Arc<SystemTrayService>, Error> {
         let connection = Connection::session().await?;
 
         let cancellation_token = CancellationToken::new();
@@ -62,13 +76,13 @@ impl SystemTrayServiceBuilder {
             TrayMode::Auto => Self::try_become_watcher(&connection).await?,
         };
 
-        let service = SystemTrayService {
+        let service = Arc::new(SystemTrayService {
             cancellation_token,
             event_tx,
             connection,
             is_watcher,
             items: Property::new(Vec::new()),
-        };
+        });
 
         if is_watcher {
             let watcher = StatusNotifierWatcher::new(
@@ -88,7 +102,10 @@ impl SystemTrayServiceBuilder {
                 .connection
                 .unique_name()
                 .ok_or_else(|| {
-                    Error::ServiceInitializationFailed("Failed to get unique name".to_string())
+                    Error::ServiceInitializationFailed(
+                        "Failed to get D-Bus unique name - connection may not be established"
+                            .to_string(),
+                    )
                 })?
                 .to_string();
 
@@ -103,6 +120,35 @@ impl SystemTrayServiceBuilder {
         )
         .await?;
         service.items.set(items);
+
+        if self.register_daemon {
+            let daemon = SystemTrayDaemon {
+                service: Arc::clone(&service),
+            };
+
+            service
+                .connection
+                .object_server()
+                .at(SERVICE_PATH, daemon)
+                .await
+                .map_err(|err| {
+                    Error::ServiceInitializationFailed(format!(
+                        "Failed to register D-Bus object at '{SERVICE_PATH}': {err}"
+                    ))
+                })?;
+
+            service
+                .connection
+                .request_name(SERVICE_NAME)
+                .await
+                .map_err(|err| {
+                    Error::ServiceInitializationFailed(format!(
+                        "Failed to acquire D-Bus name '{SERVICE_NAME}': {err}"
+                    ))
+                })?;
+
+            info!("System tray service registered at {SERVICE_NAME}");
+        }
 
         Ok(service)
     }
@@ -126,7 +172,11 @@ impl SystemTrayServiceBuilder {
         connection
             .request_name(WATCHER_BUS_NAME)
             .await
-            .map_err(|_| Error::WatcherRegistrationFailed("Name already taken".to_string()))?;
+            .map_err(|_| {
+                Error::WatcherRegistrationFailed(format!(
+                    "D-Bus name '{WATCHER_BUS_NAME}' already taken by another application"
+                ))
+            })?;
 
         info!("Operating as StatusNotifierWatcher");
         Ok(())

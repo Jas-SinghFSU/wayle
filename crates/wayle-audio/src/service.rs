@@ -1,11 +1,11 @@
 use std::sync::Arc;
 
 use derive_more::Debug;
-use tokio::sync::{broadcast, mpsc};
 use tokio_util::sync::CancellationToken;
 use tracing::instrument;
 use wayle_common::Property;
-use wayle_traits::{Reactive, ServiceMonitoring};
+use wayle_traits::Reactive;
+use zbus::Connection;
 
 use super::core::{
     device::{
@@ -15,10 +15,8 @@ use super::core::{
     stream::{AudioStreamParams, LiveAudioStreamParams},
 };
 use crate::{
-    backend::{
-        PulseBackend,
-        types::{CommandSender, EventSender},
-    },
+    backend::types::{CommandSender, EventSender},
+    builder::AudioServiceBuilder,
     core::{
         device::{input::InputDevice, output::OutputDevice},
         stream::AudioStream,
@@ -39,6 +37,8 @@ pub struct AudioService {
     pub(crate) event_tx: EventSender,
     #[debug(skip)]
     pub(crate) cancellation_token: CancellationToken,
+    #[debug(skip)]
+    pub(crate) _connection: Option<Connection>,
 
     /// Output devices (speakers, headphones)
     pub output_devices: Property<Vec<Arc<OutputDevice>>>,
@@ -60,47 +60,20 @@ pub struct AudioService {
 }
 
 impl AudioService {
-    /// Creates a new audio service instance.
+    /// Creates a new audio service instance with default configuration.
     ///
     /// Initializes PulseAudio connection and discovers available devices and streams.
     ///
     /// # Errors
     /// Returns error if PulseAudio connection fails or service initialization fails.
     #[instrument]
-    pub async fn new() -> Result<Self, Error> {
-        let (command_tx, command_rx) = mpsc::unbounded_channel();
-        let (event_tx, _) = broadcast::channel(100);
-        let cancellation_token = CancellationToken::new();
+    pub async fn new() -> Result<Arc<Self>, Error> {
+        Self::builder().build().await
+    }
 
-        let output_devices = Property::new(Vec::new());
-        let input_devices = Property::new(Vec::new());
-        let default_output = Property::new(None);
-        let default_input = Property::new(None);
-        let playback_streams = Property::new(Vec::new());
-        let recording_streams = Property::new(Vec::new());
-
-        PulseBackend::start(
-            command_rx,
-            event_tx.clone(),
-            cancellation_token.child_token(),
-        )
-        .await?;
-
-        let service = Self {
-            command_tx,
-            event_tx,
-            cancellation_token,
-            output_devices,
-            input_devices,
-            default_output,
-            default_input,
-            playback_streams,
-            recording_streams,
-        };
-
-        service.start_monitoring().await?;
-
-        Ok(service)
+    /// Creates a builder for configuring an AudioService.
+    pub fn builder() -> AudioServiceBuilder {
+        AudioServiceBuilder::new()
     }
 
     /// Get a specific output device.

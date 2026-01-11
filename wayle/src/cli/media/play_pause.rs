@@ -1,23 +1,22 @@
-use wayle_media::MediaService;
-
-use super::utils::get_player_or_active;
+use super::{
+    proxy::{connect, format_error},
+    resolve::resolve_player,
+};
 use crate::cli::CliAction;
 
 /// Execute the command
 ///
 /// # Errors
-/// Returns error if service communication fails or player is not found.
+/// Returns error if D-Bus communication fails or player is not found.
 pub async fn execute(player: Option<String>) -> CliAction {
-    let service = MediaService::new()
-        .await
-        .map_err(|e| format!("Failed to start media service: {e}"))?;
+    let (_connection, proxy) = connect().await?;
 
-    let player = get_player_or_active(&service, player.as_ref()).await?;
+    let resolved = resolve_player(&proxy, player).await?;
 
-    player
-        .play_pause()
+    proxy
+        .play_pause(resolved)
         .await
-        .map_err(|e| format!("Failed to toggle play/pause: {e}"))?;
+        .map_err(|e| format_error("toggle play/pause", e))?;
 
     Ok(())
 }

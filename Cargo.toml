@@ -15,6 +15,7 @@ members = [
     "crates/wayle-network",
     "crates/wayle-notification",
     "crates/wayle-power-profiles",
+    "crates/wayle-shell",
     "crates/wayle-styling",
     "crates/wayle-systray",
     "crates/wayle-traits",
@@ -65,7 +66,8 @@ zbus = "5.11.0"
 smithay-client-toolkit = "0.20"
 rusqlite = { version = "0.37.0", features = ["bundled"] }
 
-gtk4 = { version = "0.10.1" }
+gdk4 = { version = "0.10.1" }
+gtk4 = { version = "0.10.1", features = ["v4_12"] }
 gtk4-layer-shell = "0.7"
 gdk-pixbuf = { version = "0.21.2" }
 glib = { version = "0.21.3" }
@@ -73,14 +75,17 @@ glib = { version = "0.21.3" }
 wayle-audio = { path = "crates/wayle-audio" }
 wayle-battery = { path = "crates/wayle-battery" }
 wayle-bluetooth = { path = "crates/wayle-bluetooth" }
+wayle-cava = { path = "crates/wayle-cava" }
 wayle-common = { path = "crates/wayle-common" }
 wayle-config = { path = "crates/wayle-config" }
 wayle-derive = { path = "crates/wayle-derive" }
+wayle-hyprland = { path = "crates/wayle-hyprland" }
 wayle-icons = { path = "crates/wayle-icons" }
 wayle-media = { path = "crates/wayle-media" }
 wayle-network = { path = "crates/wayle-network" }
 wayle-notification = { path = "crates/wayle-notification" }
 wayle-power-profiles = { path = "crates/wayle-power-profiles" }
+wayle-shell = { path = "crates/wayle-shell" }
 wayle-styling = { path = "crates/wayle-styling" }
 wayle-systray = { path = "crates/wayle-systray" }
 wayle-traits = { path = "crates/wayle-traits" }

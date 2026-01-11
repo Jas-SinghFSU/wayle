@@ -6,8 +6,11 @@
 #![cfg_attr(test, allow(clippy::panic))]
 
 mod backend;
+mod builder;
 /// Core domain models
 pub mod core;
+/// D-Bus interface for external control
+pub mod dbus;
 mod error;
 mod events;
 mod monitoring;
@@ -18,5 +21,6 @@ pub mod types;
 /// Volume control domain
 pub mod volume;
 
+pub use builder::AudioServiceBuilder;
 pub use error::Error;
 pub use service::AudioService;

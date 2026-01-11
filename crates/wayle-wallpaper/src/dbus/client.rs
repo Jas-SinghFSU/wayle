@@ -8,9 +8,9 @@ use zbus::{Result, proxy};
 /// Connects to a running wallpaper daemon and allows external control
 /// of wallpaper settings, cycling, and color extraction.
 #[proxy(
-    interface = "org.wayle.Wallpaper1",
-    default_service = "org.wayle.Wallpaper1",
-    default_path = "/org/wayle/Wallpaper"
+    interface = "com.wayle.Wallpaper1",
+    default_service = "com.wayle.Wallpaper1",
+    default_path = "/com/wayle/Wallpaper"
 )]
 pub trait Wallpaper {
     /// Sets the wallpaper for a specific monitor or all monitors.
