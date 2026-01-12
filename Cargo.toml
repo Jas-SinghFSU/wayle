@@ -38,11 +38,13 @@ async-trait = "0.1.89"
 bitflags = "2.9.4"
 chrono = { version = "0.4.42", features = ["clock"] }
 clap = { version = "4.5.48", features = ["derive", "color"] }
+console = "0.15"
 derive_more = { version = "2.0.1", default-features = false, features = [
     "debug",
 ] }
 futures = "0.3.31"
 grass = "0.13.4"
+indicatif = "0.17"
 libpulse-binding = "2.30.1"
 libc = "0.2.176"
 notify = "8"

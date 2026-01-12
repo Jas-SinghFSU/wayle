@@ -1,3 +1,4 @@
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::schemas::styling::PaletteColor;
@@ -10,7 +11,7 @@ pub mod utils;
 /// Theme palette for CSS generation.
 ///
 /// Contains the 10 palette colors that drive the entire visual theme.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct Palette {
     /// Theme identifier.
     pub name: String,

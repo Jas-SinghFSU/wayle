@@ -76,31 +76,7 @@ impl SystemTrayServiceBuilder {
             TrayMode::Auto => Self::try_become_watcher(&connection).await?,
         };
 
-        let service = Arc::new(SystemTrayService {
-            cancellation_token,
-            event_tx,
-            connection,
-            is_watcher,
-            items: Property::new(Vec::new()),
-        });
-
-        if is_watcher {
-            let watcher = StatusNotifierWatcher::new(
-                service.event_tx.clone(),
-                &service.connection,
-                &service.cancellation_token,
-            )
-            .await?;
-
-            service
-                .connection
-                .object_server()
-                .at(WATCHER_OBJECT_PATH, watcher)
-                .await?;
-        }
-
-        let unique_name = service
-            .connection
+        let unique_name = connection
             .unique_name()
             .ok_or_else(|| {
                 Error::ServiceInitializationFailed(
@@ -110,16 +86,42 @@ impl SystemTrayServiceBuilder {
             })?
             .to_string();
 
-        SystemTrayServiceDiscovery::register_as_host(&service.connection, &unique_name).await?;
+        let service = Arc::new(SystemTrayService {
+            cancellation_token,
+            event_tx,
+            connection,
+            is_watcher,
+            items: Property::new(Vec::new()),
+        });
+
+        if is_watcher {
+            let watcher = StatusNotifierWatcher::with_initial_host(
+                service.event_tx.clone(),
+                &service.connection,
+                &service.cancellation_token,
+                unique_name.clone(),
+            )
+            .await?;
+
+            service
+                .connection
+                .object_server()
+                .at(WATCHER_OBJECT_PATH, watcher)
+                .await?;
+        } else {
+            SystemTrayServiceDiscovery::register_as_host(&service.connection, &unique_name).await?;
+        }
 
         service.start_monitoring().await?;
 
-        let items = SystemTrayServiceDiscovery::discover_items(
-            &service.connection,
-            &service.cancellation_token,
-        )
-        .await?;
-        service.items.set(items);
+        if !is_watcher {
+            let items = SystemTrayServiceDiscovery::discover_items(
+                &service.connection,
+                &service.cancellation_token,
+            )
+            .await?;
+            service.items.set(items);
+        }
 
         if self.register_daemon {
             let daemon = SystemTrayDaemon {

@@ -1,4 +1,3 @@
-pub mod bindings;
 pub mod types;
 pub mod wrappers;
 

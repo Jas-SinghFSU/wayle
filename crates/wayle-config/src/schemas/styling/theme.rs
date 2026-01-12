@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use wayle_common::{ConfigProperty, Property};
 use wayle_derive::{ApplyConfigLayer, ApplyRuntimeLayer, ExtractRuntimeValues, SubscribeChanges};
 
-use crate::infrastructure::themes::Palette;
+use crate::infrastructure::themes::{Palette, palettes::catppuccin};
 
 mod defaults {
     pub const BG: &str = "#11111b";
@@ -128,11 +128,8 @@ impl CustomPalette {
 )]
 #[serde(default)]
 pub struct ThemeConfig {
-    /// Theme preset name or "custom" for user-defined colors.
-    pub preset: ConfigProperty<String>,
-
-    /// Custom color palette used when preset is "custom".
-    pub custom: CustomPalette,
+    /// The active color palette
+    pub palette: ConfigProperty<Palette>,
 
     /// Available themes discovered at runtime.
     ///
@@ -146,31 +143,8 @@ pub struct ThemeConfig {
 impl Default for ThemeConfig {
     fn default() -> Self {
         Self {
-            preset: ConfigProperty::new(String::from("catppuccin")),
-            custom: CustomPalette::default(),
+            palette: ConfigProperty::new(catppuccin()),
             available: Property::new(Vec::new()),
         }
-    }
-}
-
-impl ThemeConfig {
-    /// Get the active palette based on current preset selection.
-    ///
-    /// Returns the custom palette if preset is "custom", otherwise
-    /// looks up the preset in available themes. Falls back to custom
-    /// palette if the preset isn't found.
-    pub fn active_palette(&self) -> Palette {
-        let preset = self.preset.get();
-
-        if preset == "custom" {
-            return self.custom.to_palette();
-        }
-
-        self.available
-            .get()
-            .iter()
-            .find(|entry| entry.palette.name == preset)
-            .map(|entry| entry.palette.clone())
-            .unwrap_or_else(|| self.custom.to_palette())
     }
 }

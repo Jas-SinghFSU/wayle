@@ -6,6 +6,7 @@ use tokio_stream::{StreamExt, wrappers::BroadcastStream};
 use tokio_util::sync::CancellationToken;
 use tracing::{error, instrument};
 use wayle_common::Property;
+use wayle_traits::ServiceMonitoring;
 
 use crate::{
     Address, BindData, CursorPosition, DeviceInfo, HyprlandEvent, Result, WorkspaceId,
@@ -61,7 +62,7 @@ impl HyprlandService {
             layers,
         } = HyprlandDiscovery::new(hypr_messenger.clone(), &internal_tx, &cancellation_token).await;
 
-        Ok(Self {
+        let service = Self {
             internal_tx,
             hyprland_tx,
             cancellation_token,
@@ -70,7 +71,11 @@ impl HyprlandService {
             clients: Property::new(clients),
             monitors: Property::new(monitors),
             layers: Property::new(layers),
-        })
+        };
+
+        service.start_monitoring().await?;
+
+        Ok(service)
     }
 
     /// Returns a client window by its address if it exists.

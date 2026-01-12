@@ -1,14 +1,24 @@
 #![allow(unsafe_code)]
 
-use std::{ffi, pin::Pin, ptr};
+use std::{ffi::CString, pin::Pin, ptr};
 
-use ffi::CString;
-
-use super::super::types;
+use super::super::types::{
+    self, config_params, input_method, mono_option_AVERAGE, orientation_ORIENT_BOTTOM,
+    output_method_OUTPUT_RAW, xaxis_scale_NONE,
+};
 use crate::Result;
 
+/// Safe wrapper around libcava's config_params struct.
+///
+/// # Safety
+///
+/// This type is `Send` and `Sync` because:
+/// - The inner `config_params` is pinned and not shared with C code after construction
+/// - String pointers (`raw_target`, `data_format`, `audio_source`) point to `CString` fields
+///   that are owned by this struct and live as long as the config
+/// - The config is only passed to C functions during `Plan` and `AudioInput` initialization
 pub struct Config {
-    inner: Pin<Box<types::ConfigParams>>,
+    inner: Pin<Box<config_params>>,
     _raw_target: CString,
     _data_format: CString,
     _audio_source: CString,
@@ -33,7 +43,7 @@ impl Config {
         let data_format = CString::new("binary")?;
         let audio_source_str = CString::new(audio_source)?;
 
-        let config = Box::new(types::ConfigParams {
+        let config = Box::new(config_params {
             color: ptr::null_mut(),
             bcolor: ptr::null_mut(),
             raw_target: raw_target.as_ptr() as *mut _,
@@ -43,6 +53,7 @@ impl Config {
             data_format: data_format.as_ptr() as *mut _,
             vertex_shader: ptr::null_mut(),
             fragment_shader: ptr::null_mut(),
+            theme: ptr::null_mut(),
 
             bar_delim: b';' as i8,
             frame_delim: b'\n' as i8,
@@ -52,17 +63,18 @@ impl Config {
             ignore: 0.0,
             sens: 1.0,
             noise_reduction,
+            max_height: 0.0,
             lower_cut_off: low_cutoff,
             upper_cut_off: high_cutoff,
-            user_eq: ptr::null_mut(),
-            input,
-            output: types::OutputMethod::Raw,
-            xaxis: types::XAxisScale::None,
-            mono_opt: types::MonoOption::Average,
-            orientation: types::Orientation::Bottom,
-            blend_direction: types::Orientation::Bottom,
-            user_eq_keys: 0,
-            user_eq_enabled: 0,
+            userEQ: ptr::null_mut(),
+            input: input_method::from(input),
+            output: output_method_OUTPUT_RAW,
+            xaxis: xaxis_scale_NONE,
+            mono_opt: mono_option_AVERAGE,
+            orientation: orientation_ORIENT_BOTTOM,
+            blendDirection: orientation_ORIENT_BOTTOM,
+            userEQ_keys: 0,
+            userEQ_enabled: 0,
             col: 0,
             bgcol: 0,
             autobars: 0,
@@ -82,6 +94,9 @@ impl Config {
             autosens: autosens as i32,
             overshoot: 0,
             waves: 0,
+            active: 0,
+            remix: 0,
+            virtual_: 0,
             samplerate: samplerate as i32,
             samplebits: 16,
             channels: channels as i32,
@@ -101,7 +116,9 @@ impl Config {
             disable_blanking: 1,
             show_idle_bar_heads: 1,
             waveform: 0,
-            in_atty: 0,
+            center_align: 0,
+            inAtty: 0,
+            inAterminal: 0,
             fp: 0,
             x_axis_info: 0,
         });
@@ -114,10 +131,23 @@ impl Config {
         })
     }
 
-    pub(crate) fn as_ptr(&mut self) -> *mut types::ConfigParams {
+    pub(crate) fn as_ptr(&mut self) -> *mut config_params {
         &mut *self.inner as *mut _
     }
 }
 
+/// # Safety
+///
+/// `Config` is `Send` because:
+/// - The inner `config_params` struct contains only primitive types and raw pointers
+/// - All raw pointers point to memory owned by this struct (`CString` fields)
+/// - No thread-local state is accessed
 unsafe impl Send for Config {}
+
+/// # Safety
+///
+/// `Config` is `Sync` because:
+/// - The struct is only mutated during construction
+/// - `as_ptr()` requires `&mut self`, preventing concurrent access
+/// - The C library only reads from this config during initialization
 unsafe impl Sync for Config {}

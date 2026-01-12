@@ -33,13 +33,13 @@ macro_rules! watch_all {
 macro_rules! unwrap_string {
     ($result:expr) => {
         $result.unwrap_or_else(|err| {
-            ::tracing::warn!("Failed to fetch property: {}", err);
+            ::tracing::debug!("Failed to fetch property: {}", err);
             String::new()
         })
     };
     ($result:expr, $path:expr) => {
         $result.unwrap_or_else(|err| {
-            ::tracing::warn!("Failed to fetch property for {:?}: {}", $path, err);
+            ::tracing::debug!("Failed to fetch property for {:?}: {}", $path, err);
             String::new()
         })
     };
@@ -50,13 +50,13 @@ macro_rules! unwrap_string {
 macro_rules! unwrap_string_or {
     ($result:expr, $default:expr) => {
         $result.unwrap_or_else(|err| {
-            ::tracing::warn!("Failed to fetch property: {}", err);
+            ::tracing::debug!("Failed to fetch property: {}", err);
             $default
         })
     };
     ($result:expr, $path:expr, $default:expr) => {
         $result.unwrap_or_else(|err| {
-            ::tracing::warn!("Failed to fetch property for {:?}: {}", $path, err);
+            ::tracing::debug!("Failed to fetch property for {:?}: {}", $path, err);
             $default
         })
     };
@@ -67,13 +67,13 @@ macro_rules! unwrap_string_or {
 macro_rules! unwrap_bool {
     ($result:expr) => {
         $result.unwrap_or_else(|err| {
-            ::tracing::warn!("Failed to fetch property: {}", err);
+            ::tracing::debug!("Failed to fetch property: {}", err);
             false
         })
     };
     ($result:expr, $path:expr) => {
         $result.unwrap_or_else(|err| {
-            ::tracing::warn!("Failed to fetch property for {:?}: {}", $path, err);
+            ::tracing::debug!("Failed to fetch property for {:?}: {}", $path, err);
             false
         })
     };
@@ -84,18 +84,13 @@ macro_rules! unwrap_bool {
 macro_rules! unwrap_bool_or {
     ($result:expr, $default:expr) => {
         $result.unwrap_or_else(|err| {
-            ::tracing::warn!("Failed to fetch '{}' property: {}", "property", err);
+            ::tracing::debug!("Failed to fetch property: {}", err);
             $default
         })
     };
     ($result:expr, $path:expr, $default:expr) => {
         $result.unwrap_or_else(|err| {
-            ::tracing::warn!(
-                "Failed to fetch '{}' property for {:?}: {}",
-                "property",
-                $path,
-                err
-            );
+            ::tracing::debug!("Failed to fetch property for {:?}: {}", $path, err);
             $default
         })
     };
@@ -106,18 +101,13 @@ macro_rules! unwrap_bool_or {
 macro_rules! unwrap_u8 {
     ($result:expr) => {
         $result.unwrap_or_else(|err| {
-            ::tracing::warn!("Failed to fetch '{}' property: {}", "property", err);
+            ::tracing::debug!("Failed to fetch property: {}", err);
             0u8
         })
     };
     ($result:expr, $path:expr) => {
         $result.unwrap_or_else(|err| {
-            ::tracing::warn!(
-                "Failed to fetch '{}' property for {:?}: {}",
-                "property",
-                $path,
-                err
-            );
+            ::tracing::debug!("Failed to fetch property for {:?}: {}", $path, err);
             0u8
         })
     };
@@ -128,18 +118,13 @@ macro_rules! unwrap_u8 {
 macro_rules! unwrap_u8_or {
     ($result:expr, $default:expr) => {
         $result.unwrap_or_else(|err| {
-            ::tracing::warn!("Failed to fetch '{}' property: {}", "property", err);
+            ::tracing::debug!("Failed to fetch property: {}", err);
             $default
         })
     };
     ($result:expr, $path:expr, $default:expr) => {
         $result.unwrap_or_else(|err| {
-            ::tracing::warn!(
-                "Failed to fetch '{}' property for {:?}: {}",
-                "property",
-                $path,
-                err
-            );
+            ::tracing::debug!("Failed to fetch property for {:?}: {}", $path, err);
             $default
         })
     };
@@ -150,18 +135,13 @@ macro_rules! unwrap_u8_or {
 macro_rules! unwrap_u16 {
     ($result:expr) => {
         $result.unwrap_or_else(|err| {
-            ::tracing::warn!("Failed to fetch '{}' property: {}", "property", err);
+            ::tracing::debug!("Failed to fetch property: {}", err);
             0u16
         })
     };
     ($result:expr, $path:expr) => {
         $result.unwrap_or_else(|err| {
-            ::tracing::warn!(
-                "Failed to fetch '{}' property for {:?}: {}",
-                "property",
-                $path,
-                err
-            );
+            ::tracing::debug!("Failed to fetch property for {:?}: {}", $path, err);
             0u16
         })
     };
@@ -172,18 +152,13 @@ macro_rules! unwrap_u16 {
 macro_rules! unwrap_u16_or {
     ($result:expr, $default:expr) => {
         $result.unwrap_or_else(|err| {
-            ::tracing::warn!("Failed to fetch '{}' property: {}", "property", err);
+            ::tracing::debug!("Failed to fetch property: {}", err);
             $default
         })
     };
     ($result:expr, $path:expr, $default:expr) => {
         $result.unwrap_or_else(|err| {
-            ::tracing::warn!(
-                "Failed to fetch '{}' property for {:?}: {}",
-                "property",
-                $path,
-                err
-            );
+            ::tracing::debug!("Failed to fetch property for {:?}: {}", $path, err);
             $default
         })
     };
@@ -194,18 +169,13 @@ macro_rules! unwrap_u16_or {
 macro_rules! unwrap_u64 {
     ($result:expr) => {
         $result.unwrap_or_else(|err| {
-            ::tracing::warn!("Failed to fetch '{}' property: {}", "property", err);
+            ::tracing::debug!("Failed to fetch property: {}", err);
             0u64
         })
     };
     ($result:expr, $path:expr) => {
         $result.unwrap_or_else(|err| {
-            ::tracing::warn!(
-                "Failed to fetch '{}' property for {:?}: {}",
-                "property",
-                $path,
-                err
-            );
+            ::tracing::debug!("Failed to fetch property for {:?}: {}", $path, err);
             0u64
         })
     };
@@ -216,18 +186,13 @@ macro_rules! unwrap_u64 {
 macro_rules! unwrap_u64_or {
     ($result:expr, $default:expr) => {
         $result.unwrap_or_else(|err| {
-            ::tracing::warn!("Failed to fetch '{}' property: {}", "property", err);
+            ::tracing::debug!("Failed to fetch property: {}", err);
             $default
         })
     };
     ($result:expr, $path:expr, $default:expr) => {
         $result.unwrap_or_else(|err| {
-            ::tracing::warn!(
-                "Failed to fetch '{}' property for {:?}: {}",
-                "property",
-                $path,
-                err
-            );
+            ::tracing::debug!("Failed to fetch property for {:?}: {}", $path, err);
             $default
         })
     };
@@ -238,18 +203,13 @@ macro_rules! unwrap_u64_or {
 macro_rules! unwrap_i64 {
     ($result:expr) => {
         $result.unwrap_or_else(|err| {
-            ::tracing::warn!("Failed to fetch '{}' property: {}", "property", err);
+            ::tracing::debug!("Failed to fetch property: {}", err);
             0i64
         })
     };
     ($result:expr, $path:expr) => {
         $result.unwrap_or_else(|err| {
-            ::tracing::warn!(
-                "Failed to fetch '{}' property for {:?}: {}",
-                "property",
-                $path,
-                err
-            );
+            ::tracing::debug!("Failed to fetch property for {:?}: {}", $path, err);
             0i64
         })
     };
@@ -260,18 +220,13 @@ macro_rules! unwrap_i64 {
 macro_rules! unwrap_i64_or {
     ($result:expr, $default:expr) => {
         $result.unwrap_or_else(|err| {
-            ::tracing::warn!("Failed to fetch '{}' property: {}", "property", err);
+            ::tracing::debug!("Failed to fetch property: {}", err);
             $default
         })
     };
     ($result:expr, $default:expr, $path:expr) => {
         $result.unwrap_or_else(|err| {
-            ::tracing::warn!(
-                "Failed to fetch '{}' property for {:?}: {}",
-                "property",
-                $path,
-                err
-            );
+            ::tracing::debug!("Failed to fetch property for {:?}: {}", $path, err);
             $default
         })
     };
@@ -282,18 +237,13 @@ macro_rules! unwrap_i64_or {
 macro_rules! unwrap_u32 {
     ($result:expr) => {
         $result.unwrap_or_else(|err| {
-            ::tracing::warn!("Failed to fetch '{}' property: {}", "property", err);
+            ::tracing::debug!("Failed to fetch property: {}", err);
             0u32
         })
     };
     ($result:expr, $path:expr) => {
         $result.unwrap_or_else(|err| {
-            ::tracing::warn!(
-                "Failed to fetch '{}' property for {:?}: {}",
-                "property",
-                $path,
-                err
-            );
+            ::tracing::debug!("Failed to fetch property for {:?}: {}", $path, err);
             0u32
         })
     };
@@ -304,18 +254,13 @@ macro_rules! unwrap_u32 {
 macro_rules! unwrap_u32_or {
     ($result:expr, $default:expr) => {
         $result.unwrap_or_else(|err| {
-            ::tracing::warn!("Failed to fetch '{}' property: {}", "property", err);
+            ::tracing::debug!("Failed to fetch property: {}", err);
             $default
         })
     };
     ($result:expr, $path:expr, $default:expr) => {
         $result.unwrap_or_else(|err| {
-            ::tracing::warn!(
-                "Failed to fetch '{}' property for {:?}: {}",
-                "property",
-                $path,
-                err
-            );
+            ::tracing::debug!("Failed to fetch property for {:?}: {}", $path, err);
             $default
         })
     };
@@ -326,18 +271,13 @@ macro_rules! unwrap_u32_or {
 macro_rules! unwrap_i32 {
     ($result:expr) => {
         $result.unwrap_or_else(|err| {
-            ::tracing::warn!("Failed to fetch '{}' property: {}", "property", err);
+            ::tracing::debug!("Failed to fetch property: {}", err);
             0i32
         })
     };
     ($result:expr, $path:expr) => {
         $result.unwrap_or_else(|err| {
-            ::tracing::warn!(
-                "Failed to fetch '{}' property for {:?}: {}",
-                "property",
-                $path,
-                err
-            );
+            ::tracing::debug!("Failed to fetch property for {:?}: {}", $path, err);
             0i32
         })
     };
@@ -348,18 +288,13 @@ macro_rules! unwrap_i32 {
 macro_rules! unwrap_i32_or {
     ($result:expr, $default:expr) => {
         $result.unwrap_or_else(|err| {
-            ::tracing::warn!("Failed to fetch '{}' property: {}", "property", err);
+            ::tracing::debug!("Failed to fetch property: {}", err);
             $default
         })
     };
     ($result:expr, $path:expr, $default:expr) => {
         $result.unwrap_or_else(|err| {
-            ::tracing::warn!(
-                "Failed to fetch '{}' property for {:?}: {}",
-                "property",
-                $path,
-                err
-            );
+            ::tracing::debug!("Failed to fetch property for {:?}: {}", $path, err);
             $default
         })
     };
@@ -370,18 +305,13 @@ macro_rules! unwrap_i32_or {
 macro_rules! unwrap_vec {
     ($result:expr) => {
         $result.unwrap_or_else(|err| {
-            ::tracing::warn!("Failed to fetch '{}' property: {}", "property", err);
+            ::tracing::debug!("Failed to fetch property: {}", err);
             vec![]
         })
     };
     ($result:expr, $path:expr) => {
         $result.unwrap_or_else(|err| {
-            ::tracing::warn!(
-                "Failed to fetch '{}' property for {:?}: {}",
-                "property",
-                $path,
-                err
-            );
+            ::tracing::debug!("Failed to fetch property for {:?}: {}", $path, err);
             vec![]
         })
     };
@@ -392,18 +322,13 @@ macro_rules! unwrap_vec {
 macro_rules! unwrap_vec_or {
     ($result:expr, $default:expr) => {
         $result.unwrap_or_else(|err| {
-            ::tracing::warn!("Failed to fetch '{}' property: {}", "property", err);
+            ::tracing::debug!("Failed to fetch property: {}", err);
             $default
         })
     };
     ($result:expr, $path:expr, $default:expr) => {
         $result.unwrap_or_else(|err| {
-            ::tracing::warn!(
-                "Failed to fetch '{}' property for {:?}: {}",
-                "property",
-                $path,
-                err
-            );
+            ::tracing::debug!("Failed to fetch property for {:?}: {}", $path, err);
             $default
         })
     };
@@ -414,18 +339,13 @@ macro_rules! unwrap_vec_or {
 macro_rules! unwrap_path {
     ($result:expr) => {
         $result.unwrap_or_else(|err| {
-            ::tracing::warn!("Failed to fetch '{}' property: {}", "property", err);
+            ::tracing::debug!("Failed to fetch property: {}", err);
             ::zbus::zvariant::OwnedObjectPath::default()
         })
     };
     ($result:expr, $path:expr) => {
         $result.unwrap_or_else(|err| {
-            ::tracing::warn!(
-                "Failed to fetch '{}' property for {:?}: {}",
-                "property",
-                $path,
-                err
-            );
+            ::tracing::debug!("Failed to fetch property for {:?}: {}", $path, err);
             ::zbus::zvariant::OwnedObjectPath::default()
         })
     };
@@ -436,18 +356,13 @@ macro_rules! unwrap_path {
 macro_rules! unwrap_path_or {
     ($result:expr, $default:expr) => {
         $result.unwrap_or_else(|err| {
-            ::tracing::warn!("Failed to fetch '{}' property: {}", "property", err);
+            ::tracing::debug!("Failed to fetch property: {}", err);
             $default
         })
     };
     ($result:expr, $path:expr, $default:expr) => {
         $result.unwrap_or_else(|err| {
-            ::tracing::warn!(
-                "Failed to fetch '{}' property for {:?}: {}",
-                "property",
-                $path,
-                err
-            );
+            ::tracing::debug!("Failed to fetch property for {:?}: {}", $path, err);
             $default
         })
     };
@@ -458,18 +373,13 @@ macro_rules! unwrap_path_or {
 macro_rules! unwrap_f64 {
     ($result:expr) => {
         $result.unwrap_or_else(|err| {
-            ::tracing::warn!("Failed to fetch '{}' property: {}", "property", err);
+            ::tracing::debug!("Failed to fetch property: {}", err);
             0.0
         })
     };
     ($result:expr, $path:expr) => {
         $result.unwrap_or_else(|err| {
-            ::tracing::warn!(
-                "Failed to fetch '{}' property for {:?}: {}",
-                "property",
-                $path,
-                err
-            );
+            ::tracing::debug!("Failed to fetch property for {:?}: {}", $path, err);
             0.0
         })
     };
@@ -480,18 +390,13 @@ macro_rules! unwrap_f64 {
 macro_rules! unwrap_f64_or {
     ($result:expr, $default:expr) => {
         $result.unwrap_or_else(|err| {
-            ::tracing::warn!("Failed to fetch '{}' property: {}", "property", err);
+            ::tracing::debug!("Failed to fetch property: {}", err);
             $default
         })
     };
     ($result:expr, $path:expr, $default:expr) => {
         $result.unwrap_or_else(|err| {
-            ::tracing::warn!(
-                "Failed to fetch '{}' property for {:?}: {}",
-                "property",
-                $path,
-                err
-            );
+            ::tracing::debug!("Failed to fetch property for {:?}: {}", $path, err);
             $default
         })
     };

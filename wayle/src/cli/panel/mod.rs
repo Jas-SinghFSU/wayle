@@ -1,21 +1,35 @@
-/// Panel command definitions
+//! Panel management commands.
+
+/// Panel command definitions.
 pub mod commands;
+/// D-Bus proxy utilities.
+mod proxy;
+/// Restart command.
+pub mod restart;
+/// Settings command.
+pub mod settings;
+/// Start command.
+pub mod start;
+/// Status command.
+pub mod status;
+/// Stop command.
+pub mod stop;
 
 use commands::PanelCommands;
 
 use crate::cli::CliAction;
 
-/// Executes panel management commands
+/// Executes panel management commands.
 ///
 /// # Errors
+///
 /// Returns error if the command execution fails.
-/// Execute the command
-pub async fn execute(command: commands::PanelCommands) -> CliAction {
+pub async fn execute(command: PanelCommands) -> CliAction {
     match command {
-        PanelCommands::Start => commands::start().await,
-        PanelCommands::Stop => commands::stop().await,
-        PanelCommands::Restart => commands::restart().await,
-        PanelCommands::Status => commands::status().await,
-        PanelCommands::Settings => commands::settings().await,
+        PanelCommands::Start => start::execute().await,
+        PanelCommands::Stop => stop::execute().await,
+        PanelCommands::Restart => restart::execute().await,
+        PanelCommands::Status => status::execute().await,
+        PanelCommands::Settings => settings::execute().await,
     }
 }

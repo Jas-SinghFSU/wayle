@@ -133,14 +133,15 @@ impl StatusNotifierWatcher {
 }
 
 impl StatusNotifierWatcher {
-    /// Creates a new StatusNotifierWatcher instance.
-    pub(crate) async fn new(
+    /// Creates a new StatusNotifierWatcher with an initial host pre-registered.
+    pub(crate) async fn with_initial_host(
         event_tx: broadcast::Sender<TrayEvent>,
         connection: &Connection,
         cancellation_token: &CancellationToken,
+        initial_host: String,
     ) -> Result<Self, Error> {
         let registered_items = Arc::new(RwLock::new(Vec::new()));
-        let registered_hosts = Arc::new(RwLock::new(Vec::new()));
+        let registered_hosts = Arc::new(RwLock::new(vec![initial_host]));
 
         let watcher = Self {
             zbus_connection: connection.clone(),

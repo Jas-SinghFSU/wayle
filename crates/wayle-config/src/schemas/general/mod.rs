@@ -1,3 +1,6 @@
+mod bar;
+
+pub use bar::*;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use wayle_derive::{ApplyConfigLayer, ApplyRuntimeLayer, ExtractRuntimeValues, SubscribeChanges};
@@ -18,4 +21,7 @@ use wayle_derive::{ApplyConfigLayer, ApplyRuntimeLayer, ExtractRuntimeValues, Su
     SubscribeChanges,
 )]
 #[serde(default)]
-pub struct GeneralConfig {}
+pub struct GeneralConfig {
+    /// Bar configuration.
+    pub bar: BarConfig,
+}

@@ -1,6 +1,6 @@
 use std::{fs, path::Path};
 
-use tracing::error;
+use tracing::{error, info};
 
 use crate::{
     Config, Error,
@@ -20,7 +20,7 @@ pub fn load_themes(config: &Config, themes_dir: &Path) {
         .collect();
 
     let Ok(entries) = fs::read_dir(themes_dir) else {
-        error!("Failed to read themes directory");
+        info!("Themes directory not found...");
         return;
     };
 

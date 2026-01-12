@@ -1,13 +1,19 @@
 //! Common utilities and types shared across Wayle services.
 //!
 //! Provides reusable components including property watchers, macros,
-//! and runtime state management for service persistence.
+//! runtime state management, and the global service registry.
 
 #[macro_use]
 /// Common macros for services
 pub mod macros;
 mod property;
+/// Global service registry for dependency injection.
+pub mod services;
+/// Shared constants for wayle-shell IPC.
+pub mod shell;
 mod state;
+/// Ergonomic watcher utilities for Relm4 components.
+pub mod watchers;
 
 pub use property::{
     ApplyConfigLayer, ApplyRuntimeLayer, ComputedProperty, ConfigProperty, ExtractRuntimeValues,
