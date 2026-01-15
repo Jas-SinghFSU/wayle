@@ -49,7 +49,7 @@ impl SystemTrayService {
     /// Automatically detects whether to act as StatusNotifierWatcher
     /// or connect to an existing one.
     ///
-    /// For more control over initialization, use [`Self::builder()`].
+    /// For more control over initialization, see [`Self::builder()`].
     ///
     /// # Errors
     /// Returns error if D-Bus connection fails or service initialization fails.
@@ -60,8 +60,8 @@ impl SystemTrayService {
 
     /// Returns a builder for configuring the system tray service.
     ///
-    /// Use this for advanced configuration like enabling D-Bus daemon registration
-    /// for CLI control.
+    /// The builder provides advanced configuration options such as enabling D-Bus
+    /// daemon registration for CLI control.
     pub fn builder() -> SystemTrayServiceBuilder {
         SystemTrayServiceBuilder::new()
     }
@@ -149,8 +149,8 @@ impl SystemTrayService {
     /// A new StatusNotifierItem has been registered, the argument of the signal is the session
     /// bus name of the instance.
     ///
-    /// StatusNotifierHost instances should react to this signal by refreshing their
-    /// representation of the item list.
+    /// StatusNotifierHost instances typically refresh their item list representation in response
+    /// to this signal.
     ///
     /// # Errors
     /// Returns error if D-Bus proxy creation fails.
@@ -166,8 +166,8 @@ impl SystemTrayService {
     /// A StatusNotifierItem instance has disappeared from the bus, the argument of the signal is
     /// the session bus name of the instance.
     ///
-    /// StatusNotifierHost instances should react to this signal by refreshing their
-    /// representation of the item list.
+    /// StatusNotifierHost instances typically refresh their item list representation in response
+    /// to this signal.
     ///
     /// # Errors
     /// Returns error if D-Bus proxy creation fails.
@@ -182,8 +182,8 @@ impl SystemTrayService {
 
     /// A new StatusNotifierHost has been registered.
     ///
-    /// StatusNotifierItem instances that previously did not register if no hosts were available
-    /// may now reconsider to register.
+    /// StatusNotifierItem instances that previously skipped registration due to no available hosts
+    /// may now proceed with registration.
     ///
     /// # Errors
     /// Returns error if D-Bus proxy creation fails.
@@ -198,8 +198,7 @@ impl SystemTrayService {
 
     /// There are no more StatusNotifierHost instances running.
     ///
-    /// StatusNotifierItem instances may choose to skip registration if there are no hosts
-    /// available.
+    /// StatusNotifierItem instances can skip registration when no hosts are available.
     ///
     /// # Errors
     /// Returns error if D-Bus proxy creation fails.

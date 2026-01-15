@@ -12,7 +12,9 @@ pub(crate) fn handle_active_window(
     let [class, title] = window_data.as_slice() else {
         return Err(Error::EventParseError {
             event_data: format!("{event}>>{data}"),
-            reason: "expected 2 comma-separated values (windowclass,windowtitle)".to_string(),
+            field: "window_data",
+            expected: "2 comma-separated values (windowclass,windowtitle)",
+            value: data.to_string(),
         });
     };
 
@@ -51,7 +53,9 @@ pub(crate) fn handle_open_window(
     let [address, workspace, class, title] = parts.as_slice() else {
         return Err(Error::EventParseError {
             event_data: format!("{event}>>{data}"),
-            reason: "expected 4 comma-separated values (address,workspace,class,title)".to_string(),
+            field: "window_data",
+            expected: "4 comma-separated values (address,workspace,class,title)",
+            value: data.to_string(),
         });
     };
 
@@ -96,7 +100,9 @@ pub(crate) fn handle_move_window(
     let Some((address, workspace)) = data.split_once(',') else {
         return Err(Error::EventParseError {
             event_data: format!("{event}>>{data}"),
-            reason: "expected comma-separated address,workspace".to_string(),
+            field: "window_data",
+            expected: "comma-separated address,workspace",
+            value: data.to_string(),
         });
     };
 
@@ -114,17 +120,21 @@ pub(crate) fn handle_move_window_v2(
     internal_tx: Sender<ServiceNotification>,
     hyprland_tx: Sender<HyprlandEvent>,
 ) -> Result<()> {
+    let event_data = format!("{event}>>{data}");
     let parts: Vec<&str> = data.split(',').collect();
     let [address, workspace_id, workspace] = parts.as_slice() else {
         return Err(Error::EventParseError {
-            event_data: format!("{event}>>{data}"),
-            reason: "expected 3 comma-separated values (address,workspace_id,workspace)"
-                .to_string(),
+            event_data,
+            field: "window_data",
+            expected: "3 comma-separated values (address,workspace_id,workspace)",
+            value: data.to_string(),
         });
     };
     let workspace_id = workspace_id.parse().map_err(|_| Error::EventParseError {
-        event_data: format!("{event}>>{data}"),
-        reason: format!("invalid workspace ID: {workspace_id}"),
+        event_data,
+        field: "workspace_id",
+        expected: "integer",
+        value: (*workspace_id).to_string(),
     })?;
 
     let address = Address::new((*address).to_string());
@@ -147,10 +157,13 @@ pub(crate) fn handle_change_floating_mode(
     internal_tx: Sender<ServiceNotification>,
     hyprland_tx: Sender<HyprlandEvent>,
 ) -> Result<()> {
+    let event_data = format!("{event}>>{data}");
     let Some((address, floating)) = data.split_once(',') else {
         return Err(Error::EventParseError {
-            event_data: format!("{event}>>{data}"),
-            reason: "expected comma-separated address,floating".to_string(),
+            event_data,
+            field: "floating_mode_data",
+            expected: "comma-separated address,floating",
+            value: data.to_string(),
         });
     };
     let floating = match floating {
@@ -158,8 +171,10 @@ pub(crate) fn handle_change_floating_mode(
         "1" => true,
         _ => {
             return Err(Error::EventParseError {
-                event_data: format!("{event}>>{data}"),
-                reason: format!("invalid floating value: {floating}"),
+                event_data,
+                field: "floating",
+                expected: "0 or 1",
+                value: floating.to_string(),
             });
         }
     };
@@ -210,7 +225,9 @@ pub(crate) fn handle_window_title_v2(
     let Some((address, title)) = data.split_once(',') else {
         return Err(Error::EventParseError {
             event_data: format!("{event}>>{data}"),
-            reason: "expected comma-separated address,title".to_string(),
+            field: "window_title_data",
+            expected: "comma-separated address,title",
+            value: data.to_string(),
         });
     };
 
@@ -233,10 +250,13 @@ pub(crate) fn handle_toggle_group(
     internal_tx: Sender<ServiceNotification>,
     hyprland_tx: Sender<HyprlandEvent>,
 ) -> Result<()> {
+    let event_data = format!("{event}>>{data}");
     let Some((state, addresses_str)) = data.split_once(',') else {
         return Err(Error::EventParseError {
-            event_data: format!("{event}>>{data}"),
-            reason: "expected comma-separated state,addresses".to_string(),
+            event_data,
+            field: "toggle_group_data",
+            expected: "comma-separated state,addresses",
+            value: data.to_string(),
         });
     };
     let state = match state {
@@ -244,8 +264,10 @@ pub(crate) fn handle_toggle_group(
         "1" => true,
         _ => {
             return Err(Error::EventParseError {
-                event_data: format!("{event}>>{data}"),
-                reason: format!("invalid state value: {state}"),
+                event_data,
+                field: "state",
+                expected: "0 or 1",
+                value: state.to_string(),
             });
         }
     };
@@ -308,10 +330,13 @@ pub(crate) fn handle_pin(
     internal_tx: Sender<ServiceNotification>,
     hyprland_tx: Sender<HyprlandEvent>,
 ) -> Result<()> {
+    let event_data = format!("{event}>>{data}");
     let Some((address, pinned)) = data.split_once(',') else {
         return Err(Error::EventParseError {
-            event_data: format!("{event}>>{data}"),
-            reason: "expected comma-separated address,pinned".to_string(),
+            event_data,
+            field: "pin_data",
+            expected: "comma-separated address,pinned",
+            value: data.to_string(),
         });
     };
     let pinned = match pinned {
@@ -319,8 +344,10 @@ pub(crate) fn handle_pin(
         "1" => true,
         _ => {
             return Err(Error::EventParseError {
-                event_data: format!("{event}>>{data}"),
-                reason: format!("invalid pinned value: {pinned}"),
+                event_data,
+                field: "pinned",
+                expected: "0 or 1",
+                value: pinned.to_string(),
             });
         }
     };
@@ -343,10 +370,13 @@ pub(crate) fn handle_minimized(
     data: &str,
     hyprland_tx: Sender<HyprlandEvent>,
 ) -> Result<()> {
+    let event_data = format!("{event}>>{data}");
     let Some((address, minimized)) = data.split_once(',') else {
         return Err(Error::EventParseError {
-            event_data: format!("{event}>>{data}"),
-            reason: "expected comma-separated address,minimized".to_string(),
+            event_data,
+            field: "minimized_data",
+            expected: "comma-separated address,minimized",
+            value: data.to_string(),
         });
     };
     let minimized = match minimized {
@@ -354,8 +384,10 @@ pub(crate) fn handle_minimized(
         "1" => true,
         _ => {
             return Err(Error::EventParseError {
-                event_data: format!("{event}>>{data}"),
-                reason: format!("invalid minimized value: {minimized}"),
+                event_data,
+                field: "minimized",
+                expected: "0 or 1",
+                value: minimized.to_string(),
             });
         }
     };

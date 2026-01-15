@@ -22,10 +22,7 @@ impl ModelMonitoring for DeviceWifi {
             .map_err(Error::DbusError)?;
 
         let Some(ref cancellation_token) = self.core.cancellation_token else {
-            return Err(Error::OperationFailed {
-                operation: "start_monitoring",
-                reason: String::from("A cancellation_token was not found."),
-            });
+            return Err(Error::MissingCancellationToken);
         };
 
         let cancel_token = cancellation_token.clone();

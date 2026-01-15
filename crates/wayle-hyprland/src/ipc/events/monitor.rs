@@ -12,7 +12,9 @@ pub(crate) fn handle_focused_mon(
     let [name, workspace] = monitor_data.as_slice() else {
         return Err(Error::EventParseError {
             event_data: format!("{event}>>{data}"),
-            reason: "expected 2 comma-separated values (name,workspace)".to_string(),
+            field: "monitor_data",
+            expected: "2 comma-separated values (name,workspace)",
+            value: data.to_string(),
         });
     };
 
@@ -30,15 +32,20 @@ pub(crate) fn handle_focused_mon_v2(
     internal_tx: Sender<ServiceNotification>,
     hyprland_tx: Sender<HyprlandEvent>,
 ) -> Result<()> {
+    let event_data = format!("{event}>>{data}");
     let Some((name, workspace_id)) = data.split_once(',') else {
         return Err(Error::EventParseError {
-            event_data: format!("{event}>>{data}"),
-            reason: "expected comma-separated name,workspace_id".to_string(),
+            event_data,
+            field: "monitor_data",
+            expected: "comma-separated name,workspace_id",
+            value: data.to_string(),
         });
     };
     let workspace_id = workspace_id.parse().map_err(|_| Error::EventParseError {
-        event_data: format!("{event}>>{data}"),
-        reason: format!("invalid workspace ID: {workspace_id}"),
+        event_data,
+        field: "workspace_id",
+        expected: "integer",
+        value: workspace_id.to_string(),
     })?;
 
     let monitor_name = name.to_string();
@@ -69,16 +76,21 @@ pub(crate) fn handle_monitor_removed_v2(
     internal_tx: Sender<ServiceNotification>,
     hyprland_tx: Sender<HyprlandEvent>,
 ) -> Result<()> {
+    let event_data = format!("{event}>>{data}");
     let parts: Vec<&str> = data.split(',').collect();
     let [id, name, description] = parts.as_slice() else {
         return Err(Error::EventParseError {
-            event_data: format!("{event}>>{data}"),
-            reason: "expected 3 comma-separated values (id,name,description)".to_string(),
+            event_data,
+            field: "monitor_data",
+            expected: "3 comma-separated values (id,name,description)",
+            value: data.to_string(),
         });
     };
     let id = id.parse().map_err(|_| Error::EventParseError {
-        event_data: format!("{event}>>{data}"),
-        reason: format!("invalid monitor ID: {id}"),
+        event_data,
+        field: "monitor_id",
+        expected: "integer",
+        value: (*id).to_string(),
     })?;
 
     let monitor_name = (*name).to_string();
@@ -108,16 +120,21 @@ pub(crate) fn handle_monitor_added_v2(
     internal_tx: Sender<ServiceNotification>,
     hyprland_tx: Sender<HyprlandEvent>,
 ) -> Result<()> {
+    let event_data = format!("{event}>>{data}");
     let parts: Vec<&str> = data.split(',').collect();
     let [id, name, description] = parts.as_slice() else {
         return Err(Error::EventParseError {
-            event_data: format!("{event}>>{data}"),
-            reason: "expected 3 comma-separated values (id,name,description)".to_string(),
+            event_data,
+            field: "monitor_data",
+            expected: "3 comma-separated values (id,name,description)",
+            value: data.to_string(),
         });
     };
     let id = id.parse().map_err(|_| Error::EventParseError {
-        event_data: format!("{event}>>{data}"),
-        reason: format!("invalid monitor ID: {id}"),
+        event_data,
+        field: "monitor_id",
+        expected: "integer",
+        value: (*id).to_string(),
     })?;
 
     let monitor_name = (*name).to_string();

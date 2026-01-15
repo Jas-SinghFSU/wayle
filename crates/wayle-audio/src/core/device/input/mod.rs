@@ -130,11 +130,9 @@ impl Reactive for InputDevice {
                 device_key: params.device_key,
                 responder: tx,
             })
-            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))?;
+            .map_err(|_| Error::CommandChannelDisconnected)?;
 
-        let device = rx
-            .await
-            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))??;
+        let device = rx.await.map_err(|_| Error::CommandChannelDisconnected)??;
 
         match device {
             Device::Source(source) => Ok(Self::from_source(
@@ -158,11 +156,9 @@ impl Reactive for InputDevice {
                 device_key: params.device_key,
                 responder: tx,
             })
-            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))?;
+            .map_err(|_| Error::CommandChannelDisconnected)?;
 
-        let device = rx
-            .await
-            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))??;
+        let device = rx.await.map_err(|_| Error::CommandChannelDisconnected)??;
 
         let device = match device {
             Device::Source(source) => Arc::new(Self::from_source(

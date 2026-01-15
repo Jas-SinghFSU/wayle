@@ -46,7 +46,7 @@ pub fn compile(
     let resolved_palette = match resolve_palette(palette, &theme_provider) {
         Ok(palette) => palette,
         Err(e) => {
-            error!("Failed to resolve palette from provider '{theme_provider:#?}': {e}");
+            error!(error = %e, provider = ?theme_provider, "cannot resolve palette from provider");
             info!("Falling back to Wayle styling");
 
             palette

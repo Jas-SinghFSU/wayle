@@ -127,11 +127,9 @@ impl Reactive for OutputDevice {
                 device_key: params.device_key,
                 responder: tx,
             })
-            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))?;
+            .map_err(|_| Error::CommandChannelDisconnected)?;
 
-        let device = rx
-            .await
-            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))??;
+        let device = rx.await.map_err(|_| Error::CommandChannelDisconnected)??;
 
         match device {
             Device::Sink(sink) => Ok(Self::from_sink(
@@ -155,11 +153,9 @@ impl Reactive for OutputDevice {
                 device_key: params.device_key,
                 responder: tx,
             })
-            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))?;
+            .map_err(|_| Error::CommandChannelDisconnected)?;
 
-        let device = rx
-            .await
-            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))??;
+        let device = rx.await.map_err(|_| Error::CommandChannelDisconnected)??;
 
         let device = match device {
             Device::Sink(sink) => Arc::new(Self::from_sink(

@@ -17,13 +17,8 @@ impl PowerProfilesController {
     ) -> Result<(), Error> {
         let proxy = PowerProfilesProxy::new(connection).await?;
 
-        proxy
-            .set_active_profile(&profile.to_string())
-            .await
-            .map_err(|err| Error::OperationFailed {
-                operation: "set_active_profile",
-                reason: format!("Failed to set active profile: {err}"),
-            })
+        proxy.set_active_profile(&profile.to_string()).await?;
+        Ok(())
     }
 
     #[instrument(
@@ -37,17 +32,13 @@ impl PowerProfilesController {
     ) -> Result<HoldCookie, Error> {
         let proxy = PowerProfilesProxy::new(connection).await?;
 
-        proxy
+        Ok(proxy
             .hold_profile(
                 &hold.profile.to_string(),
                 &hold.reason,
                 &hold.application_id,
             )
-            .await
-            .map_err(|err| Error::OperationFailed {
-                operation: "hold_profile",
-                reason: format!("Failed to hold profile: {err}"),
-            })
+            .await?)
     }
 
     #[instrument(skip(connection, hold_cookie), err)]
@@ -57,12 +48,7 @@ impl PowerProfilesController {
     ) -> Result<(), Error> {
         let proxy = PowerProfilesProxy::new(connection).await?;
 
-        proxy
-            .release_profile(hold_cookie)
-            .await
-            .map_err(|err| Error::OperationFailed {
-                operation: "release_profile",
-                reason: format!("Failed to release profile: {err}"),
-            })
+        proxy.release_profile(hold_cookie).await?;
+        Ok(())
     }
 }

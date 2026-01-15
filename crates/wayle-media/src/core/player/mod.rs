@@ -77,21 +77,21 @@ impl Reactive for Player {
 
     async fn get(params: Self::Context<'_>) -> Result<Self, Self::Error> {
         let bus_name = OwnedBusName::try_from(params.player_id.bus_name())
-            .map_err(|e| Error::InitializationFailed(format!("Invalid bus name: {e}")))?;
+            .map_err(|e| Error::Initialization(format!("invalid bus name: {e}")))?;
 
         let base_proxy = MediaPlayer2Proxy::builder(params.connection)
             .destination(bus_name.clone())
-            .map_err(Error::DbusError)?
+            .map_err(Error::Dbus)?
             .build()
             .await
-            .map_err(Error::DbusError)?;
+            .map_err(Error::Dbus)?;
 
         let player_proxy = MediaPlayer2PlayerProxy::builder(params.connection)
             .destination(bus_name)
-            .map_err(Error::DbusError)?
+            .map_err(Error::Dbus)?
             .build()
             .await
-            .map_err(Error::DbusError)?;
+            .map_err(Error::Dbus)?;
 
         let identity = unwrap_string_or!(
             base_proxy.identity().await,
@@ -120,21 +120,21 @@ impl Reactive for Player {
 
     async fn get_live(params: Self::LiveContext<'_>) -> Result<Arc<Self>, Self::Error> {
         let bus_name = OwnedBusName::try_from(params.player_id.bus_name())
-            .map_err(|e| Error::InitializationFailed(format!("Invalid bus name: {e}")))?;
+            .map_err(|e| Error::Initialization(format!("invalid bus name: {e}")))?;
 
         let base_proxy = MediaPlayer2Proxy::builder(params.connection)
             .destination(bus_name.clone())
-            .map_err(Error::DbusError)?
+            .map_err(Error::Dbus)?
             .build()
             .await
-            .map_err(Error::DbusError)?;
+            .map_err(Error::Dbus)?;
 
         let player_proxy = MediaPlayer2PlayerProxy::builder(params.connection)
             .destination(bus_name)
-            .map_err(Error::DbusError)?
+            .map_err(Error::Dbus)?
             .build()
             .await
-            .map_err(Error::DbusError)?;
+            .map_err(Error::Dbus)?;
 
         let identity = unwrap_string_or!(
             base_proxy.identity().await,
@@ -246,12 +246,12 @@ impl Player {
     ///
     /// # Errors
     ///
-    /// Returns `MediaError::ControlFailed` if the D-Bus operation fails
+    /// Returns `Error::Control` if the D-Bus operation fails
     pub async fn play_pause(&self) -> Result<(), Error> {
         self.proxy
             .play_pause()
             .await
-            .map_err(|e| Error::ControlFailed(format!("Play/pause failed: {e}")))?;
+            .map_err(|e| Error::Control(format!("play/pause: {e}")))?;
         Ok(())
     }
 
@@ -259,12 +259,12 @@ impl Player {
     ///
     /// # Errors
     ///
-    /// Returns `MediaError::ControlFailed` if the D-Bus operation fails
+    /// Returns `Error::Control` if the D-Bus operation fails
     pub async fn next(&self) -> Result<(), Error> {
         self.proxy
             .next()
             .await
-            .map_err(|e| Error::ControlFailed(format!("Next failed: {e}")))?;
+            .map_err(|e| Error::Control(format!("next: {e}")))?;
         Ok(())
     }
 
@@ -272,12 +272,12 @@ impl Player {
     ///
     /// # Errors
     ///
-    /// Returns `MediaError::ControlFailed` if the D-Bus operation fails
+    /// Returns `Error::Control` if the D-Bus operation fails
     pub async fn previous(&self) -> Result<(), Error> {
         self.proxy
             .previous()
             .await
-            .map_err(|e| Error::ControlFailed(format!("Previous failed: {e}")))?;
+            .map_err(|e| Error::Control(format!("previous: {e}")))?;
         Ok(())
     }
 
@@ -285,13 +285,13 @@ impl Player {
     ///
     /// # Errors
     ///
-    /// Returns `MediaError::ControlFailed` if the D-Bus operation fails
+    /// Returns `Error::Control` if the D-Bus operation fails
     pub async fn seek(&self, offset: Duration) -> Result<(), Error> {
         let offset_micros = offset.as_micros() as i64;
         self.proxy
             .seek(offset_micros)
             .await
-            .map_err(|e| Error::ControlFailed(format!("Seek failed: {e}")))?;
+            .map_err(|e| Error::Control(format!("seek: {e}")))?;
         Ok(())
     }
 
@@ -299,18 +299,18 @@ impl Player {
     ///
     /// # Errors
     ///
-    /// Returns `MediaError::ControlFailed` if the D-Bus operation fails
+    /// Returns `Error::Control` if the D-Bus operation fails
     pub async fn set_position(&self, position: Duration) -> Result<(), Error> {
         let track_id = self.metadata.track_id.get();
         let track_path = track_id.as_deref().unwrap_or(NULL_PATH);
         let track_object_path = ObjectPath::try_from(track_path)
-            .map_err(|e| Error::ControlFailed(format!("Invalid track ID: {e}")))?;
+            .map_err(|e| Error::Control(format!("invalid track id: {e}")))?;
 
         let position_micros = position.as_micros() as i64;
         self.proxy
             .set_position(&track_object_path, position_micros)
             .await
-            .map_err(|e| Error::ControlFailed(format!("Set position failed: {e}")))?;
+            .map_err(|e| Error::Control(format!("set position: {e}")))?;
         Ok(())
     }
 
@@ -320,38 +320,38 @@ impl Player {
     ///
     /// Returns error if the D-Bus operation fails
     pub async fn position(&self) -> Result<Duration, Error> {
-        let connection = Connection::session().await.map_err(Error::DbusError)?;
+        let connection = Connection::session().await.map_err(Error::Dbus)?;
         let destination = self.proxy.inner().destination().to_owned();
         let path = self.proxy.inner().path().to_owned();
 
         let proxy = PropertiesProxy::builder(&connection)
             .destination(destination)
-            .map_err(|e| Error::ControlFailed(format!("Failed to create properties proxy: {e}")))?
+            .map_err(|e| Error::Control(format!("create properties proxy: {e}")))?
             .path(path)
-            .map_err(|e| Error::ControlFailed(format!("Failed to set path: {e}")))?
+            .map_err(|e| Error::Control(format!("set path: {e}")))?
             .build()
             .await
-            .map_err(|e| Error::ControlFailed(format!("Failed to build properties proxy: {e}")))?;
+            .map_err(|e| Error::Control(format!("build properties proxy: {e}")))?;
 
         let interface = InterfaceName::try_from("org.mpris.MediaPlayer2.Player")
-            .map_err(|e| Error::ControlFailed(format!("Invalid interface name: {e}")))?;
+            .map_err(|e| Error::Control(format!("invalid interface name: {e}")))?;
         let property = MemberName::try_from("Position")
-            .map_err(|e| Error::ControlFailed(format!("Invalid property name: {e}")))?;
+            .map_err(|e| Error::Control(format!("invalid property name: {e}")))?;
 
         let value = proxy
             .get(interface, &property)
             .await
-            .map_err(|e| Error::ControlFailed(format!("Failed to get position: {e}")))?;
+            .map_err(|e| Error::Control(format!("get position: {e}")))?;
 
-        let micros = i64::try_from(&value)
-            .map_err(|e| Error::ControlFailed(format!("Failed to parse position: {e}")))?;
+        let micros =
+            i64::try_from(&value).map_err(|e| Error::Control(format!("parse position: {e}")))?;
 
         Ok(Duration::from_micros(micros.max(0) as u64))
     }
 
     /// Watch position changes for this player.
     ///
-    /// Polls position every second. Use `watch_position_with_interval` for custom intervals.
+    /// Polls position every second. For custom intervals, see `watch_position_with_interval`.
     pub fn watch_position(&self) -> impl Stream<Item = Duration> + Send {
         self.watch_position_with_interval(Duration::from_secs(1))
     }
@@ -403,7 +403,7 @@ impl Player {
     ///
     /// # Errors
     ///
-    /// Returns `MediaError::ControlFailed` if the D-Bus operation fails,
+    /// Returns `Error::Control` if the D-Bus operation fails,
     /// or if the loop mode is unsupported
     pub async fn set_loop_mode(&self, mode: LoopMode) -> Result<(), Error> {
         let status = match mode {
@@ -411,16 +411,14 @@ impl Player {
             LoopMode::Track => "Track",
             LoopMode::Playlist => "Playlist",
             LoopMode::Unsupported => {
-                return Err(Error::ControlFailed(String::from(
-                    "Loop mode not supported",
-                )));
+                return Err(Error::Control(String::from("loop mode not supported")));
             }
         };
 
         self.proxy
             .set_loop_status(status)
             .await
-            .map_err(|e| Error::ControlFailed(format!("Set loop mode failed: {e}")))?;
+            .map_err(|e| Error::Control(format!("set loop mode: {e}")))?;
         Ok(())
     }
 
@@ -428,21 +426,21 @@ impl Player {
     ///
     /// # Errors
     ///
-    /// Returns `MediaError::ControlFailed` if the D-Bus operation fails,
+    /// Returns `Error::Control` if the D-Bus operation fails,
     /// or if shuffle is unsupported
     pub async fn set_shuffle_mode(&self, mode: ShuffleMode) -> Result<(), Error> {
         let shuffle = match mode {
             ShuffleMode::On => true,
             ShuffleMode::Off => false,
             ShuffleMode::Unsupported => {
-                return Err(Error::ControlFailed(String::from("Shuffle not supported")));
+                return Err(Error::Control(String::from("shuffle not supported")));
             }
         };
 
         self.proxy
             .set_shuffle(shuffle)
             .await
-            .map_err(|e| Error::ControlFailed(format!("Set shuffle failed: {e}")))?;
+            .map_err(|e| Error::Control(format!("set shuffle: {e}")))?;
         Ok(())
     }
 
@@ -450,22 +448,22 @@ impl Player {
     ///
     /// # Errors
     ///
-    /// Returns `MediaError::ControlFailed` if the D-Bus operation fails
+    /// Returns `Error::Control` if the D-Bus operation fails
     pub async fn set_volume(&self, volume: Volume) -> Result<(), Error> {
         self.proxy
             .set_volume(*volume)
             .await
-            .map_err(|e| Error::ControlFailed(format!("Set volume failed: {e}")))?;
+            .map_err(|e| Error::Control(format!("set volume: {e}")))?;
         Ok(())
     }
 
     /// Toggle loop mode to the next state.
     ///
-    /// Cycles through: None → Track → Playlist → None
+    /// Cycles through: None -> Track -> Playlist -> None
     ///
     /// # Errors
     ///
-    /// Returns `MediaError::OperationNotSupported` if loop mode is unsupported
+    /// Returns `Error::OperationNotSupported` if loop mode is unsupported
     pub async fn toggle_loop(&self) -> Result<(), Error> {
         let current = self.loop_mode.get();
         let next = match current {
@@ -474,7 +472,7 @@ impl Player {
             LoopMode::Playlist => LoopMode::None,
             LoopMode::Unsupported => {
                 return Err(Error::OperationNotSupported(String::from(
-                    "Loop mode not supported",
+                    "loop mode not supported",
                 )));
             }
         };
@@ -486,7 +484,7 @@ impl Player {
     ///
     /// # Errors
     ///
-    /// Returns `MediaError::OperationNotSupported` if shuffle is unsupported
+    /// Returns `Error::OperationNotSupported` if shuffle is unsupported
     pub async fn toggle_shuffle(&self) -> Result<(), Error> {
         let current = self.shuffle_mode.get();
         let next = match current {
@@ -494,7 +492,7 @@ impl Player {
             ShuffleMode::On => ShuffleMode::Off,
             ShuffleMode::Unsupported => {
                 return Err(Error::OperationNotSupported(String::from(
-                    "Shuffle not supported",
+                    "shuffle not supported",
                 )));
             }
         };

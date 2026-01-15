@@ -4,22 +4,26 @@ use super::types::PlayerId;
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     /// Player with the given ID was not found
-    #[error("Player {0:?} not found")]
+    #[error("player {0} not found")]
     PlayerNotFound(PlayerId),
 
     /// D-Bus communication error
-    #[error("D-Bus operation failed: {0:#?}")]
-    DbusError(#[from] zbus::Error),
+    #[error("d-bus error: {0}")]
+    Dbus(
+        #[from]
+        #[source]
+        zbus::Error,
+    ),
 
-    /// Operation not supported (simplified version)
-    #[error("Operation not supported: {0:#?}")]
+    /// Operation not supported by the media player
+    #[error("operation not supported: {0}")]
     OperationNotSupported(String),
 
-    /// Failed to initialize the media service
-    #[error("Failed to initialize media service: {0:#?}")]
-    InitializationFailed(String),
+    /// Cannot initialize the media service
+    #[error("cannot initialize media service: {0}")]
+    Initialization(String),
 
-    /// Failed to control the player
-    #[error("Failed to control player: {0:#?}")]
-    ControlFailed(String),
+    /// Cannot control the player
+    #[error("cannot control player: {0}")]
+    Control(String),
 }

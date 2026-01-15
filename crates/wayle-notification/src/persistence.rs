@@ -61,12 +61,12 @@ impl NotificationStore {
 
         let data_dir = format!("{home}/.local/share/wayle");
         fs::create_dir_all(&data_dir)
-            .map_err(|e| Error::DatabaseError(format!("Failed to create data directory: {e}")))?;
+            .map_err(|e| Error::DatabaseError(format!("cannot create data directory: {e}")))?;
 
         let db_path = format!("{data_dir}/notifications.db");
         debug!("Database path: {db_path}");
         let connection = Connection::open(db_path)
-            .map_err(|e| Error::DatabaseError(format!("Failed to open database: {e}")))?;
+            .map_err(|e| Error::DatabaseError(format!("cannot open database: {e}")))?;
 
         connection
             .execute(
@@ -84,14 +84,14 @@ impl NotificationStore {
                 )",
                 [],
             )
-            .map_err(|e| Error::DatabaseError(format!("Failed to create table: {e}")))?;
+            .map_err(|e| Error::DatabaseError(format!("cannot create table: {e}")))?;
 
         connection
             .execute_batch(
                 "PRAGMA journal_mode = WAL;
                  PRAGMA synchronous = NORMAL;",
             )
-            .map_err(|e| Error::DatabaseError(format!("Failed to set pragmas: {e}")))?;
+            .map_err(|e| Error::DatabaseError(format!("cannot set pragmas: {e}")))?;
 
         Ok(Self {
             connection: Arc::new(Mutex::new(connection)),
@@ -103,13 +103,13 @@ impl NotificationStore {
         let stored = StoredNotification::from(notification);
 
         let actions_json = serde_json::to_string(&stored.actions)
-            .map_err(|e| Error::DatabaseError(format!("Failed to serialize actions: {e}")))?;
+            .map_err(|e| Error::DatabaseError(format!("cannot serialize actions: {e}")))?;
         let hints_json = serde_json::to_string(&stored.hints)
-            .map_err(|e| Error::DatabaseError(format!("Failed to serialize hints: {e}")))?;
+            .map_err(|e| Error::DatabaseError(format!("cannot serialize hints: {e}")))?;
 
         self.connection
             .lock()
-            .map_err(|_| Error::DatabaseError("Failed to acquire lock on database".to_string()))?
+            .map_err(|_| Error::DatabaseError("cannot acquire lock on database".to_string()))?
             .execute(
                 "INSERT OR REPLACE INTO notifications
                  (id, app_name, replaces_id, app_icon, summary, body, actions, hints,
@@ -128,7 +128,7 @@ impl NotificationStore {
                     stored.timestamp,
                 ],
             )
-            .map_err(|e| Error::DatabaseError(format!("Failed to store notification: {e}")))?;
+            .map_err(|e| Error::DatabaseError(format!("cannot store notification: {e}")))?;
 
         Ok(())
     }
@@ -137,9 +137,9 @@ impl NotificationStore {
     pub fn remove(&self, id: u32) -> Result<(), Error> {
         self.connection
             .lock()
-            .map_err(|_| Error::DatabaseError("Failed to acquire lock on database".to_string()))?
+            .map_err(|_| Error::DatabaseError("cannot acquire lock on database".to_string()))?
             .execute("DELETE FROM notifications WHERE id = ?1", params![id])
-            .map_err(|e| Error::DatabaseError(format!("Failed to remove notification: {e}")))?;
+            .map_err(|e| Error::DatabaseError(format!("cannot remove notification: {e}")))?;
 
         Ok(())
     }
@@ -149,7 +149,7 @@ impl NotificationStore {
         let conn = self
             .connection
             .lock()
-            .map_err(|_| Error::DatabaseError("Failed to acquire lock on database".to_string()))?;
+            .map_err(|_| Error::DatabaseError("cannot acquire lock on database".to_string()))?;
         let mut stmt = conn
             .prepare(
                 "SELECT id, app_name, replaces_id, app_icon, summary, body,
@@ -157,7 +157,7 @@ impl NotificationStore {
                  FROM notifications
                  ORDER BY timestamp DESC",
             )
-            .map_err(|e| Error::DatabaseError(format!("Failed to prepare query: {e}")))?;
+            .map_err(|e| Error::DatabaseError(format!("cannot prepare query: {e}")))?;
 
         let notifications = stmt
             .query_map([], |row| {
@@ -166,12 +166,12 @@ impl NotificationStore {
 
                 let actions: Vec<String> =
                     serde_json::from_str(&actions_json).unwrap_or_else(|e| {
-                        warn!("Failed to deserialize actions: {}", e);
+                        warn!(error = %e, "cannot deserialize actions");
                         Vec::new()
                     });
                 let hints_json_map: HashMap<String, serde_json::Value> =
                     serde_json::from_str(&hints_json).unwrap_or_else(|e| {
-                        warn!("Failed to deserialize hints: {}", e);
+                        warn!(error = %e, "cannot deserialize hints");
                         HashMap::new()
                     });
                 let hints: HashMap<String, OwnedValue> = hints_json_map
@@ -196,9 +196,9 @@ impl NotificationStore {
                     timestamp: row.get(9)?,
                 })
             })
-            .map_err(|e| Error::DatabaseError(format!("Failed to query notifications: {e}")))?
+            .map_err(|e| Error::DatabaseError(format!("cannot query notifications: {e}")))?
             .collect::<Result<Vec<_>, _>>()
-            .map_err(|e| Error::DatabaseError(format!("Failed to parse notifications: {e}")))?;
+            .map_err(|e| Error::DatabaseError(format!("cannot parse notifications: {e}")))?;
 
         if !remove_expired {
             debug!("Loaded {} stored notifications", notifications.len());

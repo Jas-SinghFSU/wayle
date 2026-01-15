@@ -26,10 +26,9 @@ impl AudioStreamController {
                 volume,
                 responder: tx,
             })
-            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))?;
+            .map_err(|_| Error::CommandChannelDisconnected)?;
 
-        rx.await
-            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))?
+        rx.await.map_err(|_| Error::CommandChannelDisconnected)?
     }
 
     /// Set the mute state for an audio stream.
@@ -49,10 +48,9 @@ impl AudioStreamController {
                 muted,
                 responder: tx,
             })
-            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))?;
+            .map_err(|_| Error::CommandChannelDisconnected)?;
 
-        rx.await
-            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))?
+        rx.await.map_err(|_| Error::CommandChannelDisconnected)?
     }
 
     /// Move a stream to a different device.
@@ -72,9 +70,8 @@ impl AudioStreamController {
                 device_key,
                 responder: tx,
             })
-            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))?;
+            .map_err(|_| Error::CommandChannelDisconnected)?;
 
-        rx.await
-            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))?
+        rx.await.map_err(|_| Error::CommandChannelDisconnected)?
     }
 }

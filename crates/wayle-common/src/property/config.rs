@@ -13,6 +13,15 @@ use super::{
     traits::{ApplyConfigLayer, ApplyRuntimeLayer, ExtractRuntimeValues, SubscribeChanges},
 };
 
+fn format_toml_indented(value: &toml::Value) -> String {
+    toml::to_string_pretty(value)
+        .unwrap_or_else(|_| format!("{value:?}"))
+        .lines()
+        .map(|line| format!("    {line}"))
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
 /// Indicates where a configuration value originates from.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ValueSource {
@@ -211,17 +220,14 @@ impl<T> ApplyConfigLayer for ConfigProperty<T>
 where
     T: Clone + Send + Sync + PartialEq + for<'de> Deserialize<'de> + 'static,
 {
-    fn apply_config_layer(&self, value: &toml::Value) {
+    fn apply_config_layer(&self, value: &toml::Value, path: &str) {
         match T::deserialize(value.clone()) {
             Ok(new_value) => {
                 self.set_config(new_value);
             }
             Err(e) => {
-                tracing::warn!(
-                    error = %e,
-                    value = ?value,
-                    "Failed to deserialize config layer value, skipping"
-                );
+                let toml_repr = format_toml_indented(value);
+                tracing::warn!("invalid config at `{path}`:\n  error: {e}\n  value:\n{toml_repr}");
             }
         }
     }
@@ -231,16 +237,15 @@ impl<T> ApplyRuntimeLayer for ConfigProperty<T>
 where
     T: Clone + Send + Sync + PartialEq + for<'de> Deserialize<'de> + 'static,
 {
-    fn apply_runtime_layer(&self, value: &toml::Value) {
+    fn apply_runtime_layer(&self, value: &toml::Value, path: &str) {
         match T::deserialize(value.clone()) {
             Ok(new_value) => {
                 self.set(new_value);
             }
             Err(e) => {
+                let toml_repr = format_toml_indented(value);
                 tracing::warn!(
-                    error = %e,
-                    value = ?value,
-                    "Failed to deserialize runtime layer value, skipping"
+                    "invalid runtime config at `{path}`:\n  error: {e}\n  value:\n{toml_repr}"
                 );
             }
         }
@@ -254,7 +259,7 @@ where
     fn extract_runtime_values(&self) -> Option<toml::Value> {
         self.runtime().map(|value| {
             toml::Value::try_from(value).unwrap_or_else(|e| {
-                tracing::warn!(error = %e, "Failed to serialize runtime value");
+                tracing::warn!(error = %e, "cannot serialize runtime value");
                 toml::Value::String(String::from("<serialization error>"))
             })
         })

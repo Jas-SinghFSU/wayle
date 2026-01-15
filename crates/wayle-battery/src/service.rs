@@ -28,15 +28,16 @@ impl BatteryService {
     ///
     /// # Errors
     ///
-    /// Returns `Error::ServiceInitializationFailed` if service initialization fails.
+    /// Returns `Error::InvalidObjectPath` if the device path is invalid, or
+    /// `Error::Dbus` if D-Bus connection fails.
     pub async fn new() -> Result<Self, Error> {
         Self::builder().build().await
     }
 
-    /// Creates a builder for configuring a BatteryService.
+    /// Returns a builder for configuring a BatteryService.
     ///
-    /// Use this when you need to monitor a specific battery device
-    /// rather than the default aggregated DisplayDevice.
+    /// The builder allows monitoring a specific battery device rather than
+    /// the default aggregated DisplayDevice.
     pub fn builder() -> BatteryServiceBuilder {
         BatteryServiceBuilder::new()
     }

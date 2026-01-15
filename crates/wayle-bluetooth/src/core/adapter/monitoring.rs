@@ -21,13 +21,10 @@ impl ModelMonitoring for Adapter {
     async fn start_monitoring(self: Arc<Self>) -> Result<(), Self::Error> {
         let proxy = Adapter1Proxy::new(&self.zbus_connection, self.object_path.clone())
             .await
-            .map_err(Error::DbusError)?;
+            .map_err(Error::Dbus)?;
 
         let Some(ref cancellation_token) = self.cancellation_token else {
-            return Err(Error::OperationFailed {
-                operation: "start_monitoring",
-                reason: String::from("A cancellation_token was not found."),
-            });
+            return Err(Error::NoCancellationToken);
         };
 
         let cancel_token = cancellation_token.clone();

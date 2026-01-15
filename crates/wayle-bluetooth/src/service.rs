@@ -71,9 +71,9 @@ impl BluetoothService {
     /// # Errors
     /// Returns error if D-Bus connection fails or service initialization fails.
     pub async fn new() -> Result<Self, Error> {
-        let connection = Connection::system().await.map_err(|err| {
-            Error::ServiceInitializationFailed(format!("D-Bus connection failed: {err}"))
-        })?;
+        let connection = Connection::system()
+            .await
+            .map_err(|err| Error::ServiceInitialization(Box::new(err)))?;
 
         let cancellation_token = CancellationToken::new();
 
@@ -83,9 +83,8 @@ impl BluetoothService {
         let agent = BluetoothAgent {
             service_tx: agent_tx.clone(),
         };
-        let agent_path = OwnedObjectPath::try_from("/com/wayle/BluetoothAgent").map_err(|err| {
-            Error::AgentRegistrationFailed(format!("Failed to construct agent path: {err}"))
-        })?;
+        let agent_path = OwnedObjectPath::try_from("/com/wayle/BluetoothAgent")
+            .map_err(|err| Error::AgentRegistration(Box::new(err)))?;
 
         connection.object_server().at(&agent_path, agent).await?;
 
@@ -125,8 +124,8 @@ impl BluetoothService {
             cancellation_token.child_token(),
         )
         .await
-        .unwrap_or_else(|e| {
-            error!("Failed to start agent event processor: {e}");
+        .unwrap_or_else(|error| {
+            error!(error = %error, "cannot start agent event processor");
             error!("Bluetooth pairing may be degraded");
         });
 
@@ -204,9 +203,8 @@ impl BluetoothService {
     #[instrument(skip(self), err)]
     pub async fn start_discovery(&self) -> Result<(), Error> {
         let Some(active_adapter) = self.primary_adapter.get() else {
-            return Err(Error::OperationFailed {
-                operation: "start_discovery",
-                reason: String::from("No primary adapter found to perform the operation."),
+            return Err(Error::NoPrimaryAdapter {
+                operation: "start discovery",
             });
         };
 
@@ -224,9 +222,8 @@ impl BluetoothService {
     #[instrument(skip(self), fields(duration_secs = duration.as_secs()), err)]
     pub async fn start_timed_discovery(&self, duration: Duration) -> Result<(), Error> {
         let Some(active_adapter) = self.primary_adapter.get() else {
-            return Err(Error::OperationFailed {
-                operation: "start_discovery",
-                reason: String::from("No primary adapter found to perform the operation."),
+            return Err(Error::NoPrimaryAdapter {
+                operation: "start timed discovery",
             });
         };
 
@@ -234,8 +231,8 @@ impl BluetoothService {
 
         tokio::spawn(async move {
             let _ = sleep(duration).await;
-            if let Err(err) = active_adapter.stop_discovery().await {
-                error!("Failed to stop timed discovery: {err}");
+            if let Err(error) = active_adapter.stop_discovery().await {
+                error!(error = %error, "cannot stop timed discovery");
             };
         });
 
@@ -252,9 +249,8 @@ impl BluetoothService {
     #[instrument(skip(self), err)]
     pub async fn stop_discovery(&self) -> Result<(), Error> {
         let Some(active_adapter) = self.primary_adapter.get() else {
-            return Err(Error::OperationFailed {
-                operation: "stop_discovery",
-                reason: String::from("No primary adapter found to perform the operation."),
+            return Err(Error::NoPrimaryAdapter {
+                operation: "stop discovery",
             });
         };
 
@@ -271,9 +267,8 @@ impl BluetoothService {
     #[instrument(skip(self), err)]
     pub async fn enable(&self) -> Result<(), Error> {
         let Some(active_adapter) = self.primary_adapter.get() else {
-            return Err(Error::OperationFailed {
-                operation: "enable",
-                reason: String::from("No primary adapter found to perform the operation."),
+            return Err(Error::NoPrimaryAdapter {
+                operation: "enable bluetooth",
             });
         };
 
@@ -290,9 +285,8 @@ impl BluetoothService {
     #[instrument(skip(self), err)]
     pub async fn disable(&self) -> Result<(), Error> {
         let Some(active_adapter) = self.primary_adapter.get() else {
-            return Err(Error::OperationFailed {
-                operation: "disable",
-                reason: String::from("No primary adapter found to perform the operation."),
+            return Err(Error::NoPrimaryAdapter {
+                operation: "disable bluetooth",
             });
         };
 
@@ -301,7 +295,7 @@ impl BluetoothService {
 
     /// Provides a PIN code for legacy device pairing.
     ///
-    /// Called in response to `PairingRequest::RequestPinCode`.
+    /// Responds to `PairingRequest::RequestPinCode`.
     /// PIN must be 1-16 alphanumeric characters.
     ///
     /// # Errors
@@ -314,7 +308,7 @@ impl BluetoothService {
 
     /// Provides a numeric passkey for device pairing.
     ///
-    /// Called in response to `PairingRequest::RequestPasskey`.
+    /// Responds to `PairingRequest::RequestPasskey`.
     /// Passkey must be between 0-999999.
     ///
     /// # Errors
@@ -327,8 +321,8 @@ impl BluetoothService {
 
     /// Provides confirmation for passkey matching.
     ///
-    /// Called in response to `PairingRequest::RequestConfirmation`.
-    /// Confirms whether displayed passkey matches remote device.
+    /// Responds to `PairingRequest::RequestConfirmation`.
+    /// Confirms whether the displayed passkey matches the remote device.
     ///
     /// # Errors
     ///
@@ -340,11 +334,8 @@ impl BluetoothService {
 
     /// Provides authorization for device pairing or connection.
     ///
-    /// Called in response to `PairingRequest::RequestAuthorization`.
+    /// Responds to `PairingRequest::RequestAuthorization`.
     /// Grants or denies permission for the device to pair/connect.
-    ///
-    /// # Arguments
-    /// * `authorized` - Whether to authorize the device connection
     ///
     /// # Errors
     ///
@@ -355,11 +346,8 @@ impl BluetoothService {
 
     /// Provides authorization for specific Bluetooth service access.
     ///
-    /// Called in response to `PairingRequest::RequestServiceAuthorization`.
+    /// Responds to `PairingRequest::RequestServiceAuthorization`.
     /// Grants or denies permission for the device to use a specific service/profile.
-    ///
-    /// # Arguments
-    /// * `authorized` - Whether to authorize access to the requested service
     ///
     /// # Errors
     ///

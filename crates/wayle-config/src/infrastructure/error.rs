@@ -1,129 +1,207 @@
-use std::{
-    fmt, io,
-    path::{Path, PathBuf},
-};
+use std::path::PathBuf;
 
 use thiserror::Error;
 
-/// Error types for the Wayle application.
-///
-/// This enum represents all possible errors that can occur during
-/// configuration loading, parsing, and import operations.
+/// Error types for the Wayle configuration infrastructure.
 #[derive(Error, Debug)]
 pub enum Error {
-    /// Configuration validation error
-    #[error("configuration validation failed for '{component}': {details}")]
-    ConfigValidation {
-        /// Component that failed validation
-        component: String,
-        /// Validation error details
-        details: String,
+    /// Circular import detected in configuration files.
+    #[error("circular import detected: {chain}")]
+    CircularImport {
+        /// Human-readable import chain showing the cycle.
+        chain: String,
     },
 
-    /// Configuration field missing or invalid
+    /// Configuration deserialization failed.
+    #[error("cannot deserialize config: {source}")]
+    ConfigDeserialization {
+        /// The underlying TOML deserialization error.
+        #[source]
+        source: toml::de::Error,
+    },
+
+    /// Configuration field is invalid or missing.
     #[error("invalid config field '{field}' in {component}: {reason}")]
     InvalidConfigField {
-        /// The field that is invalid
+        /// The field that is invalid.
         field: String,
-        /// Component containing the field
+        /// Component containing the field.
         component: String,
-        /// Reason why the field is invalid
-        reason: String,
+        /// Reason why the field is invalid.
+        reason: InvalidFieldReason,
     },
 
-    /// I/O operation error
-    #[error("I/O error on '{path}': {details}")]
-    IoError {
-        /// Path where I/O error occurred
+    /// I/O operation failed.
+    #[error("cannot {operation}")]
+    Io {
+        /// What operation was being attempted.
+        operation: IoOperation,
+        /// Path where I/O error occurred.
         path: PathBuf,
-        /// I/O error details
-        details: String,
+        /// The underlying I/O error.
+        #[source]
+        source: std::io::Error,
     },
 
-    /// Standard I/O operation error (for compatibility)
-    #[error("IO error: {0:#?}")]
-    Io(#[from] io::Error),
-
-    /// TOML parsing error with location context
-    #[error("failed to parse TOML at '{location}': {details}")]
-    TomlParseError {
-        /// Location of TOML being parsed (file path or "string")
-        location: String,
-        /// Parse error details
-        details: String,
-    },
-
-    /// Import operation error with file context
-    #[error("failed to import '{path}': {details}")]
-    ImportError {
-        /// Path of file being imported
+    /// TOML parsing failed.
+    #[error("cannot parse toml at '{path}'")]
+    TomlParse {
+        /// Location of TOML being parsed.
         path: PathBuf,
-        /// Import error details
-        details: String,
+        /// The underlying TOML parse error.
+        #[source]
+        source: toml::de::Error,
     },
 
-    /// Error occurred while serializing configuration
-    #[error("failed to serialize {content_type}: {details}")]
-    SerializationError {
-        /// Type of content being serialized
-        content_type: String,
-        /// Serialization error details
-        details: String,
+    /// TOML parsing failed for inline content.
+    #[error("cannot parse toml")]
+    TomlParseInline {
+        /// The underlying TOML parse error.
+        #[source]
+        source: toml::de::Error,
     },
 
-    /// Error occurred while persisting configuration to disk
-    #[error("failed to persist config to '{path}': {details}")]
-    PersistenceError {
-        /// Path where persistence failed
+    /// Import operation failed.
+    #[error("cannot import '{}'", path.display())]
+    Import {
+        /// Path of file being imported.
         path: PathBuf,
-        /// Error details from the persistence operation
-        details: String,
+        /// The underlying import error.
+        #[source]
+        source: Box<Error>,
     },
 
-    /// Error occurred while serializing theme file
-    #[error("failed to serialize theme file '{path}': {details}")]
-    ThemeSerializationError {
-        /// Path of the theme file
+    /// Import path has no parent directory.
+    #[error("cannot resolve import path '{}': no parent directory", path.display())]
+    ImportNoParent {
+        /// Path with no parent.
         path: PathBuf,
-        /// Error details from the theme serialization operation
-        details: String,
     },
+
+    /// TOML serialization failed.
+    #[error("cannot serialize {content_type}")]
+    Serialization {
+        /// Type of content being serialized.
+        content_type: &'static str,
+        /// The underlying TOML serialization error.
+        #[source]
+        source: toml::ser::Error,
+    },
+
+    /// Persistence operation failed.
+    #[error("cannot persist config to '{}'", path.display())]
+    Persistence {
+        /// Path where persistence failed.
+        path: PathBuf,
+        /// The underlying I/O error.
+        #[source]
+        source: std::io::Error,
+    },
+
+    /// Theme file is not a TOML file.
+    #[error("theme file '{}' is not a toml file", path.display())]
+    ThemeNotToml {
+        /// Path of the theme file.
+        path: PathBuf,
+    },
+
+    /// Theme file read failed.
+    #[error("cannot read theme file '{}'", path.display())]
+    ThemeRead {
+        /// Path of the theme file.
+        path: PathBuf,
+        /// The underlying I/O error.
+        #[source]
+        source: std::io::Error,
+    },
+
+    /// Theme TOML parsing failed.
+    #[error("cannot parse theme file '{}'", path.display())]
+    ThemeParse {
+        /// Path of the theme file.
+        path: PathBuf,
+        /// The underlying TOML parse error.
+        #[source]
+        source: toml::de::Error,
+    },
+
+    /// File watcher initialization failed.
+    #[error("cannot initialize file watcher")]
+    WatcherInit {
+        /// The underlying notify error.
+        #[source]
+        source: notify::Error,
+    },
+
+    /// Watch operation failed.
+    #[error("cannot watch '{}'", path.display())]
+    Watch {
+        /// Path that could not be watched.
+        path: PathBuf,
+        /// The underlying notify error.
+        #[source]
+        source: notify::Error,
+    },
+
+    /// Watcher state is poisoned.
+    #[error("watcher state is poisoned")]
+    WatcherPoisoned,
 }
 
-impl Error {
-    /// Creates a TOML parsing error with optional file path context.
-    ///
-    /// # Arguments
-    ///
-    /// * `error` - The underlying parsing error
-    /// * `path` - Optional path to the file that failed to parse
-    pub fn toml_parse(error: impl fmt::Display, path: Option<&Path>) -> Self {
-        let location = match path {
-            Some(p) => {
-                let clean_path = p.canonicalize().unwrap_or_else(|_| p.to_path_buf());
-                clean_path.to_string_lossy().to_string()
-            }
-            None => String::from("string"),
-        };
+/// Reasons why a config field is invalid.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum InvalidFieldReason {
+    /// The field was not found.
+    NotFound,
+    /// The path was empty.
+    EmptyPath,
+    /// The parent is not a table.
+    ParentNotTable,
+}
 
-        Error::TomlParseError {
-            location,
-            details: error.to_string(),
+impl std::fmt::Display for InvalidFieldReason {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::NotFound => write!(f, "field not found"),
+            Self::EmptyPath => write!(f, "empty path"),
+            Self::ParentNotTable => write!(f, "parent is not a table"),
         }
     }
+}
 
-    /// Creates an import error with file path context.
-    ///
-    /// # Arguments
-    ///
-    /// * `error` - The underlying import error
-    /// * `path` - Path to the file that failed to import
-    pub fn import(error: impl fmt::Display, path: &Path) -> Self {
-        let clean_path = path.canonicalize().unwrap_or_else(|_| path.to_path_buf());
+/// I/O operations for error context.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum IoOperation {
+    /// Reading a file.
+    ReadFile,
+    /// Writing a file.
+    WriteFile,
+    /// Creating a directory.
+    CreateDir,
+    /// Resolving a path.
+    ResolvePath,
+    /// Accessing config directory.
+    AccessConfigDir,
+}
 
-        Error::ImportError {
-            path: clean_path,
-            details: error.to_string(),
+impl std::fmt::Display for IoOperation {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::ReadFile => write!(f, "read file"),
+            Self::WriteFile => write!(f, "write file"),
+            Self::CreateDir => write!(f, "create directory"),
+            Self::ResolvePath => write!(f, "resolve path"),
+            Self::AccessConfigDir => write!(f, "access config directory"),
+        }
+    }
+}
+
+impl From<std::io::Error> for Error {
+    fn from(source: std::io::Error) -> Self {
+        Self::Io {
+            operation: IoOperation::ReadFile,
+            path: PathBuf::new(),
+            source,
         }
     }
 }

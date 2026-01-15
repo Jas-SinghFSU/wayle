@@ -19,10 +19,7 @@ impl ModelMonitoring for Settings {
 
     async fn start_monitoring(self: Arc<Self>) -> Result<(), Self::Error> {
         let Some(ref cancellation_token) = self.cancellation_token else {
-            return Err(Error::OperationFailed {
-                operation: "start_monitoring",
-                reason: String::from("A cancellation_token was not found."),
-            });
+            return Err(Error::MissingCancellationToken);
         };
 
         let settings_proxy = SettingsProxy::new(&self.zbus_connection).await?;
@@ -31,7 +28,7 @@ impl ModelMonitoring for Settings {
 
         tokio::spawn(async move {
             if let Err(e) = monitor(weak_self, settings_proxy, cancel_token).await {
-                warn!("Failed to start SettingsMonitor: {e}");
+                warn!(error = %e, "cannot start settings monitor");
             }
         });
 

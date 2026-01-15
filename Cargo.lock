@@ -4058,6 +4058,7 @@ dependencies = [
  "wayle-common",
  "wayle-config",
  "wayle-hyprland",
+ "wayle-icons",
  "wayle-media",
  "wayle-network",
  "wayle-notification",
@@ -4065,6 +4066,7 @@ dependencies = [
  "wayle-styling",
  "wayle-systray",
  "wayle-wallpaper",
+ "wayle-widgets",
 ]
 
 [[package]]

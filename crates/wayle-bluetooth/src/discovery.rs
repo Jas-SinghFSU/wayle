@@ -37,14 +37,10 @@ impl BluetoothDiscovery {
         notifier_tx: &broadcast::Sender<ServiceNotification>,
     ) -> Result<Self, Error> {
         let object_manager = ObjectManagerProxy::new(connection, BLUEZ_SERVICE, ROOT_PATH).await?;
-        let managed_objects =
-            object_manager
-                .get_managed_objects()
-                .await
-                .map_err(|e| Error::OperationFailed {
-                    operation: "object_manager.get_managed_objects",
-                    reason: e.to_string(),
-                })?;
+        let managed_objects = object_manager
+            .get_managed_objects()
+            .await
+            .map_err(Error::Discovery)?;
 
         let mut adapters = Vec::new();
         let mut devices = Vec::new();
@@ -118,12 +114,8 @@ impl BluetoothDiscovery {
         .await
         {
             Ok(adapter) => adapters.push(adapter),
-            Err(e) => {
-                warn!(
-                    "Failed to create adapter for path {}: {}",
-                    object_path.to_string(),
-                    e
-                );
+            Err(error) => {
+                warn!(error = %error, path = %object_path, "cannot create adapter");
             }
         }
     }
@@ -149,12 +141,8 @@ impl BluetoothDiscovery {
         .await
         {
             Ok(device) => devices.push(device),
-            Err(e) => {
-                warn!(
-                    "Failed to create device for path {}: {}",
-                    object_path.to_string(),
-                    e
-                );
+            Err(error) => {
+                warn!(error = %error, path = %object_path, "cannot create device");
             }
         }
     }

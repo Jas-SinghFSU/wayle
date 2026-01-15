@@ -43,7 +43,7 @@ impl SystemTrayServiceDiscovery {
 
             match TrayItem::get_live(params).await {
                 Ok(item) => items.push(item),
-                Err(e) => warn!("Failed to load tray item {}: {}", bus_name, e),
+                Err(error) => warn!(error = %error, bus_name = %bus_name, "cannot load tray item"),
             }
         }
 

@@ -66,12 +66,12 @@ async fn discover_existing_players(
 ) -> Result<(), Error> {
     let dbus_proxy = DBusProxy::new(connection)
         .await
-        .map_err(|e| Error::InitializationFailed(format!("DBus proxy failed: {e}")))?;
+        .map_err(|e| Error::Initialization(format!("d-bus proxy: {e}")))?;
 
     let names = dbus_proxy
         .list_names()
         .await
-        .map_err(|e| Error::DbusError(e.into()))?;
+        .map_err(|e| Error::Dbus(e.into()))?;
 
     for name in names {
         if name.starts_with(MPRIS_BUS_PREFIX) && !should_ignore(&name, ignored_patterns) {
@@ -104,12 +104,12 @@ fn spawn_name_monitoring(
     tokio::spawn(async move {
         debug!("MprisMonitoring task spawned");
         let Ok(dbus_proxy) = DBusProxy::new(&connection).await else {
-            warn!("Failed to create DBus proxy for name monitoring");
+            warn!("cannot create DBus proxy for name monitoring");
             return;
         };
 
         let Ok(mut name_owner_changed) = dbus_proxy.receive_name_owner_changed().await else {
-            warn!("Failed to subscribe to NameOwnerChanged");
+            warn!("cannot subscribe to NameOwnerChanged");
             return;
         };
 
@@ -184,7 +184,7 @@ async fn handle_player_added(
             debug!("Player {} added", player_id);
         }
         Err(e) => {
-            warn!("Failed to create player {}: {}", player_id, e);
+            warn!(error = %e, player_id = %player_id, "cannot create player");
         }
     }
 }

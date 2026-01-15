@@ -36,7 +36,7 @@ impl PersistenceWatcher {
                 debug!("Config change detected, persisting to disk");
 
                 if let Err(e) = service.save().await {
-                    error!(error = ?e, "Failed to persist config changes");
+                    error!(error = %e, "cannot persist config changes");
                 }
             }
         });

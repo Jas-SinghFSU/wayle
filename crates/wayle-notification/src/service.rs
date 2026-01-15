@@ -64,14 +64,11 @@ impl NotificationService {
         let notifications = self.notifications.get();
 
         for notif in notifications.iter() {
-            if let Err(e) = self.notif_tx.send(NotificationEvent::Remove(
+            if let Err(error) = self.notif_tx.send(NotificationEvent::Remove(
                 notif.id,
                 ClosedReason::DismissedByUser,
             )) {
-                warn!(
-                    "Failed to dismiss notification with id '{}': {}",
-                    notif.id, e
-                );
+                warn!(error = %error, id = notif.id, "cannot dismiss notification");
             }
         }
 

@@ -269,7 +269,7 @@ pub enum HyprlandEvent {
 
     /// Emitted when a screencopy state of a client changes.
     ///
-    /// Keep in mind there might be multiple separate clients.
+    /// Multiple separate clients may be screencasting simultaneously.
     Screencast {
         /// Whether screencasting is active.
         state: bool,
@@ -347,9 +347,10 @@ pub enum HyprlandEvent {
 
     /// Emitted when an app requests to ring the system bell via xdg-system-bell-v1.
     ///
-    /// Window address parameter may be empty.
+    /// The window address is `None` when the bell request originates from an
+    /// unknown or background source.
     Bell {
-        /// Window address (may be empty).
+        /// Window address, if the bell originated from a specific window.
         address: Option<Address>,
     },
 }

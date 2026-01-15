@@ -41,11 +41,12 @@ impl Volume {
         Self { volumes }
     }
 
-    /// Create volume with amplification (allows up to 4.0)
+    /// Creates volume with amplification (allows up to 4.0).
     ///
-    /// # Safety
-    /// Volumes above 2.0 may cause audio damage or distortion.
-    /// Only use when amplification is explicitly required.
+    /// Unlike `new()`, this method validates input and returns an error
+    /// for out-of-range values instead of clamping.
+    ///
+    /// Note: Volumes above 2.0 may cause audio damage or distortion.
     ///
     /// # Errors
     /// Returns error if any volume is negative or exceeds 4.0.
@@ -58,18 +59,18 @@ impl Volume {
         Ok(Self { volumes })
     }
 
-    /// Create a mono volume
+    /// Creates a mono (single-channel) volume.
     ///
     /// Volume is automatically clamped to valid range (0.0 to 4.0).
-    /// Use 1.0 for normal volume, values above 1.0 for amplification.
+    /// A value of 1.0 represents normal volume, and values above 1.0 provide amplification.
     pub fn mono(volume: f64) -> Self {
         Self::new(vec![volume])
     }
 
-    /// Create a stereo volume
+    /// Creates a stereo (two-channel) volume with left and right levels.
     ///
     /// Volume levels are automatically clamped to valid range (0.0 to 4.0).
-    /// Use 1.0 for normal volume, values above 1.0 for amplification.
+    /// A value of 1.0 represents normal volume, and values above 1.0 provide amplification.
     pub fn stereo(left: f64, right: f64) -> Self {
         Self::new(vec![left, right])
     }

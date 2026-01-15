@@ -82,10 +82,10 @@ impl<T: Clone + Send + Sync + 'static> Property<T> {
         Self { tx, rx }
     }
 
-    /// Set the property value.
+    /// Sets the property value, notifying all watchers if the value changed.
     ///
-    /// For service runtime state only. Configuration values should use
-    /// `ConfigProperty` which provides layered default/config/runtime handling.
+    /// Intended for service runtime state. Configuration values are better served
+    /// by `ConfigProperty` which provides layered default/config/runtime handling.
     pub fn set(&self, new_value: T)
     where
         T: PartialEq,

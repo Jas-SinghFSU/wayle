@@ -46,7 +46,7 @@ async fn handle_watcher_mode(service: &SystemTrayService) -> Result<(), Error> {
                 Ok(event) = event_receiver.recv() => {
                     match event {
                         TrayEvent::ItemRegistered(bus_name) => {
-                            if let Err(e) = handle_item_registered(
+                            if let Err(error) = handle_item_registered(
                                 &bus_name,
                                 &items,
                                 &connection,
@@ -54,7 +54,7 @@ async fn handle_watcher_mode(service: &SystemTrayService) -> Result<(), Error> {
                             )
                             .await
                             {
-                                warn!("Failed to handle registration for {}: {}", bus_name, e);
+                                warn!(error = %error, bus_name = %bus_name, "cannot handle registration");
                             }
                         }
                         TrayEvent::ItemUnregistered(bus_name) => {
@@ -93,7 +93,7 @@ async fn handle_host_mode(service: &SystemTrayService) -> Result<(), Error> {
                 }
                 Some(signal) = registered.next() => {
                     if let Ok(args) = signal.args()
-                        && let Err(e) = handle_item_registered(
+                        && let Err(error) = handle_item_registered(
                             &args.service,
                             &items,
                             &connection,
@@ -101,7 +101,7 @@ async fn handle_host_mode(service: &SystemTrayService) -> Result<(), Error> {
                         )
                         .await
                         {
-                            warn!("Failed to handle registration for {}: {}", args.service, e);
+                            warn!(error = %error, service = %args.service, "cannot handle registration");
                         }
                 }
                 Some(signal) = unregistered.next() => {
@@ -162,14 +162,20 @@ fn handle_item_unregistered(bus_name: &str, items: &Property<Vec<Arc<TrayItem>>>
 
 #[instrument(skip(service), err)]
 async fn monitor_name_owner_changes(service: &SystemTrayService) -> Result<(), Error> {
-    let Ok(dbus_proxy) = DBusProxy::new(&service.connection).await else {
-        warn!("Failed to create DBus proxy for name monitoring");
-        return Ok(());
+    let dbus_proxy = match DBusProxy::new(&service.connection).await {
+        Ok(proxy) => proxy,
+        Err(error) => {
+            warn!(error = %error, "cannot create dbus proxy for name monitoring");
+            return Ok(());
+        }
     };
 
-    let Ok(mut name_owner_changed) = dbus_proxy.receive_name_owner_changed().await else {
-        warn!("Failed to subscribe to NameOwnerChanged");
-        return Ok(());
+    let mut name_owner_changed = match dbus_proxy.receive_name_owner_changed().await {
+        Ok(stream) => stream,
+        Err(error) => {
+            warn!(error = %error, "cannot subscribe to NameOwnerChanged");
+            return Ok(());
+        }
     };
 
     let event_tx = service.event_tx.clone();

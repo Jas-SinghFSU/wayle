@@ -15,7 +15,7 @@ use zbus::{Result, proxy};
 pub trait Wallpaper {
     /// Sets the wallpaper for a specific monitor or all monitors.
     ///
-    /// Use an empty string for `monitor` to set on all monitors.
+    /// An empty string for `monitor` applies to all monitors.
     async fn set_wallpaper(&self, path: String, monitor: String) -> Result<()>;
 
     /// Sets the fit mode for wallpaper scaling.

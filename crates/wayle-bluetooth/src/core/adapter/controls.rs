@@ -20,9 +20,9 @@ impl AdapterControls {
         proxy
             .set_alias(alias)
             .await
-            .map_err(|e| Error::OperationFailed {
-                operation: "set_alias",
-                reason: e.to_string(),
+            .map_err(|source| Error::AdapterOperation {
+                operation: "set alias",
+                source,
             })
     }
 
@@ -36,9 +36,9 @@ impl AdapterControls {
         proxy
             .set_connectable(connectable)
             .await
-            .map_err(|e| Error::OperationFailed {
-                operation: "set_connectable",
-                reason: e.to_string(),
+            .map_err(|source| Error::AdapterOperation {
+                operation: "set connectable",
+                source,
             })
     }
 
@@ -52,9 +52,9 @@ impl AdapterControls {
         proxy
             .set_powered(powered)
             .await
-            .map_err(|e| Error::OperationFailed {
-                operation: "set_powered",
-                reason: e.to_string(),
+            .map_err(|source| Error::AdapterOperation {
+                operation: "set powered",
+                source,
             })
     }
 
@@ -68,9 +68,9 @@ impl AdapterControls {
         proxy
             .set_discoverable(discoverable)
             .await
-            .map_err(|e| Error::OperationFailed {
-                operation: "set_discoverable",
-                reason: e.to_string(),
+            .map_err(|source| Error::AdapterOperation {
+                operation: "set discoverable",
+                source,
             })
     }
 
@@ -84,9 +84,9 @@ impl AdapterControls {
         proxy
             .set_discoverable_timeout(discoverable_timeout)
             .await
-            .map_err(|e| Error::OperationFailed {
-                operation: "set_discoverable_timeout",
-                reason: e.to_string(),
+            .map_err(|source| Error::AdapterOperation {
+                operation: "set discoverable timeout",
+                source,
             })
     }
 
@@ -100,9 +100,9 @@ impl AdapterControls {
         proxy
             .set_pairable(pairable)
             .await
-            .map_err(|e| Error::OperationFailed {
-                operation: "set_pairable",
-                reason: e.to_string(),
+            .map_err(|source| Error::AdapterOperation {
+                operation: "set pairable",
+                source,
             })
     }
 
@@ -116,9 +116,9 @@ impl AdapterControls {
         proxy
             .set_pairable_timeout(pairable_timeout)
             .await
-            .map_err(|e| Error::OperationFailed {
-                operation: "set_pairable_timeout",
-                reason: e.to_string(),
+            .map_err(|source| Error::AdapterOperation {
+                operation: "set pairable timeout",
+                source,
             })
     }
 
@@ -132,9 +132,9 @@ impl AdapterControls {
         proxy
             .set_discovery_filter(discovery_filter)
             .await
-            .map_err(|e| Error::OperationFailed {
-                operation: "set_discovery_filter",
-                reason: e.to_string(),
+            .map_err(|source| Error::AdapterOperation {
+                operation: "set discovery filter",
+                source,
             })
     }
 
@@ -147,9 +147,9 @@ impl AdapterControls {
         proxy
             .start_discovery()
             .await
-            .map_err(|e| Error::OperationFailed {
-                operation: "start_discovery",
-                reason: e.to_string(),
+            .map_err(|source| Error::AdapterOperation {
+                operation: "start discovery",
+                source,
             })
     }
 
@@ -162,9 +162,9 @@ impl AdapterControls {
         proxy
             .stop_discovery()
             .await
-            .map_err(|e| Error::OperationFailed {
-                operation: "stop_discovery",
-                reason: e.to_string(),
+            .map_err(|source| Error::AdapterOperation {
+                operation: "stop discovery",
+                source,
             })
     }
 
@@ -178,9 +178,9 @@ impl AdapterControls {
         proxy
             .remove_device(device_path)
             .await
-            .map_err(|e| Error::OperationFailed {
-                operation: "remove_device",
-                reason: e.to_string(),
+            .map_err(|source| Error::AdapterOperation {
+                operation: "remove device",
+                source,
             })
     }
 
@@ -193,7 +193,10 @@ impl AdapterControls {
         proxy
             .get_discovery_filters()
             .await
-            .map_err(Error::DbusError)
+            .map_err(|source| Error::AdapterOperation {
+                operation: "get discovery filters",
+                source,
+            })
     }
 
     pub(super) async fn connect_device(
@@ -206,9 +209,9 @@ impl AdapterControls {
         proxy
             .connect_device(properties)
             .await
-            .map_err(|e| Error::OperationFailed {
-                operation: "connect_device",
-                reason: e.to_string(),
+            .map_err(|source| Error::AdapterOperation {
+                operation: "connect device",
+                source,
             })
     }
 }

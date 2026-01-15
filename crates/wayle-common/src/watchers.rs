@@ -45,7 +45,7 @@ pub type BoxedStream = Pin<Box<dyn Stream<Item = ()> + Send>>;
 ///
 /// ## Manual
 ///
-/// Handler receives the command sender for full control. Use for conditional
+/// Handler receives the command sender for full control. Supports conditional
 /// sends, multiple commands, or custom error handling.
 ///
 /// ```ignore

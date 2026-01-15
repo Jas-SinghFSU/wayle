@@ -1,77 +1,87 @@
-/// System tray service errors
+/// System tray service errors.
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
-    /// D-Bus communication error
-    #[error("D-Bus operation failed: {0:#?}")]
-    DbusError(#[from] zbus::Error),
+    /// D-Bus communication error.
+    #[error("dbus operation failed")]
+    Dbus(#[from] zbus::Error),
 
-    /// Service initialization failed
-    #[error("Failed to initialize system tray service: {0:#?}")]
-    ServiceInitializationFailed(String),
+    /// Service initialization failed.
+    #[error("cannot initialize system tray service: {0}")]
+    ServiceInitialization(String),
 
-    /// Failed to register as StatusNotifierWatcher
-    #[error("Failed to register as StatusNotifierWatcher: {0:#?}")]
-    WatcherRegistrationFailed(String),
+    /// Cannot register as StatusNotifierWatcher.
+    #[error("cannot register as StatusNotifierWatcher: {0}")]
+    WatcherRegistration(String),
 
-    /// StatusNotifierItem not found
-    #[error("StatusNotifierItem not found: {service}")]
+    /// StatusNotifierItem not found.
+    #[error("cannot find StatusNotifierItem: {service}")]
     ItemNotFound {
-        /// D-Bus service name of the missing item
+        /// D-Bus service name of the missing item.
         service: String,
     },
 
-    /// Failed to connect to StatusNotifierItem
-    #[error("Failed to connect to item {service}: {reason}")]
-    ItemConnectionFailed {
-        /// D-Bus service name of the item
+    /// Cannot connect to StatusNotifierItem.
+    #[error("cannot connect to tray item {service}")]
+    ItemConnection {
+        /// D-Bus service name of the item.
         service: String,
-        /// Reason for connection failure
-        reason: String,
+        /// Underlying D-Bus error.
+        #[source]
+        source: zbus::Error,
     },
 
-    /// Menu operation failed
-    #[error("Menu operation failed for item {service}: {reason}")]
-    MenuOperationFailed {
-        /// D-Bus service name of the item
+    /// Menu operation failed.
+    #[error("cannot perform menu operation for item {service}")]
+    MenuOperation {
+        /// D-Bus service name of the item.
         service: String,
-        /// Reason for menu operation failure
-        reason: String,
+        /// Underlying D-Bus error.
+        #[source]
+        source: zbus::Error,
     },
 
-    /// Icon data parsing failed
-    #[error("Failed to parse icon data for {service}: {reason}")]
-    IconParsingFailed {
-        /// D-Bus service name of the item
+    /// Icon data parsing failed.
+    #[error("cannot parse icon data for {service}: {details}")]
+    IconParsing {
+        /// D-Bus service name of the item.
         service: String,
-        /// Reason for parsing failure
-        reason: String,
+        /// Description of the parsing failure.
+        details: String,
     },
 
-    /// Property conversion failed
-    #[error("Failed to convert property {property} for {service}: expected {expected}")]
-    PropertyConversionFailed {
-        /// D-Bus service name
+    /// Property conversion failed.
+    #[error("cannot convert property {property} for {service}: expected {expected}")]
+    PropertyConversion {
+        /// D-Bus service name.
         service: String,
-        /// Property name that failed to convert
+        /// Property name that failed to convert.
         property: String,
-        /// Expected type
+        /// Expected type.
         expected: String,
     },
 
-    /// System tray operation failed
-    #[error("System tray operation failed: {operation} - {reason}")]
-    OperationFailed {
-        /// The operation that failed
+    /// System tray operation failed.
+    #[error("cannot perform tray operation '{operation}'")]
+    Operation {
+        /// The operation that failed.
         operation: &'static str,
-        /// The reason the operation failed
-        reason: String,
+        /// Underlying D-Bus error.
+        #[source]
+        source: zbus::Error,
     },
 
-    /// Invalid service name format
-    #[error("Invalid bus name format: {0}")]
+    /// Tray item does not support the requested activation method.
+    #[error("tray item does not support '{operation}', use its menu instead")]
+    OperationNotSupported {
+        /// The operation that is not supported.
+        operation: &'static str,
+    },
+
+    /// Invalid service name format.
+    #[error("invalid bus name format: {0}")]
     InvalidBusName(String),
 
-    /// ZVariant conversion error
-    #[error("ZVariant error: {0}")]
-    ZVariantError(#[from] zbus::zvariant::Error),
+    /// ZVariant conversion error.
+    #[error("zvariant conversion failed")]
+    ZVariant(#[from] zbus::zvariant::Error),
 }

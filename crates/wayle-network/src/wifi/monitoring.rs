@@ -42,10 +42,7 @@ impl ModelMonitoring for Wifi {
         device_arc.start_monitoring().await?;
 
         let Some(ref cancellation_token) = self.device.core.cancellation_token else {
-            return Err(Error::OperationFailed {
-                operation: "start_monitoring",
-                reason: String::from("A cancellation_token was not found."),
-            });
+            return Err(Error::MissingCancellationToken);
         };
 
         let access_points = &self.access_points;
@@ -147,11 +144,11 @@ async fn monitor_wifi(
         strength: mut ap_strength_stream,
     } = {
         let Some(wifi) = weak_wifi.upgrade() else {
-            error!("Failed to upgrade weak wifi reference.");
-            error!("Access Point monitoring may be degraded");
+            error!("cannot upgrade weak wifi reference");
+            error!("access point monitoring may be degraded");
             return Err(Error::OperationFailed {
-                operation: "monitor_wifi",
-                reason: String::from("Failed to upgrade weak_wifi"),
+                operation: "monitor wifi",
+                source: "weak reference dropped".into(),
             });
         };
 

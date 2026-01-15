@@ -30,8 +30,8 @@ impl DeviceControls {
             .set_managed(managed)
             .await
             .map_err(|e| Error::OperationFailed {
-                operation: "set_managed",
-                reason: e.to_string(),
+                operation: "set managed",
+                source: e.into(),
             })?;
 
         Ok(())
@@ -55,8 +55,8 @@ impl DeviceControls {
             .set_autoconnect(autoconnect)
             .await
             .map_err(|e| Error::OperationFailed {
-                operation: "set_autoconnect",
-                reason: e.to_string(),
+                operation: "set autoconnect",
+                source: e.into(),
             })?;
 
         Ok(())
@@ -82,8 +82,8 @@ impl DeviceControls {
             .reapply(connection_settings, version_id, flags)
             .await
             .map_err(|e| Error::OperationFailed {
-                operation: "reapply",
-                reason: e.to_string(),
+                operation: "reapply connection",
+                source: e.into(),
             })?;
 
         Ok(())
@@ -108,8 +108,8 @@ impl DeviceControls {
             .await
             .map(AppliedConnection::from)
             .map_err(|e| Error::OperationFailed {
-                operation: "get_applied_connection",
-                reason: e.to_string(),
+                operation: "get applied connection",
+                source: e.into(),
             })
     }
 
@@ -126,8 +126,8 @@ impl DeviceControls {
             .disconnect()
             .await
             .map_err(|e| Error::OperationFailed {
-                operation: "disconnect",
-                reason: e.to_string(),
+                operation: "disconnect device",
+                source: e.into(),
             })?;
 
         Ok(())
@@ -143,8 +143,8 @@ impl DeviceControls {
             .map_err(Error::DbusError)?;
 
         proxy.delete().await.map_err(|e| Error::OperationFailed {
-            operation: "delete",
-            reason: e.to_string(),
+            operation: "delete device",
+            source: e.into(),
         })?;
 
         Ok(())

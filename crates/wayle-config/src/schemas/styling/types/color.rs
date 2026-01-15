@@ -225,3 +225,15 @@ pub enum ThemeProvider {
     /// Dynamic theming via Wallust. Palette tokens are injected at runtime.
     Wallust,
 }
+
+impl fmt::Display for ThemeProvider {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s = match self {
+            Self::Wayle => "wayle",
+            Self::Matugen => "matugen",
+            Self::Pywal => "pywal",
+            Self::Wallust => "wallust",
+        };
+        write!(f, "{s}")
+    }
+}

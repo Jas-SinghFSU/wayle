@@ -90,7 +90,7 @@ impl NetworkService {
         })
         .await
         .map_err(|err| {
-            Error::ServiceInitializationFailed(format!("Failed to initialize Settings: {err}"))
+            Error::ServiceInitializationFailed(format!("cannot initialize Settings: {err}"))
         })?;
 
         let wifi_device_path = NetworkServiceDiscovery::wifi_device_path(&connection).await?;
@@ -106,7 +106,7 @@ impl NetworkService {
             {
                 Ok(wifi) => Some(wifi),
                 Err(e) => {
-                    warn!("Failed to create WiFi service from path {}: {}", path, e);
+                    warn!(error = %e, path = %path, "cannot create WiFi service");
                     None
                 }
             }
@@ -124,7 +124,7 @@ impl NetworkService {
             {
                 Ok(wired) => Some(wired),
                 Err(e) => {
-                    warn!("Failed to create Wired service from path {}: {}", path, e);
+                    warn!(error = %e, path = %path, "cannot create wired service");
                     None
                 }
             }

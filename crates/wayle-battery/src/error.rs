@@ -1,20 +1,23 @@
-/// Battery service errors
+/// Battery service errors.
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
-    /// D-Bus communication error
-    #[error("D-Bus operation failed: {0:#?}")]
-    DbusError(#[from] zbus::Error),
+    /// D-Bus communication error.
+    #[error("dbus operation failed")]
+    Dbus(
+        #[from]
+        #[source]
+        zbus::Error,
+    ),
 
-    /// Service initialization failed
-    #[error("Failed to initialize battery service: {0:#?}")]
-    ServiceInitializationFailed(String),
+    /// Cannot parse D-Bus object path.
+    #[error("cannot parse D-Bus object path")]
+    InvalidObjectPath(
+        #[from]
+        #[source]
+        zbus::zvariant::Error,
+    ),
 
-    /// Battery operation failed
-    #[error("Battery operation failed: {operation} - {reason}")]
-    OperationFailed {
-        /// The operation that failed
-        operation: &'static str,
-        /// The reason the operation failed
-        reason: String,
-    },
+    /// Monitoring requires a cancellation token.
+    #[error("cannot start monitoring without a cancellation token")]
+    MissingCancellationToken,
 }

@@ -68,9 +68,9 @@ impl AudioServiceBuilder {
         .await?;
 
         let connection = if self.register_daemon {
-            let conn = Connection::session().await.map_err(|e| {
-                Error::InitializationFailed(format!("D-Bus connection failed: {e}"))
-            })?;
+            let conn = Connection::session()
+                .await
+                .map_err(Error::DbusConnectionFailed)?;
             Some(conn)
         } else {
             None
@@ -100,17 +100,18 @@ impl AudioServiceBuilder {
                 .object_server()
                 .at(SERVICE_PATH, daemon)
                 .await
-                .map_err(|e| {
-                    Error::InitializationFailed(format!(
-                        "Failed to register D-Bus object at '{SERVICE_PATH}': {e}"
-                    ))
+                .map_err(|source| Error::DbusObjectRegistrationFailed {
+                    path: SERVICE_PATH,
+                    source,
                 })?;
 
-            connection.request_name(SERVICE_NAME).await.map_err(|e| {
-                Error::InitializationFailed(format!(
-                    "Failed to acquire D-Bus name '{SERVICE_NAME}': {e}"
-                ))
-            })?;
+            connection
+                .request_name(SERVICE_NAME)
+                .await
+                .map_err(|source| Error::DbusNameAcquisitionFailed {
+                    name: SERVICE_NAME,
+                    source,
+                })?;
 
             info!("Audio service registered at {SERVICE_NAME}");
         }

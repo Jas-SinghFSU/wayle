@@ -86,8 +86,8 @@ impl RoundingLevel {
 /// Border radius class for component rounding.
 ///
 /// Maps directly to the raw `--radius-*` tokens for component-level
-/// rounding control. Use this for individual component overrides,
-/// while `RoundingLevel` sets the global preference.
+/// rounding control. Provides individual component overrides independent
+/// of the global `RoundingLevel` preference.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum RadiusClass {

@@ -29,6 +29,28 @@ impl Default for BarConfig {
     }
 }
 
+/// A bar item: either a standalone module or a named group of modules.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(untagged)]
+pub enum BarItem {
+    /// A single module (e.g., "clock", "battery").
+    Module(BarModule),
+    /// A named group of modules with shared visual container.
+    Group(BarGroup),
+}
+
+/// A named group of modules.
+///
+/// Groups provide visual containment via CSS. The group name becomes
+/// a CSS ID selector (`#group-name`) for per-group styling.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+pub struct BarGroup {
+    /// Unique name for CSS targeting (becomes `#name` selector).
+    pub name: String,
+    /// Modules contained in this group.
+    pub modules: Vec<BarModule>,
+}
+
 /// Layout configuration for a bar on a specific monitor.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, PartialEq)]
 #[serde(default)]
@@ -38,15 +60,11 @@ pub struct BarLayout {
     /// Inherit layout from another named layout.
     pub extends: Option<String>,
     /// Modules in the left section.
-    pub left: Option<Vec<BarModule>>,
-    /// Modules in the center-left section.
-    pub center_left: Option<Vec<BarModule>>,
+    pub left: Vec<BarItem>,
     /// Modules in the center section.
-    pub center: Option<Vec<BarModule>>,
-    /// Modules in the center-right section.
-    pub center_right: Option<Vec<BarModule>>,
+    pub center: Vec<BarItem>,
     /// Modules in the right section.
-    pub right: Option<Vec<BarModule>>,
+    pub right: Vec<BarItem>,
 }
 
 impl Default for BarLayout {
@@ -54,11 +72,9 @@ impl Default for BarLayout {
         Self {
             monitor: String::from("*"),
             extends: None,
-            left: None,
-            center_left: None,
-            center: None,
-            center_right: None,
-            right: None,
+            left: vec![BarItem::Module(BarModule::Dashboard)],
+            center: vec![BarItem::Module(BarModule::Clock)],
+            right: vec![BarItem::Module(BarModule::Systray)],
         }
     }
 }

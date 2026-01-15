@@ -59,7 +59,7 @@ impl Dhcp4Config {
                 Err(_) => {
                     return Err(Error::DataConversionFailed {
                         data_type: format!("DHCP4 option '{key}'"),
-                        reason: String::from("Failed to convert to OwnedValue"),
+                        reason: String::from("cannot convert to owned value"),
                     });
                 }
             }

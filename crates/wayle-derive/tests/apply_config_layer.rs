@@ -21,7 +21,7 @@ fn updates_all_fields_from_table() {
         count = 42
     };
 
-    config.apply_config_layer(&toml::Value::Table(toml_value));
+    config.apply_config_layer(&toml::Value::Table(toml_value), "");
 
     assert!(config.enabled.get());
     assert_eq!(config.count.get(), 42);
@@ -38,7 +38,7 @@ fn updates_partial_fields() {
         enabled = true
     };
 
-    config.apply_config_layer(&toml::Value::Table(toml_value));
+    config.apply_config_layer(&toml::Value::Table(toml_value), "");
 
     assert!(config.enabled.get());
     assert_eq!(config.count.get(), 10);
@@ -57,7 +57,7 @@ fn ignores_unknown_fields() {
         count = 99
     };
 
-    config.apply_config_layer(&toml::Value::Table(toml_value));
+    config.apply_config_layer(&toml::Value::Table(toml_value), "");
 
     assert!(config.enabled.get());
     assert_eq!(config.count.get(), 99);
@@ -70,7 +70,7 @@ fn handles_non_table_value() {
         count: ConfigProperty::new(5),
     };
 
-    config.apply_config_layer(&toml::Value::String("not a table".to_string()));
+    config.apply_config_layer(&toml::Value::String("not a table".to_string()), "");
 
     assert!(config.enabled.get());
     assert_eq!(config.count.get(), 5);
@@ -86,7 +86,7 @@ fn handles_empty_table() {
     use toml::map::Map;
     let toml_value = Map::new();
 
-    config.apply_config_layer(&toml::Value::Table(toml_value));
+    config.apply_config_layer(&toml::Value::Table(toml_value), "");
 
     assert!(config.enabled.get());
     assert_eq!(config.count.get(), 5);
@@ -115,7 +115,7 @@ fn updates_nested_structs() {
         count = 100
     };
 
-    config.apply_config_layer(&toml::Value::Table(toml_value));
+    config.apply_config_layer(&toml::Value::Table(toml_value), "");
 
     assert_eq!(config.name.get(), "new");
     assert!(config.simple.enabled.get());

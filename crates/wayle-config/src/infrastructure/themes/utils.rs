@@ -32,7 +32,7 @@ pub fn load_themes(config: &Config, themes_dir: &Path) {
         let path = entry.path();
 
         let Ok(theme) = get_theme_from_file(&path) else {
-            error!("Failed to load theme at {}", path.display());
+            error!(path = %path.display(), "cannot load theme");
             continue;
         };
 
@@ -40,7 +40,7 @@ pub fn load_themes(config: &Config, themes_dir: &Path) {
             .iter()
             .any(|t| t.palette.name == theme.palette.name)
         {
-            error!("Theme '{}' already exists, skipping", theme.palette.name);
+            error!(theme = %theme.palette.name, "Theme already exists, skipping");
             continue;
         }
 
@@ -52,22 +52,18 @@ pub fn load_themes(config: &Config, themes_dir: &Path) {
 
 fn get_theme_from_file(path: &Path) -> Result<ThemeEntry, Error> {
     if path.extension().is_none_or(|ext| ext != "toml") {
-        return Err(Error::ThemeSerializationError {
-            path: path.into(),
-            details: String::from("File is not a toml file"),
-        });
+        return Err(Error::ThemeNotToml { path: path.into() });
     }
 
-    let content = fs::read_to_string(path).map_err(|e| Error::ThemeSerializationError {
+    let content = fs::read_to_string(path).map_err(|source| Error::ThemeRead {
         path: path.into(),
-        details: format!("Failed to read file: {e}"),
+        source,
     })?;
 
-    let palette: Palette =
-        toml::from_str(&content).map_err(|e| Error::ThemeSerializationError {
-            path: path.into(),
-            details: format!("Failed to parse TOML: {e}"),
-        })?;
+    let palette: Palette = toml::from_str(&content).map_err(|source| Error::ThemeParse {
+        path: path.into(),
+        source,
+    })?;
 
     Ok(ThemeEntry {
         palette,

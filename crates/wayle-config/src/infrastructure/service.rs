@@ -3,10 +3,15 @@ use std::{
     sync::{Arc, RwLock},
 };
 
-use tracing::{info, instrument};
+use tracing::{info, instrument, warn};
 use wayle_common::{ApplyConfigLayer, ApplyRuntimeLayer, ExtractRuntimeValues};
 
-use super::{error::Error, paths::ConfigPaths, toml_path, watcher::FileWatcher};
+use super::{
+    error::{Error, InvalidFieldReason, IoOperation},
+    paths::ConfigPaths,
+    toml_path,
+    watcher::FileWatcher,
+};
 use crate::{Config, infrastructure::themes::utils::load_themes};
 
 /// Configuration service with reactive properties.
@@ -36,13 +41,15 @@ impl ConfigService {
         let config = Config::default();
         let config_path = ConfigPaths::main_config();
 
-        if let Ok(config_toml) = Self::load_toml_file(&config_path) {
-            config.apply_config_layer(&config_toml);
+        match Self::load_toml_file(&config_path) {
+            Ok(config_toml) => config.apply_config_layer(&config_toml, ""),
+            Err(e) => warn!(error = %e, "cannot load config.toml, using defaults"),
         }
 
         let runtime_path = ConfigPaths::runtime_config();
-        if let Ok(runtime_toml) = Self::load_toml_file(&runtime_path) {
-            config.apply_runtime_layer(&runtime_toml);
+        match Self::load_toml_file(&runtime_path) {
+            Ok(runtime_toml) => config.apply_runtime_layer(&runtime_toml, ""),
+            Err(e) => warn!(error = %e, "cannot load runtime.toml"),
         }
 
         let service = Arc::new(Self {
@@ -57,10 +64,7 @@ impl ConfigService {
         *service
             ._watcher
             .write()
-            .map_err(|e| Error::PersistenceError {
-                path: config_path,
-                details: format!("Failed to initialize watcher: {e}"),
-            })? = Some(watcher);
+            .map_err(|_| Error::WatcherPoisoned)? = Some(watcher);
 
         info!("Configuration loaded successfully");
 
@@ -90,19 +94,19 @@ impl ConfigService {
         let temp_path = runtime_path.with_extension("tmp");
 
         let toml_str =
-            toml::to_string_pretty(&runtime_value).map_err(|e| Error::SerializationError {
-                content_type: String::from("runtime config"),
-                details: e.to_string(),
+            toml::to_string_pretty(&runtime_value).map_err(|source| Error::Serialization {
+                content_type: "runtime config",
+                source,
             })?;
 
-        fs::write(&temp_path, toml_str).map_err(|e| Error::PersistenceError {
+        fs::write(&temp_path, toml_str).map_err(|source| Error::Persistence {
             path: temp_path.clone(),
-            details: e.to_string(),
+            source,
         })?;
 
-        fs::rename(&temp_path, &runtime_path).map_err(|e| Error::PersistenceError {
+        fs::rename(&temp_path, &runtime_path).map_err(|source| Error::Persistence {
             path: runtime_path.clone(),
-            details: e.to_string(),
+            source,
         })?;
 
         info!("Configuration saved to runtime.toml");
@@ -111,12 +115,16 @@ impl ConfigService {
     }
 
     fn load_toml_file(path: &std::path::Path) -> Result<toml::Value, Error> {
-        let content = fs::read_to_string(path).map_err(|e| Error::IoError {
+        let content = fs::read_to_string(path).map_err(|source| Error::Io {
+            operation: IoOperation::ReadFile,
             path: path.to_path_buf(),
-            details: e.to_string(),
+            source,
         })?;
 
-        toml::from_str(&content).map_err(|e| Error::toml_parse(e, Some(path)))
+        toml::from_str(&content).map_err(|source| Error::TomlParse {
+            path: path.to_path_buf(),
+            source,
+        })
     }
 }
 
@@ -143,9 +151,9 @@ pub trait ConfigServiceCli {
 impl ConfigServiceCli for ConfigService {
     fn get_by_path(&self, path: &str) -> Result<toml::Value, Error> {
         let config_value =
-            toml::Value::try_from(self.config.as_ref()).map_err(|e| Error::SerializationError {
-                content_type: String::from("config"),
-                details: e.to_string(),
+            toml::Value::try_from(self.config.as_ref()).map_err(|source| Error::Serialization {
+                content_type: "config",
+                source,
             })?;
 
         let mut value = config_value;
@@ -155,7 +163,7 @@ impl ConfigServiceCli for ConfigService {
                 .ok_or_else(|| Error::InvalidConfigField {
                     field: segment.to_string(),
                     component: path.to_string(),
-                    reason: String::from("field not found"),
+                    reason: InvalidFieldReason::NotFound,
                 })?
                 .clone();
         }
@@ -166,7 +174,7 @@ impl ConfigServiceCli for ConfigService {
     fn set_by_path(&self, path: &str, value: toml::Value) -> Result<(), Error> {
         let mut root = toml::Value::Table(toml::Table::new());
         toml_path::insert(&mut root, path, value)?;
-        self.config.apply_runtime_layer(&root);
+        self.config.apply_runtime_layer(&root, "");
         Ok(())
     }
 }

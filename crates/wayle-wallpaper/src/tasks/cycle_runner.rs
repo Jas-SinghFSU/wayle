@@ -133,7 +133,7 @@ impl CyclingTask {
         };
 
         if let Err(err) = config.refresh() {
-            warn!(error = %err, "Failed to refresh cycling images");
+            warn!(error = %err, "cannot refresh cycling images");
             return;
         }
 
@@ -181,7 +181,7 @@ impl CyclingTask {
                     error = %err,
                     monitor = monitor_name,
                     path = %path.display(),
-                    "Failed to apply wallpaper"
+                    "cannot apply wallpaper"
                 );
             }
         }

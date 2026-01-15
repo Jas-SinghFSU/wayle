@@ -41,7 +41,7 @@ impl OutputWatcher {
         let conn = match Connection::connect_to_env() {
             Ok(conn) => conn,
             Err(err) => {
-                warn!(error = %err, "Failed to connect to Wayland display");
+                warn!(error = %err, "cannot connect to Wayland display");
                 return None;
             }
         };
@@ -56,7 +56,7 @@ impl OutputWatcher {
             }) {
             Ok(handle) => handle,
             Err(err) => {
-                warn!(error = %err, "Failed to spawn Wayland output watcher thread");
+                warn!(error = %err, "cannot spawn Wayland output watcher thread");
                 return None;
             }
         };
@@ -79,7 +79,7 @@ impl OutputWatcher {
         let conn = match Connection::connect_to_env() {
             Ok(conn) => conn,
             Err(err) => {
-                warn!(error = %err, "Failed to connect to Wayland for output query");
+                warn!(error = %err, "cannot connect to Wayland for output query");
                 return None;
             }
         };
@@ -87,7 +87,7 @@ impl OutputWatcher {
         let (globals, mut event_queue) = match registry_queue_init(&conn) {
             Ok(result) => result,
             Err(err) => {
-                warn!(error = %err, "Failed to initialize Wayland registry");
+                warn!(error = %err, "cannot initialize Wayland registry");
                 return None;
             }
         };
@@ -97,11 +97,11 @@ impl OutputWatcher {
         let mut state = WatcherState::new(&globals, &qh, tx);
 
         if let Err(err) = event_queue.roundtrip(&mut state) {
-            warn!(error = %err, "Wayland roundtrip failed during output query");
+            warn!(error = %err, "wayland roundtrip failed during output query");
             return None;
         }
         if let Err(err) = event_queue.roundtrip(&mut state) {
-            warn!(error = %err, "Wayland roundtrip failed during output query");
+            warn!(error = %err, "wayland roundtrip failed during output query");
             return None;
         }
 
@@ -195,7 +195,7 @@ fn run_event_loop(
     let (globals, mut event_queue) = match registry_queue_init(&conn) {
         Ok(result) => result,
         Err(err) => {
-            warn!(error = %err, "Failed to initialize Wayland registry");
+            warn!(error = %err, "cannot initialize Wayland registry");
             return;
         }
     };

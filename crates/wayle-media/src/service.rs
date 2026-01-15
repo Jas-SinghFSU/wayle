@@ -39,7 +39,7 @@ impl MediaService {
     ///
     /// # Errors
     ///
-    /// Returns `MediaError::InitializationFailed` if D-Bus connection fails
+    /// Returns `Error::Initialization` if D-Bus connection fails.
     #[instrument]
     pub async fn new() -> Result<Arc<Self>, Error> {
         Self::builder().build().await
@@ -58,8 +58,8 @@ impl MediaService {
     ///
     /// # Errors
     ///
-    /// Returns `MediaError::PlayerNotFound` if the player doesn't exist.
-    /// Returns `MediaError::DbusError` if D-Bus operations fail.
+    /// Returns `Error::PlayerNotFound` if the player doesn't exist.
+    /// Returns `Error::Dbus` if D-Bus operations fail.
     pub async fn player(&self, player_id: &PlayerId) -> Result<Player, Error> {
         Player::get(PlayerParams {
             connection: &self.connection,
@@ -71,13 +71,13 @@ impl MediaService {
     /// Get a live-updating instance of a specific media player.
     ///
     /// Returns a monitored player instance that automatically updates its
-    /// properties when the actual player state changes. Use this when you
-    /// need to track ongoing changes to a player's state.
+    /// properties when the actual player state changes. Suitable for scenarios
+    /// requiring ongoing state tracking.
     ///
     /// # Errors
     ///
-    /// Returns `MediaError::PlayerNotFound` if the player doesn't exist.
-    /// Returns `MediaError::DbusError` if D-Bus operations fail.
+    /// Returns `Error::PlayerNotFound` if the player doesn't exist.
+    /// Returns `Error::Dbus` if D-Bus operations fail.
     pub async fn player_monitored(&self, player_id: &PlayerId) -> Result<Arc<Player>, Error> {
         Player::get_live(LivePlayerParams {
             connection: &self.connection,

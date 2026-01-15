@@ -1,5 +1,5 @@
 use crate::{
-    error::Error,
+    error::{Error, ResponderDropped},
     service::BluetoothService,
     types::agent::{PairingRequest, PairingResponder},
 };
@@ -9,34 +9,31 @@ pub(crate) async fn pin(service: &BluetoothService, pin: String) -> Result<(), E
         service.pairing_request.get(),
         Some(PairingRequest::RequestPinCode { .. })
     ) {
-        return Err(Error::OperationFailed {
-            operation: "pin",
-            reason: String::from("Failed to provide PIN. A PIN is not currently being requested."),
+        return Err(Error::NoPendingRequest {
+            request_type: "pin",
         });
     }
 
     let responder = {
         let mut responder_guard = service.pairing_responder.lock().await;
         let Some(pairing_responder) = responder_guard.take() else {
-            return Err(Error::OperationFailed {
-                operation: "pin",
-                reason: String::from("Failed to provide PIN. No pairing responder available."),
+            return Err(Error::NoResponder {
+                request_type: "pin",
             });
         };
 
         let PairingResponder::Pin(responder_channel) = pairing_responder else {
-            return Err(Error::OperationFailed {
-                operation: "pin",
-                reason: String::from("Failed to provide PIN. No PIN responder available."),
+            return Err(Error::NoResponder {
+                request_type: "pin",
             });
         };
 
         responder_channel
     };
 
-    responder.send(pin).map_err(|err| Error::OperationFailed {
-        operation: "pin",
-        reason: format!("Failed to process PIN: {err}"),
+    responder.send(pin).map_err(|_| Error::ResponderSend {
+        request_type: "pin",
+        source: Box::new(ResponderDropped),
     })?;
 
     service.pairing_request.set(None);
@@ -49,39 +46,32 @@ pub(crate) async fn passkey(service: &BluetoothService, passkey: u32) -> Result<
         service.pairing_request.get(),
         Some(PairingRequest::RequestPasskey { .. })
     ) {
-        return Err(Error::OperationFailed {
-            operation: "passkey",
-            reason: String::from(
-                "Failed to provide passkey. A passkey is not currently being requested.",
-            ),
+        return Err(Error::NoPendingRequest {
+            request_type: "passkey",
         });
     }
 
     let responder = {
         let mut responder_guard = service.pairing_responder.lock().await;
         let Some(pairing_responder) = responder_guard.take() else {
-            return Err(Error::OperationFailed {
-                operation: "passkey",
-                reason: String::from("Failed to provide passkey. No pairing responder available."),
+            return Err(Error::NoResponder {
+                request_type: "passkey",
             });
         };
 
         let PairingResponder::Passkey(responder_channel) = pairing_responder else {
-            return Err(Error::OperationFailed {
-                operation: "passkey",
-                reason: String::from("Failed to provide passkey. No passkey responder available."),
+            return Err(Error::NoResponder {
+                request_type: "passkey",
             });
         };
 
         responder_channel
     };
 
-    responder
-        .send(passkey)
-        .map_err(|err| Error::OperationFailed {
-            operation: "passkey",
-            reason: format!("Failed to process passkey: {err}"),
-        })?;
+    responder.send(passkey).map_err(|_| Error::ResponderSend {
+        request_type: "passkey",
+        source: Box::new(ResponderDropped),
+    })?;
 
     service.pairing_request.set(None);
 
@@ -96,31 +86,22 @@ pub(crate) async fn confirmation(
         service.pairing_request.get(),
         Some(PairingRequest::RequestConfirmation { .. })
     ) {
-        return Err(Error::OperationFailed {
-            operation: "confirmation",
-            reason: String::from(
-                "Failed to provide confirmation. A confirmation is not currently being requested.",
-            ),
+        return Err(Error::NoPendingRequest {
+            request_type: "confirmation",
         });
     }
 
     let responder = {
         let mut responder_guard = service.pairing_responder.lock().await;
         let Some(pairing_responder) = responder_guard.take() else {
-            return Err(Error::OperationFailed {
-                operation: "confirmation",
-                reason: String::from(
-                    "Failed to provide confirmation. No confirmation responder available.",
-                ),
+            return Err(Error::NoResponder {
+                request_type: "confirmation",
             });
         };
 
         let PairingResponder::Confirmation(responder_channel) = pairing_responder else {
-            return Err(Error::OperationFailed {
-                operation: "confirmation",
-                reason: String::from(
-                    "Failed to provide confirmation. No confirmation responder available.",
-                ),
+            return Err(Error::NoResponder {
+                request_type: "confirmation",
             });
         };
 
@@ -129,9 +110,9 @@ pub(crate) async fn confirmation(
 
     responder
         .send(confirmation)
-        .map_err(|err| Error::OperationFailed {
-            operation: "confirmation",
-            reason: format!("Failed to process confirmation: {err}"),
+        .map_err(|_| Error::ResponderSend {
+            request_type: "confirmation",
+            source: Box::new(ResponderDropped),
         })?;
 
     service.pairing_request.set(None);
@@ -147,31 +128,22 @@ pub(crate) async fn authorization(
         service.pairing_request.get(),
         Some(PairingRequest::RequestAuthorization { .. })
     ) {
-        return Err(Error::OperationFailed {
-            operation: "authorization",
-            reason: String::from(
-                "Failed to provide authorization. An authorization is not currently being requested.",
-            ),
+        return Err(Error::NoPendingRequest {
+            request_type: "authorization",
         });
     }
 
     let responder = {
         let mut responder_guard = service.pairing_responder.lock().await;
         let Some(pairing_responder) = responder_guard.take() else {
-            return Err(Error::OperationFailed {
-                operation: "authorization",
-                reason: String::from(
-                    "Failed to provide authorization. No authorization responder available.",
-                ),
+            return Err(Error::NoResponder {
+                request_type: "authorization",
             });
         };
 
         let PairingResponder::Authorization(responder_channel) = pairing_responder else {
-            return Err(Error::OperationFailed {
-                operation: "authorization",
-                reason: String::from(
-                    "Failed to provide authorization. No authorization responder available.",
-                ),
+            return Err(Error::NoResponder {
+                request_type: "authorization",
             });
         };
 
@@ -180,9 +152,9 @@ pub(crate) async fn authorization(
 
     responder
         .send(authorization)
-        .map_err(|err| Error::OperationFailed {
-            operation: "authorization",
-            reason: format!("Failed to process authorization: {err}"),
+        .map_err(|_| Error::ResponderSend {
+            request_type: "authorization",
+            source: Box::new(ResponderDropped),
         })?;
 
     service.pairing_request.set(None);
@@ -198,31 +170,22 @@ pub(crate) async fn service_authorization(
         service.pairing_request.get(),
         Some(PairingRequest::RequestServiceAuthorization { .. })
     ) {
-        return Err(Error::OperationFailed {
-            operation: "service_authorization",
-            reason: String::from(
-                "Failed to provide service authorization. A service authorization is not currently being requested.",
-            ),
+        return Err(Error::NoPendingRequest {
+            request_type: "service authorization",
         });
     }
 
     let responder = {
         let mut responder_guard = service.pairing_responder.lock().await;
         let Some(pairing_responder) = responder_guard.take() else {
-            return Err(Error::OperationFailed {
-                operation: "service_authorization",
-                reason: String::from(
-                    "Failed to provide service authorization. No service authorization responder available.",
-                ),
+            return Err(Error::NoResponder {
+                request_type: "service authorization",
             });
         };
 
         let PairingResponder::ServiceAuthorization(responder_channel) = pairing_responder else {
-            return Err(Error::OperationFailed {
-                operation: "service_authorization",
-                reason: String::from(
-                    "Failed to provide service authorization. No service authorization responder available.",
-                ),
+            return Err(Error::NoResponder {
+                request_type: "service authorization",
             });
         };
 
@@ -231,9 +194,9 @@ pub(crate) async fn service_authorization(
 
     responder
         .send(authorization)
-        .map_err(|err| Error::OperationFailed {
-            operation: "service_authorization",
-            reason: format!("Failed to process service authorization: {err}"),
+        .map_err(|_| Error::ResponderSend {
+            request_type: "service authorization",
+            source: Box::new(ResponderDropped),
         })?;
 
     service.pairing_request.set(None);

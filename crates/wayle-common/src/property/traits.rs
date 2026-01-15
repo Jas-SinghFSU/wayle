@@ -7,9 +7,12 @@ use tokio::sync::mpsc;
 pub trait ApplyConfigLayer {
     /// Apply TOML values to the config layer.
     ///
+    /// The `path` parameter indicates the config key path (e.g., "general.bar.layout")
+    /// for error messages.
+    ///
     /// Missing fields are skipped. Deserialization failures are logged
     /// and skipped, allowing partial updates to succeed.
-    fn apply_config_layer(&self, value: &toml::Value);
+    fn apply_config_layer(&self, value: &toml::Value, path: &str);
 }
 
 /// Applies TOML values to the runtime layer of ConfigProperty fields.
@@ -19,9 +22,12 @@ pub trait ApplyConfigLayer {
 pub trait ApplyRuntimeLayer {
     /// Apply TOML values to the runtime layer.
     ///
+    /// The `path` parameter indicates the config key path (e.g., "general.bar.layout")
+    /// for error messages.
+    ///
     /// Missing fields are skipped. Deserialization failures are logged
     /// and skipped, allowing partial updates to succeed.
-    fn apply_runtime_layer(&self, value: &toml::Value);
+    fn apply_runtime_layer(&self, value: &toml::Value, path: &str);
 }
 
 /// Extracts runtime layer values for persistence to runtime.toml.

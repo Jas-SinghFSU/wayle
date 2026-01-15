@@ -64,7 +64,7 @@ impl Reactive for Wifi {
         .map_err(|e| Error::ObjectCreationFailed {
             object_type: String::from("WiFi"),
             object_path: params.device_path.clone(),
-            reason: e.to_string(),
+            source: e.into(),
         })?;
         Self::from_device(params.connection, device).await
     }

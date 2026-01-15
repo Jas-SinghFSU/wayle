@@ -10,7 +10,7 @@ pub enum Error {
     /// # Errors
     /// This typically occurs when CAVA configuration parameters are invalid or
     /// when system resources required for audio processing cannot be allocated.
-    #[error("Failed to initialize CAVA: {0}")]
+    #[error("cannot initialize CAVA: {0}")]
     InitFailed(String),
 
     /// CAVA plan creation returned a null pointer.

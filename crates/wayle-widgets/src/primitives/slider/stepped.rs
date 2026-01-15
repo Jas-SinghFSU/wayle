@@ -21,7 +21,7 @@ pub struct SteppedSliderInit {
     pub range: (f64, f64),
     /// Initial value (will be snapped to nearest step).
     pub value: f64,
-    /// Discrete step values. Must contain at least 2 values.
+    /// Discrete step values (requires at least 2 values).
     pub steps: Vec<f64>,
     /// Whether to display labels under each step mark.
     pub show_labels: bool,

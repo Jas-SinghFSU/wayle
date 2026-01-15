@@ -12,70 +12,62 @@ use file_creation::create_default_config_file;
 use merging::merge_toml_configs;
 use toml::Value;
 
-use super::error::Error;
+use super::error::{Error, IoOperation};
 use crate::Config;
 
 impl Config {
-    /// Loads a configuration file with support for importing other TOML files
-    ///
-    /// Import paths are specified using the `@` prefix in the TOML file.
-    /// Imported configurations are merged with the main configuration,
-    /// with the main configuration taking precedence in case of conflicts.
-    /// Also checks for circular imports.
-    ///
-    /// # Arguments
-    ///
-    /// * `path` - Path to the main configuration file
+    /// Loads configuration with imports resolved and deserializes to Config.
     ///
     /// # Errors
     ///
-    /// Returns an error if:
-    /// - The configuration file cannot be read
-    /// - The TOML content is invalid
-    /// - Any imported files cannot be loaded
-    /// - The merged configuration is invalid
-    /// - Circular imports are detected
+    /// Returns an error if files cannot be read, TOML is invalid,
+    /// imports fail, deserialization fails, or circular imports are detected.
     pub fn load_with_imports(path: &Path) -> Result<Config, Error> {
+        let merged = Self::load_toml_with_imports(path)?;
+        merged
+            .try_into()
+            .map_err(|source| Error::ConfigDeserialization { source })
+    }
+
+    /// Loads and merges configuration TOML with imports resolved.
+    ///
+    /// Returns the merged TOML value without deserializing to Config.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if files cannot be read, TOML is invalid,
+    /// imports fail, or circular imports are detected.
+    pub fn load_toml_with_imports(path: &Path) -> Result<Value, Error> {
         if !path.exists() {
             create_default_config_file(path)?;
         }
 
-        let canonical_path = path.canonicalize().map_err(|e| Error::IoError {
+        let canonical_path = path.canonicalize().map_err(|source| Error::Io {
+            operation: IoOperation::ResolvePath,
             path: path.to_path_buf(),
-            details: format!("Failed to resolve path: {e}"),
+            source,
         })?;
 
         let mut detector = CircularDetector::new();
-        Self::load_config_with_tracking(&canonical_path, &mut detector)
+        Self::load_merged_toml(&canonical_path, &mut detector)
     }
 
-    fn load_config_with_tracking(
-        path: &Path,
-        detector: &mut CircularDetector,
-    ) -> Result<Config, Error> {
+    fn load_merged_toml(path: &Path, detector: &mut CircularDetector) -> Result<Value, Error> {
         detector.detect_circular_import(path)?;
         detector.push_to_chain(path);
 
-        let result = Self::load_main_config(path, detector);
-        detector.pop_from_chain();
-        result
-    }
-
-    fn load_main_config(path: &Path, detector: &mut CircularDetector) -> Result<Config, Error> {
         let main_config_content = fs::read_to_string(path)?;
         let import_paths = Self::extract_import_paths(&main_config_content)?;
         let imported_configs = Self::load_all_imports(path, &import_paths, detector)?;
 
         let main_config: Value =
-            toml::from_str(&main_config_content).map_err(|e| Error::toml_parse(e, Some(path)))?;
+            toml::from_str(&main_config_content).map_err(|source| Error::TomlParse {
+                path: path.to_path_buf(),
+                source,
+            })?;
 
-        let merged_config = merge_toml_configs(imported_configs, main_config);
-        merged_config
-            .try_into()
-            .map_err(|e| Error::ConfigValidation {
-                component: String::from("config parsing"),
-                details: format!("Configuration validation failed: {e}"),
-            })
+        detector.pop_from_chain();
+        Ok(merge_toml_configs(imported_configs, main_config))
     }
 
     fn load_all_imports(
@@ -87,9 +79,17 @@ impl Config {
             .iter()
             .map(|import_path| {
                 let resolved_path = Self::resolve_import_path(base_path, import_path)?;
-                let canonical_import = resolved_path
-                    .canonicalize()
-                    .map_err(|e| Error::import(e, &resolved_path))?;
+                let canonical_import =
+                    resolved_path
+                        .canonicalize()
+                        .map_err(|source| Error::Import {
+                            path: resolved_path.clone(),
+                            source: Box::new(Error::Io {
+                                operation: IoOperation::ResolvePath,
+                                path: resolved_path.clone(),
+                                source,
+                            }),
+                        })?;
 
                 Self::load_imported_file_with_tracking(&canonical_import, detector)
             })
@@ -112,18 +112,28 @@ impl Config {
         path: &Path,
         detector: &mut CircularDetector,
     ) -> Result<Value, Error> {
-        let content = fs::read_to_string(path).map_err(|e| Error::import(e, path))?;
+        let content = fs::read_to_string(path).map_err(|source| Error::Import {
+            path: path.to_path_buf(),
+            source: Box::new(Error::Io {
+                operation: IoOperation::ReadFile,
+                path: path.to_path_buf(),
+                source,
+            }),
+        })?;
         let import_paths = Self::extract_import_paths(&content)?;
         let imported_configs = Self::load_all_imports(path, &import_paths, detector)?;
 
-        let main_value: Value =
-            toml::from_str(&content).map_err(|e| Error::toml_parse(e, Some(path)))?;
+        let main_value: Value = toml::from_str(&content).map_err(|source| Error::TomlParse {
+            path: path.to_path_buf(),
+            source,
+        })?;
 
         Ok(merge_toml_configs(imported_configs, main_value))
     }
 
     fn extract_import_paths(config_content: &str) -> Result<Vec<String>, Error> {
-        let value = toml::from_str(config_content).map_err(|e| Error::toml_parse(e, None))?;
+        let value =
+            toml::from_str(config_content).map_err(|source| Error::TomlParseInline { source })?;
 
         let import_paths = if let Value::Table(table) = value {
             if let Some(Value::Array(imports)) = table.get("imports") {
@@ -144,9 +154,8 @@ impl Config {
     }
 
     fn resolve_import_path(base_path: &Path, import_path: &str) -> Result<PathBuf, Error> {
-        let parent_dir = base_path.parent().ok_or_else(|| Error::ImportError {
+        let parent_dir = base_path.parent().ok_or_else(|| Error::ImportNoParent {
             path: base_path.to_path_buf(),
-            details: String::from("Invalid base path - no parent directory"),
         })?;
 
         let mut import_path_buf = PathBuf::from(import_path);

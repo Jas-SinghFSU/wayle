@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use super::error::Error;
+use super::error::{Error, InvalidFieldReason};
 
 /// Insert a value at a dot-separated path in a TOML structure.
 ///
@@ -24,7 +24,7 @@ pub fn insert(root: &mut toml::Value, path: &str, value: toml::Value) -> Result<
             .ok_or_else(|| Error::InvalidConfigField {
                 field: path.to_string(),
                 component: String::from("config"),
-                reason: String::from("empty path"),
+                reason: InvalidFieldReason::EmptyPath,
             })?;
 
     let parent = navigate_to_parent(root, parent_segments, path)?;
@@ -34,7 +34,7 @@ pub fn insert(root: &mut toml::Value, path: &str, value: toml::Value) -> Result<
         .ok_or_else(|| Error::InvalidConfigField {
             field: (*final_key).to_string(),
             component: path.to_string(),
-            reason: String::from("parent is not a table"),
+            reason: InvalidFieldReason::ParentNotTable,
         })?;
 
     table.insert((*final_key).to_string(), value);
@@ -65,7 +65,7 @@ fn navigate_to_parent<'a>(
             .ok_or_else(|| Error::InvalidConfigField {
                 field: (*segment).to_string(),
                 component: full_path.to_string(),
-                reason: String::from("parent is not a table"),
+                reason: InvalidFieldReason::ParentNotTable,
             })?;
 
         current = table

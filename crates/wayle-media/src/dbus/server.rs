@@ -55,7 +55,7 @@ impl MediaDaemon {
 impl MediaDaemon {
     /// Toggles play/pause for a player.
     ///
-    /// Pass an empty string for `player_id` to use the active player.
+    /// An empty string for `player_id` targets the active player.
     #[instrument(skip(self), fields(player = %player_id))]
     pub async fn play_pause(&self, player_id: String) -> fdo::Result<()> {
         let id = self.resolve_player(&player_id)?;
@@ -74,7 +74,7 @@ impl MediaDaemon {
 
     /// Skips to the next track.
     ///
-    /// Pass an empty string for `player_id` to use the active player.
+    /// An empty string for `player_id` targets the active player.
     #[instrument(skip(self), fields(player = %player_id))]
     pub async fn next(&self, player_id: String) -> fdo::Result<()> {
         let id = self.resolve_player(&player_id)?;
@@ -93,7 +93,7 @@ impl MediaDaemon {
 
     /// Goes to the previous track.
     ///
-    /// Pass an empty string for `player_id` to use the active player.
+    /// An empty string for `player_id` targets the active player.
     #[instrument(skip(self), fields(player = %player_id))]
     pub async fn previous(&self, player_id: String) -> fdo::Result<()> {
         let id = self.resolve_player(&player_id)?;
@@ -112,7 +112,7 @@ impl MediaDaemon {
 
     /// Seeks to a position in microseconds.
     ///
-    /// Pass an empty string for `player_id` to use the active player.
+    /// An empty string for `player_id` targets the active player.
     #[instrument(skip(self), fields(player = %player_id, position_us = %position_us))]
     pub async fn seek(&self, player_id: String, position_us: i64) -> fdo::Result<()> {
         let id = self.resolve_player(&player_id)?;
@@ -133,8 +133,8 @@ impl MediaDaemon {
 
     /// Sets the shuffle mode for a player.
     ///
-    /// `state` must be one of: "on", "off", "toggle".
-    /// Pass an empty string for `player_id` to use the active player.
+    /// `state` accepts: "on", "off", or "toggle".
+    /// An empty string for `player_id` targets the active player.
     #[instrument(skip(self), fields(player = %player_id, state = %state))]
     pub async fn set_shuffle(&self, player_id: String, state: String) -> fdo::Result<()> {
         let id = self.resolve_player(&player_id)?;
@@ -160,8 +160,8 @@ impl MediaDaemon {
 
     /// Sets the loop mode for a player.
     ///
-    /// `mode` must be one of: "none", "track", "playlist".
-    /// Pass an empty string for `player_id` to use the active player.
+    /// `mode` accepts: "none", "track", or "playlist".
+    /// An empty string for `player_id` targets the active player.
     #[instrument(skip(self), fields(player = %player_id, mode = %mode))]
     pub async fn set_loop_status(&self, player_id: String, mode: String) -> fdo::Result<()> {
         let id = self.resolve_player(&player_id)?;
@@ -209,7 +209,7 @@ impl MediaDaemon {
 
     /// Sets the active player by ID.
     ///
-    /// Pass an empty string to clear the active player.
+    /// An empty string clears the active player.
     #[instrument(skip(self), fields(player = %player_id))]
     pub async fn set_active_player(&self, player_id: String) -> fdo::Result<()> {
         let id = if player_id.is_empty() {
@@ -227,7 +227,7 @@ impl MediaDaemon {
     /// Gets detailed information about a player.
     ///
     /// Returns a dictionary with player metadata.
-    /// Pass an empty string for `player_id` to use the active player.
+    /// An empty string for `player_id` targets the active player.
     #[instrument(skip(self), fields(player = %player_id))]
     pub async fn get_player_info(
         &self,

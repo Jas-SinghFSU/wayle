@@ -78,11 +78,11 @@ impl PulseBackend {
                     Ok(backend) => {
                         if let Err(e) = backend.run(command_rx, event_tx, cancellation_token).await
                         {
-                            error!("PulseAudio backend runtime error: {e}");
+                            error!(error = %e, "PulseAudio backend runtime error");
                         }
                     }
                     Err(e) => {
-                        error!("Failed to create PulseAudio backend: {e}");
+                        error!(error = %e, "cannot create PulseAudio backend");
                     }
                 }
             });
@@ -92,20 +92,27 @@ impl PulseBackend {
     }
 
     async fn new() -> Result<Self, Error> {
+        use libpulse_binding::context::State;
+
         let mut mainloop = TokioMain::new();
         info!("Creating PulseAudio context");
-        let mut context = Context::new(&mainloop, "wayle-pulse")
-            .ok_or_else(|| Error::ConnectionFailed(String::from("Failed to create context")))?;
+        let mut context =
+            Context::new(&mainloop, "wayle-pulse").ok_or(Error::ContextCreationFailed)?;
 
         info!("Connecting to PulseAudio server");
         context
             .connect(None, ContextFlags::NOFLAGS, None)
-            .map_err(|e| Error::ConnectionFailed(format!("Connection failed: {e}")))?;
+            .map_err(Error::ConnectionFailed)?;
 
         info!("Waiting for PulseAudio context to become ready");
-        mainloop.wait_for_ready(&context).await.map_err(|e| {
-            Error::ConnectionFailed(format!("Context failed to become ready: {e:?}"))
-        })?;
+        let state = mainloop
+            .wait_for_ready(&context)
+            .await
+            .map_err(|_| Error::ContextStateFailed(State::Terminated))?;
+
+        if state != State::Ready {
+            return Err(Error::ContextStateFailed(state));
+        }
 
         Ok(Self {
             state: BackendState::new(),
@@ -197,9 +204,7 @@ impl PulseBackend {
                             device_type: device_key.device_type,
                         })
                 } else {
-                    Err(Error::LockPoisoned(String::from(
-                        "Device storage lock poisoned",
-                    )))
+                    Err(Error::LockPoisoned)
                 };
                 let _ = responder.send(result);
             }
@@ -217,9 +222,7 @@ impl PulseBackend {
                             stream_type: stream_key.stream_type,
                         })
                 } else {
-                    Err(Error::LockPoisoned(String::from(
-                        "Stream storage lock poisoned",
-                    )))
+                    Err(Error::LockPoisoned)
                 };
                 let _ = responder.send(result);
             }
@@ -352,15 +355,19 @@ impl PulseBackend {
         event_tx: EventSender,
         cancellation_token: CancellationToken,
     ) -> Result<(), Error> {
+        let event_token = cancellation_token.child_token();
+        let command_token = cancellation_token.child_token();
+        let context_token = cancellation_token.child_token();
+
         let (_, internal_command_rx) =
-            self.setup_event_monitoring(event_tx.clone(), cancellation_token.child_token())?;
+            self.setup_event_monitoring(event_tx.clone(), event_token)?;
 
         let (external_tx, external_rx) = mpsc::unbounded_channel::<ExternalCommand>();
 
         info!("PulseAudio backend fully initialized and monitoring");
 
         let command_handle =
-            self.spawn_command_processor(command_rx, external_tx, cancellation_token.child_token());
+            self.spawn_command_processor(command_rx, external_tx, command_token.clone());
 
         let ContextHandlerComponents {
             mut mainloop,
@@ -369,23 +376,22 @@ impl PulseBackend {
             internal_command_rx,
             external_rx,
             event_tx.clone(),
-            cancellation_token.child_token(),
+            context_token.clone(),
         );
 
         tokio::select! {
             _ = mainloop.run() => {
                 info!("PulseAudio mainloop exited");
             }
-            _ = command_handle => {
-                info!("Command processing loop exited");
-            }
-            _ = context_handle => {
-                info!("Context handling loop exited");
-            }
             _ = cancellation_token.cancelled() => {
                 info!("PulseAudio backend cancelled");
             }
         }
+
+        command_token.cancel();
+        context_token.cancel();
+
+        let _ = tokio::join!(command_handle, context_handle);
 
         info!("PulseAudio backend stopped");
         Ok(())

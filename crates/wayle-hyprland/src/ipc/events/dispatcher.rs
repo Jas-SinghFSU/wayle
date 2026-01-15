@@ -86,7 +86,9 @@ fn handle_fullscreen(event: &str, data: &str, hyprland_tx: Sender<HyprlandEvent>
         _ => {
             return Err(Error::EventParseError {
                 event_data: format!("{event}>>{data}"),
-                reason: format!("invalid fullscreen value: {data}"),
+                field: "fullscreen",
+                expected: "0 or 1",
+                value: data.to_string(),
             });
         }
     };
@@ -99,7 +101,9 @@ fn handle_active_layout(event: &str, data: &str, hyprland_tx: Sender<HyprlandEve
     let Some((keyboard, layout)) = data.split_once(',') else {
         return Err(Error::EventParseError {
             event_data: format!("{event}>>{data}"),
-            reason: "expected comma-separated keyboard,layout".to_string(),
+            field: "layout_data",
+            expected: "comma-separated keyboard,layout",
+            value: data.to_string(),
         });
     };
 
@@ -120,10 +124,13 @@ fn handle_submap(data: &str, hyprland_tx: Sender<HyprlandEvent>) -> Result<()> {
 }
 
 fn handle_screencast(event: &str, data: &str, hyprland_tx: Sender<HyprlandEvent>) -> Result<()> {
+    let event_data = format!("{event}>>{data}");
     let Some((state, owner)) = data.split_once(',') else {
         return Err(Error::EventParseError {
-            event_data: format!("{event}>>{data}"),
-            reason: "expected comma-separated state,owner".to_string(),
+            event_data,
+            field: "screencast_data",
+            expected: "comma-separated state,owner",
+            value: data.to_string(),
         });
     };
     let state = match state {
@@ -131,8 +138,10 @@ fn handle_screencast(event: &str, data: &str, hyprland_tx: Sender<HyprlandEvent>
         "1" => true,
         _ => {
             return Err(Error::EventParseError {
-                event_data: format!("{event}>>{data}"),
-                reason: format!("invalid state value: {state}"),
+                event_data,
+                field: "state",
+                expected: "0 or 1",
+                value: state.to_string(),
             });
         }
     };
@@ -155,7 +164,9 @@ fn handle_ignore_group_lock(
         _ => {
             return Err(Error::EventParseError {
                 event_data: format!("{event}>>{data}"),
-                reason: format!("invalid ignore value: {data}"),
+                field: "ignore",
+                expected: "0 or 1",
+                value: data.to_string(),
             });
         }
     };
@@ -172,7 +183,9 @@ fn handle_lock_groups(event: &str, data: &str, hyprland_tx: Sender<HyprlandEvent
         _ => {
             return Err(Error::EventParseError {
                 event_data: format!("{event}>>{data}"),
-                reason: format!("invalid locked value: {data}"),
+                field: "locked",
+                expected: "0 or 1",
+                value: data.to_string(),
             });
         }
     };
@@ -232,10 +245,13 @@ mod tests {
         let result = handle_fullscreen("fullscreen", "2", tx);
 
         assert!(result.is_err());
-        if let Err(Error::EventParseError { event_data, reason }) = result {
+        if let Err(Error::EventParseError {
+            event_data, field, ..
+        }) = result
+        {
             assert!(event_data.contains("fullscreen"));
             assert!(event_data.contains("2"));
-            assert!(reason.contains("invalid fullscreen value"));
+            assert_eq!(field, "fullscreen");
         } else {
             panic!("Expected EventParseError");
         }
@@ -257,8 +273,8 @@ mod tests {
         let result = handle_active_layout("activelayout", "no_comma_here", tx);
 
         assert!(result.is_err());
-        if let Err(Error::EventParseError { reason, .. }) = result {
-            assert!(reason.contains("comma-separated"));
+        if let Err(Error::EventParseError { expected, .. }) = result {
+            assert!(expected.contains("comma-separated"));
         } else {
             panic!("Expected EventParseError");
         }
@@ -280,8 +296,8 @@ mod tests {
         let result = handle_screencast("screencast", "5,0", tx);
 
         assert!(result.is_err());
-        if let Err(Error::EventParseError { reason, .. }) = result {
-            assert!(reason.contains("invalid state value"));
+        if let Err(Error::EventParseError { field, .. }) = result {
+            assert_eq!(field, "state");
         } else {
             panic!("Expected EventParseError");
         }
@@ -294,8 +310,8 @@ mod tests {
         let result = handle_screencast("screencast", "no_comma", tx);
 
         assert!(result.is_err());
-        if let Err(Error::EventParseError { reason, .. }) = result {
-            assert!(reason.contains("comma-separated"));
+        if let Err(Error::EventParseError { expected, .. }) = result {
+            assert!(expected.contains("comma-separated"));
         } else {
             panic!("Expected EventParseError");
         }

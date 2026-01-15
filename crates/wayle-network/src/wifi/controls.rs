@@ -40,8 +40,8 @@ impl WifiControls {
             .set_wireless_enabled(enabled)
             .await
             .map_err(|e| Error::OperationFailed {
-                operation: "set_wireless_enabled",
-                reason: e.to_string(),
+                operation: "set wireless enabled",
+                source: e.into(),
             })?;
 
         Ok(())
@@ -57,8 +57,8 @@ impl WifiControls {
         let device_proxy = DeviceProxy::new(connection, device_path)
             .await
             .map_err(|e| Error::OperationFailed {
-                operation: "device_proxy",
-                reason: e.to_string(),
+                operation: "create device proxy",
+                source: e.into(),
             })?;
 
         let active_connection_path =
@@ -66,8 +66,8 @@ impl WifiControls {
                 .active_connection()
                 .await
                 .map_err(|e| Error::OperationFailed {
-                    operation: "active_connection",
-                    reason: e.to_string(),
+                    operation: "get active connection",
+                    source: e.into(),
                 })?;
 
         if active_connection_path.as_str() == "/" || active_connection_path.as_str().is_empty() {
@@ -78,8 +78,8 @@ impl WifiControls {
             .deactivate_connection(&active_connection_path)
             .await
             .map_err(|e| Error::OperationFailed {
-                operation: "deactivate_connection",
-                reason: e.to_string(),
+                operation: "deactivate connection",
+                source: e.into(),
             })?;
 
         Ok(())
@@ -101,13 +101,13 @@ impl WifiControls {
         let ap_proxy = AccessPointProxy::new(connection, ap_path.clone())
             .await
             .map_err(|e| Error::OperationFailed {
-                operation: "create_ap_proxy",
-                reason: e.to_string(),
+                operation: "create access point proxy",
+                source: e.into(),
             })?;
 
         let ssid_bytes = ap_proxy.ssid().await.map_err(|e| Error::OperationFailed {
-            operation: "get_ssid",
-            reason: e.to_string(),
+            operation: "get ssid",
+            source: e.into(),
         })?;
 
         let ssid_string = Ssid::new(ssid_bytes.clone()).as_str();
@@ -128,8 +128,8 @@ impl WifiControls {
             .add_and_activate_connection(connection_settings, &device_path, &ap_path)
             .await
             .map_err(|e| Error::OperationFailed {
-                operation: "add_and_activate_connection",
-                reason: e.to_string(),
+                operation: "add and activate connection",
+                source: e.into(),
             })?;
 
         Ok(())
@@ -147,8 +147,8 @@ impl WifiControls {
     ) -> Result<ConnectionSettings, Error> {
         let to_owned = |value: Value| {
             value.try_to_owned().map_err(|e| Error::OperationFailed {
-                operation: "to_owned",
-                reason: e.to_string(),
+                operation: "convert to owned value",
+                source: e.into(),
             })
         };
 

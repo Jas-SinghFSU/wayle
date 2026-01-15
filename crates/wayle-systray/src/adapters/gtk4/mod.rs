@@ -92,11 +92,11 @@ impl Adapter {
         let menu_event_handler = move |_action: &SimpleAction, _param: Option<&Variant>| {
             let tray_item = tray_item_clone.clone();
             tokio::spawn(async move {
-                if let Err(e) = tray_item
+                if let Err(error) = tray_item
                     .menu_event(id, MenuEvent::Clicked, Utc::now().timestamp() as u32)
                     .await
                 {
-                    error!("Failed to send menu event: {e}");
+                    error!(error = %error, "cannot send menu event");
                 }
             });
         };

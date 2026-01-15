@@ -243,7 +243,7 @@ impl HyprlandService {
         let workspace = match self.hypr_messenger.active_workspace().await {
             Ok(w) => w,
             Err(e) => {
-                error!("Failed to get active workspace: {e}");
+                error!(error = %e, "cannot get active workspace");
                 return None;
             }
         };
@@ -260,7 +260,7 @@ impl HyprlandService {
         let window = match self.hypr_messenger.active_window().await {
             Ok(w) => w,
             Err(e) => {
-                error!("Failed to get active workspace: {e}");
+                error!(error = %e, "cannot get active window");
                 return None;
             }
         };

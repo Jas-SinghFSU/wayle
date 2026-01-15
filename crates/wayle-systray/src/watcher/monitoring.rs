@@ -22,14 +22,20 @@ impl ServiceMonitoring for StatusNotifierWatcher {
 }
 
 async fn monitor_name_owner_changes(watcher: &StatusNotifierWatcher) -> Result<(), Error> {
-    let Ok(dbus_proxy) = DBusProxy::new(&watcher.zbus_connection).await else {
-        warn!("Failed to create DBus proxy for name monitoring");
-        return Ok(());
+    let dbus_proxy = match DBusProxy::new(&watcher.zbus_connection).await {
+        Ok(proxy) => proxy,
+        Err(error) => {
+            warn!(error = %error, "cannot create dbus proxy for name monitoring");
+            return Ok(());
+        }
     };
 
-    let Ok(mut name_owner_changed) = dbus_proxy.receive_name_owner_changed().await else {
-        warn!("Failed to subscribe to NameOwnerChanged");
-        return Ok(());
+    let mut name_owner_changed = match dbus_proxy.receive_name_owner_changed().await {
+        Ok(stream) => stream,
+        Err(error) => {
+            warn!(error = %error, "cannot subscribe to NameOwnerChanged");
+            return Ok(());
+        }
     };
 
     let cancellation_token = watcher.cancellation_token.clone();
@@ -97,8 +103,8 @@ pub(crate) async fn unregister_item(
             &item,
         )
         .await
-        .unwrap_or_else(|e| {
-            error!("Failed to emit unregistered signal for item '{item}': {e}");
+        .unwrap_or_else(|error| {
+            error!(error = %error, item = %item, "cannot emit unregistered signal for item");
         });
 
     Ok(())
@@ -132,8 +138,8 @@ pub(crate) async fn unregister_host(
                 &(),
             )
             .await
-            .unwrap_or_else(|e| {
-                error!("Failed to emit unregistered signal for host '{host}': {e}");
+            .unwrap_or_else(|error| {
+                error!(error = %error, host = %host, "cannot emit unregistered signal for host");
             })
     }
 

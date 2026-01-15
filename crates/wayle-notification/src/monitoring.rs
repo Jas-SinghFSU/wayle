@@ -188,6 +188,6 @@ async fn handle_notification_removed(
         )
         .await
     {
-        warn!("Failed to emit NotificationClosed signal for notification {id}: {e}");
+        warn!(id = id, error = %e, "cannot emit NotificationClosed signal");
     }
 }

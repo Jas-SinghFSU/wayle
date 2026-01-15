@@ -91,7 +91,7 @@ impl Reactive for AccessPoint {
                 _ => Error::ObjectCreationFailed {
                     object_type: String::from("AccessPoint"),
                     object_path: params.path.clone(),
-                    reason: e.to_string(),
+                    source: e.into(),
                 },
             })?;
 
@@ -110,7 +110,7 @@ impl Reactive for AccessPoint {
             _ => Error::ObjectCreationFailed {
                 object_type: String::from("AccessPoint"),
                 object_path: params.path.clone(),
-                reason: e.to_string(),
+                source: e.into(),
             },
         })?;
         let access_point = Arc::new(access_point);

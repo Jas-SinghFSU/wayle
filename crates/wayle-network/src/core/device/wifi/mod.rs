@@ -214,11 +214,11 @@ impl DeviceWifi {
         let base = match Device::from_path(connection, object_path.clone(), None).await {
             Ok(base) => base,
             Err(e) => {
-                warn!("Failed to create base Device for {}", object_path);
+                warn!(object_path = %object_path, "cannot create base device");
                 return Err(Error::ObjectCreationFailed {
                     object_type: String::from("Device"),
                     object_path: object_path.clone(),
-                    reason: e.to_string(),
+                    source: e.into(),
                 });
             }
         };

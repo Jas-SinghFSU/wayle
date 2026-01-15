@@ -51,7 +51,7 @@ fn should_skip(field: &Field) -> bool {
 ///
 /// # Generated Code
 ///
-/// For each field, generates: `self.field.apply_config_layer(&toml["field"])`
+/// For each field, generates: `self.field.apply_config_layer(&toml["field"], "path.field")`
 #[proc_macro_derive(ApplyConfigLayer, attributes(wayle))]
 pub fn derive_apply_config_layer(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
@@ -71,14 +71,19 @@ pub fn derive_apply_config_layer(input: TokenStream) -> TokenStream {
 
             quote! {
                 if let Some(field_value) = table.get(stringify!(#field_name)) {
-                    self.#field_name.apply_config_layer(field_value);
+                    let child_path = if path.is_empty() {
+                        stringify!(#field_name).to_string()
+                    } else {
+                        format!("{}.{}", path, stringify!(#field_name))
+                    };
+                    self.#field_name.apply_config_layer(field_value, &child_path);
                 }
             }
         });
 
     let expanded = quote! {
         impl wayle_common::ApplyConfigLayer for #name {
-            fn apply_config_layer(&self, value: &toml::Value) {
+            fn apply_config_layer(&self, value: &toml::Value, path: &str) {
                 if let toml::Value::Table(table) = value {
                     #(#field_updates)*
                 }
@@ -100,7 +105,7 @@ pub fn derive_apply_config_layer(input: TokenStream) -> TokenStream {
 ///
 /// # Generated Code
 ///
-/// For each field, generates: `self.field.apply_runtime_layer(&toml["field"])`
+/// For each field, generates: `self.field.apply_runtime_layer(&toml["field"], "path.field")`
 #[proc_macro_derive(ApplyRuntimeLayer, attributes(wayle))]
 pub fn derive_apply_runtime_layer(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
@@ -120,14 +125,19 @@ pub fn derive_apply_runtime_layer(input: TokenStream) -> TokenStream {
 
             quote! {
                 if let Some(field_value) = table.get(stringify!(#field_name)) {
-                    self.#field_name.apply_runtime_layer(field_value);
+                    let child_path = if path.is_empty() {
+                        stringify!(#field_name).to_string()
+                    } else {
+                        format!("{}.{}", path, stringify!(#field_name))
+                    };
+                    self.#field_name.apply_runtime_layer(field_value, &child_path);
                 }
             }
         });
 
     let expanded = quote! {
         impl wayle_common::ApplyRuntimeLayer for #name {
-            fn apply_runtime_layer(&self, value: &toml::Value) {
+            fn apply_runtime_layer(&self, value: &toml::Value, path: &str) {
                 if let toml::Value::Table(table) = value {
                     #(#field_updates)*
                 }

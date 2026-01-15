@@ -12,38 +12,38 @@ pub enum InputMethod {
     /// Common with MPD and other music players.
     Fifo,
 
-    /// Use PortAudio cross-platform audio I/O library.
+    /// PortAudio cross-platform audio I/O library.
     ///
     /// Works on Linux, macOS, and Windows. Provides automatic device selection.
     PortAudio,
 
-    /// Use PipeWire multimedia server (default).
+    /// PipeWire multimedia server (default).
     ///
     /// Modern Linux audio system that supersedes PulseAudio and JACK.
-    /// Recommended for most Linux systems.
+    /// The default input method for most Linux desktop systems.
     PipeWire,
 
-    /// Use Advanced Linux Sound Architecture (ALSA).
+    /// Advanced Linux Sound Architecture (ALSA).
     ///
     /// Low-level Linux audio API. Requires specific device configuration.
     Alsa,
 
-    /// Use PulseAudio sound server.
+    /// PulseAudio sound server.
     ///
     /// Common on older Linux desktop systems. Works with automatic source detection.
     Pulse,
 
-    /// Use sndio audio subsystem.
+    /// sndio audio subsystem.
     ///
     /// Primarily used on OpenBSD and other BSD systems.
     Sndio,
 
-    /// Use Open Sound System.
+    /// Open Sound System.
     ///
     /// Legacy Unix audio API, less common on modern systems.
     Oss,
 
-    /// Use JACK Audio Connection Kit.
+    /// JACK Audio Connection Kit.
     ///
     /// Professional audio system for low-latency audio routing.
     Jack,
@@ -53,7 +53,7 @@ pub enum InputMethod {
     /// Used by applications like Squeezelite that write directly to shared memory.
     Shmem,
 
-    /// Use Windows audio capture (WASAPI).
+    /// Windows audio capture (WASAPI).
     ///
     /// Windows-specific audio capture method.
     Winscap,

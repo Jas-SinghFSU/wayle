@@ -5,7 +5,7 @@ use wayle_traits::ModelMonitoring;
 
 use crate::{
     core::device::output::OutputDevice,
-    error::Error,
+    error::{Error, MissingMonitoringComponent},
     events::AudioEvent,
     types::device::{Device, DeviceState},
 };
@@ -15,15 +15,15 @@ impl ModelMonitoring for OutputDevice {
 
     async fn start_monitoring(self: Arc<Self>) -> Result<(), Self::Error> {
         let Some(ref cancellation_token) = self.cancellation_token else {
-            return Err(Error::MonitoringNotInitialized(String::from(
-                "Cancellation token not available",
-            )));
+            return Err(Error::MonitoringNotInitialized(
+                MissingMonitoringComponent::CancellationToken,
+            ));
         };
 
         let Some(ref event_tx) = self.event_tx else {
-            return Err(Error::MonitoringNotInitialized(String::from(
-                "Event sender not available",
-            )));
+            return Err(Error::MonitoringNotInitialized(
+                MissingMonitoringComponent::EventSender,
+            ));
         };
 
         let weak_device = Arc::downgrade(&self);

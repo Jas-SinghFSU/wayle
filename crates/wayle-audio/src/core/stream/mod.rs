@@ -133,11 +133,9 @@ impl Reactive for AudioStream {
                 stream_key: params.stream_key,
                 responder: tx,
             })
-            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))?;
+            .map_err(|_| Error::CommandChannelDisconnected)?;
 
-        let stream_info = rx
-            .await
-            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))??;
+        let stream_info = rx.await.map_err(|_| Error::CommandChannelDisconnected)??;
         Ok(Self::from_info(
             stream_info,
             params.command_tx.clone(),
@@ -154,11 +152,9 @@ impl Reactive for AudioStream {
                 stream_key: params.stream_key,
                 responder: tx,
             })
-            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))?;
+            .map_err(|_| Error::CommandChannelDisconnected)?;
 
-        let stream_info = rx
-            .await
-            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))??;
+        let stream_info = rx.await.map_err(|_| Error::CommandChannelDisconnected)??;
         let stream = Arc::new(Self::from_info(
             stream_info,
             params.command_tx.clone(),

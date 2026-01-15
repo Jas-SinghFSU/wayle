@@ -22,8 +22,8 @@ impl ModelMonitoring for TrayItem {
     #[instrument(skip(self), fields(bus_name = %self.bus_name.get()), err)]
     async fn start_monitoring(self: Arc<Self>) -> Result<(), Self::Error> {
         let Some(ref cancellation_token) = self.cancellation_token else {
-            return Err(Error::ServiceInitializationFailed(String::from(
-                "A cancellation_token was not found.",
+            return Err(Error::ServiceInitialization(String::from(
+                "cancellation token not found",
             )));
         };
 
@@ -88,8 +88,8 @@ async fn monitor_properties(
 
     let mut layout_updated = match menu_proxy.receive_layout_updated().await {
         Ok(layout) => layout,
-        Err(e) => {
-            error!("Failed to subscribe to menu layout updates for {bus_name}: {e}");
+        Err(error) => {
+            error!(error = %error, "cannot subscribe to menu layout updates");
             return;
         }
     };
@@ -238,9 +238,9 @@ async fn monitor_properties(
                         let menu_item = MenuItem::from(layout);
                         tray_item.menu.set(Some(menu_item));
                     }
-                    Err(e) => {
+                    Err(error) => {
                         tray_item.menu.set(None);
-                        error!("Failed to update menu layout for {bus_name}: {e}");
+                        error!(error = %error, "cannot update menu layout");
                     }
                 }
             }

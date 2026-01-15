@@ -155,12 +155,12 @@ pub struct DiscoveryFilterOptions<'a> {
 }
 
 impl<'a> DiscoveryFilterOptions<'a> {
-    /// Create a new discovery filter options struct.
+    /// Creates a new discovery filter options with default values.
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// Convert options to a discovery filter HashMap.
+    /// Converts options to a discovery filter HashMap for D-Bus transmission.
     pub fn to_filter(self) -> DiscoveryFilter<'a> {
         let mut filter = HashMap::new();
 

@@ -6,34 +6,43 @@ use std::{io, path::PathBuf};
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     /// Service initialization failed.
-    #[error("Failed to initialize wallpaper service: {0}")]
+    #[error("cannot initialize wallpaper service: {0}")]
     ServiceInitializationFailed(String),
 
     /// Wallpaper directory does not exist.
-    #[error("Directory not found: {}", .0.display())]
+    #[error("directory not found: {}", .0.display())]
     DirectoryNotFound(PathBuf),
 
     /// No valid image files in the specified directory.
-    #[error("No images found in directory: {}", .0.display())]
+    #[error("no images found in directory: {}", .0.display())]
     NoImagesFound(PathBuf),
 
-    /// Color extraction tool failed.
-    #[error("Color extraction failed ({tool}): {reason}")]
-    ColorExtractionFailed {
-        /// The tool that failed.
-        tool: String,
-        /// The failure reason.
-        reason: String,
+    /// Color extraction command failed to execute.
+    #[error("cannot execute color extractor `{tool}`")]
+    ColorExtractionCommandFailed {
+        /// The tool that failed to execute.
+        tool: &'static str,
+        /// The underlying I/O error.
+        #[source]
+        source: io::Error,
     },
 
-    /// Failed to load an image file.
-    #[error("Failed to load image {}: {reason}", .path.display())]
-    ImageLoadFailed {
-        /// Path to the image that failed to load.
-        path: PathBuf,
-        /// The failure reason.
-        reason: String,
+    /// Color extraction tool returned non-zero exit status.
+    #[error("color extractor `{tool}` failed: {stderr}")]
+    ColorExtractionFailed {
+        /// The tool that failed.
+        tool: &'static str,
+        /// The stderr output from the tool.
+        stderr: String,
     },
+
+    /// Image file does not exist.
+    #[error("image not found: {}", .0.display())]
+    ImageNotFound(PathBuf),
+
+    /// Image path contains invalid UTF-8.
+    #[error("image path contains invalid UTF-8: {}", .0.display())]
+    InvalidImagePath(PathBuf),
 
     /// swww is not installed or not in PATH.
     #[error("swww is not installed or not in PATH")]
@@ -44,10 +53,10 @@ pub enum Error {
     SwwwDaemonNotRunning,
 
     /// swww command failed.
-    #[error("swww command failed: {reason}")]
+    #[error("swww command failed: {stderr}")]
     SwwwCommandFailed {
-        /// The failure reason from stderr.
-        reason: String,
+        /// The stderr output from swww.
+        stderr: String,
     },
 
     /// I/O operation failed.

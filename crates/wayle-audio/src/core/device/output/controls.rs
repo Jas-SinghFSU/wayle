@@ -32,10 +32,9 @@ impl OutputDeviceController {
                 volume,
                 responder: tx,
             })
-            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))?;
+            .map_err(|_| Error::CommandChannelDisconnected)?;
 
-        rx.await
-            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))?
+        rx.await.map_err(|_| Error::CommandChannelDisconnected)?
     }
 
     /// Set the mute state for an output device.
@@ -56,10 +55,9 @@ impl OutputDeviceController {
                 muted,
                 responder: tx,
             })
-            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))?;
+            .map_err(|_| Error::CommandChannelDisconnected)?;
 
-        rx.await
-            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))?
+        rx.await.map_err(|_| Error::CommandChannelDisconnected)?
     }
 
     /// Set the active port for an output device.
@@ -80,10 +78,9 @@ impl OutputDeviceController {
                 port,
                 responder: tx,
             })
-            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))?;
+            .map_err(|_| Error::CommandChannelDisconnected)?;
 
-        rx.await
-            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))?
+        rx.await.map_err(|_| Error::CommandChannelDisconnected)?
     }
 
     /// Set a device as the default output.
@@ -102,9 +99,8 @@ impl OutputDeviceController {
                 device_key,
                 responder: tx,
             })
-            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))?;
+            .map_err(|_| Error::CommandChannelDisconnected)?;
 
-        rx.await
-            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))?
+        rx.await.map_err(|_| Error::CommandChannelDisconnected)?
     }
 }

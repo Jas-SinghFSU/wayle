@@ -6,18 +6,14 @@ use wayle_config::schemas::styling::ThemeProvider;
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     /// SCSS compilation failed.
-    #[error("SCSS compilation failed: {0}")]
+    #[error("scss compilation failed")]
     Compilation(#[from] Box<grass::Error>),
 
     /// File I/O error when writing variables.
-    #[error("Failed to write SCSS variables: {0}")]
+    #[error("cannot write scss variables")]
     Io(#[from] std::io::Error),
 
-    /// Theme provider palette resolution error.
-    #[error("Failed to resolve theme provider's palette: {0:#?}")]
-    ThemeProvider(String),
-
     /// Theme provider not yet implemented.
-    #[error("Theme provider {0:?} is not yet implemented")]
+    #[error("theme provider '{0}' is not yet implemented")]
     ProviderNotImplemented(ThemeProvider),
 }

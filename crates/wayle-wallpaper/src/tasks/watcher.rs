@@ -47,7 +47,7 @@ impl DirectoryWatcher {
         let mut watcher = match watcher {
             Ok(watcher) => watcher,
             Err(err) => {
-                warn!(error = %err, "Failed to create directory watcher");
+                warn!(error = %err, "cannot create directory watcher");
                 return None;
             }
         };
@@ -56,7 +56,7 @@ impl DirectoryWatcher {
             warn!(
                 error = %err,
                 directory = %directory.display(),
-                "Failed to watch directory"
+                "cannot watch directory"
             );
             return None;
         }

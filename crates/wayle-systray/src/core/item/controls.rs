@@ -27,9 +27,9 @@ impl TrayItemController {
         proxy
             .context_menu(x, y)
             .await
-            .map_err(|err| Error::OperationFailed {
+            .map_err(|source| Error::Operation {
                 operation: "context_menu",
-                reason: err.to_string(),
+                source,
             })
     }
 
@@ -47,17 +47,18 @@ impl TrayItemController {
             .build()
             .await?;
 
-        proxy.activate(x, y).await.map_err(|err| {
+        proxy.activate(x, y).await.map_err(|source| {
             const UNKNOWN_METHOD: &str = "org.freedesktop.DBus.Error.UnknownMethod";
-            let reason = match &err {
-                zbus::Error::MethodError(name, _, _) if name.as_str() == UNKNOWN_METHOD => {
-                    "Item does not support Activate. Use its menu instead.".to_string()
+            if let zbus::Error::MethodError(name, _, _) = &source {
+                if name.as_str() == UNKNOWN_METHOD {
+                    return Error::OperationNotSupported {
+                        operation: "activate",
+                    };
                 }
-                _ => err.to_string(),
-            };
-            Error::OperationFailed {
+            }
+            Error::Operation {
                 operation: "activate",
-                reason,
+                source,
             }
         })
     }
@@ -79,9 +80,9 @@ impl TrayItemController {
         proxy
             .secondary_activate(x, y)
             .await
-            .map_err(|err| Error::OperationFailed {
+            .map_err(|source| Error::Operation {
                 operation: "secondary_activate",
-                reason: err.to_string(),
+                source,
             })
     }
 
@@ -106,9 +107,9 @@ impl TrayItemController {
         proxy
             .scroll(delta, orientation)
             .await
-            .map_err(|err| Error::OperationFailed {
+            .map_err(|source| Error::Operation {
                 operation: "scroll",
-                reason: err.to_string(),
+                source,
             })
     }
 
@@ -128,9 +129,9 @@ impl TrayItemController {
         proxy
             .about_to_show(id)
             .await
-            .map_err(|err| Error::OperationFailed {
+            .map_err(|source| Error::Operation {
                 operation: "menu_about_to_show",
-                reason: err.to_string(),
+                source,
             })
     }
 
@@ -153,9 +154,9 @@ impl TrayItemController {
         proxy
             .event(id, event_id, data, timestamp)
             .await
-            .map_err(|err| Error::OperationFailed {
+            .map_err(|source| Error::Operation {
                 operation: "menu_event",
-                reason: err.to_string(),
+                source,
             })
     }
 
@@ -175,9 +176,9 @@ impl TrayItemController {
         proxy
             .about_to_show_group(ids)
             .await
-            .map_err(|err| Error::OperationFailed {
+            .map_err(|source| Error::Operation {
                 operation: "menu_about_to_show_group",
-                reason: err.to_string(),
+                source,
             })
     }
 
@@ -197,9 +198,9 @@ impl TrayItemController {
         proxy
             .event_group(events)
             .await
-            .map_err(|err| Error::OperationFailed {
+            .map_err(|source| Error::Operation {
                 operation: "menu_event_group",
-                reason: err.to_string(),
+                source,
             })
     }
 
@@ -220,9 +221,9 @@ impl TrayItemController {
         proxy
             .get_property(id, property)
             .await
-            .map_err(|err| Error::OperationFailed {
+            .map_err(|source| Error::Operation {
                 operation: "menu_get_property",
-                reason: err.to_string(),
+                source,
             })
     }
 
@@ -248,9 +249,9 @@ impl TrayItemController {
         proxy
             .get_group_properties(ids, property_names)
             .await
-            .map_err(|err| Error::OperationFailed {
+            .map_err(|source| Error::Operation {
                 operation: "menu_get_group_properties",
-                reason: err.to_string(),
+                source,
             })
     }
 }

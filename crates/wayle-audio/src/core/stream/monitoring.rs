@@ -4,7 +4,10 @@ use tracing::debug;
 use wayle_traits::ModelMonitoring;
 
 use crate::{
-    core::stream::AudioStream, error::Error, events::AudioEvent, types::stream::StreamState,
+    core::stream::AudioStream,
+    error::{Error, MissingMonitoringComponent},
+    events::AudioEvent,
+    types::stream::StreamState,
 };
 
 impl ModelMonitoring for AudioStream {
@@ -12,15 +15,15 @@ impl ModelMonitoring for AudioStream {
 
     async fn start_monitoring(self: Arc<Self>) -> Result<(), Self::Error> {
         let Some(ref cancellation_token) = self.cancellation_token else {
-            return Err(Error::MonitoringNotInitialized(String::from(
-                "Cancellation token not available",
-            )));
+            return Err(Error::MonitoringNotInitialized(
+                MissingMonitoringComponent::CancellationToken,
+            ));
         };
 
         let Some(ref event_tx) = self.event_tx else {
-            return Err(Error::MonitoringNotInitialized(String::from(
-                "Event sender not available",
-            )));
+            return Err(Error::MonitoringNotInitialized(
+                MissingMonitoringComponent::EventSender,
+            ));
         };
 
         let weak_stream = Arc::downgrade(&self);

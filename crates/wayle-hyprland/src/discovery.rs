@@ -25,22 +25,22 @@ impl HyprlandDiscovery {
         cancellation_token: &CancellationToken,
     ) -> Self {
         let all_layers = hypr_messenger.layers().await.unwrap_or_else(|e| {
-            error!("Failed to discover layers: {e}");
+            error!(error = %e, "cannot discover layers");
             vec![]
         });
 
         let all_clients = hypr_messenger.clients().await.unwrap_or_else(|e| {
-            error!("Failed to discover clients: {e}");
+            error!(error = %e, "cannot discover clients");
             vec![]
         });
 
         let all_monitors = hypr_messenger.monitors().await.unwrap_or_else(|e| {
-            error!("Failed to discover monitors: {e}");
+            error!(error = %e, "cannot discover monitors");
             vec![]
         });
 
         let all_workspaces = hypr_messenger.workspaces().await.unwrap_or_else(|e| {
-            error!("Failed to discover workspaces: {e}");
+            error!(error = %e, "cannot discover workspaces");
             vec![]
         });
 
@@ -62,7 +62,9 @@ impl HyprlandDiscovery {
                 Ok(_) => clients.push(client),
                 Err(e) => {
                     error!(
-                        "Failed to start monitoring for client '{client_address}': {e}... Discarding."
+                        error = %e,
+                        client_address = %client_address,
+                        "cannot start monitoring for client, discarding"
                     )
                 }
             }
@@ -81,7 +83,9 @@ impl HyprlandDiscovery {
                 Ok(_) => monitors.push(monitor),
                 Err(e) => {
                     error!(
-                        "Failed to start monitoring for monitor '{monitor_name}': {e}... Discarding."
+                        error = %e,
+                        monitor_name,
+                        "cannot start monitoring for monitor, discarding"
                     )
                 }
             }
@@ -100,7 +104,9 @@ impl HyprlandDiscovery {
                 Ok(_) => workspaces.push(workspace),
                 Err(e) => {
                     error!(
-                        "Failed to start monitoring for workspace '{workspace_id}': {e}... Discarding."
+                        error = %e,
+                        workspace_id,
+                        "cannot start monitoring for workspace, discarding"
                     )
                 }
             }

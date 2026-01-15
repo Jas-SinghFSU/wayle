@@ -34,7 +34,7 @@ impl ServiceMonitoring for WallpaperService {
 
 fn discover_initial_outputs(service: &WallpaperService) {
     let Some(outputs) = OutputWatcher::query_outputs() else {
-        warn!("Failed to query Wayland outputs, no monitors registered");
+        warn!("cannot query wayland outputs, no monitors registered");
         return;
     };
 
@@ -118,14 +118,14 @@ pub(crate) fn spawn_color_extractor(service: Arc<WallpaperService>) {
 
                 _ = monitor_watch.next() => {
                     if let Err(e) = service.extract_colors().await {
-                        error!("Failed to extract colors: {e}");
+                        error!(error = %e, "cannot extract colors");
                     }
                 }
 
                 _ = color_extractor.next() => {
                     service.last_extracted_wallpaper.set(None);
                     if let Err(e) = service.extract_colors().await {
-                        error!("Failed to extract colors: {e}");
+                        error!(error = %e, "cannot extract colors");
                     }
                 }
             }

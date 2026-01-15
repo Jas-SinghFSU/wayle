@@ -95,8 +95,8 @@ pub enum ConfirmModalMsg {
 
 /// Confirmation modal component.
 ///
-/// Create once at init, then send `Show(config)` messages to display.
-/// The modal emits `Confirmed` or `Cancelled` output.
+/// Initialized once and controlled via `Show(config)` messages.
+/// Emits `Confirmed` or `Cancelled` output based on user interaction.
 pub struct ConfirmModal {
     visible: bool,
     title: String,

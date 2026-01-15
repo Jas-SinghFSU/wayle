@@ -90,10 +90,7 @@ impl WallpaperService {
     #[instrument(skip(self), fields(path = %path.display(), monitor))]
     pub async fn set_wallpaper(&self, path: PathBuf, monitor: Option<&str>) -> Result<(), Error> {
         if !path.exists() {
-            return Err(Error::ImageLoadFailed {
-                path: path.clone(),
-                reason: "File does not exist".to_string(),
-            });
+            return Err(Error::ImageNotFound(path));
         }
 
         let fit_mode = self.fit_mode.get();
@@ -270,7 +267,7 @@ impl WallpaperService {
 
     /// Returns a stream that emits when color extraction completes.
     ///
-    /// Use this to react to palette changes from matugen, wallust, or pywal.
+    /// Subscribers can listen for palette changes from matugen, wallust, or pywal.
     pub fn watch_extraction(&self) -> impl Stream<Item = ()> + Send + 'static {
         BroadcastStream::new(self.extraction_complete.subscribe())
             .filter_map(|result| async { result.ok() })

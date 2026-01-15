@@ -165,7 +165,7 @@ pub(super) async fn handle_workspace_created(
     {
         Ok(workspace) => workspace,
         Err(e) => {
-            error!("Failed to get workspace with id '{id}': {e}");
+            error!(error = %e, workspace_id = id, "cannot get workspace");
             return;
         }
     };
@@ -184,7 +184,7 @@ pub(super) async fn handle_workspace_removed(
         .iter()
         .find(|workspace| workspace.id.get() == id)
     else {
-        warn!("Failed to remove workspace with id '{id}': Not Found");
+        warn!(workspace_id = id, "cannot remove workspace: not found");
         return;
     };
 
@@ -213,7 +213,7 @@ pub(super) async fn handle_monitor_created(
     {
         Ok(monitor) => monitor,
         Err(e) => {
-            error!("Failed to get monitor with name '{name}': {e}");
+            error!(error = %e, monitor_name = %name, "cannot get monitor");
             return;
         }
     };
@@ -229,7 +229,7 @@ pub(super) async fn handle_monitor_removed(name: String, monitors: &Property<Vec
         .iter()
         .find(|monitor| monitor.name.get() == name)
     else {
-        warn!("Failed to remove monitor with name '{name}': Not Found");
+        warn!(monitor_name = %name, "cannot remove monitor: not found");
         return;
     };
 
@@ -258,7 +258,7 @@ pub(super) async fn handle_client_created(
     {
         Ok(client) => client,
         Err(e) => {
-            error!("Failed to get client with address '{address}': {e}");
+            error!(error = %e, client_address = %address, "cannot get client");
             return;
         }
     };
@@ -274,7 +274,7 @@ pub(super) async fn handle_client_removed(address: Address, clients: &Property<V
         .iter()
         .find(|client| client.address.get() == address)
     else {
-        warn!("Failed to remove client with address '{address}': Not Found");
+        warn!(client_address = %address, "cannot remove client: not found");
         return;
     };
 
@@ -294,7 +294,7 @@ pub(super) async fn handle_layer_created(
     let all_layers = match hypr_messenger.layers().await {
         Ok(data) => data,
         Err(e) => {
-            error!("Failed to query layers: {e}");
+            error!(error = %e, "cannot query layers");
             return;
         }
     };
@@ -327,6 +327,6 @@ pub(super) async fn handle_layer_removed(namespace: String, layers: &Property<Ve
     if updated_layers.len() != original_len {
         layers.set(updated_layers);
     } else {
-        warn!("Failed to remove layer with namespace '{namespace}': Not Found");
+        warn!(layer_namespace = %namespace, "cannot remove layer: not found");
     }
 }

@@ -62,7 +62,7 @@ impl ServiceMonitoring for CavaService {
             let token = self
                 .cancellation_token
                 .lock()
-                .map_err(|_| Error::InitFailed("Failed to lock cancellation token".to_string()))?;
+                .map_err(|_| Error::InitFailed("cannot lock cancellation token".to_string()))?;
             token.child_token()
         };
 
@@ -78,7 +78,7 @@ impl ServiceMonitoring for CavaService {
                     }
                     _ = interval.tick() => {
                         if let Err(e) = audio_input.lock() {
-                            error!("Failed to lock audio input mutex: {}", e);
+                            error!(error = %e, "cannot lock audio input mutex");
                             continue;
                         }
 
@@ -89,7 +89,7 @@ impl ServiceMonitoring for CavaService {
                         }
 
                         if let Err(e) = audio_input.unlock() {
-                            error!("Failed to unlock audio input mutex: {}", e);
+                            error!(error = %e, "cannot unlock audio input mutex");
                         }
 
                         let new_values = audio_output.values().to_vec();

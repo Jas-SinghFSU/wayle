@@ -79,9 +79,8 @@ impl SystemTrayServiceBuilder {
         let unique_name = connection
             .unique_name()
             .ok_or_else(|| {
-                Error::ServiceInitializationFailed(
-                    "Failed to get D-Bus unique name - connection may not be established"
-                        .to_string(),
+                Error::ServiceInitialization(
+                    "cannot get D-Bus unique name - connection may not be established".to_string(),
                 )
             })?
             .to_string();
@@ -134,8 +133,8 @@ impl SystemTrayServiceBuilder {
                 .at(SERVICE_PATH, daemon)
                 .await
                 .map_err(|err| {
-                    Error::ServiceInitializationFailed(format!(
-                        "Failed to register D-Bus object at '{SERVICE_PATH}': {err}"
+                    Error::ServiceInitialization(format!(
+                        "cannot register D-Bus object at '{SERVICE_PATH}': {err}"
                     ))
                 })?;
 
@@ -144,8 +143,8 @@ impl SystemTrayServiceBuilder {
                 .request_name(SERVICE_NAME)
                 .await
                 .map_err(|err| {
-                    Error::ServiceInitializationFailed(format!(
-                        "Failed to acquire D-Bus name '{SERVICE_NAME}': {err}"
+                    Error::ServiceInitialization(format!(
+                        "cannot acquire D-Bus name '{SERVICE_NAME}': {err}"
                     ))
                 })?;
 
@@ -175,7 +174,7 @@ impl SystemTrayServiceBuilder {
             .request_name(WATCHER_BUS_NAME)
             .await
             .map_err(|_| {
-                Error::WatcherRegistrationFailed(format!(
+                Error::WatcherRegistration(format!(
                     "D-Bus name '{WATCHER_BUS_NAME}' already taken by another application"
                 ))
             })?;
@@ -189,8 +188,8 @@ impl SystemTrayServiceBuilder {
         StatusNotifierWatcherProxy::new(connection)
             .await
             .map_err(|_| {
-                Error::ServiceInitializationFailed(
-                    "No StatusNotifierWatcher available to connect to".to_string(),
+                Error::ServiceInitialization(
+                    "no StatusNotifierWatcher available to connect to".to_string(),
                 )
             })?;
 

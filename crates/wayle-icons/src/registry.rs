@@ -26,7 +26,7 @@ Type=Scalable
 
 /// Manages GTK IconTheme registration for Wayle icons.
 ///
-/// Call [`IconRegistry::init`] at application startup to ensure
+/// [`IconRegistry::init`] should be invoked at application startup to ensure
 /// GTK can discover icons installed via `wayle icons install`.
 #[derive(Debug, Clone)]
 pub struct IconRegistry {
@@ -90,8 +90,9 @@ impl IconRegistry {
 
     /// Ensures the icon directory structure and index.theme exist.
     ///
-    /// Use this in CLI contexts where GTK is not available.
-    /// For GUI applications, use [`Self::init`] instead.
+    /// Suitable for CLI contexts where GTK is not available.
+    /// GUI applications should use [`Self::init`] instead, which also
+    /// registers with GTK and starts file watching.
     ///
     /// # Errors
     ///
@@ -110,8 +111,8 @@ impl IconRegistry {
     /// 3. Registers the directory with GTK's IconTheme
     /// 4. Starts a background watcher that refreshes icons when files change
     ///
-    /// Call this once at application startup before displaying any widgets
-    /// that use Wayle icons.
+    /// Should be invoked once at application startup before displaying any
+    /// widgets that use Wayle icons.
     ///
     /// # Errors
     ///
@@ -145,13 +146,13 @@ impl IconRegistry {
                 }) {
                     Ok(watcher) => watcher,
                     Err(err) => {
-                        warn!("Failed to create icon watcher: {err}");
+                        warn!(error = %err, "cannot create icon watcher");
                         return;
                     }
                 };
 
             if let Err(err) = watcher.watch(&icons_dir, RecursiveMode::NonRecursive) {
-                warn!(path = %icons_dir.display(), "Failed to watch icons directory: {err}");
+                warn!(error = %err, path = %icons_dir.display(), "cannot watch icons directory");
                 return;
             }
 
@@ -171,7 +172,7 @@ impl IconRegistry {
                 let base_path = base_path.clone();
                 glib::idle_add_once(move || {
                     if let Err(err) = Self::refresh_gtk_theme(&base_path) {
-                        warn!("Failed to refresh icon theme: {err}");
+                        warn!(error = %err, "cannot refresh icon theme");
                     } else {
                         debug!("Icon theme refreshed");
                     }
@@ -185,9 +186,9 @@ impl IconRegistry {
         let icons_dir = self.icons_dir();
 
         if !icons_dir.exists() {
-            fs::create_dir_all(&icons_dir).map_err(|err| Error::DirectoryError {
+            fs::create_dir_all(&icons_dir).map_err(|source| Error::DirectoryError {
                 path: icons_dir,
-                details: err.to_string(),
+                source,
             })?;
         }
 
@@ -199,9 +200,9 @@ impl IconRegistry {
         let index_path = self.base_path.join("index.theme");
 
         if !index_path.exists() {
-            fs::write(&index_path, INDEX_THEME_CONTENT).map_err(|err| Error::WriteError {
+            fs::write(&index_path, INDEX_THEME_CONTENT).map_err(|source| Error::WriteError {
                 path: index_path,
-                details: err.to_string(),
+                source,
             })?;
         }
 
@@ -216,7 +217,7 @@ impl IconRegistry {
     /// Forces GTK to rescan icon directories and pick up newly installed icons.
     ///
     /// GTK's IconTheme caches directory contents at startup and doesn't
-    /// automatically detect new files. Call this after installing icons
+    /// automatically detect new files. This is needed after installing icons
     /// via CLI while a GUI application is running.
     ///
     /// # Errors
@@ -228,8 +229,9 @@ impl IconRegistry {
     }
 
     fn refresh_gtk_theme(base_path: &PathBuf) -> Result<()> {
-        let display = gdk::Display::default()
-            .ok_or_else(|| Error::RegistryError("no display".to_string()))?;
+        let display = gdk::Display::default().ok_or_else(|| Error::RegistryError {
+            reason: "no display available",
+        })?;
 
         let icon_theme = gtk4::IconTheme::for_display(&display);
 

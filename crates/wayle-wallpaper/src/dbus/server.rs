@@ -27,7 +27,7 @@ impl WallpaperDaemon {
 impl WallpaperDaemon {
     /// Sets the wallpaper for a specific monitor or all monitors.
     ///
-    /// Pass an empty string for `monitor` to target all monitors.
+    /// An empty string for `monitor` targets all monitors.
     #[instrument(skip(self), fields(path = %path, monitor = %monitor))]
     pub async fn set_wallpaper(&self, path: String, monitor: String) -> fdo::Result<()> {
         self.service

@@ -1,24 +1,78 @@
-/// Bluetooth service errors
+use std::fmt;
+
+/// Error indicating the pairing response receiver was dropped.
+#[derive(Debug)]
+pub struct ResponderDropped;
+
+impl fmt::Display for ResponderDropped {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "pairing responder receiver was dropped")
+    }
+}
+
+impl std::error::Error for ResponderDropped {}
+
+/// Bluetooth service errors.
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
-    /// D-Bus communication error
-    #[error("D-Bus operation failed: {0:#?}")]
-    DbusError(#[from] zbus::Error),
+    /// D-Bus communication error.
+    #[error("dbus error: {0}")]
+    Dbus(#[from] zbus::Error),
 
-    /// Service initialization failed
-    #[error("Failed to initialize Bluetooth service: {0:#?}")]
-    ServiceInitializationFailed(String),
+    /// Service initialization failed.
+    #[error("cannot initialize bluetooth service")]
+    ServiceInitialization(#[source] Box<dyn std::error::Error + Send + Sync>),
 
-    /// Agent registration failed
-    #[error("Failed to register agent: {0:#?}")]
-    AgentRegistrationFailed(String),
+    /// Agent registration failed.
+    #[error("cannot register bluetooth agent")]
+    AgentRegistration(#[source] Box<dyn std::error::Error + Send + Sync>),
 
-    /// Bluetooth operation failed
-    #[error("Bluetooth operation failed: {operation} - {reason}")]
-    OperationFailed {
-        /// The operation that failed
+    /// Adapter operation failed.
+    #[error("cannot {operation} on adapter")]
+    AdapterOperation {
+        /// The operation that failed.
         operation: &'static str,
-        /// The reason the operation failed
-        reason: String,
+        /// The underlying D-Bus error.
+        #[source]
+        source: zbus::Error,
+    },
+
+    /// No primary adapter available for the requested operation.
+    #[error("cannot {operation}: no primary adapter available")]
+    NoPrimaryAdapter {
+        /// The operation that requires an adapter.
+        operation: &'static str,
+    },
+
+    /// Object discovery failed.
+    #[error("cannot discover bluetooth objects")]
+    Discovery(#[source] zbus::fdo::Error),
+
+    /// Monitoring requires a cancellation token but none was provided.
+    #[error("cannot start monitoring: no cancellation token configured")]
+    NoCancellationToken,
+
+    /// Pairing request type mismatch.
+    #[error("cannot provide {request_type}: no {request_type} request is pending")]
+    NoPendingRequest {
+        /// The type of pairing request expected.
+        request_type: &'static str,
+    },
+
+    /// Pairing responder unavailable.
+    #[error("cannot provide {request_type}: no responder available")]
+    NoResponder {
+        /// The type of responder expected.
+        request_type: &'static str,
+    },
+
+    /// Pairing response channel send failed.
+    #[error("cannot send {request_type} response")]
+    ResponderSend {
+        /// The type of response being sent.
+        request_type: &'static str,
+        /// The underlying send error.
+        #[source]
+        source: Box<dyn std::error::Error + Send + Sync>,
     },
 }

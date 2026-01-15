@@ -16,22 +16,18 @@ impl ModelMonitoring for Workspace {
     #[instrument(skip(self), fields(id = %self.id.get()), err)]
     async fn start_monitoring(self: Arc<Self>) -> Result<(), Self::Error> {
         let Some(cancel_token) = self.cancellation_token.as_ref() else {
-            return Err(Error::OperationFailed {
-                operation: "start_monitoring",
-                reason: format!(
-                    "Failed to start monitoring for workspace '{}': No Cancellation Token Found",
-                    self.id.get()
-                ),
+            return Err(Error::MonitoringSetupError {
+                resource_type: "workspace",
+                resource_id: self.id.get().to_string(),
+                missing_resource: "cancellation token",
             });
         };
 
         let Some(internal_tx) = self.internal_tx.as_ref() else {
-            return Err(Error::OperationFailed {
-                operation: "start_monitoring",
-                reason: format!(
-                    "Failed to start monitoring for workspace '{}': No Internal Transmitter Found",
-                    self.id.get()
-                ),
+            return Err(Error::MonitoringSetupError {
+                resource_type: "workspace",
+                resource_id: self.id.get().to_string(),
+                missing_resource: "internal transmitter",
             });
         };
 
@@ -102,7 +98,7 @@ async fn update_workspace(id: WorkspaceId, hypr_messenger: &HyprMessenger, works
     let workspace_data = match hypr_messenger.workspace(id).await {
         Ok(ws_data) => ws_data,
         Err(e) => {
-            warn!("Failed to get data for workspace '{id}': {e}");
+            warn!(error = %e, workspace_id = id, "cannot get data for workspace");
             return;
         }
     };

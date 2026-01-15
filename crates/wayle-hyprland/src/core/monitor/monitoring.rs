@@ -16,22 +16,18 @@ impl ModelMonitoring for Monitor {
     #[instrument(skip(self), fields(name = %self.name.get()), err)]
     async fn start_monitoring(self: Arc<Self>) -> Result<(), Self::Error> {
         let Some(cancel_token) = self.cancellation_token.as_ref() else {
-            return Err(Error::OperationFailed {
-                operation: "start_monitoring",
-                reason: format!(
-                    "Failed to start monitoring for monitor '{}': No Cancellation Token Found",
-                    self.id.get()
-                ),
+            return Err(Error::MonitoringSetupError {
+                resource_type: "monitor",
+                resource_id: self.id.get().to_string(),
+                missing_resource: "cancellation token",
             });
         };
 
         let Some(internal_tx) = self.internal_tx.as_ref() else {
-            return Err(Error::OperationFailed {
-                operation: "start_monitoring",
-                reason: format!(
-                    "Failed to start monitoring for monitor '{}': No Internal Transmitter Found",
-                    self.id.get()
-                ),
+            return Err(Error::MonitoringSetupError {
+                resource_type: "monitor",
+                resource_id: self.id.get().to_string(),
+                missing_resource: "internal transmitter",
             });
         };
 
@@ -100,7 +96,7 @@ async fn update_monitor(hypr_messenger: &HyprMessenger, monitor: &Monitor) {
     let monitor_data = match hypr_messenger.monitor(&name).await {
         Ok(monitor_data) => monitor_data,
         Err(e) => {
-            warn!("Failed to get data for monitor '{name}': {e}");
+            warn!(error = %e, monitor_name = %name, "cannot get data for monitor");
             return;
         }
     };

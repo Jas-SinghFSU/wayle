@@ -42,8 +42,8 @@ impl PowerProfilesService {
 
     /// Returns a builder for configuring the power profiles service.
     ///
-    /// Use this for advanced configuration like enabling D-Bus daemon registration
-    /// for CLI control.
+    /// The builder provides advanced configuration options such as enabling D-Bus
+    /// daemon registration for CLI control.
     pub fn builder() -> PowerProfilesServiceBuilder {
         PowerProfilesServiceBuilder::new()
     }

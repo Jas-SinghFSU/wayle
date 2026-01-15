@@ -29,8 +29,8 @@ impl ConnectionSettingsControls {
             .update(properties)
             .await
             .map_err(|e| Error::OperationFailed {
-                operation: "update_connection",
-                reason: e.to_string(),
+                operation: "update connection",
+                source: e.into(),
             })?;
 
         Ok(())
@@ -54,8 +54,8 @@ impl ConnectionSettingsControls {
             .update_unsaved(properties)
             .await
             .map_err(|e| Error::OperationFailed {
-                operation: "update_connection_unsaved",
-                reason: e.to_string(),
+                operation: "update connection unsaved",
+                source: e.into(),
             })?;
 
         Ok(())
@@ -71,8 +71,8 @@ impl ConnectionSettingsControls {
             .map_err(Error::DbusError)?;
 
         proxy.delete().await.map_err(|e| Error::OperationFailed {
-            operation: "delete_connection",
-            reason: e.to_string(),
+            operation: "delete connection",
+            source: e.into(),
         })?;
 
         Ok(())
@@ -91,8 +91,8 @@ impl ConnectionSettingsControls {
             .get_settings()
             .await
             .map_err(|e| Error::OperationFailed {
-                operation: "get_settings",
-                reason: e.to_string(),
+                operation: "get settings",
+                source: e.into(),
             })
     }
 
@@ -114,8 +114,8 @@ impl ConnectionSettingsControls {
             .get_secrets(setting_name)
             .await
             .map_err(|e| Error::OperationFailed {
-                operation: "get_secrets",
-                reason: e.to_string(),
+                operation: "get secrets",
+                source: e.into(),
             })
     }
 
@@ -132,8 +132,8 @@ impl ConnectionSettingsControls {
             .clear_secrets()
             .await
             .map_err(|e| Error::OperationFailed {
-                operation: "clear_secrets",
-                reason: e.to_string(),
+                operation: "clear secrets",
+                source: e.into(),
             })?;
 
         Ok(())
@@ -146,8 +146,8 @@ impl ConnectionSettingsControls {
             .map_err(Error::DbusError)?;
 
         proxy.save().await.map_err(|e| Error::OperationFailed {
-            operation: "save_connection",
-            reason: e.to_string(),
+            operation: "save connection",
+            source: e.into(),
         })?;
 
         Ok(())
@@ -173,8 +173,8 @@ impl ConnectionSettingsControls {
             .update2(settings, flags, args)
             .await
             .map_err(|e| Error::OperationFailed {
-                operation: "update2_connection",
-                reason: e.to_string(),
+                operation: "update connection v2",
+                source: e.into(),
             })
     }
 }

@@ -29,9 +29,9 @@ pub(crate) async fn subscribe(
     let event_stream =
         UnixStream::connect(&socket_path)
             .await
-            .map_err(|e| Error::IpcConnectionFailed {
+            .map_err(|source| Error::IpcConnectionFailed {
                 socket_type: "event",
-                reason: e.to_string(),
+                source,
             })?;
 
     tokio::spawn(async move {
@@ -42,8 +42,7 @@ pub(crate) async fn subscribe(
             match lines.next_line().await {
                 Ok(Some(line)) => {
                     let Some((event, data)) = line.split_once(">>") else {
-                        warn!("Failed to parse Hyprland event: missing '>>' separator");
-                        warn!("Data: {line}");
+                        warn!(raw_data = %line, "cannot parse hyprland event: missing '>>' separator");
                         continue;
                     };
 
@@ -51,7 +50,7 @@ pub(crate) async fn subscribe(
                         dispatcher::dispatch(event, data, internal_tx.clone(), hyprland_tx.clone())
                             .await
                     {
-                        warn!("Failed to handle event {event}: {e}");
+                        warn!(error = %e, event, "cannot handle event");
                     }
                 }
                 Ok(None) => {
@@ -59,7 +58,7 @@ pub(crate) async fn subscribe(
                     break;
                 }
                 Err(e) => {
-                    warn!("Error reading event stream: {e}");
+                    warn!(error = %e, "Error reading event stream");
                     break;
                 }
             }

@@ -16,22 +16,18 @@ impl ModelMonitoring for Client {
     #[instrument(skip(self), fields(address = %self.address.get()), err)]
     async fn start_monitoring(self: Arc<Self>) -> Result<(), Self::Error> {
         let Some(cancel_token) = self.cancellation_token.as_ref() else {
-            return Err(Error::OperationFailed {
-                operation: "start_monitoring",
-                reason: format!(
-                    "Failed to start monitoring for client '{}': No Cancellation Token Found",
-                    self.address.get()
-                ),
+            return Err(Error::MonitoringSetupError {
+                resource_type: "client",
+                resource_id: self.address.get().to_string(),
+                missing_resource: "cancellation token",
             });
         };
 
         let Some(internal_tx) = self.internal_tx.as_ref() else {
-            return Err(Error::OperationFailed {
-                operation: "start_monitoring",
-                reason: format!(
-                    "Failed to start monitoring for client '{}': No Internal Transmitter Found",
-                    self.address.get()
-                ),
+            return Err(Error::MonitoringSetupError {
+                resource_type: "client",
+                resource_id: self.address.get().to_string(),
+                missing_resource: "internal transmitter",
             });
         };
 
@@ -95,7 +91,7 @@ async fn update_client(address: Address, hypr_messenger: &HyprMessenger, client:
     let client_data = match hypr_messenger.client(&address).await {
         Ok(client_data) => client_data,
         Err(e) => {
-            warn!("Failed to get data for client '{address}': {e}");
+            warn!(error = %e, client_address = %address, "cannot get data for client");
             return;
         }
     };

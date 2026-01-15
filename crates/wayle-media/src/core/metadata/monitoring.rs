@@ -13,14 +13,12 @@ impl ModelMonitoring for TrackMetadata {
 
     async fn start_monitoring(self: Arc<Self>) -> Result<(), Self::Error> {
         let Some(ref proxy) = self.proxy else {
-            return Err(Error::InitializationFailed(String::from(
-                "A proxy was not found.",
-            )));
+            return Err(Error::Initialization(String::from("missing proxy")));
         };
 
         let Some(ref cancellation_token) = self.cancellation_token else {
-            return Err(Error::InitializationFailed(String::from(
-                "A cancellation_token was not found.",
+            return Err(Error::Initialization(String::from(
+                "missing cancellation token",
             )));
         };
 

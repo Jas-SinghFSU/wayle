@@ -8,9 +8,9 @@ pub enum Urgency {
     Low = 0,
     /// Normal urgency. Server implementations may display the notification how they choose.
     Normal = 1,
-    /// Critical urgency. Critical notifications should not automatically expire, as they are
-    /// things that the user will most likely want to know about. They should only be closed
-    /// when the user dismisses them, for example, by clicking on the notification.
+    /// Critical urgency. Critical notifications do not automatically expire, as they are
+    /// important for the user to see. They are closed only when the user dismisses them,
+    /// for example, by clicking on the notification.
     Critical = 2,
 }
 
@@ -52,37 +52,47 @@ impl From<u32> for ClosedReason {
 /// Server capabilities as defined in the specification.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Capabilities {
-    /// Supports using icons instead of text for displaying actions. Using icons for actions
-    /// must be enabled on a per-notification basis using the "action-icons" hint.
+    /// Supports using icons instead of text for displaying actions.
+    ///
+    /// Icon usage requires per-notification activation via the "action-icons" hint.
     ActionIcons,
     /// The server will provide the specified actions to the user. Even if this cap is missing,
     /// actions may still be specified by the client, however the server is free to ignore them.
     Actions,
-    /// Supports body text. Some implementations may only show the summary
-    /// (for instance, onscreen displays, marquee/scrollers)
+    /// Supports body text.
+    ///
+    /// Some implementations may only show the summary (for instance, onscreen displays,
+    /// marquee/scrollers).
     Body,
     /// The server supports hyperlinks in the notifications.
     BodyHyperlinks,
     /// The server supports images in the notifications.
     BodyImages,
-    /// Supports markup in the body text. If marked up text is sent to a server that does not
-    /// give this cap, the markup will show through as regular text so must be stripped clientside.
+    /// Supports markup in the body text.
+    ///
+    /// If marked up text is sent to a server that does not provide this capability, the markup
+    /// appears as regular text and requires client-side stripping.
     BodyMarkup,
-    /// The server will render an animation of all the frames in a given image array.
-    /// The client may still specify multiple frames even if this cap and/or "icon-static"
-    /// is missing, however the server is free to ignore them and use only the primary frame.
+    /// Indicates the server renders animations from all frames in a given image array.
+    ///
+    /// Clients may specify multiple frames even if this capability and/or "icon-static"
+    /// is missing, though the server may ignore them and use only the primary frame.
     IconMulti,
-    /// Supports display of exactly 1 frame of any given image array. This value is mutually
-    /// exclusive with "icon-multi", it is a protocol error for the server to specify both.
+    /// Supports display of exactly 1 frame of any given image array.
+    ///
+    /// This capability is mutually exclusive with "icon-multi"; specifying both is a
+    /// protocol error.
     IconStatic,
-    /// The server supports persistence of notifications. Notifications will be retained until
-    /// they are acknowledged or removed by the user or recalled by the sender. The presence
-    /// of this capability allows clients to depend on the server to ensure a notification
-    /// is seen and eliminate the need for the client to display a reminding function
-    /// (such as a status icon) of its own.
+    /// Indicates the server supports persistence of notifications.
+    ///
+    /// Notifications are retained until acknowledged or removed by the user, or recalled
+    /// by the sender. This capability allows clients to rely on the server to ensure a
+    /// notification is seen, eliminating the need for client-side reminding functions
+    /// (such as status icons).
     Persistence,
-    /// The server supports sounds on notifications. If returned, the server must support
-    /// the "sound-file" and "suppress-sound" hints.
+    /// Indicates the server supports sounds on notifications.
+    ///
+    /// When present, the server also supports the "sound-file" and "suppress-sound" hints.
     Sound,
     /// Vendor-specific capability.
     Vendor(String),
@@ -168,10 +178,12 @@ pub enum Category {
     /// A generic network notification that doesn't fit into any other category.
     Network,
     /// A network connection notification, such as successful sign-on to a network service.
-    /// This should not be confused with device.added for new network devices.
+    ///
+    /// Distinct from `device.added` for new network devices.
     NetworkConnected,
-    /// A network disconnected notification. This should not be confused with device.removed
-    /// for disconnected network devices.
+    /// A network disconnected notification.
+    ///
+    /// Distinct from `device.removed` for disconnected network devices.
     NetworkDisconnected,
     /// A network-related or connection-related error.
     NetworkError,

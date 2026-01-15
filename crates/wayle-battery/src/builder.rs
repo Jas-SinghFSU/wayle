@@ -41,19 +41,17 @@ impl BatteryServiceBuilder {
     ///
     /// # Errors
     ///
-    /// Returns `Error::ServiceInitializationFailed` if service initialization fails.
+    /// Returns `Error::InvalidObjectPath` if the device path is invalid, or
+    /// `Error::Dbus` if D-Bus connection fails.
     #[instrument(skip_all)]
     pub async fn build(self) -> Result<BatteryService, Error> {
         let device_path = if let Some(path) = self.device_path {
             path
         } else {
-            OwnedObjectPath::try_from("/org/freedesktop/UPower/devices/DisplayDevice")
-                .map_err(|e| Error::ServiceInitializationFailed(format!("Invalid path: {e}")))?
+            OwnedObjectPath::try_from("/org/freedesktop/UPower/devices/DisplayDevice")?
         };
 
-        let connection = Connection::system().await.map_err(|err| {
-            Error::ServiceInitializationFailed(format!("D-Bus connection failed: {err}"))
-        })?;
+        let connection = Connection::system().await?;
 
         let cancellation_token = CancellationToken::new();
 

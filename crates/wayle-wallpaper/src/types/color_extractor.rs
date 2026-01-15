@@ -63,21 +63,14 @@ impl ColorExtractor {
             Self::None => return Ok(()),
         };
 
-        let output =
-            Command::new(cmd)
-                .args(&args)
-                .output()
-                .map_err(|e| Error::ColorExtractionFailed {
-                    tool: cmd.to_string(),
-                    reason: format!("Failed to execute: {e}"),
-                })?;
+        let output = Command::new(cmd)
+            .args(&args)
+            .output()
+            .map_err(|source| Error::ColorExtractionCommandFailed { tool: cmd, source })?;
 
         if !output.status.success() {
-            let stderr = String::from_utf8_lossy(&output.stderr);
-            return Err(Error::ColorExtractionFailed {
-                tool: cmd.to_string(),
-                reason: stderr.to_string(),
-            });
+            let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
+            return Err(Error::ColorExtractionFailed { tool: cmd, stderr });
         }
 
         if self == Self::Matugen {
@@ -91,13 +84,13 @@ impl ColorExtractor {
         let cache_path = match ConfigPaths::matugen_colors() {
             Ok(path) => path,
             Err(err) => {
-                warn!(error = %err, "Failed to get matugen cache path");
+                warn!(error = %err, "cannot get matugen cache path");
                 return;
             }
         };
 
         if let Err(err) = fs::write(&cache_path, stdout) {
-            warn!(error = %err, path = %cache_path.display(), "Failed to save matugen colors");
+            warn!(error = %err, path = %cache_path.display(), "cannot save matugen colors");
         } else {
             debug!(path = %cache_path.display(), "Saved matugen colors");
         }

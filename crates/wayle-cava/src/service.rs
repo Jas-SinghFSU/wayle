@@ -69,7 +69,7 @@ pub struct CavaService {
 
     /// Audio source identifier.
     ///
-    /// Source string format depends on the input method. Use "auto" for automatic selection.
+    /// Source string format depends on the input method. The value "auto" enables automatic selection.
     pub source: Property<String>,
 
     /// Low frequency cutoff in Hz.
@@ -255,7 +255,7 @@ impl CavaService {
             let mut token = self
                 .cancellation_token
                 .lock()
-                .map_err(|_| Error::InitFailed("Failed to lock cancellation token".to_string()))?;
+                .map_err(|_| Error::InitFailed("cannot lock cancellation token".to_string()))?;
 
             token.cancel();
             *token = CancellationToken::new();

@@ -50,10 +50,7 @@ impl HyprMessenger {
             response.pop();
         }
 
-        String::from_utf8(response).map_err(|e| Error::OperationFailed {
-            operation: "send",
-            reason: e.to_string(),
-        })
+        String::from_utf8(response).map_err(Error::ResponseDecodeError)
     }
 }
 

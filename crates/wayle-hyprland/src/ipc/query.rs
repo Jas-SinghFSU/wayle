@@ -121,27 +121,34 @@ impl HyprMessenger {
     #[instrument(skip(self), err)]
     pub(crate) async fn cursor_pos(&self) -> Result<CursorPosition> {
         let response = self.send("cursorpos").await?;
-        let parts: Vec<&str> = response.trim().split(", ").collect();
+        let trimmed = response.trim().to_string();
+        let parts: Vec<&str> = trimmed.split(", ").collect();
 
         if parts.len() != 2 {
             return Err(Error::EventParseError {
-                event_data: response,
-                reason: "Expected format 'x, y'".to_string(),
+                event_data: response.clone(),
+                field: "cursor_position",
+                expected: "format 'x, y'",
+                value: response,
             });
         }
 
         let x = parts[0]
             .parse::<i32>()
             .map_err(|_| Error::EventParseError {
-                event_data: parts[0].to_string(),
-                reason: "Invalid x coordinate".to_string(),
+                event_data: response.clone(),
+                field: "x_coordinate",
+                expected: "integer",
+                value: parts[0].to_string(),
             })?;
 
         let y = parts[1]
             .parse::<i32>()
             .map_err(|_| Error::EventParseError {
-                event_data: parts[1].to_string(),
-                reason: "Invalid y coordinate".to_string(),
+                event_data: response,
+                field: "y_coordinate",
+                expected: "integer",
+                value: parts[1].to_string(),
             })?;
 
         Ok(CursorPosition { x, y })

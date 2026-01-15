@@ -27,7 +27,7 @@ static SERVICES: OnceLock<ServiceRegistry> = OnceLock::new();
 
 /// Initializes the global service registry.
 ///
-/// Must be called once at application startup before any components access services.
+/// Expected to be called once at application startup before any components access services.
 ///
 /// # Panics
 ///

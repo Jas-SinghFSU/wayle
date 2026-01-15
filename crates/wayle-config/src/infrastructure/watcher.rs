@@ -1,4 +1,4 @@
-use std::{path::PathBuf, sync::Arc};
+use std::{path::PathBuf, sync::Arc, time::Duration};
 
 use notify::{
     Event, RecommendedWatcher, RecursiveMode, Watcher as NotifyWatcher, event::EventKind,
@@ -33,28 +33,22 @@ impl FileWatcher {
     /// Returns error if file watching cannot be initialized.
     #[instrument(skip(config_service))]
     pub fn start(config_service: Arc<ConfigService>) -> Result<Self, Error> {
-        let (tx, mut rx) = mpsc::unbounded_channel();
+        let (tx, rx) = mpsc::unbounded_channel();
 
         let mut watcher = notify::recommended_watcher(move |result: Result<Event, _>| {
             if let Ok(event) = result {
                 let _ = tx.send(event);
             }
         })
-        .map_err(|e| Error::IoError {
-            path: PathBuf::from("file watcher"),
-            details: e.to_string(),
-        })?;
+        .map_err(|source| Error::WatcherInit { source })?;
 
-        let config_dir = ConfigPaths::config_dir().map_err(|e| Error::IoError {
-            path: PathBuf::from("config directory"),
-            details: e.to_string(),
-        })?;
+        let config_dir = ConfigPaths::config_dir()?;
 
         watcher
             .watch(&config_dir, RecursiveMode::Recursive)
-            .map_err(|e| Error::IoError {
+            .map_err(|source| Error::Watch {
                 path: config_dir.clone(),
-                details: e.to_string(),
+                source,
             })?;
 
         info!(?config_dir, "Config directory watcher started");
@@ -64,20 +58,7 @@ impl FileWatcher {
             _watcher: Arc::new(watcher),
         };
 
-        let watcher_clone = file_watcher.clone();
-        tokio::spawn(async move {
-            while let Some(event) = rx.recv().await {
-                debug!(?event, "File watcher received event");
-
-                if !Self::should_reload(&event) {
-                    continue;
-                }
-
-                if let Err(e) = watcher_clone.reload_and_sync(&event.paths).await {
-                    error!(error = ?e, "Failed to reload config after file change");
-                }
-            }
-        });
+        tokio::spawn(run_debounced_event_loop(file_watcher.clone(), rx));
 
         Ok(file_watcher)
     }
@@ -98,16 +79,63 @@ impl FileWatcher {
         }
 
         let config_path = ConfigPaths::main_config();
-        let reloaded_config = Config::load_with_imports(&config_path)?;
+        let toml_value = Config::load_toml_with_imports(&config_path)?;
 
-        let toml_value: toml::Value =
-            toml::Value::try_from(&reloaded_config).map_err(|e| Error::SerializationError {
-                content_type: String::from("config"),
-                details: e.to_string(),
-            })?;
-
-        self.config_service.config().apply_config_layer(&toml_value);
+        self.config_service
+            .config()
+            .apply_config_layer(&toml_value, "");
 
         Ok(())
     }
+}
+
+const DEBOUNCE_DURATION: Duration = Duration::from_millis(100);
+
+async fn run_debounced_event_loop(watcher: FileWatcher, mut rx: mpsc::UnboundedReceiver<Event>) {
+    use tokio::time::{Instant, sleep_until};
+
+    let mut pending_paths: Vec<PathBuf> = Vec::new();
+    let mut deadline: Option<Instant> = None;
+
+    loop {
+        let maybe_event = match deadline {
+            Some(d) => tokio::select! {
+                biased;
+                event = rx.recv() => event,
+                () = sleep_until(d) => None,
+            },
+            None => rx.recv().await,
+        };
+
+        match maybe_event {
+            Some(event) if FileWatcher::should_reload(&event) => {
+                accumulate_paths(&mut pending_paths, event.paths);
+                deadline = Some(Instant::now() + DEBOUNCE_DURATION);
+            }
+            Some(_) => {}
+            None if deadline.is_some() => {
+                flush_pending(&watcher, &mut pending_paths).await;
+                deadline = None;
+            }
+            None => break,
+        }
+    }
+}
+
+fn accumulate_paths(pending: &mut Vec<PathBuf>, new_paths: Vec<PathBuf>) {
+    for path in new_paths {
+        if !pending.contains(&path) {
+            pending.push(path);
+        }
+    }
+}
+
+async fn flush_pending(watcher: &FileWatcher, pending_paths: &mut Vec<PathBuf>) {
+    debug!(?pending_paths, "Debounce complete, reloading config");
+
+    if let Err(e) = watcher.reload_and_sync(pending_paths).await {
+        error!(error = %e, "cannot reload config");
+    }
+
+    pending_paths.clear();
 }

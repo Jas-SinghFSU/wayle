@@ -32,10 +32,9 @@ impl InputDeviceController {
                 volume,
                 responder: tx,
             })
-            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))?;
+            .map_err(|_| Error::CommandChannelDisconnected)?;
 
-        rx.await
-            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))?
+        rx.await.map_err(|_| Error::CommandChannelDisconnected)?
     }
 
     /// Set the mute state for an input device.
@@ -56,10 +55,9 @@ impl InputDeviceController {
                 muted,
                 responder: tx,
             })
-            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))?;
+            .map_err(|_| Error::CommandChannelDisconnected)?;
 
-        rx.await
-            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))?
+        rx.await.map_err(|_| Error::CommandChannelDisconnected)?
     }
 
     /// Set the active port for an input device.
@@ -80,10 +78,9 @@ impl InputDeviceController {
                 port,
                 responder: tx,
             })
-            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))?;
+            .map_err(|_| Error::CommandChannelDisconnected)?;
 
-        rx.await
-            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))?
+        rx.await.map_err(|_| Error::CommandChannelDisconnected)?
     }
 
     /// Set a device as the default input.
@@ -102,9 +99,8 @@ impl InputDeviceController {
                 device_key,
                 responder: tx,
             })
-            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))?;
+            .map_err(|_| Error::CommandChannelDisconnected)?;
 
-        rx.await
-            .map_err(|e| Error::CommandChannelDisconnected(e.to_string()))?
+        rx.await.map_err(|_| Error::CommandChannelDisconnected)?
     }
 }

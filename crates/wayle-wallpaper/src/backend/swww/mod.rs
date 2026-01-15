@@ -50,10 +50,9 @@ impl SwwwBackend {
             FitMode::Stretch => "stretch",
         };
 
-        let path_str = path.to_str().ok_or_else(|| Error::ImageLoadFailed {
-            path: path.to_path_buf(),
-            reason: "Path contains invalid UTF-8".into(),
-        })?;
+        let path_str = path
+            .to_str()
+            .ok_or_else(|| Error::InvalidImagePath(path.to_path_buf()))?;
 
         let mut cmd = Command::new("swww");
         cmd.arg("img");
@@ -78,14 +77,13 @@ impl SwwwBackend {
         })?;
 
         if !output.status.success() {
-            let stderr = String::from_utf8_lossy(&output.stderr);
-            let reason = stderr.trim().to_string();
+            let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
 
-            if reason.contains("daemon") || reason.contains("socket") {
+            if stderr.contains("daemon") || stderr.contains("socket") {
                 return Err(Error::SwwwDaemonNotRunning);
             }
 
-            return Err(Error::SwwwCommandFailed { reason });
+            return Err(Error::SwwwCommandFailed { stderr });
         }
 
         Ok(())

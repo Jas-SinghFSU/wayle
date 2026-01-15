@@ -8,7 +8,7 @@ use std::{fs, path::Path};
 use tracing::{debug, info, warn};
 
 use crate::{
-    error::{Error, Result},
+    error::{Error, Result, SvgValidationError},
     registry::IconRegistry,
     sources::IconSource,
     transform,
@@ -98,9 +98,9 @@ impl IconManager {
     /// icon failures are captured in [`InstallResult::failed`].
     pub async fn install(&self, source: &dyn IconSource, slugs: &[&str]) -> Result<InstallResult> {
         let icons_dir = self.registry.icons_dir();
-        fs::create_dir_all(&icons_dir).map_err(|err| Error::DirectoryError {
+        fs::create_dir_all(&icons_dir).map_err(|source| Error::DirectoryError {
             path: icons_dir.clone(),
-            details: err.to_string(),
+            source,
         })?;
 
         let mut result = InstallResult::default();
@@ -112,7 +112,7 @@ impl IconManager {
                     result.installed.push(name);
                 }
                 Err(err) => {
-                    warn!(slug = %slug, source = source.cli_name(), error = %err, "Failed to install icon");
+                    warn!(slug = %slug, source = source.cli_name(), error = %err, "cannot install icon");
                     result.failed.push(InstallFailure {
                         slug: (*slug).to_string(),
                         error: err.to_string(),
@@ -142,7 +142,7 @@ impl IconManager {
             return Err(Error::FetchError {
                 slug: slug.to_string(),
                 icon_source: source.cli_name().to_string(),
-                details: format!("HTTP {}", response.status()),
+                status: response.status(),
             });
         }
 
@@ -153,9 +153,9 @@ impl IconManager {
         let transformed = transform::to_symbolic(&svg_content);
 
         let file_path = icons_dir.join(format!("{icon_name}-symbolic.svg"));
-        fs::write(&file_path, &transformed).map_err(|err| Error::WriteError {
+        fs::write(&file_path, &transformed).map_err(|source| Error::WriteError {
             path: file_path,
-            details: err.to_string(),
+            source,
         })?;
 
         Ok(format!("{icon_name}-symbolic"))
@@ -179,9 +179,9 @@ impl IconManager {
             });
         }
 
-        fs::remove_file(&file_path).map_err(|err| Error::DeleteError {
+        fs::remove_file(&file_path).map_err(|source| Error::DeleteError {
             name: icon_name.to_string(),
-            details: err.to_string(),
+            source,
         })?;
 
         info!(icon = %icon_name, "Removed icon");
@@ -231,14 +231,14 @@ impl IconManager {
         if !trimmed.starts_with('<') {
             return Err(Error::InvalidSvg {
                 slug: slug.to_string(),
-                details: "content does not start with '<'".to_string(),
+                reason: SvgValidationError::NotXml,
             });
         }
 
         if !trimmed.contains("<svg") {
             return Err(Error::InvalidSvg {
                 slug: slug.to_string(),
-                details: "missing <svg> element".to_string(),
+                reason: SvgValidationError::MissingSvgElement,
             });
         }
 

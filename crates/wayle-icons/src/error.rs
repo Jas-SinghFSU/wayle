@@ -2,40 +2,60 @@ use std::path::PathBuf;
 
 use thiserror::Error;
 
+/// Reason why SVG validation failed.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SvgValidationError {
+    /// Content does not start with '<'.
+    NotXml,
+    /// Missing `<svg>` element.
+    MissingSvgElement,
+}
+
+impl std::fmt::Display for SvgValidationError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::NotXml => write!(f, "content does not start with '<'"),
+            Self::MissingSvgElement => write!(f, "missing <svg> element"),
+        }
+    }
+}
+
 /// Errors that can occur during icon operations.
 #[derive(Error, Debug)]
 pub enum Error {
-    /// Failed to fetch icon from CDN.
-    #[error("failed to fetch icon '{slug}' from {icon_source}: {details}")]
+    /// Cannot fetch icon from CDN due to HTTP error status.
+    #[error("cannot fetch icon '{slug}' from {icon_source}: HTTP {status}")]
     FetchError {
         /// The icon slug that failed to fetch.
         slug: String,
         /// The source name (e.g., "tabler", "simple-icons").
         icon_source: String,
-        /// Error details from the HTTP request.
-        details: String,
+        /// HTTP status code.
+        status: reqwest::StatusCode,
     },
 
     /// HTTP request failed.
     #[error("HTTP request failed: {0}")]
     HttpError(#[from] reqwest::Error),
 
-    /// Failed to write icon to disk.
-    #[error("failed to write icon to '{path}': {details}")]
+    /// Cannot write icon to disk.
+    #[error("cannot write icon to '{path}'")]
     WriteError {
         /// Path where the write failed.
         path: PathBuf,
-        /// Error details.
-        details: String,
+        /// The underlying I/O error.
+        #[source]
+        source: std::io::Error,
     },
 
-    /// Failed to delete icon.
-    #[error("failed to delete icon '{name}': {details}")]
+    /// Cannot delete icon.
+    #[error("cannot delete icon '{name}'")]
     DeleteError {
         /// Icon name that failed to delete.
         name: String,
-        /// Error details.
-        details: String,
+        /// The underlying I/O error.
+        #[source]
+        source: std::io::Error,
     },
 
     /// Icon not found.
@@ -53,26 +73,30 @@ pub enum Error {
     },
 
     /// Invalid SVG content.
-    #[error("invalid SVG content for '{slug}': {details}")]
+    #[error("invalid SVG content for '{slug}': {reason}")]
     InvalidSvg {
         /// The icon slug with invalid SVG.
         slug: String,
-        /// Validation error details.
-        details: String,
+        /// Validation error reason.
+        reason: SvgValidationError,
     },
 
-    /// Failed to create icon directory.
-    #[error("failed to create icon directory '{path}': {details}")]
+    /// Cannot create icon directory.
+    #[error("cannot create icon directory '{path}'")]
     DirectoryError {
         /// Path where directory creation failed.
         path: PathBuf,
-        /// Error details.
-        details: String,
+        /// The underlying I/O error.
+        #[source]
+        source: std::io::Error,
     },
 
-    /// Failed to initialize icon registry with GTK.
-    #[error("failed to initialize icon registry: {0}")]
-    RegistryError(String),
+    /// Cannot initialize icon registry with GTK.
+    #[error("cannot initialize icon registry: {reason}")]
+    RegistryError {
+        /// Description of what went wrong.
+        reason: &'static str,
+    },
 
     /// HOME environment variable not set.
     #[error("$HOME environment variable not set")]

@@ -6,7 +6,7 @@ use relm4::{WidgetTemplate, gtk};
 
 /// CSS class constants for Card variants.
 ///
-/// Use with `add_css_class` to apply optional styling:
+/// Applied via `add_css_class` for optional styling:
 /// ```ignore
 /// #[template]
 /// Card {

@@ -20,11 +20,9 @@ pub(crate) struct BluetoothAgent {
 
 #[interface(name = "org.bluez.Agent1")]
 impl BluetoothAgent {
-    /// This method gets called when bluetoothd needs to get the passkey for an
-    /// authentication.
+    /// Called when bluetoothd needs to get the passkey for an authentication.
     ///
-    /// The return value should be a string of 1-16 characters length. The string can be
-    /// alphanumeric.
+    /// Returns a string of 1-16 alphanumeric characters.
     ///
     /// # Errors
     ///
@@ -45,11 +43,10 @@ impl BluetoothAgent {
             .map_err(|e| fdo::Error::Failed(format!("User cancelled: {e}")))
     }
 
-    /// This method gets called when bluetoothd needs to display a pincode for
-    /// an authentication.
+    /// Called when bluetoothd needs to display a pincode for an authentication.
     ///
-    /// An empty reply should be returned. When the pincode needs no longer to be
-    /// displayed, the Cancel method of the agent will be called.
+    /// Returns an empty reply. When the pincode no longer needs to be displayed, the
+    /// Cancel method of the agent is called.
     ///
     /// This is used during the pairing process of keyboards that don't support
     /// Bluetooth 2.1 Secure Simple Pairing, in contrast to DisplayPasskey which is used
@@ -74,10 +71,9 @@ impl BluetoothAgent {
             .map_err(|e| fdo::Error::Failed(format!("Service unavailable: {e}")))
     }
 
-    /// This method gets called when bluetoothd needs to get the passkey for an
-    /// authentication.
+    /// Called when bluetoothd needs to get the passkey for an authentication.
     ///
-    /// The return value should be a numeric value between 0-999999.
+    /// Returns a numeric value between 0-999999.
     ///
     /// # Errors
     ///
@@ -98,14 +94,13 @@ impl BluetoothAgent {
             .map_err(|e| fdo::Error::Failed(format!("User cancelled: {e}")))
     }
 
-    /// This method gets called when bluetoothd needs to display a passkey for
-    /// an authentication.
+    /// Called when bluetoothd needs to display a passkey for an authentication.
     ///
     /// The entered parameter indicates the number of already typed keys on the remote
     /// side.
     ///
-    /// An empty reply should be returned. When the passkey needs no longer to be
-    /// displayed, the Cancel method of the agent will be called.
+    /// Returns an empty reply. When the passkey no longer needs to be displayed, the
+    /// Cancel method of the agent is called.
     ///
     /// During the pairing process this method might be called multiple times to update
     /// the entered value.
@@ -127,11 +122,9 @@ impl BluetoothAgent {
             .map_err(|e| fdo::Error::Failed(format!("Service unavailable: {e}")))
     }
 
-    /// This method gets called when bluetoothd needs to confirm a passkey for
-    /// an authentication.
+    /// Called when bluetoothd needs to confirm a passkey for an authentication.
     ///
-    /// To confirm the value it should return an empty reply or an error in case the
-    /// passkey is invalid.
+    /// Returns an empty reply if the passkey is confirmed, or an error if rejected.
     ///
     /// Note that the passkey will always be a 6-digit number, so the display should be
     /// zero-padded at the start if the value contains less than 6 digits.
@@ -157,10 +150,10 @@ impl BluetoothAgent {
         }
     }
 
-    /// This method gets called to request the user to authorize an incoming pairing
-    /// attempt which would in other circumstances trigger the just-works model, or when
-    /// the user plugged in a device that implements cable pairing. In the latter case,
-    /// the device would not be connected to the adapter via Bluetooth yet.
+    /// Called to request user authorization for an incoming pairing attempt that would
+    /// otherwise trigger the just-works model, or when a device implementing cable
+    /// pairing is plugged in. In the latter case, the device may not yet be connected
+    /// to the adapter via Bluetooth.
     ///
     /// # Errors
     ///
@@ -182,8 +175,7 @@ impl BluetoothAgent {
         }
     }
 
-    /// This method gets called when bluetoothd needs to authorize a
-    /// connection/service request.
+    /// Called when bluetoothd needs to authorize a connection/service request.
     ///
     /// # Errors
     ///
@@ -206,8 +198,7 @@ impl BluetoothAgent {
         }
     }
 
-    /// This method gets called to indicate that the agent request failed before a reply
-    /// was returned.
+    /// Called to indicate that the agent request failed before a reply was returned.
     async fn cancel(&self) -> fdo::Result<()> {
         self.service_tx
             .send(AgentEvent::Cancelled)

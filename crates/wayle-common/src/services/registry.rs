@@ -31,7 +31,7 @@ impl ServiceRegistry {
 
     /// Registers a service already wrapped in Arc.
     ///
-    /// Use for services whose constructors return `Arc<Self>`.
+    /// Useful for services whose constructors return `Arc<Self>`.
     pub fn register_arc<S: Send + Sync + 'static>(&mut self, service: Arc<S>) -> &mut Self {
         self.services.insert(TypeId::of::<S>(), service);
         self
@@ -51,7 +51,7 @@ impl ServiceRegistry {
 
     /// Attempts to retrieve a service by type.
     ///
-    /// Returns `None` if the service is not registered. Use for optional services.
+    /// Returns `None` if the service is not registered. Useful for optional services.
     pub fn try_get<S: Send + Sync + 'static>(&self) -> Option<Arc<S>> {
         self.services
             .get(&TypeId::of::<S>())

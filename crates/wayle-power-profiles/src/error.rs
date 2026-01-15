@@ -2,11 +2,15 @@
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     /// D-Bus communication error
-    #[error("D-Bus operation failed: {0:#?}")]
-    DbusError(#[from] zbus::Error),
+    #[error("D-Bus operation failed: {0}")]
+    DbusError(
+        #[from]
+        #[source]
+        zbus::Error,
+    ),
 
     /// Service initialization failed
-    #[error("Failed to initialize power profiles service: {0:#?}")]
+    #[error("cannot initialize power profiles service: {0}")]
     ServiceInitializationFailed(String),
 
     /// Invalid field type in D-Bus data
@@ -18,12 +22,7 @@ pub enum Error {
         expected: String,
     },
 
-    /// PowerProfiles operation failed
-    #[error("PowerProfiles operation failed: {operation} - {reason}")]
-    OperationFailed {
-        /// The operation that failed
-        operation: &'static str,
-        /// The reason the operation failed
-        reason: String,
-    },
+    /// Monitoring cannot start without a cancellation token
+    #[error("cannot start monitoring: cancellation token was not provided")]
+    MissingCancellationToken,
 }

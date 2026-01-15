@@ -47,7 +47,7 @@ impl Reactive for Wired {
         .map_err(|e| Error::ObjectCreationFailed {
             object_type: String::from("Wired"),
             object_path: params.device_path.clone(),
-            reason: e.to_string(),
+            source: e.into(),
         })?;
 
         Self::from_device(device).await

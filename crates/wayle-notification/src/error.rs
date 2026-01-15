@@ -2,19 +2,19 @@
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     /// D-Bus communication error
-    #[error("D-Bus operation failed: {0:#?}")]
+    #[error("D-Bus operation failed: {0}")]
     DbusError(#[from] zbus::Error),
 
     /// Service initialization failed
-    #[error("Failed to initialize notification service: {0:#?}")]
+    #[error("cannot initialize notification service: {0}")]
     ServiceInitializationFailed(String),
 
-    /// Failed to claim the notification service name on D-Bus
-    #[error("Failed to claim org.freedesktop.Notifications: {0:#?}")]
+    /// Cannot claim the notification service name on D-Bus
+    #[error("cannot claim org.freedesktop.Notifications: {0}")]
     NameClaimFailed(String),
 
     /// Database operation failed
-    #[error("Database operation failed: {0:#?}")]
+    #[error("Database operation failed: {0}")]
     DatabaseError(String),
 
     /// Notification not found
@@ -26,11 +26,12 @@ pub enum Error {
     InvalidNotificationData(String),
 
     /// Operation failed
-    #[error("Notification operation failed: {operation} - {reason}")]
+    #[error("cannot {operation}")]
     OperationFailed {
         /// The operation that failed
         operation: &'static str,
-        /// The reason the operation failed
-        reason: String,
+        /// The underlying error
+        #[source]
+        source: Box<dyn std::error::Error + Send + Sync>,
     },
 }

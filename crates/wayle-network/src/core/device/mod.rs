@@ -201,7 +201,7 @@ impl Reactive for Device {
         .map_err(|e| Error::ObjectCreationFailed {
             object_type: String::from("Device"),
             object_path: params.object_path.clone(),
-            reason: e.to_string(),
+            source: e.into(),
         })?;
 
         let device = Arc::new(device);

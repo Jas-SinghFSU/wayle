@@ -99,8 +99,8 @@ impl NotificationServiceBuilder {
                 Some(store)
             }
             Err(e) => {
-                error!("Failed to initialize notification store: {}", e);
-                error!("Notifications will not persist across restarts");
+                error!(error = %e, "cannot initialize notification store");
+                error!("notifications will not persist across restarts");
                 None
             }
         };
@@ -147,13 +147,13 @@ impl NotificationServiceBuilder {
             .await
             .map_err(|err| {
                 Error::ServiceInitializationFailed(format!(
-                    "Failed to register D-Bus object at '{SERVICE_PATH}': {err}"
+                    "cannot register D-Bus object at '{SERVICE_PATH}': {err}"
                 ))
             })?;
 
         connection.request_name(SERVICE_NAME).await.map_err(|err| {
             Error::ServiceInitializationFailed(format!(
-                "Failed to acquire D-Bus name '{SERVICE_NAME}': {err}"
+                "cannot acquire D-Bus name '{SERVICE_NAME}': {err}"
             ))
         })?;
 
@@ -184,7 +184,7 @@ impl NotificationServiceBuilder {
                 .await
                 .map_err(|err| {
                     Error::ServiceInitializationFailed(format!(
-                        "Failed to register D-Bus object at '{WAYLE_SERVICE_PATH}': {err}"
+                        "cannot register D-Bus object at '{WAYLE_SERVICE_PATH}': {err}"
                     ))
                 })?;
 
@@ -193,7 +193,7 @@ impl NotificationServiceBuilder {
                 .await
                 .map_err(|err| {
                     Error::ServiceInitializationFailed(format!(
-                        "Failed to acquire D-Bus name '{WAYLE_SERVICE_NAME}': {err}"
+                        "cannot acquire D-Bus name '{WAYLE_SERVICE_NAME}': {err}"
                     ))
                 })?;
 

@@ -17,15 +17,20 @@ pub(crate) fn handle_workspace_v2(
     internal_tx: Sender<ServiceNotification>,
     hyprland_tx: Sender<HyprlandEvent>,
 ) -> Result<()> {
+    let event_data = format!("{event}>>{data}");
     let Some((id, name)) = data.split_once(',') else {
         return Err(Error::EventParseError {
-            event_data: format!("{event}>>{data}"),
-            reason: "expected comma-separated id,name".to_string(),
+            event_data,
+            field: "workspace_data",
+            expected: "comma-separated id,name",
+            value: data.to_string(),
         });
     };
     let id = id.parse().map_err(|_| Error::EventParseError {
-        event_data: format!("{event}>>{data}"),
-        reason: format!("invalid workspace ID: {id}"),
+        event_data,
+        field: "workspace_id",
+        expected: "integer",
+        value: id.to_string(),
     })?;
 
     hyprland_tx.send(HyprlandEvent::WorkspaceV2 {
@@ -57,15 +62,20 @@ pub(crate) fn handle_create_workspace_v2(
     internal_tx: Sender<ServiceNotification>,
     hyprland_tx: Sender<HyprlandEvent>,
 ) -> Result<()> {
+    let event_data = format!("{event}>>{data}");
     let Some((id, name)) = data.split_once(',') else {
         return Err(Error::EventParseError {
-            event_data: format!("{event}>>{data}"),
-            reason: "expected comma-separated id,name".to_string(),
+            event_data,
+            field: "workspace_data",
+            expected: "comma-separated id,name",
+            value: data.to_string(),
         });
     };
     let id = id.parse().map_err(|_| Error::EventParseError {
-        event_data: format!("{event}>>{data}"),
-        reason: format!("invalid workspace ID: {id}"),
+        event_data,
+        field: "workspace_id",
+        expected: "integer",
+        value: id.to_string(),
     })?;
 
     hyprland_tx.send(HyprlandEvent::CreateWorkspaceV2 {
@@ -97,15 +107,20 @@ pub(crate) fn handle_destroy_workspace_v2(
     internal_tx: Sender<ServiceNotification>,
     hyprland_tx: Sender<HyprlandEvent>,
 ) -> Result<()> {
+    let event_data = format!("{event}>>{data}");
     let Some((id, name)) = data.split_once(',') else {
         return Err(Error::EventParseError {
-            event_data: format!("{event}>>{data}"),
-            reason: "expected comma-separated id,name".to_string(),
+            event_data,
+            field: "workspace_data",
+            expected: "comma-separated id,name",
+            value: data.to_string(),
         });
     };
     let id = id.parse().map_err(|_| Error::EventParseError {
-        event_data: format!("{event}>>{data}"),
-        reason: format!("invalid workspace ID: {id}"),
+        event_data,
+        field: "workspace_id",
+        expected: "integer",
+        value: id.to_string(),
     })?;
 
     hyprland_tx.send(HyprlandEvent::DestroyWorkspaceV2 {
@@ -128,7 +143,9 @@ pub(crate) fn handle_move_workspace(
     let Some((name, monitor)) = data.split_once(',') else {
         return Err(Error::EventParseError {
             event_data: format!("{event}>>{data}"),
-            reason: "expected comma-separated name,monitor".to_string(),
+            field: "workspace_data",
+            expected: "comma-separated name,monitor",
+            value: data.to_string(),
         });
     };
 
@@ -146,16 +163,21 @@ pub(crate) fn handle_move_workspace_v2(
     internal_tx: Sender<ServiceNotification>,
     hyprland_tx: Sender<HyprlandEvent>,
 ) -> Result<()> {
+    let event_data = format!("{event}>>{data}");
     let parts: Vec<&str> = data.split(',').collect();
     let [id, name, monitor] = parts.as_slice() else {
         return Err(Error::EventParseError {
-            event_data: format!("{event}>>{data}"),
-            reason: "expected 3 comma-separated values (id,name,monitor)".to_string(),
+            event_data,
+            field: "workspace_data",
+            expected: "3 comma-separated values (id,name,monitor)",
+            value: data.to_string(),
         });
     };
     let id = id.parse().map_err(|_| Error::EventParseError {
-        event_data: format!("{event}>>{data}"),
-        reason: format!("invalid workspace ID: {id}"),
+        event_data,
+        field: "workspace_id",
+        expected: "integer",
+        value: (*id).to_string(),
     })?;
 
     hyprland_tx.send(HyprlandEvent::MoveWorkspaceV2 {
@@ -177,15 +199,20 @@ pub(crate) fn handle_rename_workspace(
     internal_tx: Sender<ServiceNotification>,
     hyprland_tx: Sender<HyprlandEvent>,
 ) -> Result<()> {
+    let event_data = format!("{event}>>{data}");
     let Some((id, new_name)) = data.split_once(',') else {
         return Err(Error::EventParseError {
-            event_data: format!("{event}>>{data}"),
-            reason: "expected comma-separated id,new_name".to_string(),
+            event_data,
+            field: "workspace_data",
+            expected: "comma-separated id,new_name",
+            value: data.to_string(),
         });
     };
     let id = id.parse().map_err(|_| Error::EventParseError {
-        event_data: format!("{event}>>{data}"),
-        reason: format!("invalid workspace ID: {id}"),
+        event_data,
+        field: "workspace_id",
+        expected: "integer",
+        value: id.to_string(),
     })?;
 
     hyprland_tx.send(HyprlandEvent::RenameWorkspace {
@@ -208,7 +235,9 @@ pub(crate) fn handle_active_special(
     let Some((workspace, monitor)) = data.split_once(',') else {
         return Err(Error::EventParseError {
             event_data: format!("{event}>>{data}"),
-            reason: "expected comma-separated workspace,monitor".to_string(),
+            field: "special_workspace_data",
+            expected: "comma-separated workspace,monitor",
+            value: data.to_string(),
         });
     };
 
@@ -226,16 +255,21 @@ pub(crate) fn handle_active_special_v2(
     internal_tx: Sender<ServiceNotification>,
     hyprland_tx: Sender<HyprlandEvent>,
 ) -> Result<()> {
+    let event_data = format!("{event}>>{data}");
     let parts: Vec<&str> = data.split(',').collect();
     let [id, workspace, monitor] = parts.as_slice() else {
         return Err(Error::EventParseError {
-            event_data: format!("{event}>>{data}"),
-            reason: "expected 3 comma-separated values (id,workspace,monitor)".to_string(),
+            event_data,
+            field: "special_workspace_data",
+            expected: "3 comma-separated values (id,workspace,monitor)",
+            value: data.to_string(),
         });
     };
     let id = id.parse().map_err(|_| Error::EventParseError {
-        event_data: format!("{event}>>{data}"),
-        reason: format!("invalid workspace ID: {id}"),
+        event_data,
+        field: "workspace_id",
+        expected: "integer",
+        value: (*id).to_string(),
     })?;
 
     hyprland_tx.send(HyprlandEvent::ActiveSpecialV2 {

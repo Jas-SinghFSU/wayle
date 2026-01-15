@@ -68,7 +68,7 @@ impl MediaServiceBuilder {
 
         let connection = Connection::session()
             .await
-            .map_err(|e| Error::InitializationFailed(format!("D-Bus connection failed: {e}")))?;
+            .map_err(|e| Error::Initialization(format!("d-bus connection: {e}")))?;
 
         let cancellation_token = CancellationToken::new();
 
@@ -93,15 +93,13 @@ impl MediaServiceBuilder {
                 .at(SERVICE_PATH, daemon)
                 .await
                 .map_err(|e| {
-                    Error::InitializationFailed(format!(
-                        "Failed to register D-Bus object at '{SERVICE_PATH}': {e}"
+                    Error::Initialization(format!(
+                        "cannot register d-bus object at '{SERVICE_PATH}': {e}"
                     ))
                 })?;
 
             connection.request_name(SERVICE_NAME).await.map_err(|e| {
-                Error::InitializationFailed(format!(
-                    "Failed to acquire D-Bus name '{SERVICE_NAME}': {e}"
-                ))
+                Error::Initialization(format!("cannot acquire d-bus name '{SERVICE_NAME}': {e}"))
             })?;
 
             info!("Media service registered at {SERVICE_NAME}");

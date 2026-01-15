@@ -86,13 +86,13 @@ impl WallpaperServiceBuilder {
             .await
             .map_err(|err| {
                 Error::ServiceInitializationFailed(format!(
-                    "Failed to register D-Bus object at '{SERVICE_PATH}': {err}"
+                    "cannot register D-Bus object at '{SERVICE_PATH}': {err}"
                 ))
             })?;
 
         connection.request_name(SERVICE_NAME).await.map_err(|err| {
             Error::ServiceInitializationFailed(format!(
-                "Failed to acquire D-Bus name '{SERVICE_NAME}': {err}"
+                "cannot acquire D-Bus name '{SERVICE_NAME}': {err}"
             ))
         })?;
 

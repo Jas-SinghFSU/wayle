@@ -24,8 +24,8 @@ impl DeviceWifiControls {
             .get_all_access_points()
             .await
             .map_err(|e| Error::OperationFailed {
-                operation: "get_all_access_points",
-                reason: e.to_string(),
+                operation: "get all access points",
+                source: e.into(),
             })
     }
 
@@ -47,8 +47,8 @@ impl DeviceWifiControls {
             .request_scan(options)
             .await
             .map_err(|e| Error::OperationFailed {
-                operation: "request_scan",
-                reason: e.to_string(),
+                operation: "request wifi scan",
+                source: e.into(),
             })?;
 
         Ok(())

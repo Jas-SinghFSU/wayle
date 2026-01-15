@@ -18,34 +18,34 @@ use zbus::{Result, proxy};
 pub trait Media {
     /// Toggles play/pause for a player.
     ///
-    /// Use an empty string for `player_id` to target the active player.
+    /// An empty string for `player_id` targets the active player.
     async fn play_pause(&self, player_id: String) -> Result<()>;
 
     /// Skips to the next track.
     ///
-    /// Use an empty string for `player_id` to target the active player.
+    /// An empty string for `player_id` targets the active player.
     async fn next(&self, player_id: String) -> Result<()>;
 
     /// Goes to the previous track.
     ///
-    /// Use an empty string for `player_id` to target the active player.
+    /// An empty string for `player_id` targets the active player.
     async fn previous(&self, player_id: String) -> Result<()>;
 
     /// Seeks to a position in microseconds.
     ///
-    /// Use an empty string for `player_id` to target the active player.
+    /// An empty string for `player_id` targets the active player.
     async fn seek(&self, player_id: String, position_us: i64) -> Result<()>;
 
     /// Sets the shuffle mode for a player.
     ///
-    /// `state` must be one of: "on", "off", "toggle".
-    /// Use an empty string for `player_id` to target the active player.
+    /// `state` accepts: "on", "off", or "toggle".
+    /// An empty string for `player_id` targets the active player.
     async fn set_shuffle(&self, player_id: String, state: String) -> Result<()>;
 
     /// Sets the loop mode for a player.
     ///
-    /// `mode` must be one of: "none", "track", "playlist".
-    /// Use an empty string for `player_id` to target the active player.
+    /// `mode` accepts: "none", "track", or "playlist".
+    /// An empty string for `player_id` targets the active player.
     async fn set_loop_status(&self, player_id: String, mode: String) -> Result<()>;
 
     /// Lists all available media players.
@@ -60,12 +60,12 @@ pub trait Media {
 
     /// Sets the active player by ID.
     ///
-    /// Pass an empty string to clear the active player.
+    /// An empty string clears the active player.
     async fn set_active_player(&self, player_id: String) -> Result<()>;
 
     /// Gets detailed information about a player.
     ///
-    /// Use an empty string for `player_id` to target the active player.
+    /// An empty string for `player_id` targets the active player.
     async fn get_player_info(&self, player_id: String) -> Result<HashMap<String, String>>;
 
     /// The currently active player ID.

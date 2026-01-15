@@ -10,8 +10,8 @@ use super::IconSource;
 
 /// Tabler Icons outline variant.
 ///
-/// These are stroke-based icons. For GTK symbolic icon support
-/// (CSS color recoloring), use [`TablerFilled`] instead.
+/// These are stroke-based icons. [`TablerFilled`] provides fill-based
+/// icons that work better with GTK's symbolic icon CSS color recoloring.
 #[derive(Debug, Clone, Copy, Default)]
 pub struct Tabler;
 
