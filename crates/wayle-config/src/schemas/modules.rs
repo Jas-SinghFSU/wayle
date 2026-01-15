@@ -1,6 +1,4 @@
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
-use wayle_derive::{ApplyConfigLayer, ApplyRuntimeLayer, ExtractRuntimeValues, SubscribeChanges};
+use wayle_derive::wayle_config;
 
 use super::{battery::BatteryConfig, clock::ClockConfig};
 
@@ -8,19 +6,7 @@ use super::{battery::BatteryConfig, clock::ClockConfig};
 ///
 /// If a module's configuration is not specified in TOML,
 /// it uses its default settings.
-#[derive(
-    Debug,
-    Clone,
-    Serialize,
-    Deserialize,
-    Default,
-    JsonSchema,
-    ApplyConfigLayer,
-    ApplyRuntimeLayer,
-    ExtractRuntimeValues,
-    SubscribeChanges,
-)]
-#[serde(default)]
+#[wayle_config]
 pub struct ModulesConfig {
     /// Configuration for the battery status module.
     pub battery: BatteryConfig,

@@ -14,7 +14,7 @@ glib.workspace = true
 gtk4 = { workspace = true, features = ["v4_10"] }
 relm4.workspace = true
 wayle-common.workspace = true
-wayle-config = { workspace = true, features = ["schema"] }
+wayle-config.workspace = true
 
 [lints]
 workspace = true

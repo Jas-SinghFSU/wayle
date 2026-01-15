@@ -1,8 +1,11 @@
 //! Derive macros for Wayle configuration management.
 
 use proc_macro::TokenStream;
+use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
-use syn::{Data, DeriveInput, Field, Fields, FieldsNamed, parse_macro_input};
+use syn::{
+    Attribute, Data, DeriveInput, Expr, Field, Fields, FieldsNamed, ItemStruct, parse_macro_input,
+};
 
 fn validate_named_struct(input: &DeriveInput) -> Result<&FieldsNamed, TokenStream> {
     match &input.data {
@@ -202,6 +205,94 @@ pub fn derive_extract_runtime_values(input: TokenStream) -> TokenStream {
     TokenStream::from(expanded)
 }
 
+/// Derive macro for `ResetConfigLayer` trait.
+///
+/// Recursively clears the config layer of all fields without notifying watchers.
+/// Part of the reload cycle: reset -> apply -> commit.
+///
+/// # Attributes
+///
+/// - `#[wayle(skip)]` - Skip this field in config reset
+///
+/// # Generated Code
+///
+/// For each field, generates: `self.field.reset_config_layer()`
+#[proc_macro_derive(ResetConfigLayer, attributes(wayle))]
+pub fn derive_reset_config_layer(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    let name = &input.ident;
+
+    let fields = match validate_named_struct(&input) {
+        Ok(fields) => fields,
+        Err(err) => return err,
+    };
+
+    let field_resets = fields
+        .named
+        .iter()
+        .filter(|field| !should_skip(field))
+        .map(|field| {
+            let field_name = &field.ident;
+            quote! {
+                self.#field_name.reset_config_layer();
+            }
+        });
+
+    let expanded = quote! {
+        impl wayle_common::ResetConfigLayer for #name {
+            fn reset_config_layer(&self) {
+                #(#field_resets)*
+            }
+        }
+    };
+
+    TokenStream::from(expanded)
+}
+
+/// Derive macro for `CommitConfigReload` trait.
+///
+/// Recursively commits config reload by recomputing effective values.
+/// Part of the reload cycle: reset -> apply -> commit.
+///
+/// # Attributes
+///
+/// - `#[wayle(skip)]` - Skip this field in config commit
+///
+/// # Generated Code
+///
+/// For each field, generates: `self.field.commit_config_reload()`
+#[proc_macro_derive(CommitConfigReload, attributes(wayle))]
+pub fn derive_commit_config_reload(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    let name = &input.ident;
+
+    let fields = match validate_named_struct(&input) {
+        Ok(fields) => fields,
+        Err(err) => return err,
+    };
+
+    let field_commits = fields
+        .named
+        .iter()
+        .filter(|field| !should_skip(field))
+        .map(|field| {
+            let field_name = &field.ident;
+            quote! {
+                self.#field_name.commit_config_reload();
+            }
+        });
+
+    let expanded = quote! {
+        impl wayle_common::CommitConfigReload for #name {
+            fn commit_config_reload(&self) {
+                #(#field_commits)*
+            }
+        }
+    };
+
+    TokenStream::from(expanded)
+}
+
 /// Derive macro for `SubscribeChanges` trait.
 ///
 /// Automatically generates code to subscribe to changes in all struct fields.
@@ -270,4 +361,165 @@ pub fn derive_subscribe_changes(input: TokenStream) -> TokenStream {
     };
 
     TokenStream::from(expanded)
+}
+
+/// Attribute macro for Wayle configuration structs.
+///
+/// Reduces boilerplate by automatically adding all required derives and generating
+/// the `Default` implementation from inline `#[default(...)]` attributes.
+///
+/// # Generates
+///
+/// - Standard derives: `Debug`, `Clone`, `Serialize`, `Deserialize`, `JsonSchema`
+/// - Config layer derives: `ApplyConfigLayer`, `ApplyRuntimeLayer`, `ExtractRuntimeValues`,
+///   `SubscribeChanges`, `ResetConfigLayer`, `CommitConfigReload`
+/// - `#[serde(default)]` attribute
+/// - `impl Default` from `#[default(...)]` field attributes
+///
+/// # Field Attributes
+///
+/// - `#[default(expr)]` - Leaf field with `ConfigProperty<T>`, uses `ConfigProperty::new(expr)`
+/// - No `#[default]` - Container field, uses `FieldType::default()`
+/// - `#[serde(...)]` - Preserved and passed through to the struct
+///
+/// # Example
+///
+/// ```ignore
+/// use wayle_common::ConfigProperty;
+/// use wayle_derive::wayle_config;
+///
+/// #[wayle_config]
+/// pub struct ClockConfig {
+///     /// Time format string.
+///     #[default("%H:%M")]
+///     pub format: ConfigProperty<String>,
+///
+///     /// Nested container (no #[default] needed).
+///     pub styling: ClockStyling,
+/// }
+/// ```
+#[proc_macro_attribute]
+pub fn wayle_config(_attr: TokenStream, item: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(item as ItemStruct);
+
+    match generate_wayle_config(input) {
+        Ok(tokens) => tokens.into(),
+        Err(err) => err.to_compile_error().into(),
+    }
+}
+
+fn generate_wayle_config(input: ItemStruct) -> syn::Result<TokenStream2> {
+    let name = &input.ident;
+    let vis = &input.vis;
+    let generics = &input.generics;
+    let attrs = filter_non_default_attrs(&input.attrs);
+
+    let fields = match &input.fields {
+        Fields::Named(fields) => fields,
+        _ => {
+            return Err(syn::Error::new_spanned(
+                &input,
+                "wayle_config only supports structs with named fields",
+            ));
+        }
+    };
+
+    let processed_fields = process_fields(fields)?;
+    let struct_fields = &processed_fields.struct_fields;
+    let default_initializers = &processed_fields.default_initializers;
+
+    Ok(quote! {
+        #(#attrs)*
+        #[derive(
+            Debug,
+            Clone,
+            serde::Serialize,
+            serde::Deserialize,
+            schemars::JsonSchema,
+            wayle_derive::ApplyConfigLayer,
+            wayle_derive::ApplyRuntimeLayer,
+            wayle_derive::ExtractRuntimeValues,
+            wayle_derive::SubscribeChanges,
+            wayle_derive::ResetConfigLayer,
+            wayle_derive::CommitConfigReload,
+        )]
+        #[serde(default)]
+        #vis struct #name #generics {
+            #(#struct_fields),*
+        }
+
+        impl #generics Default for #name #generics {
+            fn default() -> Self {
+                Self {
+                    #(#default_initializers),*
+                }
+            }
+        }
+    })
+}
+
+struct ProcessedFields {
+    struct_fields: Vec<TokenStream2>,
+    default_initializers: Vec<TokenStream2>,
+}
+
+fn process_fields(fields: &FieldsNamed) -> syn::Result<ProcessedFields> {
+    let mut struct_fields = Vec::new();
+    let mut default_initializers = Vec::new();
+
+    for field in &fields.named {
+        let field_name = field
+            .ident
+            .as_ref()
+            .ok_or_else(|| syn::Error::new_spanned(field, "expected named field"))?;
+        let field_ty = &field.ty;
+        let field_vis = &field.vis;
+
+        let (default_expr, remaining_attrs) = extract_default_attr(&field.attrs)?;
+
+        let struct_field = quote! {
+            #(#remaining_attrs)*
+            #field_vis #field_name: #field_ty
+        };
+        struct_fields.push(struct_field);
+
+        let initializer = match default_expr {
+            Some(expr) => quote! { #field_name: wayle_common::ConfigProperty::new(#expr) },
+            None => quote! { #field_name: Default::default() },
+        };
+        default_initializers.push(initializer);
+    }
+
+    Ok(ProcessedFields {
+        struct_fields,
+        default_initializers,
+    })
+}
+
+fn extract_default_attr(attrs: &[Attribute]) -> syn::Result<(Option<Expr>, Vec<&Attribute>)> {
+    let mut default_expr = None;
+    let mut remaining = Vec::new();
+
+    for attr in attrs {
+        if attr.path().is_ident("default") {
+            if default_expr.is_some() {
+                return Err(syn::Error::new_spanned(
+                    attr,
+                    "duplicate #[default] attribute",
+                ));
+            }
+            default_expr = Some(attr.parse_args::<Expr>()?);
+        } else {
+            remaining.push(attr);
+        }
+    }
+
+    Ok((default_expr, remaining))
+}
+
+fn filter_non_default_attrs(attrs: &[Attribute]) -> Vec<&Attribute> {
+    attrs
+        .iter()
+        .filter(|attr| !attr.path().is_ident("default"))
+        .collect()
 }

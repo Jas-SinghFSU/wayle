@@ -16,8 +16,9 @@ mod state;
 pub mod watchers;
 
 pub use property::{
-    ApplyConfigLayer, ApplyRuntimeLayer, ComputedProperty, ConfigProperty, ExtractRuntimeValues,
-    Property, PropertyStream, SubscribeChanges, ValueSource,
+    ApplyConfigLayer, ApplyRuntimeLayer, CommitConfigReload, ComputedProperty, ConfigProperty,
+    ExtractRuntimeValues, Property, PropertyStream, ResetConfigLayer, SubscribeChanges,
+    ValueSource,
 };
 pub use state::RuntimeState;
 

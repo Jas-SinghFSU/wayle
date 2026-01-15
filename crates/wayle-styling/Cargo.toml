@@ -12,7 +12,7 @@ description = "SCSS compilation and theming for Wayle"
 grass.workspace = true
 thiserror.workspace = true
 tracing.workspace = true
-wayle-config = { path = "../wayle-config", features = ["schema"] }
+wayle-config = { path = "../wayle-config" }
 
 [dev-dependencies]
 gtk4 = { workspace = true, features = ["v4_12"] }

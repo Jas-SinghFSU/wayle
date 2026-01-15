@@ -6,10 +6,9 @@ mod styling;
 use button::ClockButtonConfig;
 use dropdown::ClockDropdownConfig;
 use general::ClockGeneralConfig;
-use schemars::{JsonSchema, schema_for};
-use serde::{Deserialize, Serialize};
+use schemars::schema_for;
 use styling::{ClockButtonStyling, ClockDropdownStyling, ClockStyling};
-use wayle_derive::{ApplyConfigLayer, ApplyRuntimeLayer, ExtractRuntimeValues, SubscribeChanges};
+use wayle_derive::wayle_config;
 
 use crate::docs::{BehaviorConfigs, ModuleInfo, ModuleInfoProvider, StylingConfigs};
 
@@ -17,19 +16,7 @@ use crate::docs::{BehaviorConfigs, ModuleInfo, ModuleInfoProvider, StylingConfig
 ///
 /// Provides comprehensive settings for displaying time and calendar information,
 /// including general behavior, button appearance, dropdown functionality, and styling options.
-#[derive(
-    Debug,
-    Clone,
-    Serialize,
-    Deserialize,
-    JsonSchema,
-    Default,
-    ApplyConfigLayer,
-    ApplyRuntimeLayer,
-    ExtractRuntimeValues,
-    SubscribeChanges,
-)]
-#[serde(default)]
+#[wayle_config]
 pub struct ClockConfig {
     /// General configuration settings that apply to all clock functionality.
     #[serde(default)]

@@ -52,25 +52,13 @@ pub use infrastructure::{
 use schemas::{
     general::GeneralConfig, media::MediaConfig, modules::ModulesConfig, styling::StylingConfig,
 };
-use serde::{Deserialize, Serialize};
-use wayle_derive::{ApplyConfigLayer, ApplyRuntimeLayer, ExtractRuntimeValues, SubscribeChanges};
+use wayle_derive::wayle_config;
 
 /// Main configuration structure for Wayle.
 ///
 /// Represents the complete configuration schema that can be loaded
 /// from TOML files. All fields have sensible defaults.
-#[derive(
-    Debug,
-    Clone,
-    Serialize,
-    Deserialize,
-    Default,
-    ApplyConfigLayer,
-    ApplyRuntimeLayer,
-    ExtractRuntimeValues,
-    SubscribeChanges,
-)]
-#[serde(default)]
+#[wayle_config]
 pub struct Config {
     /// General application settings.
     pub general: GeneralConfig,

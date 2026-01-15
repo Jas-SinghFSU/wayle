@@ -53,3 +53,30 @@ pub trait SubscribeChanges {
     /// Spawns background tasks that watch for changes and send () to the channel.
     fn subscribe_changes(&self, tx: mpsc::UnboundedSender<()>);
 }
+
+/// Resets the config layer to None without notifying watchers.
+///
+/// Part of the reload cycle: reset -> apply -> commit.
+/// Clearing the config layer allows fields removed from TOML to
+/// fall back to their default values after commit.
+pub trait ResetConfigLayer {
+    /// Clears the config layer value without triggering notifications.
+    ///
+    /// After calling this, the effective value is NOT recomputed.
+    /// Call `commit_config_reload` after applying new values to
+    /// recompute and notify watchers.
+    fn reset_config_layer(&self);
+}
+
+/// Commits a config reload by recomputing effective values.
+///
+/// Part of the reload cycle: reset -> apply -> commit.
+/// Recomputes effective values and notifies watchers only for
+/// fields whose effective value actually changed.
+pub trait CommitConfigReload {
+    /// Recomputes effective values and notifies watchers of changes.
+    ///
+    /// Thanks to change detection in Property::set, watchers are only
+    /// notified if the effective value actually changed.
+    fn commit_config_reload(&self);
+}

@@ -10,11 +10,10 @@ description = "Configuration management for Wayle"
 
 [features]
 default = []
-schema = ["schemars"]
 
 [dependencies]
 notify.workspace = true
-schemars = { workspace = true, optional = true }
+schemars.workspace = true
 serde.workspace = true
 thiserror.workspace = true
 tokio.workspace = true

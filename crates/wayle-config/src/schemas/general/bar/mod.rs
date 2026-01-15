@@ -1,32 +1,14 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use wayle_common::ConfigProperty;
-use wayle_derive::{ApplyConfigLayer, ApplyRuntimeLayer, ExtractRuntimeValues, SubscribeChanges};
+use wayle_derive::wayle_config;
 
 /// Bar configuration.
-#[derive(
-    Debug,
-    Clone,
-    Serialize,
-    Deserialize,
-    JsonSchema,
-    ApplyConfigLayer,
-    ApplyRuntimeLayer,
-    ExtractRuntimeValues,
-    SubscribeChanges,
-)]
-#[serde(default)]
+#[wayle_config]
 pub struct BarConfig {
     /// Per-monitor bar layouts.
+    #[default(vec![BarLayout::default()])]
     pub layout: ConfigProperty<Vec<BarLayout>>,
-}
-
-impl Default for BarConfig {
-    fn default() -> Self {
-        Self {
-            layout: ConfigProperty::new(vec![BarLayout::default()]),
-        }
-    }
 }
 
 /// A bar item: either a standalone module or a named group of modules.

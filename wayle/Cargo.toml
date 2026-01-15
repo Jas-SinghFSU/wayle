@@ -30,7 +30,7 @@ zbus.workspace = true
 
 # Common dependencies
 wayle-common = { workspace = true, features = ["schema"] }
-wayle-config = { workspace = true, features = ["schema"] }
+wayle-config.workspace = true
 
 # Service dependencies (for CLI commands)
 wayle-audio.workspace = true

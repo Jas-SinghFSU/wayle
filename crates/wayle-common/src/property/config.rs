@@ -10,7 +10,10 @@ use tokio::sync::mpsc;
 
 use super::{
     Property,
-    traits::{ApplyConfigLayer, ApplyRuntimeLayer, ExtractRuntimeValues, SubscribeChanges},
+    traits::{
+        ApplyConfigLayer, ApplyRuntimeLayer, CommitConfigReload, ExtractRuntimeValues,
+        ResetConfigLayer, SubscribeChanges,
+    },
 };
 
 fn format_toml_indented(value: &toml::Value) -> String {
@@ -280,6 +283,20 @@ impl<T: Clone + Send + Sync + PartialEq + 'static> SubscribeChanges for ConfigPr
     }
 }
 
+impl<T: Clone + Send + Sync + PartialEq + 'static> ResetConfigLayer for ConfigProperty<T> {
+    fn reset_config_layer(&self) {
+        if let Ok(mut guard) = self.config.write() {
+            *guard = None;
+        }
+    }
+}
+
+impl<T: Clone + Send + Sync + PartialEq + 'static> CommitConfigReload for ConfigProperty<T> {
+    fn commit_config_reload(&self) {
+        self.recompute_effective();
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -356,5 +373,76 @@ mod tests {
         prop.set(200);
 
         assert_eq!(*prop.default(), 42);
+    }
+
+    #[test]
+    fn reset_config_layer_clears_without_recomputing() {
+        let prop = ConfigProperty::new(10);
+        prop.set_config(20);
+        assert_eq!(prop.get(), 20);
+
+        prop.reset_config_layer();
+
+        assert_eq!(prop.config(), None);
+        assert_eq!(
+            prop.get(),
+            20,
+            "effective value should NOT change until commit"
+        );
+    }
+
+    #[test]
+    fn commit_config_reload_recomputes_effective() {
+        let prop = ConfigProperty::new(10);
+        prop.set_config(20);
+        prop.reset_config_layer();
+        assert_eq!(prop.get(), 20);
+
+        prop.commit_config_reload();
+
+        assert_eq!(prop.get(), 10);
+        assert_eq!(prop.source(), ValueSource::Default);
+    }
+
+    #[test]
+    fn reset_apply_commit_reverts_removed_config_to_default() {
+        let prop = ConfigProperty::new(10);
+        prop.set_config(20);
+        assert_eq!(prop.get(), 20);
+
+        prop.reset_config_layer();
+        prop.commit_config_reload();
+
+        assert_eq!(prop.get(), 10);
+        assert_eq!(prop.source(), ValueSource::Default);
+    }
+
+    #[test]
+    fn reset_apply_commit_preserves_runtime_override() {
+        let prop = ConfigProperty::new(10);
+        prop.set_config(20);
+        prop.set(30);
+        assert_eq!(prop.source(), ValueSource::Override);
+
+        prop.reset_config_layer();
+        prop.commit_config_reload();
+
+        assert_eq!(prop.get(), 30);
+        assert_eq!(prop.source(), ValueSource::Custom);
+        assert_eq!(prop.runtime(), Some(30));
+        assert_eq!(prop.config(), None);
+    }
+
+    #[test]
+    fn reset_apply_commit_with_new_config_value() {
+        let prop = ConfigProperty::new(10);
+        prop.set_config(20);
+
+        prop.reset_config_layer();
+        prop.set_config(50);
+        prop.commit_config_reload();
+
+        assert_eq!(prop.get(), 50);
+        assert_eq!(prop.source(), ValueSource::Config);
     }
 }

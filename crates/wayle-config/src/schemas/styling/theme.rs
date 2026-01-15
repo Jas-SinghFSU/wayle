@@ -1,7 +1,5 @@
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
-use wayle_common::{ConfigProperty, Property};
-use wayle_derive::{ApplyConfigLayer, ApplyRuntimeLayer, ExtractRuntimeValues, SubscribeChanges};
+use wayle_common::ConfigProperty;
+use wayle_derive::wayle_config;
 
 use crate::infrastructure::themes::{Palette, palettes::catppuccin};
 
@@ -30,66 +28,48 @@ pub struct ThemeEntry {
 /// User-defined custom color palette.
 ///
 /// Used when preset is set to "custom".
-#[derive(
-    Debug,
-    Clone,
-    Serialize,
-    Deserialize,
-    JsonSchema,
-    ApplyConfigLayer,
-    ApplyRuntimeLayer,
-    ExtractRuntimeValues,
-    SubscribeChanges,
-)]
-#[serde(default)]
+#[wayle_config]
 pub struct CustomPalette {
     /// Base background color (darkest).
+    #[default(String::from(defaults::BG))]
     pub bg: ConfigProperty<String>,
 
     /// Card and sidebar background.
+    #[default(String::from(defaults::SURFACE))]
     pub surface: ConfigProperty<String>,
 
     /// Raised element background.
+    #[default(String::from(defaults::ELEVATED))]
     pub elevated: ConfigProperty<String>,
 
     /// Primary text color.
+    #[default(String::from(defaults::FG))]
     pub fg: ConfigProperty<String>,
 
     /// Secondary text color.
     #[serde(rename = "fg-muted")]
+    #[default(String::from(defaults::FG_MUTED))]
     pub fg_muted: ConfigProperty<String>,
 
     /// Accent color for interactive elements.
+    #[default(String::from(defaults::PRIMARY))]
     pub primary: ConfigProperty<String>,
 
     /// Red palette color.
+    #[default(String::from(defaults::RED))]
     pub red: ConfigProperty<String>,
 
     /// Yellow palette color.
+    #[default(String::from(defaults::YELLOW))]
     pub yellow: ConfigProperty<String>,
 
     /// Green palette color.
+    #[default(String::from(defaults::GREEN))]
     pub green: ConfigProperty<String>,
 
     /// Blue palette color.
+    #[default(String::from(defaults::BLUE))]
     pub blue: ConfigProperty<String>,
-}
-
-impl Default for CustomPalette {
-    fn default() -> Self {
-        Self {
-            bg: ConfigProperty::new(String::from(defaults::BG)),
-            surface: ConfigProperty::new(String::from(defaults::SURFACE)),
-            elevated: ConfigProperty::new(String::from(defaults::ELEVATED)),
-            fg: ConfigProperty::new(String::from(defaults::FG)),
-            fg_muted: ConfigProperty::new(String::from(defaults::FG_MUTED)),
-            primary: ConfigProperty::new(String::from(defaults::PRIMARY)),
-            red: ConfigProperty::new(String::from(defaults::RED)),
-            yellow: ConfigProperty::new(String::from(defaults::YELLOW)),
-            green: ConfigProperty::new(String::from(defaults::GREEN)),
-            blue: ConfigProperty::new(String::from(defaults::BLUE)),
-        }
-    }
 }
 
 impl CustomPalette {
@@ -115,21 +95,11 @@ impl CustomPalette {
 ///
 /// Controls the color palette used throughout the interface.
 /// Select a preset theme or use "custom" with user-defined colors.
-#[derive(
-    Debug,
-    Clone,
-    Serialize,
-    Deserialize,
-    JsonSchema,
-    ApplyConfigLayer,
-    ApplyRuntimeLayer,
-    ExtractRuntimeValues,
-    SubscribeChanges,
-)]
-#[serde(default)]
+#[wayle_config]
 pub struct ThemeConfig {
-    /// The active color palette
-    pub palette: ConfigProperty<Palette>,
+    /// The active color palette.
+    #[default(catppuccin())]
+    pub active: ConfigProperty<Palette>,
 
     /// Available themes discovered at runtime.
     ///
@@ -137,14 +107,6 @@ pub struct ThemeConfig {
     #[serde(skip)]
     #[schemars(skip)]
     #[wayle(skip)]
-    pub available: Property<Vec<ThemeEntry>>,
-}
-
-impl Default for ThemeConfig {
-    fn default() -> Self {
-        Self {
-            palette: ConfigProperty::new(catppuccin()),
-            available: Property::new(Vec::new()),
-        }
-    }
+    #[default(Vec::new())]
+    pub available: ConfigProperty<Vec<ThemeEntry>>,
 }

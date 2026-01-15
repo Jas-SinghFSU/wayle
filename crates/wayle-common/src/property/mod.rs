@@ -60,7 +60,10 @@ use schemars::{JsonSchema, Schema, SchemaGenerator};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use tokio::sync::watch;
 use tokio_stream::wrappers::WatchStream;
-pub use traits::{ApplyConfigLayer, ApplyRuntimeLayer, ExtractRuntimeValues, SubscribeChanges};
+pub use traits::{
+    ApplyConfigLayer, ApplyRuntimeLayer, CommitConfigReload, ExtractRuntimeValues,
+    ResetConfigLayer, SubscribeChanges,
+};
 
 /// Stream of property value changes.
 pub type PropertyStream<T> = Box<dyn Stream<Item = T> + Send + Unpin>;
