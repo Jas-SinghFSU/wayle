@@ -6,7 +6,7 @@
 mod errors;
 mod palette_provider;
 
-use std::{fs, io::Write, path::PathBuf};
+use std::{fs, path::PathBuf};
 
 pub use errors::Error;
 use tracing::{error, info};
@@ -21,16 +21,8 @@ fn scss_dir() -> PathBuf {
 
 /// Compiles the complete stylesheet from palette, font, scale, and rounding inputs.
 ///
-/// Generates SCSS variables from the inputs, writes them to a temporary file,
-/// and compiles the main SCSS entry point which imports all component styles.
-///
-/// # Arguments
-///
-/// * `palette` - Color palette for the theme
-/// * `fonts` - Font configuration for sans and mono families
-/// * `scale` - Global UI scale multiplier (1.0 = default)
-/// * `bar_scale` - Bar-specific scale multiplier (1.0 = default)
-/// * `rounding` - Global rounding preference
+/// Generates SCSS variables and compiles them with the main stylesheet.
+/// All compilation happens in-memory without writing to disk.
 ///
 /// # Errors
 ///
@@ -62,17 +54,14 @@ pub fn compile(
     );
 
     let scss_path = scss_dir();
-    let variables_path = scss_path.join("_variables.scss");
     let main_path = scss_path.join("main.scss");
 
-    let mut file = fs::File::create(&variables_path).map_err(Error::Io)?;
-    file.write_all(variables.as_bytes()).map_err(Error::Io)?;
-    file.sync_all().map_err(Error::Io)?;
-    drop(file);
+    let main_content = fs::read_to_string(&main_path).map_err(Error::Io)?;
+    let full_scss = main_content.replace("@import \"variables\";", &variables);
 
     let options = grass::Options::default().load_path(&scss_path);
 
-    grass::from_path(&main_path, &options).map_err(Error::Compilation)
+    grass::from_string(&full_scss, &options).map_err(Error::Compilation)
 }
 
 fn resolve_palette<'a>(
