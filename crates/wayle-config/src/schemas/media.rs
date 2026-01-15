@@ -1,16 +1,18 @@
 use wayle_common::ConfigProperty;
 use wayle_derive::wayle_config;
 
-/// Media service configuration.
+/// Media module configuration.
 ///
-/// Each field is reactive and can be watched for changes.
+/// Controls media player display in the status bar. Properties use noun-first
+/// naming with prefixes for logical grouping.
 #[wayle_config]
 pub struct MediaConfig {
-    /// List of player bus name patterns to ignore during discovery
-    #[default(Vec::new())]
-    pub ignored_players: ConfigProperty<Vec<String>>,
-
-    /// Whether the media module is displayed in the status bar.
+    /// Whether the media module is displayed.
     #[default(true)]
     pub enabled: ConfigProperty<bool>,
+
+    /// Player bus name patterns to exclude from discovery.
+    #[serde(rename = "players-ignored")]
+    #[default(Vec::new())]
+    pub players_ignored: ConfigProperty<Vec<String>>,
 }

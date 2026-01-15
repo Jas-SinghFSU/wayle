@@ -1,22 +1,23 @@
 use wayle_common::ConfigProperty;
 use wayle_derive::wayle_config;
 
-/// Configuration for the battery status module.
+/// Battery module configuration.
 ///
-/// Controls the display and behavior of battery information in the status bar,
-/// including percentage display and low battery warnings.
-/// Each field is reactive and can be watched for changes.
+/// Controls battery display in the status bar. Properties use noun-first
+/// naming with prefixes for logical grouping.
 #[wayle_config]
 pub struct BatteryConfig {
-    /// Whether the battery module is displayed in the status bar.
+    /// Whether the battery module is displayed.
     #[default(true)]
     pub enabled: ConfigProperty<bool>,
 
-    /// Whether to show the battery percentage alongside the icon.
+    /// Whether to show the percentage label alongside the icon.
+    #[serde(rename = "percentage-show")]
     #[default(true)]
-    pub show_percentage: ConfigProperty<bool>,
+    pub percentage_show: ConfigProperty<bool>,
 
-    /// Battery percentage threshold for triggering a low battery warning.
+    /// Percentage threshold for low battery warning.
+    #[serde(rename = "warning-threshold")]
     #[default(20)]
-    pub battery_warning: ConfigProperty<u8>,
+    pub warning_threshold: ConfigProperty<u8>,
 }

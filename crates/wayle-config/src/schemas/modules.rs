@@ -1,6 +1,6 @@
 use wayle_derive::wayle_config;
 
-use super::{battery::BatteryConfig, clock::ClockConfig};
+use super::{battery::BatteryConfig, clock::ClockConfig, media::MediaConfig};
 
 /// Configuration container for all available Wayle modules.
 ///
@@ -12,4 +12,6 @@ pub struct ModulesConfig {
     pub battery: BatteryConfig,
     /// Configuration for the clock display module.
     pub clock: ClockConfig,
+    /// Configuration for the media player module.
+    pub media: MediaConfig,
 }

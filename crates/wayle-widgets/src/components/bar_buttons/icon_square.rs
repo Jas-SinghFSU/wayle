@@ -76,8 +76,8 @@ pub struct IconSquareBarButtonConfig {
     pub icon_padding_x: Arc<ConfigProperty<PaddingClass>>,
     /// Icon container vertical padding (global).
     pub icon_padding_y: Arc<ConfigProperty<PaddingClass>>,
-    /// Text size class (global).
-    pub text_size: Arc<ConfigProperty<TextSizeClass>>,
+    /// Label size class (global).
+    pub label_size: Arc<ConfigProperty<TextSizeClass>>,
     /// Button horizontal padding (global).
     pub padding_x: Arc<ConfigProperty<PaddingClass>>,
     /// Button vertical padding (global).
@@ -115,7 +115,7 @@ impl Default for IconSquareBarButtonConfig {
             icon_size: Arc::new(ConfigProperty::new(IconSizeClass::default())),
             icon_padding_x: Arc::new(ConfigProperty::new(PaddingClass::Sm)),
             icon_padding_y: Arc::new(ConfigProperty::new(PaddingClass::Sm)),
-            text_size: Arc::new(ConfigProperty::new(TextSizeClass::default())),
+            label_size: Arc::new(ConfigProperty::new(TextSizeClass::default())),
             padding_x: Arc::new(ConfigProperty::new(PaddingClass::Sm)),
             padding_y: Arc::new(ConfigProperty::new(PaddingClass::Sm)),
             gap: Arc::new(ConfigProperty::new(GapClass::default())),
@@ -168,7 +168,7 @@ impl IconSquareBarButton {
             BarButtonClass::BASE,
             "icon-square",
             self.config.icon_size.get().css_class(),
-            self.config.text_size.get().css_class(),
+            self.config.label_size.get().css_class(),
             self.config.padding_x.get().css_class_x(),
             self.config.padding_y.get().css_class_y(),
             self.config.gap.get().css_class(),
@@ -352,7 +352,7 @@ impl IconSquareBarButton {
         Self::watch_property(&config.icon_size, sender);
         Self::watch_property(&config.icon_padding_x, sender);
         Self::watch_property(&config.icon_padding_y, sender);
-        Self::watch_property(&config.text_size, sender);
+        Self::watch_property(&config.label_size, sender);
         Self::watch_property(&config.padding_x, sender);
         Self::watch_property(&config.padding_y, sender);
         Self::watch_property(&config.gap, sender);

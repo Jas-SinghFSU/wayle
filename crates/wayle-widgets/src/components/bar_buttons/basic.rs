@@ -70,8 +70,8 @@ pub struct BasicBarButtonConfig {
 
     /// Icon size class (global).
     pub icon_size: Arc<ConfigProperty<IconSizeClass>>,
-    /// Text size class (global).
-    pub text_size: Arc<ConfigProperty<TextSizeClass>>,
+    /// Label size class (global).
+    pub label_size: Arc<ConfigProperty<TextSizeClass>>,
     /// Horizontal padding class (global).
     pub padding_x: Arc<ConfigProperty<PaddingClass>>,
     /// Vertical padding class (global).
@@ -106,7 +106,7 @@ impl Default for BasicBarButtonConfig {
                 "transparent".to_string(),
             ))),
             icon_size: Arc::new(ConfigProperty::new(IconSizeClass::default())),
-            text_size: Arc::new(ConfigProperty::new(TextSizeClass::default())),
+            label_size: Arc::new(ConfigProperty::new(TextSizeClass::default())),
             padding_x: Arc::new(ConfigProperty::new(PaddingClass::Md)),
             padding_y: Arc::new(ConfigProperty::new(PaddingClass::Sm)),
             gap: Arc::new(ConfigProperty::new(GapClass::default())),
@@ -159,7 +159,7 @@ impl BasicBarButton {
             BarButtonClass::BASE,
             "basic",
             self.config.icon_size.get().css_class(),
-            self.config.text_size.get().css_class(),
+            self.config.label_size.get().css_class(),
             self.config.padding_x.get().css_class_x(),
             self.config.padding_y.get().css_class_y(),
             self.config.gap.get().css_class(),
@@ -319,7 +319,7 @@ impl BasicBarButton {
         Self::watch_property(&config.label_color, sender);
         Self::watch_property(&config.button_background, sender);
         Self::watch_property(&config.icon_size, sender);
-        Self::watch_property(&config.text_size, sender);
+        Self::watch_property(&config.label_size, sender);
         Self::watch_property(&config.padding_x, sender);
         Self::watch_property(&config.padding_y, sender);
         Self::watch_property(&config.gap, sender);

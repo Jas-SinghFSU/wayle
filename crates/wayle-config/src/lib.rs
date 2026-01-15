@@ -8,15 +8,15 @@ pub mod docs;
 
 /// Configuration schema definitions.
 pub mod schemas {
-    /// Battery configuration
+    /// Bar layout configuration
+    pub mod bar;
+    /// Battery module configuration
     pub mod battery;
-    /// Clock configuration
+    /// Clock module configuration
     pub mod clock;
-    /// General application configuration
-    pub mod general;
-    /// Media configuration
+    /// Media module configuration
     pub mod media;
-    /// Module configuration
+    /// Module-specific configurations
     pub mod modules;
     /// Styling configuration
     pub mod styling;
@@ -49,9 +49,7 @@ pub use infrastructure::{
     service::{ConfigService, ConfigServiceCli},
     watcher::FileWatcher,
 };
-use schemas::{
-    general::GeneralConfig, media::MediaConfig, modules::ModulesConfig, styling::StylingConfig,
-};
+use schemas::{bar::BarConfig, modules::ModulesConfig, styling::StylingConfig};
 use wayle_derive::wayle_config;
 
 /// Main configuration structure for Wayle.
@@ -60,15 +58,12 @@ use wayle_derive::wayle_config;
 /// from TOML files. All fields have sensible defaults.
 #[wayle_config]
 pub struct Config {
-    /// General application settings.
-    pub general: GeneralConfig,
+    /// Bar layout and module placement.
+    pub bar: BarConfig,
 
     /// Styling configuration (theme, fonts, scale).
     pub styling: StylingConfig,
 
     /// Module-specific configurations.
     pub modules: ModulesConfig,
-
-    /// Media service configuration.
-    pub media: MediaConfig,
 }

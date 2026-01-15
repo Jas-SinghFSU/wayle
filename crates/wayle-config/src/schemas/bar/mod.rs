@@ -11,28 +11,6 @@ pub struct BarConfig {
     pub layout: ConfigProperty<Vec<BarLayout>>,
 }
 
-/// A bar item: either a standalone module or a named group of modules.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
-#[serde(untagged)]
-pub enum BarItem {
-    /// A single module (e.g., "clock", "battery").
-    Module(BarModule),
-    /// A named group of modules with shared visual container.
-    Group(BarGroup),
-}
-
-/// A named group of modules.
-///
-/// Groups provide visual containment via CSS. The group name becomes
-/// a CSS ID selector (`#group-name`) for per-group styling.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
-pub struct BarGroup {
-    /// Unique name for CSS targeting (becomes `#name` selector).
-    pub name: String,
-    /// Modules contained in this group.
-    pub modules: Vec<BarModule>,
-}
-
 /// Layout configuration for a bar on a specific monitor.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, PartialEq)]
 #[serde(default)]
@@ -61,9 +39,31 @@ impl Default for BarLayout {
     }
 }
 
+/// A bar item: either a standalone module or a named group of modules.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(untagged)]
+pub enum BarItem {
+    /// A single module (e.g., "clock", "battery").
+    Module(BarModule),
+    /// A named group of modules with shared visual container.
+    Group(BarGroup),
+}
+
+/// A named group of modules.
+///
+/// Groups provide visual containment via CSS. The group name becomes
+/// a CSS ID selector (`#group-name`) for per-group styling.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+pub struct BarGroup {
+    /// Unique name for CSS targeting (becomes `#name` selector).
+    pub name: String,
+    /// Modules contained in this group.
+    pub modules: Vec<BarModule>,
+}
+
 /// Available bar modules that can be placed in bar sections.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[serde(rename_all = "kebab-case")]
 pub enum BarModule {
     /// Battery status and percentage.
     Battery,

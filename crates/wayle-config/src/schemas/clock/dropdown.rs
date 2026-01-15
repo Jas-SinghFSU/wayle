@@ -1,14 +1,20 @@
 use wayle_common::ConfigProperty;
 use wayle_derive::wayle_config;
 
-/// Configuration for the clock's dropdown menu.
+/// Clock dropdown panel configuration.
 ///
-/// Controls the content and behavior of the dropdown that appears
-/// when clicking on the clock module.
-/// Each field is reactive and can be watched for changes.
+/// Controls both behavior and styling for the clock's dropdown menu.
+/// Properties use noun-first naming with prefixes for logical grouping
+/// (e.g., `calendar-*`, `clock-*` properties).
 #[wayle_config]
 pub struct ClockDropdownConfig {
-    /// Whether to display a calendar widget in the dropdown menu.
+    /// Whether to display the calendar widget.
+    #[serde(rename = "calendar-show")]
     #[default(true)]
-    pub show_calendar: ConfigProperty<bool>,
+    pub calendar_show: ConfigProperty<bool>,
+
+    /// Clock display color in dropdown (CSS color token).
+    #[serde(rename = "clock-color")]
+    #[default(String::from("fg"))]
+    pub clock_color: ConfigProperty<String>,
 }

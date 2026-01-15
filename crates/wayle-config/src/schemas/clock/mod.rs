@@ -1,63 +1,48 @@
-mod button;
+mod bar;
 mod dropdown;
-mod general;
-mod styling;
 
-use button::ClockButtonConfig;
-use dropdown::ClockDropdownConfig;
-use general::ClockGeneralConfig;
+pub use bar::ClockBarConfig;
+pub use dropdown::ClockDropdownConfig;
+
 use schemars::schema_for;
-use styling::{ClockButtonStyling, ClockDropdownStyling, ClockStyling};
+use wayle_common::ConfigProperty;
 use wayle_derive::wayle_config;
 
-use crate::docs::{BehaviorConfigs, ModuleInfo, ModuleInfoProvider, StylingConfigs};
+use crate::docs::{ModuleInfo, ModuleInfoProvider};
 
-/// Configuration for the clock module.
+/// Clock module configuration.
 ///
-/// Provides comprehensive settings for displaying time and calendar information,
-/// including general behavior, button appearance, dropdown functionality, and styling options.
+/// Provides settings for time display in the bar and dropdown calendar.
+/// Structure follows flat model with noun-first naming:
+/// - Root level: general settings (format)
+/// - `bar`: bar button behavior and styling
+/// - `dropdown`: dropdown panel behavior and styling
 #[wayle_config]
 pub struct ClockConfig {
-    /// General configuration settings that apply to all clock functionality.
-    #[serde(default)]
-    pub general: ClockGeneralConfig,
+    /// Time format string using strftime syntax.
+    #[default(String::from("%H:%M"))]
+    pub format: ConfigProperty<String>,
 
-    /// Settings specific to the clock's appearance in the status bar button.
+    /// Bar button configuration.
     #[serde(default)]
-    pub button: ClockButtonConfig,
+    pub bar: ClockBarConfig,
 
-    /// Configuration for the clock's dropdown panel behavior and content.
+    /// Dropdown panel configuration.
     #[serde(default)]
     pub dropdown: ClockDropdownConfig,
-
-    /// Visual styling options for customizing the clock's appearance.
-    #[serde(default)]
-    pub styling: ClockStyling,
 }
 
 impl ModuleInfoProvider for ClockConfig {
     fn module_info() -> ModuleInfo {
-        let behavior_configs: BehaviorConfigs = vec![
-            (String::from("general"), || schema_for!(ClockGeneralConfig)),
-            (String::from("button"), || schema_for!(ClockButtonConfig)),
-            (String::from("dropdown"), || {
-                schema_for!(ClockDropdownConfig)
-            }),
-        ];
-
-        let styling_configs: StylingConfigs = vec![
-            (String::from("button"), || schema_for!(ClockButtonStyling)),
-            (String::from("dropdown"), || {
-                schema_for!(ClockDropdownStyling)
-            }),
-        ];
-
         ModuleInfo {
             name: String::from("clock"),
             icon: String::from("󰥔"),
-            description: String::from("Controls the clock display and calendar settings"),
-            behavior_configs,
-            styling_configs,
+            description: String::from("Clock display and calendar settings"),
+            behavior_configs: vec![
+                (String::from("bar"), || schema_for!(ClockBarConfig)),
+                (String::from("dropdown"), || schema_for!(ClockDropdownConfig)),
+            ],
+            styling_configs: vec![],
         }
     }
 }
