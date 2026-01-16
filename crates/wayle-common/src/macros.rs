@@ -400,13 +400,13 @@ macro_rules! unwrap_f64_or {
     };
 }
 
-/// Removes items from a Property<Vec<T>> by object path and cancels their tokens.
+/// Removes items from a `Property<Vec<T>>` by object path and cancels their tokens.
 ///
 /// Removes items from a reactive property while cancelling their associated
 /// cancellation tokens for cleanup.
 ///
 /// # Arguments
-/// * `$property` - The Property<Vec<T>> to modify
+/// * `$property` - The `Property<Vec<T>>` to modify
 /// * `$target_path` - The OwnedObjectPath to match against item.object_path
 ///
 /// # Requirements

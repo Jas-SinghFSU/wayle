@@ -6,13 +6,13 @@
 //!
 //! Import everything via the prelude:
 //!
-//! ```ignore
+//! ```rust,no_run
 //! use wayle_widgets::prelude::*;
 //! ```
 //!
 //! Or import specific modules:
 //!
-//! ```ignore
+//! ```rust,no_run
 //! use wayle_widgets::primitives::card::{Card, CardClass};
 //! use wayle_widgets::components::bar_buttons::{BarButton, BarButtonOutput};
 //! ```

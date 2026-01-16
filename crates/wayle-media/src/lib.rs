@@ -1,53 +1,94 @@
-//! Reactive media player service for MPRIS D-Bus control and monitoring.
+//! MPRIS media player control via D-Bus.
 //!
-//! # Reactive Property Pattern
+//! # Quick Start
 //!
-//! All state is exposed through [`Property<T>`](wayle_common::Property) fields that support
-//! two access patterns:
+//! ```rust,no_run
+//! use wayle_media::MediaService;
 //!
-//! - **Snapshot** (`.get()`): Returns the current value immediately
-//! - **Stream** (`.watch()`): Returns a [`Stream`](futures::Stream) that emits on every change
+//! # async fn example() -> Result<(), wayle_media::Error> {
+//! let media = MediaService::new().await?;
 //!
-//! ```ignore
-//! // Snapshot: get current playback state once
-//! let state = player.playback_state.get();
-//!
-//! // Stream: react to playback state changes
-//! player.playback_state.watch().for_each(|state| async move {
-//!     println!("State changed: {:?}", state);
-//! });
+//! // Get active player
+//! if let Some(player) = media.active_player.get() {
+//!     println!("{}: {:?}", player.identity.get(), player.playback_state.get());
+//!     println!("Track: {}", player.metadata.title.get());
+//! }
+//! # Ok(())
+//! # }
 //! ```
 //!
-//! # Live vs Snapshot Instances
+//! # Watching for Changes
 //!
-//! Players and metadata can be obtained in two modes:
+//! ```rust,no_run
+//! use wayle_media::MediaService;
+//! use futures::StreamExt;
 //!
-//! - **Snapshot**: Properties reflect state at creation time and do not update
-//! - **Live**: Properties update automatically via D-Bus signal monitoring
-//!
-//! ```ignore
-//! // Snapshot - frozen state
-//! let player = service.player(&player_id).await?;
-//!
-//! // Live - auto-updating properties
-//! let player = service.player_monitored(&player_id).await?;
+//! # async fn example() -> Result<(), wayle_media::Error> {
+//! # let media = MediaService::new().await?;
+//! // React to player list changes
+//! let mut stream = media.player_list.watch();
+//! while let Some(players) = stream.next().await {
+//!     println!("{} players available", players.len());
+//! }
+//! # Ok(())
+//! # }
 //! ```
 //!
 //! # Playback Control
 //!
-//! [`Player`](core::player::Player) exposes async methods for controlling playback:
+//! ```rust,no_run
+//! # use wayle_media::MediaService;
+//! # async fn example() -> Result<(), wayle_media::Error> {
+//! # let media = MediaService::new().await?;
+//! if let Some(player) = media.active_player.get() {
+//!     player.play_pause().await?;
+//!     player.next().await?;
+//!     player.set_volume(0.5.into()).await?;
+//! }
+//! # Ok(())
+//! # }
+//! ```
 //!
-//! - `play_pause()`, `next()`, `previous()`
-//! - `seek()`, `set_position()`
-//! - `set_volume()`, `set_loop_mode()`, `set_shuffle_mode()`
-//! - `toggle_loop()`, `toggle_shuffle()`
+//! # Configuration
+//!
+//! | Method | Effect |
+//! |--------|--------|
+//! | `with_daemon()` | Control playback from scripts or other processes |
+//! | `ignore_player(pattern)` | Skip players matching the pattern |
+//!
+//! ```rust,no_run
+//! use wayle_media::MediaService;
+//!
+//! # async fn example() -> Result<(), wayle_media::Error> {
+//! let media = MediaService::builder()
+//!     .with_daemon()
+//!     .ignore_player("chromium".to_string())
+//!     .ignore_player("firefox".to_string())
+//!     .build()
+//!     .await?;
+//! # Ok(())
+//! # }
+//! ```
+//!
+//! # Reactive Properties
+//!
+//! All fields are [`Property<T>`](wayle_common::Property):
+//! - `.get()` - Current value snapshot
+//! - `.watch()` - Stream yielding on changes
 //!
 //! # Service Fields
 //!
-//! [`MediaService`] tracks all MPRIS players on the session bus:
+//! | Field | Type | Description |
+//! |-------|------|-------------|
+//! | `player_list` | `Vec<Arc<Player>>` | All MPRIS players |
+//! | `active_player` | `Option<Arc<Player>>` | Selected player for control |
 //!
-//! - `player_list`: All discovered players (filtered by `ignored_patterns`)
-//! - `active_player`: Currently selected player for focused control
+//! # Control Methods
+//!
+//! On [`Player`](core::player::Player):
+//! - `play_pause()`, `next()`, `previous()` - Playback
+//! - `seek()`, `set_position()` - Position
+//! - `set_volume()`, `set_loop_mode()`, `set_shuffle_mode()` - Settings
 
 mod builder;
 /// Core media domain models

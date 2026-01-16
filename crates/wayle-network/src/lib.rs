@@ -1,70 +1,84 @@
-//! Network management via NetworkManager D-Bus API.
+//! Network management via NetworkManager D-Bus.
 //!
-//! # Overview
+//! # Quick Start
 //!
-//! Provides WiFi and wired network monitoring, connection management, and device
-//! tracking through NetworkManager. All network state is exposed as reactive
-//! [`Property`] types that can be polled or streamed.
+//! ```rust,no_run
+//! use wayle_network::NetworkService;
 //!
-//! # Reactive Pattern
+//! # async fn example() -> Result<(), wayle_network::Error> {
+//! let net = NetworkService::new().await?;
 //!
-//! Network state uses [`Property<T>`] for reactive access:
+//! // Check WiFi state
+//! if let Some(wifi) = &net.wifi {
+//!     println!("WiFi enabled: {}", wifi.enabled.get());
+//!     for ap in wifi.access_points.get().iter() {
+//!         println!("  {} ({}%)", ap.ssid.get(), ap.strength.get());
+//!     }
+//! }
 //!
-//! - **Snapshot**: Call `.get()` for the current value
-//! - **Stream**: Call `.watch()` for a stream of changes
-//!
-//! ```ignore
-//! // Get current WiFi enabled state
-//! let enabled = service.wifi.as_ref().map(|w| w.enabled.get());
-//!
-//! // Watch for connectivity changes
-//! let stream = service.wifi.as_ref().map(|w| w.connectivity.watch());
+//! // Check wired state
+//! if let Some(wired) = &net.wired {
+//!     println!("Ethernet status: {:?}", wired.connectivity.get());
+//! }
+//! # Ok(())
+//! # }
 //! ```
 //!
-//! # Live vs Snapshot Instances
+//! # Watching for Changes
 //!
-//! Most types implement the `Reactive` trait with two constructors:
+//! ```rust,no_run
+//! use wayle_network::NetworkService;
+//! use futures::StreamExt;
 //!
-//! - **`get()`**: Returns an owned snapshot. Properties are populated but not monitored.
-//! - **`get_live()`**: Returns `Arc<T>` with active monitoring. Properties update automatically
-//!   as NetworkManager state changes.
-//!
-//! The service methods mirror this pattern:
-//!
-//! ```ignore
-//! // Snapshot - read once, no updates
-//! let device = service.device(path).await?;
-//!
-//! // Live - properties update automatically
-//! let device = service.device_monitored(path).await?;
+//! # async fn example() -> Result<(), wayle_network::Error> {
+//! # let net = NetworkService::new().await?;
+//! if let Some(wifi) = &net.wifi {
+//!     let mut stream = wifi.access_points.watch();
+//!     while let Some(aps) = stream.next().await {
+//!         println!("{} networks visible", aps.len());
+//!     }
+//! }
+//! # Ok(())
+//! # }
 //! ```
+//!
+//! # WiFi Control
+//!
+//! ```rust,no_run
+//! # use wayle_network::NetworkService;
+//! # async fn example() -> Result<(), wayle_network::Error> {
+//! # let net = NetworkService::new().await?;
+//! if let Some(wifi) = &net.wifi {
+//!     // Enable WiFi
+//!     wifi.set_enabled(true).await?;
+//!
+//!     // List available networks
+//!     for ap in wifi.access_points.get().iter() {
+//!         println!("{}: {:?} ({}%)",
+//!             ap.ssid.get(),
+//!             ap.security.get(),
+//!             ap.strength.get()
+//!         );
+//!     }
+//! }
+//! # Ok(())
+//! # }
+//! ```
+//!
+//! # Reactive Properties
+//!
+//! All fields are [`Property<T>`](wayle_common::Property):
+//! - `.get()` - Current value snapshot
+//! - `.watch()` - Stream yielding on changes
 //!
 //! # Service Fields
 //!
-//! [`NetworkService`] exposes:
-//!
-//! - `settings` - Connection profile management (add, remove, list saved networks)
-//! - `wifi` - WiFi device state, access points, and connection control (if available)
-//! - `wired` - Ethernet device state and connectivity (if available)
-//! - `primary` - Which interface provides the primary connection
-//!
-//! # Control Methods
-//!
-//! WiFi operations are exposed on the [`Wifi`] struct:
-//!
-//! - `set_enabled()` - Enable/disable WiFi system-wide
-//! - `connect()` - Connect to an access point
-//! - `disconnect()` - Disconnect from current network
-//!
-//! Connection profile management is on [`Settings`](core::settings::Settings):
-//!
-//! - `add_connection()` - Create new connection profile
-//! - `list_connections()` - List saved profiles
-//! - `connections_for_ssid()` - Find profiles matching an SSID
-//!
-//! [`Property`]: wayle_common::Property
-//! [`Property<T>`]: wayle_common::Property
-//! [`Wifi`]: wifi::Wifi
+//! | Field | Type | Description |
+//! |-------|------|-------------|
+//! | `wifi` | `Option<Arc<Wifi>>` | WiFi device (if present) |
+//! | `wired` | `Option<Arc<Wired>>` | Ethernet device (if present) |
+//! | `settings` | `Settings` | Connection profile management |
+//! | `primary` | `Property<PrimaryConnection>` | Active connection type |
 
 /// Core network domain models.
 pub mod core;

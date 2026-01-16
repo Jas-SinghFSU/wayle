@@ -91,6 +91,24 @@
 //! # }
 //! ```
 //!
+//! # Configuration
+//!
+//! | Method | Effect |
+//! |--------|--------|
+//! | `with_daemon()` | Control audio from scripts or other processes |
+//!
+//! ```rust,no_run
+//! use wayle_audio::AudioService;
+//!
+//! # async fn example() -> Result<(), wayle_audio::Error> {
+//! let audio = AudioService::builder()
+//!     .with_daemon()
+//!     .build()
+//!     .await?;
+//! # Ok(())
+//! # }
+//! ```
+//!
 //! # Service Fields
 //!
 //! [`AudioService`] exposes these reactive properties:

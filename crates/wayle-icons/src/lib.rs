@@ -16,17 +16,21 @@
 //!
 //! # Example
 //!
-//! ```ignore
+//! ```rust,no_run
 //! use wayle_icons::{IconManager, IconRegistry, sources};
 //!
+//! # async fn example() -> wayle_icons::Result<()> {
 //! // At app startup, register icon directory with GTK
-//! IconRegistry::init()?;
+//! let registry = IconRegistry::new()?;
+//! registry.init()?;
 //!
 //! // Install icons from CDN
-//! let manager = IconManager::new();
+//! let manager = IconManager::new()?;
 //! manager.install(&sources::Tabler, &["home", "settings"]).await?;
 //!
 //! // Icons are now available via set_icon_name("tb-home")
+//! # Ok(())
+//! # }
 //! ```
 
 /// Error types for icon operations.

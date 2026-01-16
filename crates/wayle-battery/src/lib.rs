@@ -44,9 +44,12 @@
 //!
 //! ```rust,no_run
 //! # use wayle_battery::BatteryService;
+//! use zbus::zvariant::OwnedObjectPath;
+//!
 //! # async fn example() -> Result<(), wayle_battery::Error> {
+//! let path = OwnedObjectPath::try_from("/org/freedesktop/UPower/devices/battery_BAT0")?;
 //! let service = BatteryService::builder()
-//!     .device_path("/org/freedesktop/UPower/devices/battery_BAT0")
+//!     .device_path(path)
 //!     .build()
 //!     .await?;
 //! # Ok(())

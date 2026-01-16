@@ -15,7 +15,7 @@
 //!
 //! # Quick Start
 //!
-//! ```no_run
+//! ```rust,no_run
 //! use wayle_systray::SystemTrayService;
 //!
 //! # async fn example() -> Result<(), wayle_systray::error::Error> {
@@ -25,12 +25,43 @@
 //! for item in service.items.get().iter() {
 //!     println!("{}: {}", item.id.get(), item.title.get());
 //! }
+//! # Ok(())
+//! # }
+//! ```
 //!
-//! // Watch for item changes
+//! # Watching for Changes
+//!
+//! ```rust,no_run
+//! use wayle_systray::SystemTrayService;
+//! use futures::StreamExt;
+//!
+//! # async fn example() -> Result<(), wayle_systray::error::Error> {
+//! # let service = SystemTrayService::new().await?;
+//! // React to tray item changes
 //! let mut stream = service.items.watch();
-//! while let Some(items) = stream.recv().await.ok() {
+//! while let Some(items) = stream.next().await {
 //!     println!("Tray items changed: {} items", items.len());
 //! }
+//! # Ok(())
+//! # }
+//! ```
+//!
+//! # Configuration
+//!
+//! | Method | Effect |
+//! |--------|--------|
+//! | `with_daemon()` | Interact with tray items from scripts or other processes |
+//! | `mode(TrayMode)` | Set operating mode: `Watcher`, `Host`, or `Auto` (default) |
+//!
+//! ```rust,no_run
+//! use wayle_systray::{SystemTrayService, types::TrayMode};
+//!
+//! # async fn example() -> Result<(), wayle_systray::error::Error> {
+//! let tray = SystemTrayService::builder()
+//!     .with_daemon()
+//!     .mode(TrayMode::Auto)
+//!     .build()
+//!     .await?;
 //! # Ok(())
 //! # }
 //! ```

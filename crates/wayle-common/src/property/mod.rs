@@ -68,10 +68,23 @@ pub use traits::{
 /// Stream of property value changes.
 pub type PropertyStream<T> = Box<dyn Stream<Item = T> + Send + Unpin>;
 
-/// A reactive property that can be watched for changes.
+/// Reactive property exposing service state.
 ///
-/// When the value changes, all watchers are notified automatically.
-/// Each watcher gets the current value immediately when subscribing.
+/// # Reading State
+///
+/// - `.get()` - Returns the current value (snapshot)
+/// - `.watch()` - Returns a stream that yields on every change
+///
+/// ```ignore
+/// // Snapshot
+/// let volume = device.volume.get();
+///
+/// // React to changes
+/// let mut stream = device.volume.watch();
+/// while let Some(vol) = stream.next().await {
+///     println!("Volume: {vol:?}");
+/// }
+/// ```
 #[derive(Clone)]
 pub struct Property<T: Clone + Send + Sync + 'static> {
     tx: watch::Sender<T>,
@@ -79,16 +92,15 @@ pub struct Property<T: Clone + Send + Sync + 'static> {
 }
 
 impl<T: Clone + Send + Sync + 'static> Property<T> {
-    /// Create a new property with an initial value.
+    /// Creates a property with an initial value.
+    #[doc(hidden)]
     pub fn new(initial: T) -> Self {
         let (tx, rx) = watch::channel(initial);
         Self { tx, rx }
     }
 
-    /// Sets the property value, notifying all watchers if the value changed.
-    ///
-    /// Intended for service runtime state. Configuration values are better served
-    /// by `ConfigProperty` which provides layered default/config/runtime handling.
+    /// Sets the property value, notifying watchers if changed.
+    #[doc(hidden)]
     pub fn set(&self, new_value: T)
     where
         T: PartialEq,
@@ -103,17 +115,14 @@ impl<T: Clone + Send + Sync + 'static> Property<T> {
         });
     }
 
-    /// Get the current value.
-    ///
-    /// Synchronous operation that clones the current value.
+    /// Returns the current value.
     pub fn get(&self) -> T {
         self.rx.borrow().clone()
     }
 
-    /// Watch for changes to this property.
+    /// Watches for value changes.
     ///
-    /// The stream immediately yields the current value, then yields
-    /// whenever the value changes.
+    /// Yields the current value immediately, then on every change.
     pub fn watch(&self) -> impl Stream<Item = T> + Send + 'static {
         WatchStream::new(self.rx.clone())
     }
