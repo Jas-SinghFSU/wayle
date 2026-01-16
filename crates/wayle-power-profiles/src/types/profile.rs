@@ -7,17 +7,17 @@ use zbus::zvariant::OwnedValue;
 
 use crate::error::Error;
 
-/// Cookie returned by profile hold operations for tracking and release.
+/// Cookie returned by hold operations.
 pub type HoldCookie = u32;
 
-/// Power profile types available in the system.
+/// System power profile.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PowerProfile {
-    /// Battery saving profile
+    /// Battery saving mode.
     PowerSaver,
-    /// The default balanced profile
+    /// Default balanced mode.
     Balanced,
-    /// High performance profile
+    /// High performance mode.
     Performance,
 }
 

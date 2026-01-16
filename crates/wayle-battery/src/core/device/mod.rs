@@ -22,10 +22,17 @@ use crate::{
     types::{BatteryLevel, BatteryTechnology, DeviceState, DeviceType, WarningLevel},
 };
 
-/// Battery device with reactive properties.
+/// UPower battery device with reactive properties.
 ///
-/// Provides access to UPower device properties through reactive Property fields
-/// that automatically update when the underlying device state changes.
+/// The [`Device`] from [`BatteryService::device`](crate::BatteryService::device) is live -
+/// all properties auto-update via D-Bus signals.
+///
+/// # Control Methods
+///
+/// - [`refresh`](Self::refresh) - Force hardware data refresh
+/// - [`get_history`](Self::get_history) - Historical charge/rate data
+/// - [`get_statistics`](Self::get_statistics) - Charge prediction statistics
+/// - [`enable_charge_threshold`](Self::enable_charge_threshold) - Battery charge limiting
 #[derive(Debug, Clone)]
 pub struct Device {
     #[debug(skip)]

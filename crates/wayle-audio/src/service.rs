@@ -25,10 +25,7 @@ use crate::{
     types::{device::DeviceKey, stream::StreamKey},
 };
 
-/// Audio service with reactive properties.
-///
-/// Provides access to audio devices and streams through reactive Property fields
-/// that automatically update when the underlying PulseAudio state changes.
+/// Pipewire Audio management service. See [crate-level docs](crate) for usage patterns.
 #[derive(Debug)]
 pub struct AudioService {
     #[debug(skip)]
@@ -40,22 +37,22 @@ pub struct AudioService {
     #[debug(skip)]
     pub(crate) _connection: Option<Connection>,
 
-    /// Output devices (speakers, headphones)
+    /// All PulseAudio sinks: speakers, headphones, Bluetooth outputs, virtual sinks.
     pub output_devices: Property<Vec<Arc<OutputDevice>>>,
 
-    /// Input devices (microphones)
+    /// All PulseAudio sources: microphones, monitor sources, virtual inputs.
     pub input_devices: Property<Vec<Arc<InputDevice>>>,
 
-    /// Default output device
+    /// Current default sink, or `None` if unset.
     pub default_output: Property<Option<Arc<OutputDevice>>>,
 
-    /// Default input device
+    /// Current default source, or `None` if unset.
     pub default_input: Property<Option<Arc<InputDevice>>>,
 
-    /// Playback streams
+    /// Applications currently playing audio.
     pub playback_streams: Property<Vec<Arc<AudioStream>>>,
 
-    /// Recording streams
+    /// Applications currently recording audio.
     pub recording_streams: Property<Vec<Arc<AudioStream>>>,
 }
 
@@ -76,10 +73,14 @@ impl AudioService {
         AudioServiceBuilder::new()
     }
 
-    /// Get a specific output device.
+    /// Returns a snapshot of the output device's current state.
+    ///
+    /// The returned [`OutputDevice`] properties will not update after this call.
+    /// For live updates, see [`output_device_monitored`](Self::output_device_monitored).
     ///
     /// # Errors
-    /// Returns error if device not found or backend query fails.
+    ///
+    /// Returns [`Error::DeviceNotFound`] if no sink exists with this key.
     #[instrument(skip(self), fields(device_key = ?key), err)]
     pub async fn output_device(&self, key: DeviceKey) -> Result<OutputDevice, Error> {
         OutputDevice::get(OutputDeviceParams {
@@ -89,10 +90,14 @@ impl AudioService {
         .await
     }
 
-    /// Get a specific output device with monitoring.
+    /// Returns a live-updating output device instance.
+    ///
+    /// The returned [`OutputDevice`] properties update automatically when
+    /// PulseAudio state changes. Monitoring stops when the `Arc` is dropped.
     ///
     /// # Errors
-    /// Returns error if device not found, backend query fails, or monitoring setup fails.
+    ///
+    /// Returns [`Error::DeviceNotFound`] if no sink exists with this key.
     #[instrument(skip(self), fields(device_key = ?key), err)]
     pub async fn output_device_monitored(
         &self,
@@ -107,10 +112,11 @@ impl AudioService {
         .await
     }
 
-    /// Get a specific input device.
+    /// Returns a snapshot of the input device's current state.
     ///
     /// # Errors
-    /// Returns error if device not found or backend query fails.
+    ///
+    /// Returns [`Error::DeviceNotFound`] if no source exists with this key.
     #[instrument(skip(self), fields(device_key = ?key), err)]
     pub async fn input_device(&self, key: DeviceKey) -> Result<InputDevice, Error> {
         InputDevice::get(InputDeviceParams {
@@ -120,10 +126,11 @@ impl AudioService {
         .await
     }
 
-    /// Get a specific input device with monitoring.
+    /// Returns a live-updating input device instance.
     ///
     /// # Errors
-    /// Returns error if device not found, backend query fails, or monitoring setup fails.
+    ///
+    /// Returns [`Error::DeviceNotFound`] if no source exists with this key.
     #[instrument(skip(self), fields(device_key = ?key), err)]
     pub async fn input_device_monitored(&self, key: DeviceKey) -> Result<Arc<InputDevice>, Error> {
         InputDevice::get_live(LiveInputDeviceParams {
@@ -135,10 +142,11 @@ impl AudioService {
         .await
     }
 
-    /// Get a specific audio stream.
+    /// Returns a snapshot of the audio stream's current state.
     ///
     /// # Errors
-    /// Returns error if stream not found or backend query fails.
+    ///
+    /// Returns [`Error::StreamNotFound`] if no stream exists with this key.
     #[instrument(skip(self), fields(stream_key = ?key), err)]
     pub async fn audio_stream(&self, key: StreamKey) -> Result<AudioStream, Error> {
         AudioStream::get(AudioStreamParams {
@@ -148,10 +156,11 @@ impl AudioService {
         .await
     }
 
-    /// Get a specific audio stream with monitoring.
+    /// Returns a live-updating audio stream instance.
     ///
     /// # Errors
-    /// Returns error if stream not found, backend query fails, or monitoring setup fails.
+    ///
+    /// Returns [`Error::StreamNotFound`] if no stream exists with this key.
     #[instrument(skip(self), fields(stream_key = ?key), err)]
     pub async fn audio_stream_monitored(&self, key: StreamKey) -> Result<Arc<AudioStream>, Error> {
         AudioStream::get_live(LiveAudioStreamParams {

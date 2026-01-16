@@ -1,10 +1,10 @@
-/// Network connectivity type definitions
+/// Connectivity and metering types.
 pub mod connectivity;
-/// Network device type definitions
+/// Device type enumeration.
 pub mod device;
-/// NetworkManager flag definitions
+/// NetworkManager bitflags.
 pub mod flags;
-/// NetworkManager state definitions
+/// Device and connection state enums.
 pub mod states;
-/// WiFi-specific type definitions
+/// WiFi mode types.
 pub mod wifi;

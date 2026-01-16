@@ -7,11 +7,7 @@ use zbus::Connection;
 
 use crate::{builder::PowerProfilesServiceBuilder, core::PowerProfiles, error::Error};
 
-/// Power profiles service for managing system power profiles and monitoring changes.
-///
-/// Provides a high-level interface to the system's power profile daemon,
-/// allowing access to available profiles, current active profile, and reactive
-/// monitoring of profile changes through the D-Bus interface.
+/// Entry point for power-profiles-daemon integration. See [crate-level docs](crate).
 #[derive(Debug)]
 pub struct PowerProfilesService {
     #[debug(skip)]
@@ -19,31 +15,24 @@ pub struct PowerProfilesService {
     #[debug(skip)]
     pub(crate) _connection: Option<Connection>,
 
-    /// The power profiles D-Bus proxy for system power management operations.
+    /// Reactive power profile state and controls.
     pub power_profiles: Arc<PowerProfiles>,
 }
 
 impl PowerProfilesService {
-    /// Creates a new power profiles service instance with default configuration.
+    /// Creates a service with default configuration.
     ///
-    /// Establishes a connection to the system D-Bus and initializes live monitoring
-    /// of power profile changes. The service will automatically track profile state
-    /// changes and provide reactive access to current profile information.
-    ///
-    /// For more control over initialization, use [`Self::builder()`].
+    /// For advanced options (e.g., D-Bus daemon registration), use [`Self::builder()`].
     ///
     /// # Errors
     ///
-    /// Returns error if D-Bus connection fails or service initialization fails.
+    /// Returns error if D-Bus connection or monitoring setup fails.
     #[instrument]
     pub async fn new() -> Result<Arc<Self>, Error> {
         Self::builder().build().await
     }
 
-    /// Returns a builder for configuring the power profiles service.
-    ///
-    /// The builder provides advanced configuration options such as enabling D-Bus
-    /// daemon registration for CLI control.
+    /// Returns a builder for advanced configuration.
     pub fn builder() -> PowerProfilesServiceBuilder {
         PowerProfilesServiceBuilder::new()
     }

@@ -1,16 +1,18 @@
 use std::{fmt, ops::Deref};
 
-/// Unique identifier for a media player
+/// MPRIS player identifier (D-Bus bus name).
+///
+/// Format: `org.mpris.MediaPlayer2.<player_name>` (e.g., `org.mpris.MediaPlayer2.spotify`).
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct PlayerId(String);
 
 impl PlayerId {
-    /// Create a PlayerId from a D-Bus bus name
+    /// Creates from a D-Bus bus name.
     pub fn from_bus_name(bus_name: &str) -> Self {
         Self(bus_name.to_string())
     }
 
-    /// Get the D-Bus bus name
+    /// Returns the D-Bus bus name.
     pub fn bus_name(&self) -> &str {
         &self.0
     }
@@ -22,16 +24,14 @@ impl fmt::Display for PlayerId {
     }
 }
 
-/// Current playback state of a media player
+/// MPRIS playback status.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum PlaybackState {
-    /// Player is currently playing
+    /// Media is playing.
     Playing,
-
-    /// Player is paused
+    /// Playback paused.
     Paused,
-
-    /// Player is stopped
+    /// No media loaded or playback stopped.
     Stopped,
 }
 
@@ -45,19 +45,16 @@ impl From<&str> for PlaybackState {
     }
 }
 
-/// Loop mode for track or playlist repetition
+/// MPRIS loop status.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum LoopMode {
-    /// No looping
+    /// No looping.
     None,
-
-    /// Loop current track
+    /// Repeat current track.
     Track,
-
-    /// Loop entire playlist
+    /// Repeat playlist/queue.
     Playlist,
-
-    /// Loop mode not supported by player
+    /// Player does not support loop control.
     Unsupported,
 }
 

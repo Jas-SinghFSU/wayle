@@ -1,3 +1,5 @@
+//! Types from the freedesktop.org Desktop Notifications Specification.
+
 mod notification;
 
 pub use notification::*;

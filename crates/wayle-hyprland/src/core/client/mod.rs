@@ -16,36 +16,62 @@ use crate::{
     ipc::{HyprMessenger, events::types::ServiceNotification},
 };
 
+/// A Hyprland client window with reactive state.
 #[derive(Debug, Clone)]
 pub struct Client {
     pub(crate) hypr_messenger: HyprMessenger,
     pub(crate) internal_tx: Option<Sender<ServiceNotification>>,
     pub(crate) cancellation_token: Option<CancellationToken>,
 
+    /// Window address (unique identifier).
     pub address: Property<Address>,
+    /// Whether the window surface is mapped.
     pub mapped: Property<bool>,
+    /// Whether the window is hidden.
     pub hidden: Property<bool>,
+    /// Window position.
     pub at: Property<ClientLocation>,
+    /// Window dimensions.
     pub size: Property<ClientSize>,
+    /// Containing workspace.
     pub workspace: Property<WorkspaceInfo>,
+    /// Floating state.
     pub floating: Property<bool>,
+    /// Pseudo-tiled state.
     pub pseudo: Property<bool>,
+    /// Monitor ID the window is on.
     pub monitor: Property<MonitorId>,
+    /// Window class (app identifier).
     pub class: Property<String>,
+    /// Window title.
     pub title: Property<String>,
+    /// Class at window creation.
     pub initial_class: Property<String>,
+    /// Title at window creation.
     pub initial_title: Property<String>,
+    /// Process ID.
     pub pid: Property<ProcessId>,
+    /// Running under XWayland.
     pub xwayland: Property<bool>,
+    /// Pinned to all workspaces.
     pub pinned: Property<bool>,
+    /// Server-side fullscreen state.
     pub fullscreen: Property<FullscreenMode>,
+    /// Client-requested fullscreen state.
     pub fullscreen_client: Property<FullscreenMode>,
+    /// Addresses of grouped windows.
     pub grouped: Property<Vec<Address>>,
+    /// User-assigned tags.
     pub tags: Property<Vec<String>>,
+    /// Address of swallowed window.
     pub swallowing: Property<Option<Address>>,
+    /// Position in focus history.
     pub focus_history_id: Property<FocusHistoryId>,
+    /// Inhibiting idle timeout.
     pub inhibiting_idle: Property<bool>,
+    /// XDG activation tag.
     pub xdg_tag: Property<Option<String>>,
+    /// XDG application description.
     pub xdg_description: Property<Option<String>>,
 }
 

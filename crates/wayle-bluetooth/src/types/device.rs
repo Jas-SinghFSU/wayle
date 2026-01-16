@@ -5,7 +5,7 @@ use std::{
 
 /// Preferred bearer for dual-mode Bluetooth devices.
 ///
-/// [experimental]
+/// (BlueZ experimental)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum PreferredBearer {
     /// Connect to last used bearer first (default)

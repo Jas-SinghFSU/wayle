@@ -23,50 +23,57 @@ use crate::{
     types::{LoopMode, PlaybackState, PlayerId, ShuffleMode, Volume},
 };
 
-/// Reactive player model with fine-grained property updates.
+/// An MPRIS media player with reactive properties and playback control.
 ///
-/// Each property can be watched independently for efficient UI updates.
-/// Properties are updated by the D-Bus monitoring layer.
+/// Obtained via [`MediaService::player`](crate::MediaService::player) (snapshot) or
+/// [`MediaService::player_monitored`](crate::MediaService::player_monitored) (live).
+/// Live instances auto-update properties via D-Bus signals; snapshots are frozen at creation.
+///
+/// # Control Methods
+///
+/// - `play_pause()`, `next()`, `previous()` - Basic playback
+/// - `seek()`, `set_position()` - Position control
+/// - `set_volume()`, `set_loop_mode()`, `set_shuffle_mode()` - Settings
+/// - `toggle_loop()`, `toggle_shuffle()` - Convenience toggles
 #[derive(Clone, Debug)]
 pub struct Player {
-    /// D-Bus proxy for controlling this player
     #[debug(skip)]
     pub(crate) proxy: MediaPlayer2PlayerProxy<'static>,
     #[debug(skip)]
     pub(crate) cancellation_token: Option<CancellationToken>,
 
-    /// Unique identifier for this player instance
+    /// D-Bus bus name identifier.
     pub id: PlayerId,
-    /// Human-readable name of the player application
+    /// Application name (e.g., "Spotify", "Firefox").
     pub identity: Property<String>,
-    /// Desktop file name for the player application
+    /// Desktop entry filename without `.desktop` extension.
     pub desktop_entry: Property<Option<String>>,
 
-    /// Current playback state (Playing, Paused, Stopped)
+    /// Playing, Paused, or Stopped.
     pub playback_state: Property<PlaybackState>,
-    /// Current loop mode (None, Track, Playlist)
+    /// None, Track, or Playlist repetition.
     pub loop_mode: Property<LoopMode>,
-    /// Current shuffle mode (On, Off, Unsupported)
+    /// Shuffle on/off.
     pub shuffle_mode: Property<ShuffleMode>,
-    /// Current volume level
+    /// Volume level (0.0 to 1.0).
     pub volume: Property<Volume>,
 
-    /// Current track metadata
+    /// Current track information.
     pub metadata: Arc<TrackMetadata>,
 
-    /// Whether the player can be controlled
+    /// Player accepts control commands.
     pub can_control: Property<bool>,
-    /// Whether playback can be started
+    /// Play command available.
     pub can_play: Property<bool>,
-    /// Whether the player can skip to the next track
+    /// Next track available.
     pub can_go_next: Property<bool>,
-    /// Whether the player can go to the previous track
+    /// Previous track available.
     pub can_go_previous: Property<bool>,
-    /// Whether the player supports seeking
+    /// Seek/position control available.
     pub can_seek: Property<bool>,
-    /// Whether the player supports loop modes
+    /// Loop mode control available.
     pub can_loop: Property<bool>,
-    /// Whether the player supports shuffle
+    /// Shuffle control available.
     pub can_shuffle: Property<bool>,
 }
 

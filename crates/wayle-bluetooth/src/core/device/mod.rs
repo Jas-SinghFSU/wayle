@@ -21,7 +21,22 @@ use crate::{
     types::{ServiceNotification, UUID, adapter::AddressType, device::PreferredBearer},
 };
 
-/// Represents a Bluetooth device with its properties and pairing state.
+/// Bluetooth device from BlueZ.
+///
+/// Instances from service fields are **live** and auto-update.
+/// Instances from [`BluetoothService::device()`](crate::BluetoothService::device) are **snapshots**.
+/// Use [`BluetoothService::device_monitored()`](crate::BluetoothService::device_monitored) for a live instance by path.
+///
+/// # Control Methods
+///
+/// - [`connect()`](Self::connect) / [`disconnect()`](Self::disconnect) - Manage connection
+/// - [`pair()`](Self::pair) / [`cancel_pairing()`](Self::cancel_pairing) - Pairing flow
+/// - [`connect_profile()`](Self::connect_profile) /
+///   [`disconnect_profile()`](Self::disconnect_profile) - Profile-specific
+/// - [`set_trusted()`](Self::set_trused) / [`set_blocked()`](Self::set_blocked) -
+///   Trust and block settings
+/// - [`set_alias()`](Self::set_alias) - Custom display name
+/// - [`forget()`](Self::forget) - Remove from adapter and clear bonding
 #[derive(Debug, Clone)]
 pub struct Device {
     #[debug(skip)]
@@ -165,7 +180,7 @@ pub struct Device {
     ///
     /// - byte Rank: Rank of the device in the Set.
     ///
-    /// [experimental]
+    /// (BlueZ experimental)
     pub sets: Property<Vec<DeviceSet>>,
 
     /// Indicate the preferred bearer when initiating a connection, only available for
@@ -176,7 +191,7 @@ pub struct Device {
     ///
     /// Note: Changes only take effect when the device is disconnected.
     ///
-    /// [experimental]
+    /// (BlueZ experimental)
     pub preferred_bearer: Property<Option<PreferredBearer>>,
 }
 
@@ -348,7 +363,7 @@ impl Device {
     /// General applications should instead use the Profile API for services-related
     /// functionality.
     ///
-    /// [experimental]
+    /// (BlueZ experimental)
     ///
     /// # Errors
     ///
@@ -405,7 +420,7 @@ impl Device {
     ///
     /// Note: Changes only take effect when the device is disconnected.
     ///
-    /// [experimental]
+    /// (BlueZ experimental)
     ///
     /// # Errors
     /// Returns error if D-Bus operation fails or device is not available.

@@ -83,5 +83,5 @@ pub enum Error {
     InvalidParameter(String),
 }
 
-/// Specialized Result type for CAVA operations with [`Error`] as the error variant.
+/// Specialized Result type for CAVA operations with [`enum@Error`] as the error variant.
 pub type Result<T> = std::result::Result<T, Error>;

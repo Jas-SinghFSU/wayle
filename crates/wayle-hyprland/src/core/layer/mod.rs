@@ -7,16 +7,26 @@ use wayle_traits::Static;
 
 use crate::{Address, Error, LayerData, LayerLevel, ProcessId};
 
+/// A layer shell surface (panel, overlay, wallpaper, etc.).
 #[derive(Debug, Clone)]
 pub struct Layer {
+    /// Surface address.
     pub address: Property<Address>,
+    /// X position.
     pub x: Property<i32>,
+    /// Y position.
     pub y: Property<i32>,
+    /// Width in pixels.
     pub width: Property<u32>,
+    /// Height in pixels.
     pub height: Property<u32>,
+    /// Layer namespace (app identifier).
     pub namespace: Property<String>,
+    /// Monitor name.
     pub monitor: Property<String>,
+    /// Stack level (background, bottom, top, overlay).
     pub level: Property<LayerLevel>,
+    /// Process ID.
     pub pid: Property<ProcessId>,
 }
 

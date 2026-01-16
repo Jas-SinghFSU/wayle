@@ -26,10 +26,19 @@ use crate::{
     volume::types::Volume,
 };
 
-/// Audio stream representation with reactive properties.
+/// PulseAudio stream (playback or recording) with reactive properties.
 ///
-/// Provides access to stream state, volume, mute status, and media information
-/// that automatically update when the underlying PulseAudio stream changes.
+/// Instances from [`AudioService`] fields are live (properties auto-update).
+/// Instances from [`AudioService::audio_stream`] are snapshots (frozen state).
+///
+/// # Control Methods
+///
+/// - [`set_volume`](Self::set_volume) - Adjust stream volume
+/// - [`set_mute`](Self::set_mute) - Mute or unmute
+/// - [`move_to_device`](Self::move_to_device) - Route to a different device
+///
+/// [`AudioService`]: crate::AudioService
+/// [`AudioService::audio_stream`]: crate::AudioService::audio_stream
 #[derive(Clone, Debug)]
 pub struct AudioStream {
     /// Command sender for backend operations

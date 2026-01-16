@@ -16,42 +16,74 @@ use crate::{
     ipc::{HyprMessenger, events::types::ServiceNotification},
 };
 
+/// A Hyprland monitor (display output) with reactive state.
 #[derive(Debug, Clone)]
 pub struct Monitor {
     pub(crate) hypr_messenger: HyprMessenger,
     pub(crate) internal_tx: Option<Sender<ServiceNotification>>,
     pub(crate) cancellation_token: Option<CancellationToken>,
 
+    /// Monitor ID.
     pub id: Property<MonitorId>,
+    /// Monitor name (e.g., "DP-1", "HDMI-A-1").
     pub name: Property<String>,
+    /// Human-readable description.
     pub description: Property<String>,
+    /// Manufacturer name.
     pub make: Property<String>,
+    /// Model name.
     pub model: Property<String>,
+    /// Serial number.
     pub serial: Property<String>,
+    /// Width in pixels.
     pub width: Property<u32>,
+    /// Height in pixels.
     pub height: Property<u32>,
+    /// Physical width in millimeters.
     pub physical_width: Property<u32>,
+    /// Physical height in millimeters.
     pub physical_height: Property<u32>,
+    /// Refresh rate in Hz.
     pub refresh_rate: Property<f32>,
+    /// X position in layout.
     pub x: Property<i32>,
+    /// Y position in layout.
     pub y: Property<i32>,
+    /// Currently active workspace.
     pub active_workspace: Property<WorkspaceInfo>,
+    /// Currently open special workspace.
     pub special_workspace: Property<WorkspaceInfo>,
+    /// Reserved screen edges for panels.
     pub reserved: Property<Reserved>,
+    /// Output scale factor.
     pub scale: Property<f32>,
+    /// Rotation/flip transform.
     pub transform: Property<Transform>,
+    /// Has keyboard focus.
     pub focused: Property<bool>,
+    /// DPMS (display power) state.
     pub dpms_status: Property<bool>,
+    /// Variable refresh rate enabled.
     pub vrr: Property<bool>,
+    /// Window in solitary mode (if any).
     pub solitary: Property<Option<Address>>,
+    /// Why solitary mode is blocked.
     pub solitary_blocked_by: Property<Vec<SolitaryBlocker>>,
+    /// Tearing is currently active.
     pub actively_tearing: Property<bool>,
+    /// Why tearing is blocked.
     pub tearing_blocked_by: Property<Vec<TearingBlocker>>,
+    /// Window receiving direct scanout (if any).
     pub direct_scanout_to: Property<Option<Address>>,
+    /// Why direct scanout is blocked.
     pub direct_scanout_blocked_by: Property<Vec<DirectScanoutBlocker>>,
+    /// Monitor is disabled.
     pub disabled: Property<bool>,
+    /// Current pixel format.
     pub current_format: Property<String>,
+    /// Monitor this is mirroring (if any).
     pub mirror_of: Property<Option<String>>,
+    /// Supported video modes.
     pub available_modes: Property<Vec<String>>,
 }
 

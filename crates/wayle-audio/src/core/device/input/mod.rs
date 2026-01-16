@@ -26,7 +26,20 @@ use crate::{
     volume::types::Volume,
 };
 
-/// Input device (source) representation with reactive properties.
+/// PulseAudio source with reactive properties and control methods.
+///
+/// Instances from [`AudioService`] fields are live (properties auto-update).
+/// Instances from [`AudioService::input_device`] are snapshots (frozen state).
+///
+/// # Control Methods
+///
+/// - [`set_volume`](Self::set_volume) - Adjust input gain
+/// - [`set_mute`](Self::set_mute) - Mute or unmute
+/// - [`set_port`](Self::set_port) - Switch input port
+/// - [`set_as_default`](Self::set_as_default) - Make this the default input
+///
+/// [`AudioService`]: crate::AudioService
+/// [`AudioService::input_device`]: crate::AudioService::input_device
 #[derive(Clone, Debug)]
 pub struct InputDevice {
     /// Command sender for backend operations

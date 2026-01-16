@@ -32,16 +32,16 @@ struct ServiceIdentifier<'a> {
     path: &'a str,
 }
 
-/// StatusNotifierItem representation with associated DBusMenu.
+/// Individual system tray item from org.kde.StatusNotifierItem.
 ///
-/// Combines the org.kde.StatusNotifierItem and com.canonical.dbusmenu
-/// interfaces into a single model for system tray items.
+/// All properties are reactive via [`Property<T>`](wayle_common::Property).
+/// Field semantics follow the [StatusNotifierItem spec](https://freedesktop.org/wiki/Specifications/StatusNotifierItem/).
 #[derive(Debug, Clone)]
 pub struct TrayItem {
     pub(crate) zbus_connection: Connection,
     pub(crate) cancellation_token: Option<CancellationToken>,
 
-    /// D-Bus service name or path (e.g., "org.kde.StatusNotifierItem-12345-1")
+    /// D-Bus service name (e.g., "org.kde.StatusNotifierItem-12345-1").
     pub bus_name: Property<String>,
 
     /// It's a name that should be unique for this application and consistent between sessions,

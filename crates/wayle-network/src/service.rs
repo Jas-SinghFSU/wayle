@@ -42,25 +42,20 @@ use crate::{
     wired::LiveWiredParams,
 };
 
-/// Manages network connectivity through NetworkManager D-Bus interface.
-///
-/// Provides unified access to both WiFi and wired network interfaces,
-/// tracking their state and managing connections. The service monitors
-/// the primary connection type and exposes reactive properties for
-/// network status changes.
+/// Entry point for network management. See [crate-level docs](crate) for usage.
 #[derive(Debug)]
 pub struct NetworkService {
     #[debug(skip)]
     pub(crate) zbus_connection: Connection,
     #[debug(skip)]
     pub(crate) cancellation_token: CancellationToken,
-    /// NetworkManager Settings interface for managing connection profiles.
+    /// Connection profile management.
     pub settings: Arc<Settings>,
-    /// Current WiFi device state, if available.
+    /// WiFi device, if present.
     pub wifi: Option<Arc<Wifi>>,
-    /// Current wired device state, if available.
+    /// Wired device, if present.
     pub wired: Option<Arc<Wired>>,
-    /// Type of the primary network connection.
+    /// Primary connection type (WiFi, Wired, or Unknown).
     pub primary: Property<ConnectionType>,
 }
 

@@ -29,11 +29,10 @@ use crate::{
     types::agent::{AgentCapability, AgentEvent},
 };
 
-/// Manages Bluetooth connectivity through the BlueZ D-Bus interface.
+/// Bluetooth connectivity via BlueZ D-Bus.
 ///
-/// Provides a high-level API for Bluetooth operations including device discovery,
-/// pairing, and connection management. Automatically tracks adapter state and
-/// maintains reactive properties for UI consumption.
+/// See [crate-level documentation](crate) for reactive property patterns
+/// and live vs snapshot instance behavior.
 #[derive(Debug)]
 pub struct BluetoothService {
     #[debug(skip)]
@@ -45,20 +44,20 @@ pub struct BluetoothService {
     #[debug(skip)]
     pub(crate) pairing_responder: Arc<Mutex<Option<PairingResponder>>>,
 
-    /// All available Bluetooth adapters on the system.
+    /// All Bluetooth adapters on the system (live).
     pub adapters: Property<Vec<Arc<Adapter>>>,
-    /// Currently active adapter for discovery and operations.
+    /// Active adapter for discovery and operations (live).
     pub primary_adapter: Property<Option<Arc<Adapter>>>,
-    /// All discovered Bluetooth devices across all adapters.
+    /// All discovered devices across adapters (live).
     pub devices: Property<Vec<Arc<Device>>>,
-    /// Whether any Bluetooth adapter is present on the system.
+    /// Whether any adapter is present.
     pub available: Property<bool>,
-    /// Whether Bluetooth is enabled (at least one adapter powered).
+    /// Whether any adapter is powered.
     pub enabled: Property<bool>,
-    /// Whether any device is currently connected.
+    /// Addresses of connected devices.
     pub connected: Property<Vec<String>>,
 
-    /// Current pairing request awaiting user response.
+    /// Pending pairing request awaiting response.
     pub pairing_request: Property<Option<PairingRequest>>,
 }
 

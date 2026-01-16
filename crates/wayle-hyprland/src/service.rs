@@ -18,25 +18,20 @@ use crate::{
     },
 };
 
-/// Hyprland compositor service providing reactive state and event streaming.
-///
-/// Connects to Hyprland's IPC sockets to query current state and receive events
-/// about workspace changes, window lifecycle, monitor configuration, and more.
-/// State is exposed through reactive properties that automatically update when
-/// Hyprland emits relevant events.
+/// Hyprland compositor service. See [crate-level docs](crate) for usage.
 pub struct HyprlandService {
     pub(crate) internal_tx: Sender<ServiceNotification>,
     pub(crate) hyprland_tx: Sender<HyprlandEvent>,
     pub(crate) cancellation_token: CancellationToken,
     pub(crate) hypr_messenger: HyprMessenger,
 
-    /// Reactive property containing all workspaces in Hyprland.
+    /// All workspaces.
     pub workspaces: Property<Vec<Arc<Workspace>>>,
-    /// Reactive property containing all active client windows.
+    /// All client windows.
     pub clients: Property<Vec<Arc<Client>>>,
-    /// Reactive property containing all connected monitors.
+    /// Connected monitors.
     pub monitors: Property<Vec<Arc<Monitor>>>,
-    /// Reactive property containing all layer shell surfaces.
+    /// Layer shell surfaces.
     pub layers: Property<Vec<Layer>>,
 }
 

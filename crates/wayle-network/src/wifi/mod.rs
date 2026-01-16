@@ -21,26 +21,20 @@ use super::{
     types::states::NetworkStatus,
 };
 
-/// Manages WiFi network connectivity and device state.
-///
-/// Provides high-level interface for WiFi operations including connection
-/// management, access point scanning, and saved network handling. Wraps
-/// the lower-level DeviceWifi D-Bus proxy with reactive properties for
-/// state monitoring.
+/// WiFi device with connection control. See [crate-level docs](crate) for usage.
 #[derive(Clone, Debug)]
 pub struct Wifi {
-    /// The underlying WiFi device.
+    /// Underlying device properties.
     pub device: DeviceWifi,
-
-    /// Whether WiFi is enabled on the system.
+    /// System-wide WiFi enabled state.
     pub enabled: Property<bool>,
-    /// Current WiFi connectivity status.
+    /// Current connectivity status.
     pub connectivity: Property<NetworkStatus>,
-    /// Ssid of the currently connected network, if any.
+    /// Connected network SSID.
     pub ssid: Property<Option<String>>,
-    /// Signal strength of current connection (0-100).
+    /// Signal strength (0-100).
     pub strength: Property<Option<u8>>,
-    /// List of available access points.
+    /// Visible access points.
     pub access_points: Property<Vec<Arc<AccessPoint>>>,
 }
 

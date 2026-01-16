@@ -16,11 +16,7 @@ use crate::{
     types::{ColorExtractor, CyclingConfig, CyclingMode, FitMode, MonitorState},
 };
 
-/// Service for managing desktop wallpapers.
-///
-/// Supports setting wallpapers on individual monitors or all monitors at once.
-/// Cycling uses a shared configuration (directory, interval, mode) with
-/// per-monitor indices so each monitor shows a different image from the pool.
+/// Desktop wallpaper manager. See [crate-level docs](crate) for usage.
 #[derive(Debug)]
 pub struct WallpaperService {
     #[debug(skip)]
@@ -32,17 +28,17 @@ pub struct WallpaperService {
     #[debug(skip)]
     pub(crate) extraction_complete: broadcast::Sender<()>,
 
-    /// Shared fit mode for all monitors.
+    /// Image scaling mode applied to all monitors.
     pub fit_mode: Property<FitMode>,
-    /// Monitor whose wallpaper is used for color extraction (connector name).
+    /// Monitor used for color extraction, or first available if `None`.
     pub theming_monitor: Property<Option<String>>,
-    /// Shared cycling configuration (when cycling is active).
+    /// Active cycling state, or `None` when cycling is stopped.
     pub cycling: Property<Option<CyclingConfig>>,
-    /// Per-monitor wallpaper state.
+    /// Per-monitor wallpaper paths and cycle indices.
     pub monitors: Property<HashMap<String, MonitorState>>,
-    /// Color extraction tool.
+    /// Tool for extracting color palettes from wallpapers.
     pub color_extractor: Property<ColorExtractor>,
-    /// Transition animation configuration.
+    /// Animation settings for wallpaper transitions.
     pub transition: Property<TransitionConfig>,
 }
 

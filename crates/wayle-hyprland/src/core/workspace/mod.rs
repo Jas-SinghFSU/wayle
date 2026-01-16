@@ -15,20 +15,30 @@ use crate::{
     ipc::{HyprMessenger, events::types::ServiceNotification},
 };
 
+/// A Hyprland workspace with reactive state.
 #[derive(Debug, Clone)]
 pub struct Workspace {
     pub(crate) hypr_messenger: HyprMessenger,
     pub(crate) internal_tx: Option<Sender<ServiceNotification>>,
     pub(crate) cancellation_token: Option<CancellationToken>,
 
+    /// Workspace ID (negative for special workspaces).
     pub id: Property<WorkspaceId>,
+    /// Workspace name.
     pub name: Property<String>,
+    /// Monitor name this workspace is on.
     pub monitor: Property<String>,
+    /// Monitor ID.
     pub monitor_id: Property<MonitorId>,
+    /// Window count.
     pub windows: Property<u16>,
+    /// Whether any window is fullscreen.
     pub fullscreen: Property<bool>,
+    /// Address of the last focused window.
     pub last_window: Property<Option<Address>>,
+    /// Title of the last focused window.
     pub last_window_title: Property<String>,
+    /// Persistent workspace (survives having no windows).
     pub persistent: Property<bool>,
 }
 

@@ -1,5 +1,7 @@
+//! Notification data and internal types.
+
 mod controls;
-/// Notification data structure and operations.
+/// The [`Notification`](notification::Notification) struct.
 pub mod notification;
-/// Core types for notifications.
+/// Action and hint types.
 pub mod types;

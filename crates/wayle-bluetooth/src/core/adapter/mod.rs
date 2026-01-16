@@ -27,7 +27,24 @@ use crate::{
     },
 };
 
-/// Bluetooth adapter representation with reactive properties.
+/// Bluetooth adapter from BlueZ.
+///
+/// Instances from service fields are **live** and auto-update.
+/// Instances from [`BluetoothService::adapter()`](crate::BluetoothService::adapter) are **snapshots**.
+/// Use [`BluetoothService::adapter_monitored()`](crate::BluetoothService::adapter_monitored) for a live instance by path.
+///
+/// # Control Methods
+///
+/// - [`set_powered()`](Self::set_powered) - Power on/off
+/// - [`set_discoverable()`](Self::set_discoverable) /
+///   [`set_discoverable_timeout()`](Self::set_discoverable_timeout) - Visibility
+/// - [`set_pairable()`](Self::set_pairable) /
+///   [`set_pairable_timeout()`](Self::set_pairable_timeout) - Pairing acceptance
+/// - [`start_discovery()`](Self::start_discovery) /
+///   [`stop_discovery()`](Self::stop_discovery) - Device scanning
+/// - [`set_discovery_filter()`](Self::set_discovery_filter) - Filter discovered devices
+/// - [`remove_device()`](Self::remove_device) - Remove a device from the adapter
+/// - [`connect_device()`](Self::connect_device) - Direct connection without discovery
 #[derive(Debug, Clone)]
 pub struct Adapter {
     #[debug(skip)]
@@ -97,7 +114,7 @@ pub struct Adapter {
     /// The power state will show whether the adapter is turning off, or turning on, as
     /// well as being on or off.
     ///
-    /// [experimental]
+    /// (BlueZ experimental)
     pub power_state: Property<PowerState>,
 
     /// Switch an adapter to discoverable or non-discoverable to either make it visible
@@ -371,7 +388,7 @@ impl Adapter {
     /// After this method returns, services discovery will continue and any supported
     /// profile will be connected. Returns object path to created device object or device that already exists.
     ///
-    /// [experimental]
+    /// (BlueZ experimental)
     ///
     /// # Errors
     ///

@@ -19,10 +19,7 @@ use crate::{
     builder::SystemTrayServiceBuilder, proxy::status_notifier_watcher::StatusNotifierWatcherProxy,
 };
 
-/// System tray service implementing the StatusNotifier protocol.
-///
-/// Provides discovery and management of system tray items via D-Bus.
-/// Automatically detects whether to act as watcher or connect to existing one.
+/// System tray service entry point. See [crate-level docs](crate) for usage.
 #[derive(Debug)]
 pub struct SystemTrayService {
     #[debug(skip)]
@@ -32,14 +29,10 @@ pub struct SystemTrayService {
     #[debug(skip)]
     pub(crate) connection: Connection,
 
-    /// Whether this service is operating as a StatusNotifierWatcher (registry).
-    ///
-    /// When `true`, the service acts as the central registry receiving registrations
-    /// from tray items. When `false`, the service acts as a host consuming items from
-    /// an existing watcher.
+    /// `true` if acting as the watcher registry, `false` if consuming from existing watcher.
     pub is_watcher: bool,
 
-    /// All discovered tray items.
+    /// Currently registered tray items.
     pub items: Property<Vec<Arc<TrayItem>>>,
 }
 

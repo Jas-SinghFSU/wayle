@@ -21,11 +21,9 @@ pub(crate) const DEFAULT_LOW_CUTOFF: u32 = 50;
 pub(crate) const DEFAULT_HIGH_CUTOFF: u32 = 10000;
 pub(crate) const DEFAULT_SAMPLERATE: u32 = 44100;
 
-/// CAVA audio visualization service.
+/// Audio visualization service wrapping libcava.
 ///
-/// Provides real-time audio frequency visualization using the CAVA library.
-/// The service captures system audio and outputs frequency bar data that can be
-/// used for visual representations.
+/// See the [crate-level documentation](crate) for usage examples and field descriptions.
 #[derive(Debug)]
 pub struct CavaService {
     #[debug(skip)]
@@ -33,58 +31,37 @@ pub struct CavaService {
     #[debug(skip)]
     pub(crate) restart_lock: AsyncMutex<()>,
 
-    /// Current visualization bar values (0.0 to 1.0, can overshoot).
-    ///
-    /// Updates at the configured framerate. Length equals the `bars` property.
-    /// In stereo mode, first half is left channel, second half is right channel.
+    /// Bar amplitudes, updated at `framerate`. Stereo splits L/R halves.
     pub values: Property<Vec<f64>>,
 
-    /// Number of frequency bars to generate.
-    ///
-    /// Valid range: 1-256. Default: 20. Changing this property requires a service restart.
+    /// Frequency bar count (1-256, default 20).
     pub bars: Property<usize>,
 
-    /// Automatic sensitivity adjustment.
-    ///
-    /// When enabled, sensitivity is automatically adjusted to keep values in 0-1 range.
+    /// Auto-adjust sensitivity to keep values in 0-1 range.
     pub autosens: Property<bool>,
 
-    /// Stereo channel visualization.
-    ///
-    /// When enabled, splits bars between left and right channels.
+    /// Split bars between left and right audio channels.
     pub stereo: Property<bool>,
 
-    /// Noise reduction filter strength.
-    ///
-    /// Range: 0.0 (fast, noisy) to 1.0 (slow, smooth). Default: 0.77.
+    /// Smoothing filter: 0.0 = fast/noisy, 1.0 = slow/smooth (default 0.77).
     pub noise_reduction: Property<f64>,
 
-    /// Visualization update rate in frames per second.
+    /// Update rate in fps (default 60).
     pub framerate: Property<u32>,
 
-    /// Audio input method/backend.
-    ///
-    /// Determines which audio system to use for capturing audio.
+    /// Audio capture backend (default PipeWire).
     pub input: Property<InputMethod>,
 
-    /// Audio source identifier.
-    ///
-    /// Source string format depends on the input method. The value "auto" enables automatic selection.
+    /// Audio source identifier ("auto" for auto-detect).
     pub source: Property<String>,
 
-    /// Low frequency cutoff in Hz.
-    ///
-    /// Frequencies below this value are filtered out. Default: 50.
+    /// Low frequency cutoff in Hz (default 50).
     pub low_cutoff: Property<u32>,
 
-    /// High frequency cutoff in Hz.
-    ///
-    /// Frequencies above this value are filtered out. Default: 10000.
+    /// High frequency cutoff in Hz (default 10000).
     pub high_cutoff: Property<u32>,
 
-    /// Audio sample rate in Hz.
-    ///
-    /// Should match the input audio sample rate. Default: 44100.
+    /// Audio sample rate in Hz (default 44100).
     pub samplerate: Property<u32>,
 }
 

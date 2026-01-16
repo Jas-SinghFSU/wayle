@@ -16,32 +16,29 @@ use crate::{error::Error, proxy::MediaPlayer2PlayerProxy};
 
 pub(crate) const UNKNOWN_METADATA: &str = "Unknown";
 
-/// Metadata for a media track with reactive properties
+/// Track metadata with reactive properties.
+///
+/// Accessed via [`Player::metadata`](super::player::Player::metadata). Live players have live-updating metadata;
+/// snapshot players have frozen metadata.
 #[derive(Debug, Clone)]
 pub struct TrackMetadata {
     #[debug(skip)]
     pub(crate) proxy: Option<MediaPlayer2PlayerProxy<'static>>,
     #[debug(skip)]
     pub(crate) cancellation_token: Option<CancellationToken>,
-    /// Track title
+    /// Track title.
     pub title: Property<String>,
-
-    /// Track artist(s)
+    /// Artist name(s), comma-separated if multiple.
     pub artist: Property<String>,
-
-    /// Album name
+    /// Album name.
     pub album: Property<String>,
-
-    /// Album artist(s)
+    /// Album artist(s), comma-separated if multiple.
     pub album_artist: Property<String>,
-
-    /// Track length
+    /// Track duration.
     pub length: Property<Option<Duration>>,
-
-    /// Artwork URL
+    /// Album art URL (file:// or http://).
     pub art_url: Property<Option<String>>,
-
-    /// Track ID (unique identifier)
+    /// MPRIS track ID (D-Bus object path).
     pub track_id: Property<Option<String>>,
 }
 

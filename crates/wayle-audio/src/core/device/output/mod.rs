@@ -26,7 +26,22 @@ use crate::{
     volume::types::Volume,
 };
 
-/// Output device (sink) representation with reactive properties.
+/// PulseAudio sink with reactive properties and control methods.
+///
+/// Instances from [`AudioService`] fields (e.g., `output_devices`, `default_output`)
+/// are live: their [`Property`] fields update when PulseAudio state changes.
+/// Instances from [`AudioService::output_device`] are snapshots that don't update.
+///
+/// # Control Methods
+///
+/// - [`set_volume`](Self::set_volume) - Adjust volume levels
+/// - [`set_mute`](Self::set_mute) - Mute or unmute
+/// - [`set_port`](Self::set_port) - Switch output port (e.g., headphone jack vs speakers)
+/// - [`set_as_default`](Self::set_as_default) - Make this the default output
+///
+/// [`Property`]: wayle_common::Property
+/// [`AudioService`]: crate::AudioService
+/// [`AudioService::output_device`]: crate::AudioService::output_device
 #[derive(Clone, Debug)]
 pub struct OutputDevice {
     /// Command sender for backend operations

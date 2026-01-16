@@ -23,25 +23,22 @@ use super::{
     },
 };
 
-/// Power profiles management with reactive properties.
-///
-/// Provides access to system power profiles through reactive Property fields
-/// that automatically update when the underlying power-profiles-daemon state changes.
+/// Reactive power profile state. See [crate-level docs](crate).
 #[derive(Debug, Clone)]
 pub struct PowerProfiles {
     #[debug(skip)]
     cancellation_token: Option<CancellationToken>,
     #[debug(skip)]
     zbus_connection: Connection,
-    /// The type of the currently active profile.
+    /// Currently active profile.
     pub active_profile: Property<PowerProfile>,
-    /// Set when performance profile is running in degraded mode.
+    /// Performance degradation reason, if any.
     pub performance_degraded: Property<PerformanceDegradationReason>,
-    /// An array of key-pair values representing each profile.
+    /// Available profiles with driver info.
     pub profiles: Property<Vec<Profile>>,
-    /// An array of strings listing each one of the "actions" implemented in the running daemon.
+    /// Daemon-supported actions.
     pub actions: Property<Vec<String>>,
-    /// A list of dictionaries representing the current profile holds.
+    /// Applications holding a specific profile.
     pub active_profile_holds: Property<Vec<ProfileHold>>,
 }
 

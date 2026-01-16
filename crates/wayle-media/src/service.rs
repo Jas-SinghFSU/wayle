@@ -15,9 +15,7 @@ use super::{
 };
 use crate::{builder::MediaServiceBuilder, error::Error};
 
-/// MPRIS service with reactive property-based architecture.
-///
-/// Provides fine-grained reactive updates for efficient UI rendering.
+/// MPRIS media player service. See [crate-level docs](crate) for usage patterns.
 #[derive(Clone, Debug)]
 pub struct MediaService {
     #[debug(skip)]
@@ -26,11 +24,11 @@ pub struct MediaService {
     pub(crate) players: Arc<RwLock<HashMap<PlayerId, Arc<Player>>>>,
     #[debug(skip)]
     pub(crate) cancellation_token: CancellationToken,
-    /// All discovered media players.
+    /// All discovered MPRIS players.
     pub player_list: Property<Vec<Arc<Player>>>,
-    /// Currently active media player.
+    /// Selected player for focused control.
     pub active_player: Property<Option<Arc<Player>>>,
-    /// Patterns for media players to ignore.
+    /// Bus name patterns to exclude from discovery.
     pub ignored_patterns: Vec<String>,
 }
 

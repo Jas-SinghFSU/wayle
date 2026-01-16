@@ -1,7 +1,7 @@
 //! Tokio mainloop for PulseAudio
 //!
 //! This code is from Daniel De Graaf's pulse-binding-rust project.
-//! Original: https://github.com/danieldg/pulse-binding-rust/tree/master/pulse-tokio
+//! Original: <https://github.com/danieldg/pulse-binding-rust/tree/master/pulse-tokio>
 //! Copyright (c) Daniel De Graaf <code@danieldg.net>
 //! Licensed under MIT OR Apache-2.0
 //!

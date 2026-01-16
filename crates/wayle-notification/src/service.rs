@@ -12,7 +12,7 @@ use crate::{
     events::NotificationEvent, persistence::NotificationStore, types::ClosedReason,
 };
 
-/// Service for handling desktop notifications.
+/// Desktop notification service. See [crate-level docs](crate) for usage.
 #[derive(Debug)]
 pub struct NotificationService {
     #[debug(skip)]
@@ -24,15 +24,15 @@ pub struct NotificationService {
     #[debug(skip)]
     pub(crate) connection: Connection,
 
-    /// The list of all notifications that have been received.
+    /// All received notifications.
     pub notifications: Property<Vec<Arc<Notification>>>,
-    /// The list of notifications currently shown as popups.
+    /// Currently visible popups.
     pub popups: Property<Vec<Arc<Notification>>>,
-    /// Duration in milliseconds for how long popups should be shown.
+    /// Popup display duration in milliseconds.
     pub popup_duration: Property<u32>,
-    /// Do Not Disturb mode - when enabled, popups are suppressed.
+    /// Do Not Disturb mode; suppresses popups when true.
     pub dnd: Property<bool>,
-    /// Whether to automatically remove expired notifications
+    /// Auto-remove expired notifications.
     pub remove_expired: Property<bool>,
 }
 

@@ -13,17 +13,12 @@ use super::{
     types::states::NetworkStatus,
 };
 
-/// Manages wired (ethernet) network connectivity and device state.
-///
-/// Provides interface for monitoring ethernet connection status.
-/// Unlike WiFi, wired connections are typically automatic and don't
-/// require manual connection management or authentication.
+/// Wired (ethernet) device state. See [crate-level docs](crate) for usage.
 #[derive(Clone, Debug)]
 pub struct Wired {
-    /// The underlying wired device.
+    /// Underlying device properties.
     pub device: DeviceWired,
-
-    /// Current wired network connectivity status.
+    /// Current connectivity status.
     pub connectivity: Property<NetworkStatus>,
 }
 

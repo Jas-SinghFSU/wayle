@@ -5,12 +5,12 @@ use std::{
 
 use zbus::zvariant::Value;
 
-/// Bluetooth address type for adapters and devices.
+/// Bluetooth address type from BlueZ.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AddressType {
-    /// Public Bluetooth address
+    /// Public address.
     Public,
-    /// Random Bluetooth address (LE)
+    /// Random address (LE).
     Random,
 }
 
@@ -34,7 +34,7 @@ impl From<&str> for AddressType {
 
 /// Power state of a Bluetooth adapter.
 ///
-/// [experimental]
+/// (BlueZ experimental)
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PowerState {
     /// Adapter is powered on
