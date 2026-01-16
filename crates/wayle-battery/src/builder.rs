@@ -1,5 +1,3 @@
-//! Builder for configuring a BatteryService.
-
 use tokio_util::sync::CancellationToken;
 use tracing::instrument;
 use wayle_traits::Reactive;

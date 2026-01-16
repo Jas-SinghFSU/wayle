@@ -14,11 +14,10 @@ use super::{
 };
 use crate::{Config, infrastructure::themes::utils::load_themes};
 
-/// Configuration service with reactive properties.
+/// Reactive configuration service.
 ///
-/// Provides strongly-typed access to all configuration values.
-/// Each config field can be watched independently for changes.
-/// Runtime overrides are extracted directly from ConfigProperty fields.
+/// Each config field can be watched independently for changes. Runtime
+/// overrides are extracted directly from `ConfigProperty` fields.
 #[derive(Clone)]
 pub struct ConfigService {
     config: Arc<Config>,
@@ -26,10 +25,10 @@ pub struct ConfigService {
 }
 
 impl ConfigService {
-    /// Initialize config service from TOML files.
+    /// Loads configuration from TOML files and starts file watcher.
     ///
-    /// Creates default config, applies config.toml to the config layer,
-    /// and runtime.toml to the runtime layer. Starts file watcher for hot-reload.
+    /// Applies `config.toml` to the config layer and `runtime.toml` to
+    /// the runtime layer, then starts hot-reload file watching.
     ///
     /// # Errors
     ///
@@ -71,14 +70,14 @@ impl ConfigService {
         Ok(service)
     }
 
-    /// Get reference to the config.
+    /// Reference to the config root.
     pub fn config(&self) -> &Config {
         &self.config
     }
 
-    /// Save runtime layer values to runtime.toml.
+    /// Persists runtime layer values to `runtime.toml`.
     ///
-    /// Extracts only values with runtime overrides from the config tree.
+    /// Only values with runtime overrides are written.
     ///
     /// # Errors
     ///
@@ -128,19 +127,18 @@ impl ConfigService {
     }
 }
 
-/// CLI-specific extension methods for ConfigService.
+/// CLI extension for string-based config access.
 ///
-/// These use string-based paths for dynamic config access from the command line.
-/// Application code should use strongly-typed access via `config()`.
+/// Application code should prefer strongly-typed access via `config()`.
 pub trait ConfigServiceCli {
-    /// Get a configuration value by dot-separated path.
+    /// Retrieves value at a dot-separated path (e.g., `battery.enabled`).
     ///
     /// # Errors
     ///
     /// Returns error if path is invalid.
     fn get_by_path(&self, path: &str) -> Result<toml::Value, Error>;
 
-    /// Set a runtime override by dot-separated path.
+    /// Sets a runtime override at a dot-separated path.
     ///
     /// # Errors
     ///

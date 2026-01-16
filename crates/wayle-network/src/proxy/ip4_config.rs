@@ -4,9 +4,6 @@ use std::collections::HashMap;
 
 use zbus::{proxy, zvariant::OwnedValue};
 
-/// IPv4 Configuration Set.
-///
-/// Contains IPv4 configuration information.
 #[proxy(
     default_service = "org.freedesktop.NetworkManager",
     interface = "org.freedesktop.NetworkManager.IP4Config"

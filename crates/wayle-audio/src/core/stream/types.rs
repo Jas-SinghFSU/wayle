@@ -6,12 +6,14 @@ use crate::{
 };
 
 #[doc(hidden)]
+#[allow(private_interfaces)]
 pub struct AudioStreamParams<'a> {
     pub command_tx: &'a CommandSender,
     pub stream_key: StreamKey,
 }
 
 #[doc(hidden)]
+#[allow(private_interfaces)]
 pub struct LiveAudioStreamParams<'a> {
     pub command_tx: &'a CommandSender,
     pub event_tx: &'a EventSender,

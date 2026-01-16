@@ -1,5 +1,3 @@
-//! Wallpaper service with D-Bus interface.
-
 use std::{collections::HashMap, path::PathBuf, sync::Arc, time::Duration};
 
 use derive_more::Debug;

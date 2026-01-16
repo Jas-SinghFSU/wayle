@@ -1,5 +1,3 @@
-//! Wallpaper image fit modes.
-
 use std::{
     fmt::{Display, Formatter, Result as FmtResult},
     str::FromStr,

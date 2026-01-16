@@ -1,9 +1,7 @@
 use wayle_common::ConfigProperty;
 use wayle_derive::wayle_config;
 
-/// Font configuration for the Wayle shell.
-///
-/// Controls the font families used throughout the interface.
+/// Font family configuration.
 #[wayle_config]
 pub struct FontConfig {
     /// Sans-serif font family for UI text and labels.

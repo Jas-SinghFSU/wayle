@@ -11,17 +11,9 @@ use super::{
     proxy::status_notifier_watcher::StatusNotifierWatcherProxy,
 };
 
-/// Handles discovery of tray items and host registration.
 pub(crate) struct SystemTrayServiceDiscovery;
 
 impl SystemTrayServiceDiscovery {
-    /// Discovers and creates all existing tray items from the watcher.
-    ///
-    /// Queries the StatusNotifierWatcher for all registered items and creates
-    /// TrayItem objects with their properties fetched and monitoring enabled.
-    ///
-    /// # Errors
-    /// Returns error if watcher connection fails or item creation fails.
     #[instrument(skip(connection, cancellation_token), err)]
     pub async fn discover_items(
         connection: &Connection,

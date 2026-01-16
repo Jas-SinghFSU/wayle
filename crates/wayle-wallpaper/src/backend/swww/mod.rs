@@ -1,5 +1,3 @@
-//! swww backend for wallpaper rendering.
-
 mod transition;
 
 use std::{

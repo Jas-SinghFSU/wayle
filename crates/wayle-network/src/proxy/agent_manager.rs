@@ -2,9 +2,6 @@
 
 use zbus::proxy;
 
-/// Secret Agent Manager.
-///
-/// Manages secret agents that provide secrets to NetworkManager.
 #[proxy(
     default_service = "org.freedesktop.NetworkManager",
     interface = "org.freedesktop.NetworkManager.AgentManager",

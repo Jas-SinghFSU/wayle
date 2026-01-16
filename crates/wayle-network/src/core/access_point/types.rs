@@ -5,20 +5,12 @@ use zbus::{Connection, zvariant::OwnedObjectPath};
 
 use crate::types::flags::{NM80211ApFlags, NM80211ApSecurityFlags};
 
-/// Parameters for creating an AccessPoint instance.
-///
-/// **Note**: This type is exposed for trait implementation requirements
-/// but should not be constructed directly by external consumers.
 #[doc(hidden)]
 pub struct AccessPointParams<'a> {
     pub(crate) connection: &'a Connection,
     pub(crate) path: OwnedObjectPath,
 }
 
-/// Parameters for creating a LiveAccessPoint instance.
-///
-/// **Note**: This type is exposed for trait implementation requirements
-/// but should not be constructed directly by external consumers.
 #[doc(hidden)]
 pub struct LiveAccessPointParams<'a> {
     pub(crate) connection: &'a Connection,

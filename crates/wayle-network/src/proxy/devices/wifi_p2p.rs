@@ -7,7 +7,6 @@ use zbus::{
     zvariant::{OwnedObjectPath, OwnedValue},
 };
 
-/// Wi-Fi P2P Device.
 #[proxy(
     default_service = "org.freedesktop.NetworkManager",
     interface = "org.freedesktop.NetworkManager.Device.WifiP2P"

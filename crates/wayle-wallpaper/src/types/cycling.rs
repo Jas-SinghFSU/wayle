@@ -1,5 +1,3 @@
-//! Wallpaper cycling configuration.
-
 use std::{
     fmt::{Display, Formatter, Result as FmtResult},
     fs,

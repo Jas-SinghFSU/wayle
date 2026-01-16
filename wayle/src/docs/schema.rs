@@ -1,14 +1,13 @@
 //! Schema parsing and property extraction utilities for JSON Schema documents.
 //!
-//! This module provides functionality to parse JSON Schema documents and extract
-//! property information for documentation generation purposes.
+//! Parses JSON Schema documents and extracts property information for
+//! documentation generation.
 
 use serde_json::{Map, Value};
 
-/// Represents information about a single property in a JSON Schema.
+/// Metadata about a single property in a JSON Schema.
 ///
-/// This struct captures the essential metadata of a schema property including
-/// its name, type, description, and default value for documentation purposes.
+/// Includes name, type, description, and default value for documentation.
 #[derive(Debug, Clone)]
 pub struct PropertyInfo {
     /// The name of the property as defined in the schema.

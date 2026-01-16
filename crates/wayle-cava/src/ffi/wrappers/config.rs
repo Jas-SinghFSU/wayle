@@ -8,16 +8,7 @@ use super::super::types::{
 };
 use crate::Result;
 
-/// Safe wrapper around libcava's config_params struct.
-///
-/// # Safety
-///
-/// This type is `Send` and `Sync` because:
-/// - The inner `config_params` is pinned and not shared with C code after construction
-/// - String pointers (`raw_target`, `data_format`, `audio_source`) point to `CString` fields
-///   that are owned by this struct and live as long as the config
-/// - The config is only passed to C functions during `Plan` and `AudioInput` initialization
-pub struct Config {
+pub(crate) struct Config {
     inner: Pin<Box<config_params>>,
     _raw_target: CString,
     _data_format: CString,
@@ -136,18 +127,6 @@ impl Config {
     }
 }
 
-/// # Safety
-///
-/// `Config` is `Send` because:
-/// - The inner `config_params` struct contains only primitive types and raw pointers
-/// - All raw pointers point to memory owned by this struct (`CString` fields)
-/// - No thread-local state is accessed
 unsafe impl Send for Config {}
 
-/// # Safety
-///
-/// `Config` is `Sync` because:
-/// - The struct is only mutated during construction
-/// - `as_ptr()` requires `&mut self`, preventing concurrent access
-/// - The C library only reads from this config during initialization
 unsafe impl Sync for Config {}

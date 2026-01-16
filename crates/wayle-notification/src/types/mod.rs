@@ -2,21 +2,11 @@ mod notification;
 
 pub use notification::*;
 
-/// D-Bus interface constants for the notification service.
-pub mod dbus {
-    /// The D-Bus service name for notifications (freedesktop).
+pub(crate) mod dbus {
     pub const SERVICE_NAME: &str = "org.freedesktop.Notifications";
-
-    /// The D-Bus object path for notifications (freedesktop).
     pub const SERVICE_PATH: &str = "/org/freedesktop/Notifications";
-
-    /// The D-Bus interface name for notifications (freedesktop).
     pub const SERVICE_INTERFACE: &str = "org.freedesktop.Notifications";
-
-    /// Wayle extensions D-Bus service name.
     pub const WAYLE_SERVICE_NAME: &str = "com.wayle.Notifications1";
-
-    /// Wayle extensions D-Bus object path.
     pub const WAYLE_SERVICE_PATH: &str = "/com/wayle/Notifications";
 }
 
@@ -25,19 +15,14 @@ pub(crate) type Vendor = String;
 pub(crate) type Version = String;
 pub(crate) type SpecVersion = String;
 
-/// D-Bus signal names for the notification service.
-pub enum Signal {
-    /// Signal emitted when a notification is closed.
+pub(crate) enum Signal {
     NotificationClosed,
-    /// Signal emitted when an action is invoked on a notification.
     ActionInvoked,
-    /// Signal emitted with an activation token.
     ActivationToken,
 }
 
 impl Signal {
-    /// Converts the signal to its D-Bus string representation.
-    pub fn as_str(&self) -> &'static str {
+    pub(crate) fn as_str(&self) -> &'static str {
         match self {
             Signal::NotificationClosed => "NotificationClosed",
             Signal::ActionInvoked => "ActionInvoked",

@@ -1,5 +1,3 @@
-//! Builder for configuring a WallpaperService.
-
 use std::{collections::HashMap, sync::Arc};
 
 use tokio::sync::broadcast;

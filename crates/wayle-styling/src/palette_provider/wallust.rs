@@ -1,1 +1,1 @@
-pub struct WallustProvider;
+pub(super) struct WallustProvider;

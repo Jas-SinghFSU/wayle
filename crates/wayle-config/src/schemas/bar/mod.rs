@@ -49,10 +49,7 @@ pub enum BarItem {
     Group(BarGroup),
 }
 
-/// A named group of modules.
-///
-/// Groups provide visual containment via CSS. The group name becomes
-/// a CSS ID selector (`#group-name`) for per-group styling.
+/// Named group of modules. The name becomes a CSS ID selector for styling.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct BarGroup {
     /// Unique name for CSS targeting (becomes `#name` selector).

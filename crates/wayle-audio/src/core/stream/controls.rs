@@ -7,9 +7,6 @@ use crate::{
     volume::types::Volume,
 };
 
-/// Controller for audio stream operations.
-///
-/// Provides stateless methods to control audio streams through the backend.
 pub(crate) struct AudioStreamController;
 
 impl AudioStreamController {
@@ -31,10 +28,6 @@ impl AudioStreamController {
         rx.await.map_err(|_| Error::CommandChannelDisconnected)?
     }
 
-    /// Set the mute state for an audio stream.
-    ///
-    /// # Errors
-    /// Returns error if backend communication fails or stream operation fails.
     pub async fn set_mute(
         command_tx: &CommandSender,
         stream_key: StreamKey,
@@ -53,10 +46,6 @@ impl AudioStreamController {
         rx.await.map_err(|_| Error::CommandChannelDisconnected)?
     }
 
-    /// Move a stream to a different device.
-    ///
-    /// # Errors
-    /// Returns error if backend communication fails or stream operation fails.
     pub async fn move_to_device(
         command_tx: &CommandSender,
         stream_key: StreamKey,

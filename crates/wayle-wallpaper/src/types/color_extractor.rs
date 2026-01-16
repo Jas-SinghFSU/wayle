@@ -1,5 +1,3 @@
-//! Color extraction via external tools.
-
 use std::{
     fmt::{Display, Formatter, Result as FmtResult},
     fs,

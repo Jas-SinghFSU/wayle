@@ -1,5 +1,3 @@
-//! Builder for configuring a CavaService.
-
 use std::sync::Mutex;
 
 use tokio::sync::Mutex as AsyncMutex;

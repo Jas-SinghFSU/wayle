@@ -1,4 +1,3 @@
-//! D-Bus client proxy for system tray.
 #![allow(missing_docs)]
 
 use zbus::{Result, proxy};

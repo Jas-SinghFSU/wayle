@@ -278,7 +278,6 @@ where
     }
 }
 
-/// Monitor data from hyprctl.
 #[derive(Debug, Deserialize, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct MonitorData {

@@ -30,10 +30,6 @@ pub struct Action {
 }
 
 impl Action {
-    /// Parses D-Bus action array into structured Action items.
-    ///
-    /// D-Bus sends actions as alternating id/label pairs:
-    /// ["reply", "Reply", "delete", "Delete"] -> [Action{id: "reply", label: "Reply"}, ...]
     pub(crate) fn parse_dbus_actions(raw_actions: &[String]) -> Vec<Action> {
         let mut actions = Vec::new();
         let mut iter = raw_actions.iter();

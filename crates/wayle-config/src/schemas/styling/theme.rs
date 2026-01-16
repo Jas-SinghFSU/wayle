@@ -26,8 +26,6 @@ pub struct ThemeEntry {
 }
 
 /// User-defined custom color palette.
-///
-/// Used when preset is set to "custom".
 #[wayle_config]
 pub struct CustomPalette {
     /// Base background color (darkest).
@@ -73,7 +71,7 @@ pub struct CustomPalette {
 }
 
 impl CustomPalette {
-    /// Convert to a Palette for CSS generation.
+    /// Converts to a `Palette` for CSS generation.
     pub fn to_palette(&self) -> Palette {
         Palette {
             name: String::from("custom"),
@@ -91,10 +89,7 @@ impl CustomPalette {
     }
 }
 
-/// Theme configuration for the Wayle shell.
-///
-/// Controls the color palette used throughout the interface.
-/// Select a preset theme or use "custom" with user-defined colors.
+/// Color palette configuration. Select a preset or use custom colors.
 #[wayle_config]
 pub struct ThemeConfig {
     /// The active color palette.

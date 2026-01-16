@@ -1,15 +1,8 @@
 use std::fmt::{Display, Formatter, Result};
 
-/// Raw icon pixmap data from D-Bus.
-/// (width, height, argb32_data)
-pub type RawPixmap = (i32, i32, Vec<u8>);
-
-/// Collection of raw icon pixmaps from D-Bus.
-pub type RawPixmaps = Vec<RawPixmap>;
-
-/// Raw tooltip data from D-Bus.
-/// (icon_name, icon_pixmaps, title, description)
-pub type RawTooltip = (String, RawPixmaps, String, String);
+pub(crate) type RawPixmap = (i32, i32, Vec<u8>);
+pub(crate) type RawPixmaps = Vec<RawPixmap>;
+pub(crate) type RawTooltip = (String, RawPixmaps, String, String);
 
 /// Describes the category of a StatusNotifierItem.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]

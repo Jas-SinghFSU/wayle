@@ -2,7 +2,6 @@
 
 use zbus::{proxy, zvariant::OwnedObjectPath};
 
-/// High-Availability Seamless Redundancy Device.
 #[proxy(
     default_service = "org.freedesktop.NetworkManager",
     interface = "org.freedesktop.NetworkManager.Device.Hsr"

@@ -254,16 +254,14 @@ impl Device {
         DeviceControls::connect(&self.zbus_connection, &self.object_path).await
     }
 
-    /// Disconnects all connected profiles and then terminates low-level ACL connection.
+    /// Disconnects all connected profiles and terminates the low-level ACL connection.
     ///
-    /// ACL connection will be terminated even if some profiles were not disconnected
-    /// properly e.g. due to misbehaving device.
+    /// ACL connection terminates even if some profiles fail to disconnect properly
+    /// (e.g., due to misbehaving device).
     ///
-    /// This method can be also used to cancel a preceding Connect call before a reply
-    /// to it has been received.
+    /// Can also cancel a pending Connect call before receiving its reply.
     ///
-    /// For non-trusted devices connected over LE bearer calling this method will
-    /// disable incoming connections until Connect method is called again.
+    /// For non-trusted LE devices, disables incoming connections until Connect is called again.
     ///
     /// # Errors
     ///
@@ -344,8 +342,8 @@ impl Device {
     /// individual byte array represents a raw SDP record, as defined by the Bluetooth
     /// Service Discovery Protocol specification.
     ///
-    /// This method is intended to be only used by compatibility layers like Wine, that
-    /// need to provide access to raw SDP records to support foreign Bluetooth APIs.
+    /// Intended for compatibility layers like Wine that need raw SDP records
+    /// for foreign Bluetooth APIs.
     ///
     /// General applications should instead use the Profile API for services-related
     /// functionality.

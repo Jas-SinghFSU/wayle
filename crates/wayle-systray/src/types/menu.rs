@@ -12,12 +12,8 @@ pub type RawMenuItemProps = (i32, HashMap<String, OwnedValue>);
 /// Collection of menu items with properties.
 pub type RawMenuItemsPropsList = Vec<RawMenuItemProps>;
 
-/// Raw menu item property names to remove.
-/// (item_id, property_names)
-pub type RawMenuItemKeys = (i32, Vec<String>);
-
-/// Collection of menu items with property names to remove.
-pub type RawMenuItemKeysList = Vec<RawMenuItemKeys>;
+pub(crate) type RawMenuItemKeys = (i32, Vec<String>);
+pub(crate) type RawMenuItemKeysList = Vec<RawMenuItemKeys>;
 
 /// Raw menu layout data from D-Bus GetLayout method.
 /// (revision, (item_id, properties, children))
@@ -458,17 +454,6 @@ impl Debug for MenuItem {
 
         debug.finish()
     }
-}
-
-/// Raw DBusMenu layout item.
-#[derive(Debug, Clone)]
-pub struct DBusMenuLayoutItem {
-    /// Item ID.
-    pub id: i32,
-    /// Item properties.
-    pub properties: HashMap<String, OwnedValue>,
-    /// Child items.
-    pub children: Vec<OwnedValue>,
 }
 
 #[cfg(test)]

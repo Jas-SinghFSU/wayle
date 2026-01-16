@@ -1,7 +1,3 @@
-//! Wayle extensions D-Bus interface for notifications.
-//!
-//! Provides CLI-friendly methods beyond the freedesktop specification.
-
 use std::sync::Arc;
 
 use tracing::instrument;
@@ -9,10 +5,6 @@ use zbus::{fdo, interface};
 
 use crate::{events::NotificationEvent, service::NotificationService, types::ClosedReason};
 
-/// Wayle extensions D-Bus daemon for notification control.
-///
-/// Exposes methods for CLI tools to control notifications beyond
-/// the standard freedesktop interface.
 #[derive(Debug)]
 pub(crate) struct WayleDaemon {
     pub service: Arc<NotificationService>,

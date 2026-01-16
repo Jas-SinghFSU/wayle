@@ -14,9 +14,7 @@ pub mod next;
 pub mod play_pause;
 /// Previous track command
 pub mod previous;
-/// D-Bus proxy utilities
 mod proxy;
-/// Player resolution helper
 mod resolve;
 /// Shuffle command
 pub mod shuffle;

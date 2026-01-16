@@ -8,16 +8,9 @@ use crate::{
     volume::types::Volume,
 };
 
-/// Controller for input device operations.
-///
-/// Provides stateless methods to control input devices through the backend.
 pub(crate) struct InputDeviceController;
 
 impl InputDeviceController {
-    /// Set the volume for an input device.
-    ///
-    /// # Errors
-    /// Returns error if backend communication fails or device operation fails.
     #[instrument(skip(command_tx), fields(device = ?device_key, volume = ?volume), err)]
     pub async fn set_volume(
         command_tx: &CommandSender,
@@ -37,10 +30,6 @@ impl InputDeviceController {
         rx.await.map_err(|_| Error::CommandChannelDisconnected)?
     }
 
-    /// Set the mute state for an input device.
-    ///
-    /// # Errors
-    /// Returns error if backend communication fails or device operation fails.
     #[instrument(skip(command_tx), fields(device = ?device_key, muted = muted), err)]
     pub async fn set_mute(
         command_tx: &CommandSender,
@@ -60,10 +49,6 @@ impl InputDeviceController {
         rx.await.map_err(|_| Error::CommandChannelDisconnected)?
     }
 
-    /// Set the active port for an input device.
-    ///
-    /// # Errors
-    /// Returns error if backend communication fails or device operation fails.
     #[instrument(skip(command_tx), fields(device = ?device_key, port = %port), err)]
     pub async fn set_port(
         command_tx: &CommandSender,
@@ -83,10 +68,6 @@ impl InputDeviceController {
         rx.await.map_err(|_| Error::CommandChannelDisconnected)?
     }
 
-    /// Set a device as the default input.
-    ///
-    /// # Errors
-    /// Returns error if backend communication fails or device operation fails.
     #[instrument(skip(command_tx), fields(device = ?device_key), err)]
     pub async fn set_as_default(
         command_tx: &CommandSender,

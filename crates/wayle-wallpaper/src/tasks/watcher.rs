@@ -1,5 +1,3 @@
-//! Filesystem watching for directory changes.
-
 use std::path::{Path, PathBuf};
 
 use notify::{
@@ -10,22 +8,13 @@ use notify::{
 use tokio::sync::mpsc::UnboundedSender;
 use tracing::{info, warn};
 
-/// Sender for directory change notifications.
-pub type DirectoryChangeSender = UnboundedSender<PathBuf>;
+pub(super) type DirectoryChangeSender = UnboundedSender<PathBuf>;
 
-/// Watches a directory for file changes and notifies via channel.
-///
-/// Detects file creation, deletion, and renames. Sends the directory path
-/// (not individual file paths) when changes occur.
-pub struct DirectoryWatcher {
+pub(super) struct DirectoryWatcher {
     _watcher: RecommendedWatcher,
 }
 
 impl DirectoryWatcher {
-    /// Creates a watcher for the given directory.
-    ///
-    /// Returns `None` if the watcher cannot be created or the directory
-    /// cannot be watched.
     pub fn new(directory: &Path, sender: DirectoryChangeSender) -> Option<Self> {
         let dir_path = directory.to_path_buf();
 

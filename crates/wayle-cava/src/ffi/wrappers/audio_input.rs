@@ -15,20 +15,9 @@ use crate::{Error, Result};
 
 struct SendPtr(usize);
 
-/// # Safety
-///
-/// `SendPtr` wraps a raw pointer as usize for transfer to a spawned thread.
-/// This is safe because:
-/// - The pointed-to data (`AudioInput`) outlives the spawned thread
-/// - The thread is joined in `Drop`, ensuring the pointer remains valid
-/// - Only one thread (the input thread) accesses the data through this pointer
 unsafe impl Send for SendPtr {}
 
-/// Safe wrapper around libcava's audio_data struct for audio input handling.
-///
-/// This struct manages the audio input thread and synchronization primitives
-/// for reading audio data from the configured source.
-pub struct AudioInput {
+pub(crate) struct AudioInput {
     pub(super) inner: Pin<Box<audio_data>>,
     _cava_in_buffer: Vec<f64>,
     _source_string: CString,
@@ -36,14 +25,6 @@ pub struct AudioInput {
 }
 
 impl AudioInput {
-    /// Creates a new audio input handler.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if:
-    /// - The source string contains null bytes
-    /// - Mutex initialization fails
-    /// - Condition variable initialization fails
     pub fn new(buffer_size: usize, channels: u32, samplerate: u32, source: &str) -> Result<Self> {
         let source_string = CString::new(source)?;
         let mut cava_in_buffer = vec![0.0; buffer_size];
@@ -111,11 +92,6 @@ impl AudioInput {
         })
     }
 
-    /// Starts the audio input thread.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if no input function is available for the configured input method.
     pub fn start_input(&mut self, mut config: Config) -> Result<()> {
         if self.input_thread.is_some() {
             return Ok(());
@@ -145,11 +121,6 @@ impl AudioInput {
         &mut *self.inner as *mut _
     }
 
-    /// Locks the audio data mutex for thread-safe access.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the mutex lock fails.
     pub fn lock(&self) -> Result<()> {
         // SAFETY: The mutex was initialized in `new()` and remains valid.
         let ret = unsafe {
@@ -162,11 +133,6 @@ impl AudioInput {
         Ok(())
     }
 
-    /// Unlocks the audio data mutex.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the mutex unlock fails.
     pub fn unlock(&self) -> Result<()> {
         // SAFETY: The mutex was initialized in `new()` and is currently locked.
         let ret = unsafe {
@@ -179,12 +145,10 @@ impl AudioInput {
         Ok(())
     }
 
-    /// Returns the current sample counter value.
     pub fn samples_counter(&self) -> i32 {
         self.inner.samples_counter
     }
 
-    /// Resets the sample counter to zero.
     pub fn reset_samples_counter(&mut self) {
         self.inner.samples_counter = 0;
     }
@@ -211,17 +175,6 @@ impl Drop for AudioInput {
     }
 }
 
-/// # Safety
-///
-/// `AudioInput` is `Send` because:
-/// - The inner `pthread_mutex_t` provides synchronization for the audio buffer
-/// - The `input_thread` handle is only joined in Drop, never accessed concurrently
-/// - All raw pointers point to memory owned by this struct (pinned)
 unsafe impl Send for AudioInput {}
 
-/// # Safety
-///
-/// `AudioInput` is `Sync` because:
-/// - All mutable access to shared state is protected by `lock()`/`unlock()`
-/// - The C library's audio thread only accesses the buffer while holding the mutex
 unsafe impl Sync for AudioInput {}

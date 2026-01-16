@@ -15,9 +15,6 @@ pub struct RoundingCssValues {
 }
 
 /// Global rounding preference for UI components.
-///
-/// Controls how rounded corners appear throughout the shell. A single setting
-/// applies proportionally to both interactive elements and containers.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum RoundingLevel {
@@ -33,10 +30,9 @@ pub enum RoundingLevel {
 }
 
 impl RoundingLevel {
-    /// Returns global CSS variable references for element and container rounding.
+    /// CSS variable references for element and container rounding.
     ///
-    /// Elements get the base level, containers get one step larger for
-    /// perceptual consistency on larger surfaces.
+    /// Containers get one step larger for perceptual consistency.
     pub fn to_css_values(self) -> RoundingCssValues {
         match self {
             Self::None => RoundingCssValues {
@@ -58,9 +54,7 @@ impl RoundingLevel {
         }
     }
 
-    /// Returns bar-specific CSS variable references for element and container rounding.
-    ///
-    /// Uses `--bar-radius-*` tokens which scale with `$bar-scale` independently.
+    /// Bar-specific CSS variable references using `--bar-radius-*` tokens.
     pub fn to_bar_css_values(self) -> RoundingCssValues {
         match self {
             Self::None => RoundingCssValues {
@@ -83,11 +77,7 @@ impl RoundingLevel {
     }
 }
 
-/// Border radius class for component rounding.
-///
-/// Maps directly to the raw `--radius-*` tokens for component-level
-/// rounding control. Provides individual component overrides independent
-/// of the global `RoundingLevel` preference.
+/// Per-component radius override independent of global `RoundingLevel`.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum RadiusClass {

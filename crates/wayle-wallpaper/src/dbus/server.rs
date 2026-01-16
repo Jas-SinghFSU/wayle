@@ -1,5 +1,3 @@
-//! D-Bus server interface implementation.
-
 use std::{path::PathBuf, sync::Arc, time::Duration};
 
 use tracing::instrument;
@@ -7,7 +5,6 @@ use zbus::fdo;
 
 use crate::{service::WallpaperService, types::CyclingMode};
 
-/// D-Bus daemon for external control of the wallpaper service.
 #[derive(Debug)]
 pub(crate) struct WallpaperDaemon {
     pub service: Arc<WallpaperService>,

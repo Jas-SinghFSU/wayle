@@ -8,20 +8,12 @@ use zbus::{
 
 use crate::types::states::{NMDeviceState, NMDeviceStateReason};
 
-/// Parameters for creating a Device instance.
-///
-/// **Note**: This type is exposed for trait implementation requirements
-/// but should not be constructed directly by external consumers.
 #[doc(hidden)]
 pub struct DeviceParams<'a> {
     pub(crate) connection: &'a Connection,
     pub(crate) object_path: OwnedObjectPath,
 }
 
-/// Parameters for creating a LiveDevice instance.
-///
-/// **Note**: This type is exposed for trait implementation requirements
-/// but should not be constructed directly by external consumers.
 #[doc(hidden)]
 pub struct LiveDeviceParams<'a> {
     pub(crate) connection: &'a Connection,
@@ -29,7 +21,6 @@ pub struct LiveDeviceParams<'a> {
     pub(crate) cancellation_token: &'a CancellationToken,
 }
 
-/// Fetched device properties from D-Bus
 pub(crate) struct DeviceProperties {
     pub udi: String,
     pub udev_path: String,

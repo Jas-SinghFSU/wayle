@@ -16,9 +16,7 @@ use crate::{
     },
 };
 
-/// Access point monitoring implementation
 pub(crate) mod monitoring;
-/// Access point type definitions
 pub(crate) mod types;
 
 /// WiFi access point representation.

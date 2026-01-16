@@ -2,7 +2,6 @@
 
 use zbus::proxy;
 
-/// Bluetooth Device.
 #[proxy(
     default_service = "org.freedesktop.NetworkManager",
     interface = "org.freedesktop.NetworkManager.Device.Bluetooth"

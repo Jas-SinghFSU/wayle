@@ -15,19 +15,19 @@ pub type StylingConfigs = Vec<(String, SchemeFn)>;
 /// Maps behavior component names to their schema generator functions.
 pub type BehaviorConfigs = Vec<(String, SchemeFn)>;
 
-/// Trait for types that can provide module information for documentation.
+/// Module documentation provider.
 ///
-/// Implement this trait on module configuration structs to define their
-/// metadata, behavior schemas, and styling schemas in a centralized way.
+/// Module configuration structs implement this to expose their metadata,
+/// behavior schemas, and styling schemas for documentation generation.
 pub trait ModuleInfoProvider {
     /// Returns the module information including metadata and schemas.
     fn module_info() -> ModuleInfo;
 }
 
-/// Represents metadata and configuration schemas for a Wayle module.
+/// Metadata and configuration schemas for a Wayle module.
 ///
-/// Contains all the information needed to document and configure a module,
-/// including its behavior schema and associated styling component schemas.
+/// Aggregates display name, description, behavior schemas, and styling
+/// component schemas for documentation generation.
 pub struct ModuleInfo {
     /// The display name of the module (e.g., "Clock", "Battery").
     pub name: String,

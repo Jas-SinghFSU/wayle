@@ -1,5 +1,6 @@
 pub(crate) mod monitoring;
-pub(crate) mod types;
+/// Wired device types.
+pub mod types;
 
 use std::sync::Arc;
 

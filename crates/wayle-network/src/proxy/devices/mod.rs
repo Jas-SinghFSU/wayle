@@ -42,9 +42,6 @@ pub mod wpan;
 
 type NMAppliedConnection = HashMap<String, HashMap<String, OwnedValue>>;
 
-/// Base network device interface.
-///
-/// Common interface for all network device types.
 #[proxy(
     default_service = "org.freedesktop.NetworkManager",
     interface = "org.freedesktop.NetworkManager.Device"

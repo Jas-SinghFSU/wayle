@@ -3,10 +3,7 @@ use wayle_derive::wayle_config;
 
 use super::{GapClass, IconSizeClass, PaddingClass, TextSizeClass};
 
-/// Global sizing for Basic bar button variant.
-///
-/// Simple icon + label with no container backgrounds. Colors are passed
-/// per-module; this config controls consistent sizing across all modules.
+/// Sizing for Basic bar button variant (icon + label, no container backgrounds).
 #[wayle_config]
 pub struct BasicButtonSizing {
     /// Icon size class.
@@ -34,10 +31,7 @@ pub struct BasicButtonSizing {
     pub gap: ConfigProperty<GapClass>,
 }
 
-/// Global sizing for BlockPrefix bar button variant.
-///
-/// Icon in a colored container that bleeds to the button edge. Colors are
-/// passed per-module; this config controls consistent sizing across all modules.
+/// Sizing for BlockPrefix bar button variant (icon container bleeds to edge).
 #[wayle_config]
 pub struct BlockPrefixSizing {
     /// Icon size class.
@@ -75,10 +69,7 @@ pub struct BlockPrefixSizing {
     pub gap: ConfigProperty<GapClass>,
 }
 
-/// Global sizing for IconSquare bar button variant.
-///
-/// Icon in a colored square container inside button padding. Colors are
-/// passed per-module; this config controls consistent sizing across all modules.
+/// Sizing for IconSquare bar button variant (icon in colored square container).
 #[wayle_config]
 pub struct IconSquareSizing {
     /// Icon size class.

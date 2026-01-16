@@ -1,9 +1,8 @@
 //! Desktop notification management service.
 //!
-//! This crate provides a notification service that manages desktop notifications
-//! through the freedesktop.org Desktop Notifications Specification. It handles
-//! notification display, persistence, and provides reactive streams for
-//! notification events and state changes.
+//! Manages desktop notifications through the freedesktop.org Desktop Notifications
+//! Specification. Handles notification display, persistence, and reactive streams
+//! for notification events and state changes.
 
 mod builder;
 /// Core notification functionality.

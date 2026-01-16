@@ -1,6 +1,4 @@
-/// Device control operations
 mod controls;
-/// Device monitoring implementation
 mod monitoring;
 mod types;
 /// WiFi device functionality and management.

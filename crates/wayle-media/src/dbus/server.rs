@@ -10,7 +10,6 @@ use crate::{
     types::{LoopMode, PlayerId, ShuffleMode},
 };
 
-/// D-Bus daemon for external control of the media service.
 #[derive(Debug)]
 pub(crate) struct MediaDaemon {
     pub service: Arc<MediaService>,

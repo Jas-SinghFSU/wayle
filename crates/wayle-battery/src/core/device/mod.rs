@@ -1,6 +1,6 @@
 mod controls;
 mod monitoring;
-/// Type definitions for battery device core functionality
+/// Type definitions for battery device.
 pub mod types;
 
 use std::sync::Arc;

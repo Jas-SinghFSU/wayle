@@ -12,9 +12,6 @@ use zbus::{Connection, fdo, message::Header, object_server::SignalEmitter};
 
 use super::{error::Error, events::TrayEvent, types::PROTOCOL_VERSION};
 
-/// StatusNotifierWatcher D-Bus interface implementation.
-///
-/// Acts as the central registry for StatusNotifierItems and Hosts.
 #[derive(Debug)]
 pub(crate) struct StatusNotifierWatcher {
     #[debug(skip)]
@@ -30,11 +27,6 @@ pub(crate) struct StatusNotifierWatcher {
 
 #[zbus::interface(name = "org.kde.StatusNotifierWatcher")]
 impl StatusNotifierWatcher {
-    /// Register a StatusNotifierItem into the watcher.
-    ///
-    /// The service string can be either a bus name (searched at /StatusNotifierItem)
-    /// or a full object path. When a full object path is provided, the sender's bus
-    /// name is prepended to form the complete identifier.
     #[instrument(skip(self, ctx, header), fields(service = %service))]
     async fn register_status_notifier_item(
         &mut self,
@@ -66,9 +58,6 @@ impl StatusNotifierWatcher {
         Ok(())
     }
 
-    /// Register a StatusNotifierHost into the watcher.
-    ///
-    /// Every host that intends to display StatusNotifierItems should register.
     #[instrument(skip(self, ctx), fields(service = %service))]
     async fn register_status_notifier_host(
         &mut self,
@@ -91,49 +80,41 @@ impl StatusNotifierWatcher {
         Ok(())
     }
 
-    /// List of all registered StatusNotifierItems.
     #[zbus(property)]
     async fn registered_status_notifier_items(&self) -> Vec<String> {
         self.registered_items.read().await.clone()
     }
 
-    /// Whether at least one StatusNotifierHost has been registered.
     #[zbus(property)]
     async fn is_status_notifier_host_registered(&self) -> bool {
         !self.registered_hosts.read().await.is_empty()
     }
 
-    /// Protocol version (always 0 for this specification).
     #[zbus(property)]
     fn protocol_version(&self) -> i32 {
         PROTOCOL_VERSION
     }
 
-    /// Signal: A new StatusNotifierItem has been registered.
     #[zbus(signal)]
     async fn status_notifier_item_registered(
         ctx: &SignalEmitter<'_>,
         service: String,
     ) -> zbus::Result<()>;
 
-    /// Signal: A StatusNotifierItem has been unregistered.
     #[zbus(signal)]
     async fn status_notifier_item_unregistered(
         ctx: &SignalEmitter<'_>,
         service: String,
     ) -> zbus::Result<()>;
 
-    /// Signal: A new StatusNotifierHost has been registered.
     #[zbus(signal)]
     async fn status_notifier_host_registered(ctx: &SignalEmitter<'_>) -> zbus::Result<()>;
 
-    /// Signal: There are no more StatusNotifierHost instances.
     #[zbus(signal)]
     async fn status_notifier_host_unregistered(ctx: &SignalEmitter<'_>) -> zbus::Result<()>;
 }
 
 impl StatusNotifierWatcher {
-    /// Creates a new StatusNotifierWatcher with an initial host pre-registered.
     pub(crate) async fn with_initial_host(
         event_tx: broadcast::Sender<TrayEvent>,
         connection: &Connection,

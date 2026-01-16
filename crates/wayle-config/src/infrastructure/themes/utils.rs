@@ -8,9 +8,7 @@ use crate::{
     schemas::styling::ThemeEntry,
 };
 
-/// Loads and mounts the built in themes and themes in the ~/.config/wayle/themes
-/// directory into config.style.theme.available
-pub fn load_themes(config: &Config, themes_dir: &Path) {
+pub(crate) fn load_themes(config: &Config, themes_dir: &Path) {
     let mut all_themes: Vec<ThemeEntry> = builtins()
         .into_iter()
         .map(|palette| ThemeEntry {

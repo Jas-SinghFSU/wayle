@@ -1,6 +1,6 @@
 //! Icon management for Wayle with CDN fetching and GTK integration.
 //!
-//! This crate provides:
+//! Features:
 //! - [`IconSource`] trait and implementations for different icon CDNs
 //! - [`IconManager`] for installing and removing icons
 //! - [`IconRegistry`] for registering icons with GTK's IconTheme

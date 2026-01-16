@@ -1,5 +1,3 @@
-//! Per-monitor wallpaper state.
-
 use std::path::PathBuf;
 
 /// State for a single monitor.

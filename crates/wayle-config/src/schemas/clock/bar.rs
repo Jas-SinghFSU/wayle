@@ -1,11 +1,7 @@
 use wayle_common::ConfigProperty;
 use wayle_derive::wayle_config;
 
-/// Clock bar button configuration.
-///
-/// Controls both behavior and styling for the clock's appearance
-/// in the status bar. Properties use noun-first naming with prefixes
-/// for logical grouping (e.g., `icon-*` properties).
+/// Clock bar button behavior and styling.
 #[wayle_config]
 pub struct ClockBarConfig {
     /// Whether to display the clock icon.

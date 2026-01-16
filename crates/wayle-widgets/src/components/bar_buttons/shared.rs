@@ -1,5 +1,3 @@
-//! Shared utilities for bar button variants.
-
 use std::{borrow::Cow, sync::Arc};
 
 use glib::{Propagation, object::IsA};
@@ -13,11 +11,10 @@ use wayle_config::schemas::styling::ColorValue;
 
 use super::types::BarButtonOutput;
 
-/// Attaches a click gesture that handles left, middle, and right clicks.
-///
-/// Emits `BarButtonOutput::LeftClick`, `MiddleClick`, or `RightClick` via
-/// the provided sender.
-pub fn attach_click_gesture(widget: &impl IsA<gtk4::Widget>, sender: Sender<BarButtonOutput>) {
+pub(super) fn attach_click_gesture(
+    widget: &impl IsA<gtk4::Widget>,
+    sender: Sender<BarButtonOutput>,
+) {
     let click = GestureClick::new();
     click.set_button(0);
 
@@ -34,11 +31,7 @@ pub fn attach_click_gesture(widget: &impl IsA<gtk4::Widget>, sender: Sender<BarB
     widget.add_controller(click);
 }
 
-/// Attaches a scroll controller with configurable sensitivity.
-///
-/// Emits `BarButtonOutput::ScrollUp` or `ScrollDown` via the provided sender.
-/// Higher sensitivity values make scrolling trigger more easily.
-pub fn attach_scroll_controller(
+pub(super) fn attach_scroll_controller(
     widget: &impl IsA<gtk4::Widget>,
     sender: Sender<BarButtonOutput>,
     sensitivity: f64,
@@ -62,8 +55,7 @@ pub fn attach_scroll_controller(
     widget.add_controller(scroll);
 }
 
-/// Sets up both click and scroll controllers on a widget.
-pub fn setup_event_controllers(
+pub(super) fn setup_event_controllers(
     widget: &impl IsA<gtk4::Widget>,
     sender: Sender<BarButtonOutput>,
     scroll_sensitivity: f64,
@@ -72,12 +64,7 @@ pub fn setup_event_controllers(
     attach_scroll_controller(widget, sender, scroll_sensitivity);
 }
 
-/// Resolves a color value to CSS, respecting the theme provider setting.
-///
-/// When Wayle theming is active, returns the configured color value.
-/// Otherwise, falls back to the property's default value for consistent
-/// appearance with external theme providers.
-pub fn resolve_color(
+pub(super) fn resolve_color(
     color_prop: &Arc<ConfigProperty<ColorValue>>,
     is_wayle_themed: bool,
 ) -> Cow<'static, str> {

@@ -8,7 +8,6 @@ pub mod dismiss_all;
 pub mod dnd;
 /// List notifications command
 pub mod list;
-/// D-Bus proxy utilities
 mod proxy;
 /// Status command
 pub mod status;

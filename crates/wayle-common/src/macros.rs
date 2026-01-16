@@ -1,9 +1,7 @@
-/// Creates a watch method that combines multiple stream sources into one.
+/// Combines multiple stream sources into a single watch method.
 ///
-/// This macro provides a consistent watch API for types that need to aggregate
-/// multiple change streams. It takes any fields that have a `watch()` method
-/// and combines them into a single stream that emits the full struct whenever
-/// any field changes.
+/// Takes fields that have a `watch()` method and merges them into a single
+/// stream that emits the full struct whenever any field changes.
 ///
 /// # Example
 /// ```ignore
@@ -404,8 +402,8 @@ macro_rules! unwrap_f64_or {
 
 /// Removes items from a Property<Vec<T>> by object path and cancels their tokens.
 ///
-/// This macro handles the common pattern of removing items from a reactive property
-/// while also cancelling their associated cancellation tokens for cleanup.
+/// Removes items from a reactive property while cancelling their associated
+/// cancellation tokens for cleanup.
 ///
 /// # Arguments
 /// * `$property` - The Property<Vec<T>> to modify

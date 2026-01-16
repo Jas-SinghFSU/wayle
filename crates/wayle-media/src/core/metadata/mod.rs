@@ -14,8 +14,7 @@ use zbus::zvariant::OwnedValue;
 
 use crate::{error::Error, proxy::MediaPlayer2PlayerProxy};
 
-/// Default value for unknown metadata fields.
-pub const UNKNOWN_METADATA: &str = "Unknown";
+pub(crate) const UNKNOWN_METADATA: &str = "Unknown";
 
 /// Metadata for a media track with reactive properties
 #[derive(Debug, Clone)]

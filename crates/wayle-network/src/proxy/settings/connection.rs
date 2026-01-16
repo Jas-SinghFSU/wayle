@@ -4,9 +4,6 @@ use std::collections::HashMap;
 
 use zbus::{proxy, zvariant::OwnedValue};
 
-/// Connection Settings Profile.
-///
-/// Represents an individual saved network connection.
 #[proxy(
     default_service = "org.freedesktop.NetworkManager",
     interface = "org.freedesktop.NetworkManager.Settings.Connection"

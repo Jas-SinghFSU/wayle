@@ -2,7 +2,6 @@
 
 use zbus::{proxy, zvariant::OwnedObjectPath};
 
-/// VXLAN Device.
 #[proxy(
     default_service = "org.freedesktop.NetworkManager",
     interface = "org.freedesktop.NetworkManager.Device.Vxlan"

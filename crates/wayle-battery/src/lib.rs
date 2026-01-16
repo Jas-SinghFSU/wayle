@@ -1,16 +1,15 @@
-//! Battery monitoring service for power devices.
+//! Battery monitoring service for power devices via UPower.
 //!
-//! This crate provides a service for monitoring battery and power devices
-//! through UPower. It tracks battery levels, charging state, and power events,
-//! exposing device information and state changes through a reactive stream-based API.
+//! Tracks battery levels, charging state, and power events, exposing device
+//! information and state changes through a reactive stream-based API.
 
 mod builder;
-/// Battery service for monitoring power devices via UPower
+/// Core battery device functionality.
 pub mod core;
 mod error;
 mod proxy;
 mod service;
-/// Type definitions for battery service domain models and enums
+/// Type definitions for battery service domain models and enums.
 pub mod types;
 
 pub use builder::BatteryServiceBuilder;

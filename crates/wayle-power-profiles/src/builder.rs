@@ -1,5 +1,3 @@
-//! Builder for configuring a PowerProfilesService.
-
 use std::sync::Arc;
 
 use tokio_util::sync::CancellationToken;
@@ -8,7 +6,7 @@ use wayle_traits::Reactive;
 use zbus::Connection;
 
 use crate::{
-    core::{PowerProfiles, types::LivePowerProfilesParams},
+    core::{LivePowerProfilesParams, PowerProfiles},
     dbus::{PowerProfilesDaemon, SERVICE_NAME, SERVICE_PATH},
     error::Error,
     service::PowerProfilesService,
@@ -40,9 +38,9 @@ impl PowerProfilesServiceBuilder {
 
     /// Builds and initializes the PowerProfilesService.
     ///
-    /// This will establish a system D-Bus connection and start monitoring
+    /// Establishes a system D-Bus connection and starts monitoring
     /// for power profile changes. If `with_daemon()` was called, the service
-    /// will also register on the session bus for external control.
+    /// also registers on the session bus for external control.
     ///
     /// # Errors
     /// Returns error if D-Bus connection fails or monitoring cannot be started.

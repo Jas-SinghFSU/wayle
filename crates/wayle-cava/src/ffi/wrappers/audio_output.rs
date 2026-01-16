@@ -8,15 +8,11 @@ use super::{
 };
 use crate::{Error, Result};
 
-/// Safe wrapper around libcava's audio_raw struct for output data.
-///
-/// This struct holds the processed audio visualization data after cava_execute.
-pub struct AudioOutput {
+pub(crate) struct AudioOutput {
     pub(super) inner: Pin<Box<audio_raw>>,
 }
 
 impl AudioOutput {
-    /// Creates a new audio output handler for the specified number of bars.
     pub fn new(bars: usize) -> Self {
         let audio_raw = Box::new(audio_raw {
             bars: ptr::null_mut(),
@@ -43,11 +39,6 @@ impl AudioOutput {
         }
     }
 
-    /// Initializes the audio output with the given components.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if audio_raw_init fails.
     pub fn init(
         &mut self,
         audio_input: &mut AudioInput,
@@ -78,9 +69,6 @@ impl AudioOutput {
         &mut *self.inner as *mut _
     }
 
-    /// Returns a slice of the current visualization values.
-    ///
-    /// The values are normalized between 0.0 and 1.0.
     pub fn values(&self) -> &[f64] {
         // SAFETY: After init(), cava_out points to valid memory with number_of_bars elements.
         // The data is valid for the lifetime of this struct.
@@ -101,18 +89,6 @@ impl Drop for AudioOutput {
     }
 }
 
-/// # Safety
-///
-/// `AudioOutput` is `Send` because:
-/// - The inner `audio_raw` contains only primitive types and raw pointers
-/// - All raw pointers point to memory allocated by libcava and owned by this struct
-/// - No thread-local state is accessed
 unsafe impl Send for AudioOutput {}
 
-/// # Safety
-///
-/// `AudioOutput` is `Sync` because:
-/// - Read access to `values()` doesn't mutate state
-/// - Write access requires `&mut self` through `init()` and `as_ptr()`
-/// - The visualization data is only written by `cava_execute` which takes `&self` on Plan
 unsafe impl Sync for AudioOutput {}

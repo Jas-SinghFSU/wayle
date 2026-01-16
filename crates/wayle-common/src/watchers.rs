@@ -13,7 +13,7 @@ use crate::SubscribeChanges;
 
 /// Converts a [`SubscribeChanges`] implementor into a stream.
 ///
-/// This bridges the channel-based `subscribe_changes` API with the stream-based
+/// Bridges the channel-based `subscribe_changes` API with the stream-based
 /// `watch!` macro. The returned stream is `'static` and does not borrow the
 /// subscribable - it spawns internal watchers that send to the stream.
 pub fn changes_stream<T: SubscribeChanges>(subscribable: &T) -> UnboundedReceiverStream<()> {

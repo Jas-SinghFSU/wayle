@@ -8,14 +8,14 @@
 
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 
-pub type CavaPlan = cava_plan;
-pub type ConfigParams = config_params;
-pub type AudioData = audio_data;
-pub type AudioRaw = audio_raw;
-pub type ThreadFn = ptr;
+pub(super) type CavaPlan = cava_plan;
+pub(super) type ConfigParams = config_params;
+pub(super) type AudioData = audio_data;
+pub(super) type AudioRaw = audio_raw;
+pub(super) type ThreadFn = ptr;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum InputMethod {
+pub(crate) enum InputMethod {
     Fifo,
     PortAudio,
     PipeWire,

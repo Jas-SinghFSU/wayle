@@ -24,27 +24,13 @@ use usvg::{
 
 const TARGET_SIZE: f32 = 16.0;
 
-/// Icon coloring strategy detected from the source SVG.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum IconStyle {
-    /// Uses stroke for drawing (outline icons like Tabler, Lucide)
+pub(crate) enum IconStyle {
     Stroke,
-    /// Uses fill for drawing (solid icons like Simple Icons)
     Fill,
 }
 
-/// Converts an SVG icon to GTK symbolic format.
-///
-/// Parses the SVG, scales to 16x16, and adds Grappa attributes for CSS recoloring.
-///
-/// # Arguments
-///
-/// * `svg_content` - Raw SVG string from icon source
-///
-/// # Returns
-///
-/// GTK-compatible symbolic SVG string
-pub fn to_symbolic(svg_content: &str) -> String {
+pub(crate) fn to_symbolic(svg_content: &str) -> String {
     let style = detect_icon_style(svg_content);
 
     let tree = match Tree::from_str(svg_content, &Options::default()) {
@@ -68,14 +54,6 @@ pub fn to_symbolic(svg_content: &str) -> String {
     build_gtk_svg(&paths, style, scale)
 }
 
-/// Determines whether an icon uses stroke or fill rendering.
-///
-/// Icon libraries use different conventions:
-/// - **Stroke icons** (Tabler, Lucide): Draw outlines with `stroke="currentColor"`
-/// - **Fill icons** (Simple Icons): Draw solid shapes with `fill="currentColor"`
-///
-/// This distinction affects which Grappa attribute we add (`gpa:stroke` vs `gpa:fill`)
-/// for GTK CSS color inheritance to work correctly.
 fn detect_icon_style(content: &str) -> IconStyle {
     if content.contains(r#"stroke="currentColor""#) {
         IconStyle::Stroke
@@ -84,30 +62,12 @@ fn detect_icon_style(content: &str) -> IconStyle {
     }
 }
 
-/// A path element extracted from the SVG tree with coordinates already scaled.
-///
-/// After usvg parsing and transform application, this holds the final path data
-/// ready to be serialized into the output SVG.
 struct ScaledPath {
-    /// The SVG path data string (e.g., "M0 0L10 10Z").
     d: String,
-    /// Original stroke width scaled to target size, if the path had a stroke.
     stroke_width: Option<f32>,
-    /// Whether this path is a bounding box rectangle that should be filtered out.
     is_bounding_box: bool,
 }
 
-/// Detects if a path is a bounding box rectangle that should be filtered out.
-///
-/// Many icon libraries include invisible bounding boxes for alignment.
-/// These are axis-aligned rectangles spanning the full viewBox with no
-/// visible stroke or fill in the source. After conversion, they appear
-/// as unwanted squares around the actual icon content.
-///
-/// Detection criteria (all must be true):
-/// - Exactly 5 segments: MoveTo, 3x LineTo, Close
-/// - Forms an axis-aligned rectangle (only horizontal/vertical lines)
-/// - Spans from origin (0,0) to target size (16,16)
 fn is_bounding_box_path(path: &usvg::tiny_skia_path::Path, target_size: f32) -> bool {
     let segments: Vec<_> = path.segments().collect();
 
@@ -154,11 +114,6 @@ fn is_bounding_box_path(path: &usvg::tiny_skia_path::Path, target_size: f32) -> 
     has_origin && has_top_right && has_bottom_right && has_bottom_left
 }
 
-/// Extracts all path elements from the parsed SVG tree.
-///
-/// Walks the entire usvg tree starting from the root group, applying the scale
-/// transform to convert from source dimensions (typically 24x24) to target (16x16).
-/// Nested group transforms are accumulated so deeply nested paths render correctly.
 fn extract_paths(tree: &Tree, scale: f32) -> Vec<ScaledPath> {
     let mut paths = Vec::new();
     let transform = Transform::from_scale(scale, scale);
@@ -168,14 +123,6 @@ fn extract_paths(tree: &Tree, scale: f32) -> Vec<ScaledPath> {
     paths
 }
 
-/// Recursively collects paths from a group node, accumulating transforms.
-///
-/// SVG groups can have their own transforms that affect all children. This function
-/// chains transforms using `pre_concat` so a path inside `<g transform="translate(5,5)">`
-/// inside `<g transform="scale(2)">` gets both transforms applied correctly.
-///
-/// usvg simplifies all path commands to absolute coordinates and converts arcs to
-/// cubic beziers, so we only need to handle MoveTo, LineTo, QuadTo, CubicTo, and Close.
 fn collect_paths_from_group(
     group: &usvg::Group,
     parent_transform: Transform,
@@ -212,11 +159,6 @@ fn collect_paths_from_group(
     }
 }
 
-/// Serializes a tiny-skia path back to SVG path data string.
-///
-/// usvg's path representation uses only 5 segment types (no arcs, no relative commands),
-/// making serialization straightforward. Each segment becomes its SVG command letter
-/// followed by space-separated coordinates rounded to 2 decimal places.
 fn path_data_to_string(path: &usvg::tiny_skia_path::Path) -> String {
     let mut result = String::with_capacity(256);
 
@@ -247,9 +189,6 @@ fn path_data_to_string(path: &usvg::tiny_skia_path::Path) -> String {
     result
 }
 
-/// Writes a single SVG path command with its coordinates.
-///
-/// Formats coordinates with 2 decimal places and separates them with spaces.
 fn write_command(out: &mut String, cmd: char, coords: &[f32]) {
     out.push(cmd);
     for (i, coord) in coords.iter().enumerate() {
@@ -260,11 +199,6 @@ fn write_command(out: &mut String, cmd: char, coords: &[f32]) {
     }
 }
 
-/// Assembles the final GTK symbolic SVG document.
-///
-/// Creates a 16x16 SVG with the Grappa XML namespace declaration required for
-/// GTK's CSS color recoloring. Each extracted path becomes a `<path>` element
-/// with the appropriate Grappa attributes based on the detected icon style.
 fn build_gtk_svg(paths: &[ScaledPath], style: IconStyle, scale: f32) -> String {
     let mut output = String::with_capacity(512);
 
@@ -281,16 +215,6 @@ fn build_gtk_svg(paths: &[ScaledPath], style: IconStyle, scale: f32) -> String {
     output
 }
 
-/// Generates a single `<path>` element with GTK Grappa attributes.
-///
-/// For stroke icons: Sets stroke properties (width, linecap, linejoin) and adds
-/// `gpa:stroke='foreground'` so GTK CSS can recolor the stroke.
-///
-/// For fill icons: Disables stroke, sets fill, and adds `gpa:fill='foreground'`
-/// for CSS recoloring.
-///
-/// The base color is black (`rgb(0,0,0)`) which GTK replaces with the foreground
-/// color from the current CSS context.
 fn build_path_element(d: &str, style: IconStyle, stroke_width: Option<f32>, scale: f32) -> String {
     match style {
         IconStyle::Stroke => {
@@ -316,12 +240,6 @@ fn build_path_element(d: &str, style: IconStyle, stroke_width: Option<f32>, scal
     }
 }
 
-/// Last-resort SVG generation when usvg parsing fails.
-///
-/// Some malformed or unusual SVGs may fail usvg parsing. Rather than returning
-/// nothing, we attempt to extract the raw path data using simple string matching
-/// and wrap it in a minimal GTK symbolic SVG. No scaling is applied since we
-/// can't determine the source dimensions.
 fn build_fallback_svg(original: &str, style: IconStyle) -> String {
     if let Some(d) = extract_path_d_fallback(original) {
         let path = ScaledPath {
@@ -335,10 +253,6 @@ fn build_fallback_svg(original: &str, style: IconStyle) -> String {
     }
 }
 
-/// Extracts path data using naive string matching.
-///
-/// Finds the first `d="..."` attribute in the SVG and extracts its value.
-/// This is fragile but serves as a last-ditch effort when proper parsing fails.
 fn extract_path_d_fallback(content: &str) -> Option<String> {
     let start = content.find("d=\"")? + 3;
     let end = start + content[start..].find('"')?;

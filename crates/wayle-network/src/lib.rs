@@ -1,9 +1,7 @@
-//! Network device management and monitoring service.
+//! Network device management and monitoring via NetworkManager D-Bus API.
 //!
-//! This crate provides a service for managing network devices through NetworkManager,
-//! including WiFi and wired connections. It monitors connection state, device
-//! availability, and network events, exposing device information and state changes
-//! through a reactive stream-based API.
+//! Monitors WiFi and wired connections, device availability, and network events.
+//! Exposes device information and state changes through a reactive stream-based API.
 
 /// Core network domain models
 pub mod core;

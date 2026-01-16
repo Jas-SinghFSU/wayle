@@ -56,81 +56,47 @@ impl DeviceKey {
     }
 }
 
-/// Base device information common to all devices
-#[doc(hidden)]
 #[derive(Debug, Clone, PartialEq)]
-pub struct DeviceInfo {
-    /// Device index
+pub(crate) struct DeviceInfo {
     pub index: u32,
-    /// Device name (internal identifier)
     pub name: String,
-    /// Human-readable description
     pub description: String,
-    /// Card index this device belongs to
     pub card_index: Option<u32>,
-    /// Index of the owning module
     pub owner_module: Option<u32>,
-    /// Driver name
     pub driver: String,
-    /// Device state
     pub state: DeviceState,
-    /// Current volume levels
     pub volume: Volume,
-    /// Base volume (reference level)
     pub base_volume: Volume,
-    /// Number of volume steps for devices which do not support arbitrary volumes
     pub n_volume_steps: u32,
-    /// Whether device is muted
     pub muted: bool,
-    /// Device properties from PulseAudio
     pub properties: HashMap<String, String>,
-    /// Available ports
     pub ports: Vec<DevicePort>,
-    /// Currently active port
     pub active_port: Option<String>,
-    /// Supported audio formats
     pub formats: Vec<AudioFormat>,
-    /// Sample specification
     pub sample_spec: SampleSpec,
-    /// Channel map
     pub channel_map: ChannelMap,
-    /// Latency in microseconds
     pub latency: MicroSeconds,
-    /// Configured latency in microseconds
     pub configured_latency: MicroSeconds,
-    /// Device flags (raw flags from PulseAudio)
     pub flags: u32,
 }
 
-/// Sink (output) device information
-#[doc(hidden)]
 #[derive(Debug, Clone, PartialEq)]
-pub struct SinkInfo {
-    /// Common device information
+pub(crate) struct SinkInfo {
     pub device: DeviceInfo,
-    /// Monitor source index
     pub monitor_source: u32,
-    /// Monitor source name
     pub monitor_source_name: String,
 }
 
-/// Source (input) device information
-#[doc(hidden)]
 #[derive(Debug, Clone, PartialEq)]
-pub struct SourceInfo {
-    /// Common device information
+pub(crate) struct SourceInfo {
     pub device: DeviceInfo,
-    /// Index of the sink being monitored (if this is a monitor source)
     pub monitor_of_sink: Option<u32>,
-    /// Name of the sink being monitored (if this is a monitor source)
     pub monitor_of_sink_name: Option<String>,
-    /// Whether this is a monitor source
     pub is_monitor: bool,
 }
 
 impl DeviceInfo {
-    /// Get device key for identification (requires device type)
-    pub fn key(&self, device_type: DeviceType) -> DeviceKey {
+    pub(crate) fn key(&self, device_type: DeviceType) -> DeviceKey {
         DeviceKey {
             index: self.index,
             device_type,
@@ -139,32 +105,25 @@ impl DeviceInfo {
 }
 
 impl SinkInfo {
-    /// Get device key for this sink
-    pub fn key(&self) -> DeviceKey {
+    pub(crate) fn key(&self) -> DeviceKey {
         self.device.key(DeviceType::Output)
     }
 }
 
 impl SourceInfo {
-    /// Get device key for this source
-    pub fn key(&self) -> DeviceKey {
+    pub(crate) fn key(&self) -> DeviceKey {
         self.device.key(DeviceType::Input)
     }
 }
 
-/// Enum wrapper for device types to handle both sinks and sources
-#[doc(hidden)]
 #[derive(Debug, Clone, PartialEq)]
-pub enum Device {
-    /// Output device (sink)
+pub(crate) enum Device {
     Sink(SinkInfo),
-    /// Input device (source)
     Source(SourceInfo),
 }
 
 impl Device {
-    /// Get device key for identification
-    pub fn key(&self) -> DeviceKey {
+    pub(crate) fn key(&self) -> DeviceKey {
         match self {
             Device::Sink(sink) => sink.key(),
             Device::Source(source) => source.key(),

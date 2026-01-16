@@ -2,9 +2,6 @@
 
 use zbus::proxy;
 
-/// Device Statistic Counters.
-///
-/// Provides device statistics like bytes transmitted/received.
 #[proxy(
     default_service = "org.freedesktop.NetworkManager",
     interface = "org.freedesktop.NetworkManager.Device.Statistics"

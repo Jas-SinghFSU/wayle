@@ -1,5 +1,3 @@
-//! Transition configuration types for swww animations.
-
 use std::fmt::{self, Display, Formatter};
 
 /// Position for Grow/Outer transitions as percentage of screen dimensions.
@@ -240,7 +238,6 @@ impl TransitionType {
     /// CLI flag for the transition type parameter.
     pub const FLAG: &'static str = "--transition-type";
 
-    /// Returns the swww transition type name.
     pub(super) fn type_name(&self) -> &'static str {
         match self {
             Self::None => "none",
@@ -260,7 +257,6 @@ impl TransitionType {
         }
     }
 
-    /// Returns CLI arguments for this transition's type-specific parameters.
     pub(super) fn cli_args(&self) -> Vec<(&'static str, String)> {
         match self {
             Self::None => vec![(TransitionStep::FLAG, "255".to_string())],

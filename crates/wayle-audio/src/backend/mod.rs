@@ -41,15 +41,11 @@ impl BackendState {
     }
 }
 
-/// Components spawned by the context handler.
 struct ContextHandlerComponents {
-    /// The PulseAudio main loop running on Tokio.
     mainloop: TokioMain,
-    /// Handle to the spawned context handling task.
     task_handle: tokio::task::JoinHandle<()>,
 }
 
-/// PulseAudio backend implementation
 pub(crate) struct PulseBackend {
     state: BackendState,
     mainloop: TokioMain,
@@ -57,12 +53,6 @@ pub(crate) struct PulseBackend {
 }
 
 impl PulseBackend {
-    /// Start the PulseAudio backend task
-    ///
-    /// Creates a background task that monitors PulseAudio and processes commands.
-    ///
-    /// # Errors
-    /// Returns error if PulseAudio connection fails
     pub async fn start(
         command_rx: CommandReceiver,
         event_tx: EventSender,

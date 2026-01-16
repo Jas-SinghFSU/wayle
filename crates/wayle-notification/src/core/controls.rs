@@ -13,7 +13,7 @@ pub(super) struct NotificationControls;
 
 impl NotificationControls {
     #[instrument(skip(connection), fields(notification_id = %id), err)]
-    pub async fn dismiss(connection: &Connection, id: &u32) -> Result<(), Error> {
+    pub(super) async fn dismiss(connection: &Connection, id: &u32) -> Result<(), Error> {
         connection
             .emit_signal(
                 None::<()>,
@@ -28,7 +28,11 @@ impl NotificationControls {
     }
 
     #[instrument(skip(connection), fields(notification_id = %id, action = %action_key), err)]
-    pub async fn invoke(connection: &Connection, id: &u32, action_key: &str) -> Result<(), Error> {
+    pub(super) async fn invoke(
+        connection: &Connection,
+        id: &u32,
+        action_key: &str,
+    ) -> Result<(), Error> {
         connection
             .emit_signal(
                 None::<()>,

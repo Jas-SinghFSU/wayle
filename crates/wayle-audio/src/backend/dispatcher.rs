@@ -12,17 +12,12 @@ use super::{
     },
 };
 
-/// Rate limiter for volume operations to prevent overwhelming PulseAudio
-///
-/// Enforces a global rate limit on volume changes to prevent overwhelming
-/// PulseAudio's command dispatcher with rapid updates.
 pub(super) struct VolumeRateLimiter {
     last_volume_change: Mutex<Instant>,
     min_interval: Duration,
 }
 
 impl VolumeRateLimiter {
-    /// Create a new rate limiter with 30ms minimum interval
     pub fn new() -> Self {
         Self {
             last_volume_change: Mutex::new(Instant::now() - Duration::from_secs(1)),
@@ -30,10 +25,6 @@ impl VolumeRateLimiter {
         }
     }
 
-    /// Check if a volume operation should be processed
-    ///
-    /// Returns true if enough time has passed since the last operation,
-    /// false if the operation should be dropped to avoid overwhelming PulseAudio.
     pub fn should_process(&self) -> bool {
         let Ok(mut last) = self.last_volume_change.lock() else {
             return true;
@@ -50,7 +41,6 @@ impl VolumeRateLimiter {
     }
 }
 
-/// Handle internal PulseAudio commands (event-driven)
 #[allow(clippy::too_many_arguments)]
 pub(super) fn handle_internal_command(
     context: &mut Context,
@@ -86,7 +76,6 @@ pub(super) fn handle_internal_command(
     }
 }
 
-/// Handle external PulseAudio commands (user-initiated)
 pub(super) fn handle_external_command(
     context: &mut Context,
     command: ExternalCommand,

@@ -2,9 +2,6 @@
 
 use zbus::{proxy, zvariant::OwnedObjectPath};
 
-/// Configuration and State Snapshot.
-///
-/// Represents a checkpoint of network configuration.
 #[proxy(
     default_service = "org.freedesktop.NetworkManager",
     interface = "org.freedesktop.NetworkManager.Checkpoint"

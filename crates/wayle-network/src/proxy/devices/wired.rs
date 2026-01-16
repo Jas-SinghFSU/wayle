@@ -2,9 +2,6 @@
 
 use zbus::proxy;
 
-/// Wired Ethernet Device.
-///
-/// Specialized interface for wired ethernet devices.
 #[proxy(
     default_service = "org.freedesktop.NetworkManager",
     interface = "org.freedesktop.NetworkManager.Device.Wired"

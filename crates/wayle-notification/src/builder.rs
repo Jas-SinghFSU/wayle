@@ -1,5 +1,3 @@
-//! Builder for configuring a NotificationService.
-
 use std::sync::{Arc, atomic::AtomicU32};
 
 use chrono::{DateTime, Utc};

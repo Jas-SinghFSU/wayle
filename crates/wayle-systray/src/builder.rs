@@ -1,5 +1,3 @@
-//! Builder for configuring a SystemTrayService.
-
 use std::sync::Arc;
 
 use tokio::sync::broadcast;

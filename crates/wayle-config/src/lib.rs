@@ -1,7 +1,7 @@
 //! Configuration management for Wayle.
 //!
-//! This crate provides the configuration system used by Wayle and its applets.
-//! It includes schema definitions, configuration loading/saving, and file watching.
+//! Handles schema definitions, configuration loading/saving, and file watching
+//! for Wayle and its applets.
 
 /// Documentation and metadata types for configuration schemas.
 pub mod docs;

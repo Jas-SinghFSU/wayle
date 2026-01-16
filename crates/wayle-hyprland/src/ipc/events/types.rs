@@ -1,6 +1,5 @@
 use crate::{Address, MonitorId, Namespace, ScreencastOwner, WorkspaceId};
 
-/// Internal events for our hyprland service
 #[derive(Debug, Clone)]
 pub(crate) enum ServiceNotification {
     WorkspaceCreated(WorkspaceId),

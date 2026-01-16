@@ -1,27 +1,26 @@
 use tokio_util::sync::CancellationToken;
 use zbus::{Connection, zvariant::OwnedObjectPath};
 
-/// Parameters for creating a Device instance
+/// Parameters for creating a Device instance.
 #[doc(hidden)]
 pub struct DeviceParams<'a> {
-    /// D-Bus connection
+    /// D-Bus connection.
     pub connection: &'a Connection,
-    /// Device path
+    /// Device path.
     pub device_path: &'a OwnedObjectPath,
 }
 
-/// Parameters for creating a live Device instance
+/// Parameters for creating a live Device instance.
 #[doc(hidden)]
 pub struct LiveDeviceParams<'a> {
-    /// D-Bus connection
+    /// D-Bus connection.
     pub connection: &'a Connection,
-    /// Device path
+    /// Device path.
     pub device_path: &'a OwnedObjectPath,
-    /// Cancellation token for monitoring
+    /// Cancellation token for monitoring.
     pub cancellation_token: &'a CancellationToken,
 }
 
-/// Device properties retrieved from D-Bus
 pub(crate) struct DeviceProps {
     pub native_path: String,
     pub vendor: String,

@@ -2,10 +2,7 @@ use wayle_derive::wayle_config;
 
 use super::{battery::BatteryConfig, clock::ClockConfig, media::MediaConfig};
 
-/// Configuration container for all available Wayle modules.
-///
-/// If a module's configuration is not specified in TOML,
-/// it uses its default settings.
+/// Configuration for all available Wayle modules.
 #[wayle_config]
 pub struct ModulesConfig {
     /// Configuration for the battery status module.

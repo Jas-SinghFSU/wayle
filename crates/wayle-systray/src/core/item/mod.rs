@@ -27,11 +27,8 @@ use crate::{
     },
 };
 
-/// Parsed D-Bus service identifier with separate service name and object path.
 struct ServiceIdentifier<'a> {
-    /// The D-Bus service/bus name (e.g., ":1.234" or "org.kde.StatusNotifierItem-4077-1").
     service: &'a str,
-    /// The object path (e.g., "/StatusNotifierItem" or "/some/nested/path").
     path: &'a str,
 }
 
@@ -113,20 +110,12 @@ impl PartialEq for TrayItem {
     }
 }
 
-/// Parameters for creating a TrayItem instance.
-///
-/// **Note**: This type is exposed for trait implementation requirements
-/// but should not be constructed directly by external consumers.
 #[doc(hidden)]
 pub struct TrayItemParams<'a> {
     pub(crate) connection: &'a Connection,
     pub(crate) service: String,
 }
 
-/// Parameters for creating a live TrayItem instance.
-///
-/// **Note**: This type is exposed for trait implementation requirements
-/// but should not be constructed directly by external consumers.
 #[doc(hidden)]
 pub struct LiveTrayItemParams<'a> {
     pub(crate) connection: &'a Connection,

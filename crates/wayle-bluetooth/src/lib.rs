@@ -1,8 +1,8 @@
 //! Bluetooth device management and discovery service.
 //!
-//! This crate provides a service for managing Bluetooth devices through BlueZ,
-//! including device discovery, pairing, and connection monitoring. It exposes
-//! device information and state changes through a reactive stream-based API.
+//! Manages Bluetooth devices through BlueZ, including device discovery, pairing, and
+//! connection monitoring. Exposes device information and state changes through a
+//! reactive stream-based API.
 
 mod agent;
 /// Core Bluetooth domain models

@@ -1,6 +1,6 @@
 //! Wayle CLI - Compositor-agnostic desktop environment CLI.
 //!
-//! This crate provides CLI commands for managing Wayle services:
+//! CLI commands for managing Wayle services:
 //!
 //! - `wayle panel` - Start/stop/control the panel GUI
 //! - `wayle media` - Control media players

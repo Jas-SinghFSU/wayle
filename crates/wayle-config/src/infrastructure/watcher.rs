@@ -10,11 +10,10 @@ use wayle_common::{ApplyConfigLayer, CommitConfigReload, ResetConfigLayer};
 use super::{error::Error, paths::ConfigPaths, service::ConfigService};
 use crate::{Config, infrastructure::themes::utils::load_themes};
 
-/// Watches configuration files for changes and syncs to Properties.
+/// Hot-reloads configuration files on disk changes.
 ///
-/// When config files are modified on disk, the watcher automatically
-/// reloads them and updates the corresponding Property values.
-/// Only changed Properties are updated via send_if_modified, preventing circular writes.
+/// When config files are modified, reloads them and updates corresponding
+/// `ConfigProperty` values. Uses `send_if_modified` to prevent circular writes.
 #[derive(Clone)]
 pub struct FileWatcher {
     config_service: Arc<ConfigService>,
@@ -22,11 +21,7 @@ pub struct FileWatcher {
 }
 
 impl FileWatcher {
-    /// Start watching config files for changes.
-    ///
-    /// # Arguments
-    ///
-    /// * `config_service` - The config service containing Properties to update
+    /// Starts watching config directory for changes.
     ///
     /// # Errors
     ///

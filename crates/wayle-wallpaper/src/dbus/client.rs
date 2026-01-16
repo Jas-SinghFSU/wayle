@@ -1,4 +1,3 @@
-//! D-Bus client proxy for the wallpaper service.
 #![allow(missing_docs)]
 
 use zbus::{Result, proxy};

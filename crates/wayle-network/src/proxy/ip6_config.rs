@@ -4,9 +4,6 @@ use std::collections::HashMap;
 
 use zbus::{proxy, zvariant::OwnedValue};
 
-/// IPv6 Configuration Set.
-///
-/// Contains IPv6 configuration information.
 #[proxy(
     default_service = "org.freedesktop.NetworkManager",
     interface = "org.freedesktop.NetworkManager.IP6Config"

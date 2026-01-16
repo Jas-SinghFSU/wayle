@@ -28,7 +28,6 @@ use crate::{
 type SsidStream = PropertyStream<'static, Vec<u8>>;
 type StrengthStream = PropertyStream<'static, u8>;
 
-/// Streams for monitoring active access point property changes.
 struct ActiveAccessPointStreams {
     ssid: Option<SsidStream>,
     strength: Option<StrengthStream>,

@@ -1,2 +1,1 @@
-/// D-Bus proxy for UPower Device interface
-pub mod device;
+pub(crate) mod device;

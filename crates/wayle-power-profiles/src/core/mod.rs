@@ -1,6 +1,6 @@
 mod controls;
 mod monitoring;
-/// Type definitions for power profiles core functionality
+#[doc(hidden)]
 pub mod types;
 
 use std::sync::Arc;
@@ -9,7 +9,8 @@ use controls::PowerProfilesController;
 use derive_more::Debug;
 use futures::{Stream, StreamExt};
 use tokio_util::sync::CancellationToken;
-use types::{LivePowerProfilesParams, PowerProfilesParams, PowerProfilesProps};
+pub(crate) use types::LivePowerProfilesParams;
+use types::{PowerProfilesParams, PowerProfilesProps};
 use wayle_common::{Property, unwrap_string, unwrap_vec};
 use wayle_traits::{ModelMonitoring, Reactive};
 use zbus::Connection;
@@ -34,7 +35,7 @@ pub struct PowerProfiles {
     zbus_connection: Connection,
     /// The type of the currently active profile.
     pub active_profile: Property<PowerProfile>,
-    /// This will be set if the performance power profile is running in degraded mode.
+    /// Set when performance profile is running in degraded mode.
     pub performance_degraded: Property<PerformanceDegradationReason>,
     /// An array of key-pair values representing each profile.
     pub profiles: Property<Vec<Profile>>,
@@ -83,8 +84,8 @@ impl PowerProfiles {
         PowerProfilesController::set_active_profile(&self.zbus_connection, profile).await
     }
 
-    /// This forces the passed profile to be activated until either the caller quits,
-    /// "ReleaseProfile" is called, or the "ActiveProfile" is changed by the user.
+    /// Forces the passed profile to be activated until either the caller quits,
+    /// `release_profile` is called, or the active profile is changed by the user.
     ///
     /// # Errors
     /// Returns error if profile hold cannot be established.
@@ -92,7 +93,7 @@ impl PowerProfiles {
         PowerProfilesController::hold_profile(&self.zbus_connection, hold).await
     }
 
-    /// This removes the hold that was set on a profile.
+    /// Removes the hold that was set on a profile.
     ///
     /// # Errors
     /// Returns error if hold release fails or cookie is invalid.
@@ -100,8 +101,8 @@ impl PowerProfiles {
         PowerProfilesController::release_profile(&self.zbus_connection, hold_cookie).await
     }
 
-    /// This signal will be emitted if the profile is released because the
-    /// "ActiveProfile" was manually changed.
+    /// Returns a stream that emits when a profile hold is released because
+    /// the active profile was manually changed.
     ///
     /// # Errors
     /// Returns error if D-Bus proxy creation fails.

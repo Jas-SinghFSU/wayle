@@ -1,4 +1,3 @@
-//! D-Bus client proxy for power profiles.
 #![allow(missing_docs)]
 
 use zbus::{Result, proxy};

@@ -1,10 +1,7 @@
 use wayle_common::ConfigProperty;
 use wayle_derive::wayle_config;
 
-/// Media module configuration.
-///
-/// Controls media player display in the status bar. Properties use noun-first
-/// naming with prefixes for logical grouping.
+/// Media player module configuration for status bar display.
 #[wayle_config]
 pub struct MediaConfig {
     /// Whether the media module is displayed.

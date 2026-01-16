@@ -14,8 +14,7 @@ pub fn builtins() -> Vec<Palette> {
     ]
 }
 
-/// Catppuccin Mocha palette.
-pub fn catppuccin() -> Palette {
+pub(crate) fn catppuccin() -> Palette {
     Palette {
         name: String::from("catppuccin"),
         bg: String::from("#11111b"),
@@ -63,8 +62,7 @@ fn gruvbox() -> Palette {
     }
 }
 
-/// Tokyo Night palette.
-pub fn tokyo_night() -> Palette {
+fn tokyo_night() -> Palette {
     Palette {
         name: String::from("tokyo-night"),
         bg: String::from("#16161e"),
@@ -80,8 +78,7 @@ pub fn tokyo_night() -> Palette {
     }
 }
 
-/// Rose Pine palette.
-pub fn rose_pine() -> Palette {
+fn rose_pine() -> Palette {
     Palette {
         name: String::from("rose-pine"),
         bg: String::from("#191724"),
@@ -97,8 +94,7 @@ pub fn rose_pine() -> Palette {
     }
 }
 
-/// Dracula palette.
-pub fn dracula() -> Palette {
+fn dracula() -> Palette {
     Palette {
         name: String::from("dracula"),
         bg: String::from("#282a36"),
@@ -114,8 +110,7 @@ pub fn dracula() -> Palette {
     }
 }
 
-/// Nord palette.
-pub fn nord() -> Palette {
+fn nord() -> Palette {
     Palette {
         name: String::from("nord"),
         bg: String::from("#2e3440"),
@@ -131,8 +126,7 @@ pub fn nord() -> Palette {
     }
 }
 
-/// Everforest palette.
-pub fn everforest() -> Palette {
+fn everforest() -> Palette {
     Palette {
         name: String::from("everforest"),
         bg: String::from("#2d353b"),

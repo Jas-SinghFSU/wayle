@@ -1,8 +1,7 @@
-//! Wallpaper rendering backends.
-
 mod swww;
 
+pub(crate) use swww::SwwwBackend;
 pub use swww::{
-    BezierCurve, Position, SwwwBackend, TransitionAngle, TransitionConfig, TransitionDuration,
-    TransitionFps, TransitionStep, TransitionType, WaveDimensions,
+    BezierCurve, Position, TransitionAngle, TransitionConfig, TransitionDuration, TransitionFps,
+    TransitionStep, TransitionType, WaveDimensions,
 };

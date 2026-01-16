@@ -1,5 +1,3 @@
-//! Wallpaper cycling task for automatic wallpaper rotation.
-
 use std::{collections::HashMap, path::PathBuf};
 
 use futures::StreamExt;
@@ -17,11 +15,7 @@ use crate::{
     types::{CyclingConfig, FitMode, MonitorState},
 };
 
-/// Manages wallpaper cycling for all monitors.
-///
-/// Uses a shared cycling configuration with per-monitor indices.
-/// All monitors advance together on the same interval.
-pub struct CyclingTask {
+pub(crate) struct CyclingTask {
     cycling: Property<Option<CyclingConfig>>,
     monitors: Property<HashMap<String, MonitorState>>,
     fit_mode: Property<FitMode>,
@@ -36,7 +30,6 @@ pub struct CyclingTask {
 }
 
 impl CyclingTask {
-    /// Creates a new cycling task from service properties.
     pub fn new(
         cycling: Property<Option<CyclingConfig>>,
         monitors: Property<HashMap<String, MonitorState>>,
@@ -58,7 +51,6 @@ impl CyclingTask {
         }
     }
 
-    /// Runs the cycling task until cancelled.
     pub async fn run(mut self, cancellation: CancellationToken) {
         let mut cycling_stream = self.cycling.watch();
 

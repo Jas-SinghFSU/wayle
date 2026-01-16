@@ -2,7 +2,6 @@
 pub mod commands;
 /// Mute toggle command
 pub mod mute;
-/// Proxy connection helper
 mod proxy;
 /// Sinks list command
 pub mod sinks;

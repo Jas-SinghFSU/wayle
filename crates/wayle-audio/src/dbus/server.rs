@@ -11,7 +11,6 @@ use crate::{
     volume::types::Volume,
 };
 
-/// D-Bus daemon for external control of the audio service.
 #[derive(Debug)]
 pub(crate) struct AudioDaemon {
     pub service: Arc<AudioService>,

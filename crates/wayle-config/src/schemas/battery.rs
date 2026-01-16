@@ -1,10 +1,7 @@
 use wayle_common::ConfigProperty;
 use wayle_derive::wayle_config;
 
-/// Battery module configuration.
-///
-/// Controls battery display in the status bar. Properties use noun-first
-/// naming with prefixes for logical grouping.
+/// Battery module configuration for status bar display.
 #[wayle_config]
 pub struct BatteryConfig {
     /// Whether the battery module is displayed.

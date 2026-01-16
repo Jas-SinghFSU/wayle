@@ -2,7 +2,6 @@
 
 /// Panel command definitions.
 pub mod commands;
-/// D-Bus proxy utilities.
 mod proxy;
 /// Restart command.
 pub mod restart;

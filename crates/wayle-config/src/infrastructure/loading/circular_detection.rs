@@ -2,7 +2,6 @@ use std::path::{Path, PathBuf};
 
 use crate::infrastructure::error::Error;
 
-/// Tracks import chains for circular detection
 pub(crate) struct CircularDetector {
     import_chain: Vec<PathBuf>,
 }
@@ -14,11 +13,6 @@ impl CircularDetector {
         }
     }
 
-    /// Checks if a file can be visited without creating a cycle.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if a circular import is detected.
     pub fn detect_circular_import(&self, path: &Path) -> Result<(), Error> {
         if self.import_chain.contains(&path.to_path_buf()) {
             let chain_display: Vec<String> = self
@@ -44,12 +38,10 @@ impl CircularDetector {
         Ok(())
     }
 
-    /// Adds a file to the import chain for tracking.
     pub fn push_to_chain(&mut self, path: &Path) {
         self.import_chain.push(path.to_path_buf());
     }
 
-    /// Removes a file from the import chain when done processing.
     pub fn pop_from_chain(&mut self) {
         self.import_chain.pop();
     }

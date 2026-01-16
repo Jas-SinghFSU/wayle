@@ -4,9 +4,6 @@ use std::collections::HashMap;
 
 use zbus::{proxy, zvariant::Value as Variant};
 
-/// IPv6 DHCP Client State.
-///
-/// Contains DHCPv6 configuration received from server.
 #[proxy(
     default_service = "org.freedesktop.NetworkManager",
     interface = "org.freedesktop.NetworkManager.DHCP6Config"

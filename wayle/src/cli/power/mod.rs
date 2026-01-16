@@ -4,7 +4,6 @@ pub mod commands;
 pub mod cycle;
 /// List power profiles command
 pub mod list;
-/// D-Bus proxy utilities
 mod proxy;
 /// Set power profile command
 pub mod set;

@@ -1,7 +1,7 @@
 //! SCSS compilation and theming for Wayle.
 //!
-//! This crate handles runtime CSS generation from theme configuration.
-//! It compiles embedded SCSS files with user-provided palette values.
+//! Runtime CSS generation from theme configuration.
+//! Compiles embedded SCSS files with user-provided palette values.
 
 mod errors;
 mod palette_provider;

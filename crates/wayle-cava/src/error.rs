@@ -83,7 +83,5 @@ pub enum Error {
     InvalidParameter(String),
 }
 
-/// A specialized Result type for CAVA operations.
-///
-/// This type alias uses the crate's [`Error`] type as the error variant.
+/// Specialized Result type for CAVA operations with [`Error`] as the error variant.
 pub type Result<T> = std::result::Result<T, Error>;

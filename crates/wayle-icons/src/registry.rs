@@ -105,7 +105,6 @@ impl IconRegistry {
 
     /// Initializes the icon registry with GTK and starts watching for changes.
     ///
-    /// This method:
     /// 1. Creates the icon directory structure if it doesn't exist
     /// 2. Creates the `index.theme` file if missing
     /// 3. Registers the directory with GTK's IconTheme
@@ -181,7 +180,6 @@ impl IconRegistry {
         });
     }
 
-    /// Ensures the icon directory structure exists.
     fn ensure_directory_structure(&self) -> Result<()> {
         let icons_dir = self.icons_dir();
 
@@ -195,7 +193,6 @@ impl IconRegistry {
         Ok(())
     }
 
-    /// Ensures the index.theme file exists.
     fn ensure_index_theme(&self) -> Result<()> {
         let index_path = self.base_path.join("index.theme");
 
@@ -209,7 +206,6 @@ impl IconRegistry {
         Ok(())
     }
 
-    /// Registers the icon directory with GTK's IconTheme.
     fn register_with_gtk(&self) -> Result<()> {
         Self::refresh_gtk_theme(&self.base_path)
     }

@@ -1,7 +1,3 @@
-//! D-Bus interface for the wallpaper service.
-//!
-//! Contains the server-side daemon interface and client-side proxy.
-
 mod client;
 mod server;
 

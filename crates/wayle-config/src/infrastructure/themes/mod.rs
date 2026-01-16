@@ -6,11 +6,9 @@ use crate::schemas::styling::PaletteColor;
 /// Built-in theme palettes.
 pub mod palettes;
 /// Theme discovery utilities
-pub mod utils;
+pub(crate) mod utils;
 
-/// Theme palette for CSS generation.
-///
-/// Contains the 10 palette colors that drive the entire visual theme.
+/// Ten-color palette for CSS generation.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct Palette {
     /// Theme identifier.
@@ -38,9 +36,7 @@ pub struct Palette {
 }
 
 impl Palette {
-    /// Looks up a color by its semantic name.
-    ///
-    /// Returns a reference to the hex color string for the given palette color.
+    /// Hex color string for the given semantic color.
     pub fn get(&self, color: PaletteColor) -> &str {
         match color {
             PaletteColor::Bg => &self.bg,

@@ -4,7 +4,6 @@ use std::collections::HashMap;
 
 use zbus::{proxy, zvariant::OwnedValue};
 
-/// Helper interface for a PPP plugin.
 #[proxy(
     default_service = "org.freedesktop.NetworkManager",
     interface = "org.freedesktop.NetworkManager.PPP"

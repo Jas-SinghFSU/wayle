@@ -2,9 +2,6 @@
 
 use zbus::proxy;
 
-/// Active VPN Connection.
-///
-/// Extends the Connection.Active interface with VPN-specific properties.
 #[proxy(
     default_service = "org.freedesktop.NetworkManager",
     interface = "org.freedesktop.NetworkManager.VPN.Connection"

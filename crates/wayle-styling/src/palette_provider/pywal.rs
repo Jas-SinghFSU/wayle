@@ -1,1 +1,1 @@
-pub struct PywalProvider;
+pub(super) struct PywalProvider;

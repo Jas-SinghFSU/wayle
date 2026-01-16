@@ -5,19 +5,11 @@ use zbus::zvariant::OwnedValue;
 
 use crate::proxy::MediaPlayer2PlayerProxy;
 
-/// Parameters for creating a TrackMetadata instance.
-///
-/// **Note**: This type is exposed for trait implementation requirements
-/// but should not be constructed directly by external consumers.
 #[doc(hidden)]
 pub struct TrackMetadataParams<'a> {
     pub(crate) proxy: &'a MediaPlayer2PlayerProxy<'a>,
 }
 
-/// Parameters for creating a live TrackMetadata instance.
-///
-/// **Note**: This type is exposed for trait implementation requirements
-/// but should not be constructed directly by external consumers.
 #[doc(hidden)]
 pub struct LiveTrackMetadataParams<'a> {
     pub(crate) proxy: MediaPlayer2PlayerProxy<'static>,

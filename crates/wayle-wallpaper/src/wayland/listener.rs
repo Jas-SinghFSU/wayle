@@ -1,5 +1,3 @@
-//! Wayland output discovery using smithay-client-toolkit.
-
 use std::{
     sync::mpsc as std_mpsc,
     thread::{self, JoinHandle},

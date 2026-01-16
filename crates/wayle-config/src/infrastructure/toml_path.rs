@@ -2,20 +2,7 @@ use std::collections::HashMap;
 
 use super::error::{Error, InvalidFieldReason};
 
-/// Insert a value at a dot-separated path in a TOML structure.
-///
-/// Creates intermediate tables as needed.
-///
-/// # Arguments
-///
-/// * `root` - The root TOML value to modify
-/// * `path` - Dot-separated path (e.g., "battery.enabled")
-/// * `value` - The value to insert
-///
-/// # Errors
-///
-/// Returns error if path is invalid or intermediate values are not tables.
-pub fn insert(root: &mut toml::Value, path: &str, value: toml::Value) -> Result<(), Error> {
+pub(crate) fn insert(root: &mut toml::Value, path: &str, value: toml::Value) -> Result<(), Error> {
     let segments: Vec<&str> = path.split('.').collect();
 
     let (final_key, parent_segments) =
@@ -41,17 +28,6 @@ pub fn insert(root: &mut toml::Value, path: &str, value: toml::Value) -> Result<
     Ok(())
 }
 
-/// Navigate to the parent table for a given path, creating intermediate tables.
-///
-/// # Arguments
-///
-/// * `root` - The root TOML value
-/// * `segments` - Path segments to navigate through
-/// * `full_path` - Full path for error messages
-///
-/// # Errors
-///
-/// Returns error if any intermediate value is not a table.
 fn navigate_to_parent<'a>(
     root: &'a mut toml::Value,
     segments: &[&str],
@@ -76,17 +52,7 @@ fn navigate_to_parent<'a>(
     Ok(current)
 }
 
-/// Flatten a TOML structure into dot-separated paths.
-///
-/// Only leaf values (non-tables) are stored in the map.
-/// Tables are recursively traversed to build paths.
-///
-/// # Arguments
-///
-/// * `value` - The TOML value to flatten
-/// * `prefix` - Current path prefix
-/// * `map` - HashMap to store flattened paths
-pub fn flatten(value: &toml::Value, prefix: &str, map: &mut HashMap<String, toml::Value>) {
+pub(crate) fn flatten(value: &toml::Value, prefix: &str, map: &mut HashMap<String, toml::Value>) {
     match value {
         toml::Value::Table(table) => {
             for (key, val) in table {

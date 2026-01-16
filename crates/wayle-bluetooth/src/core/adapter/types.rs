@@ -1,23 +1,16 @@
 use tokio_util::sync::CancellationToken;
 use zbus::{Connection, zvariant::OwnedObjectPath};
 
-/// Context for static adapter operations
 #[doc(hidden)]
 pub struct AdapterParams<'a> {
-    /// D-Bus connection for adapter communication
     pub connection: &'a Connection,
-    /// Adapter object path
     pub path: OwnedObjectPath,
 }
 
-/// Context for live adapter operations with monitoring
 #[doc(hidden)]
 pub struct LiveAdapterParams<'a> {
-    /// D-Bus connection for adapter communication
     pub connection: &'a Connection,
-    /// Adapter object path
     pub path: OwnedObjectPath,
-    /// Token for cancelling monitoring operations
     pub cancellation_token: &'a CancellationToken,
 }
 

@@ -1,8 +1,7 @@
 use std::fmt;
 
-/// Error indicating the pairing response receiver was dropped.
 #[derive(Debug)]
-pub struct ResponderDropped;
+pub(crate) struct ResponderDropped;
 
 impl fmt::Display for ResponderDropped {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

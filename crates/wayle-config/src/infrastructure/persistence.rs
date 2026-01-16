@@ -6,18 +6,14 @@ use wayle_common::SubscribeChanges;
 
 use super::{error::Error, service::ConfigService};
 
-/// Watches for configuration changes and automatically persists to disk.
+/// Auto-saves configuration changes to disk.
 ///
-/// Spawns background tasks that monitor all Properties in the config tree.
-/// When any Property changes, the entire config is serialized and saved.
+/// Monitors all `ConfigProperty` fields and persists changes when
+/// any property is modified.
 pub struct PersistenceWatcher;
 
 impl PersistenceWatcher {
-    /// Start watching for config changes and auto-saving to disk.
-    ///
-    /// # Arguments
-    ///
-    /// * `config_service` - The config service to watch and persist
+    /// Starts watching for config changes and auto-saving to disk.
     ///
     /// # Errors
     ///

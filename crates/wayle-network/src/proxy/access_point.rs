@@ -2,9 +2,6 @@
 
 use zbus::proxy;
 
-/// Wi-Fi Access Point.
-///
-/// Represents a visible WiFi access point.
 #[proxy(
     default_service = "org.freedesktop.NetworkManager",
     interface = "org.freedesktop.NetworkManager.AccessPoint"

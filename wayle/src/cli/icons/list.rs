@@ -49,9 +49,6 @@ pub fn execute(source_filter: Option<String>, interactive: bool) -> CliAction {
     Ok(())
 }
 
-/// Runs fzf with the icon list for interactive fuzzy search.
-///
-/// Selected icon name is copied to clipboard.
 fn run_fzf(icons: &[String]) -> CliAction {
     let mut child = Command::new("fzf")
         .args(["--prompt", "Search icons: "])
@@ -86,7 +83,6 @@ fn run_fzf(icons: &[String]) -> CliAction {
     Ok(())
 }
 
-/// Copies text to clipboard using wl-copy.
 fn copy_to_clipboard(text: &str) -> Result<(), String> {
     let mut child = Command::new("wl-copy")
         .stdin(Stdio::piped())

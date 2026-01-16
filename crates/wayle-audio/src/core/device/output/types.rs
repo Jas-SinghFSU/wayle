@@ -6,12 +6,14 @@ use crate::{
 };
 
 #[doc(hidden)]
+#[allow(private_interfaces)]
 pub struct OutputDeviceParams<'a> {
     pub command_tx: &'a CommandSender,
     pub device_key: DeviceKey,
 }
 
 #[doc(hidden)]
+#[allow(private_interfaces)]
 pub struct LiveOutputDeviceParams<'a> {
     pub command_tx: &'a CommandSender,
     pub event_tx: &'a EventSender,

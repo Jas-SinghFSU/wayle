@@ -1,6 +1,6 @@
 //! Wayle CLI - Entry point for Wayle command-line interface.
 //!
-//! This binary provides CLI commands for managing Wayle services.
+//! CLI commands for managing Wayle services.
 //! The GUI panel is a separate binary (`wayle-shell`).
 
 use std::process;

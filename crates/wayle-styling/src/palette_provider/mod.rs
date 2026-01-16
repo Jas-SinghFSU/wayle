@@ -6,6 +6,6 @@ use wayle_config::infrastructure::themes::Palette;
 
 use crate::Error;
 
-pub trait PaletteProvider {
+pub(crate) trait PaletteProvider {
     fn load() -> Result<Palette, Error>;
 }

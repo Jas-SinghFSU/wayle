@@ -9,9 +9,6 @@ use zbus::{
 
 pub mod connection;
 
-/// Connection Settings Profile Manager.
-///
-/// Manages saved network connection profiles.
 #[proxy(
     default_service = "org.freedesktop.NetworkManager",
     interface = "org.freedesktop.NetworkManager.Settings",

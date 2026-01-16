@@ -4,13 +4,10 @@ use std::collections::HashMap;
 
 use zbus::{proxy, zvariant::Value};
 
-/// This is a standard `org.freedesktop.Notifications` implementation which
-/// should work with any desktop environment that follows the Desktop
-/// Notifications Specification.
+/// Standard `org.freedesktop.Notifications` D-Bus proxy.
 ///
-/// The server implements the org.freedesktop.Notifications interface on
-/// an object with the path "/org/freedesktop/Notifications". This is the
-/// only interface required by this version of the specification.
+/// Compatible with any desktop environment following the Desktop Notifications
+/// Specification. Connects to the notification server at `/org/freedesktop/Notifications`.
 #[proxy(
     interface = "org.freedesktop.Notifications",
     default_service = "org.freedesktop.Notifications",
@@ -132,8 +129,7 @@ pub trait Notifications {
     /// If the notification no longer exists, an empty D-BUS Error message is sent back.
     fn close_notification(&self, id: u32) -> zbus::Result<()>;
 
-    /// This message returns the information on the server. Specifically,
-    /// the server name, vendor, and version number.
+    /// Returns server information: name, vendor, version, and spec version.
     ///
     /// # Returns
     ///

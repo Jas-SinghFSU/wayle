@@ -58,69 +58,42 @@ pub struct MediaInfo {
     pub icon_name: Option<String>,
 }
 
-/// Complete stream information from PulseAudio
-#[doc(hidden)]
 #[derive(Debug, Clone, PartialEq)]
-pub struct StreamInfo {
-    /// Stream index
+pub(crate) struct StreamInfo {
     pub index: u32,
-    /// Stream name
     pub name: String,
-    /// Application name
     pub application_name: Option<String>,
-    /// Application binary path
     pub binary: Option<String>,
-    /// Process ID
     pub pid: Option<u32>,
-    /// Index of the owning module
     pub owner_module: Option<u32>,
-    /// Index of the client this stream belongs to
     pub client: Option<u32>,
-    /// Device index this stream is connected to (sink for playback, source for record)
     pub device_index: u32,
-    /// Stream volume
     pub volume: Volume,
-    /// Whether stream is muted
     pub muted: bool,
-    /// Whether stream is corked (paused)
     pub corked: bool,
-    /// Whether stream has volume control
     pub has_volume: bool,
-    /// Whether volume is writable by clients
     pub volume_writable: bool,
-    /// Stream state
     pub state: StreamState,
-    /// Sample specification
     pub sample_spec: SampleSpec,
-    /// Channel map
     pub channel_map: ChannelMap,
-    /// Stream properties from PulseAudio
     pub properties: HashMap<String, String>,
-    /// Media information
     pub media: MediaInfo,
-    /// Buffer latency in microseconds
     pub buffer_latency: u64,
-    /// Sink/source latency in microseconds
     pub device_latency: u64,
-    /// Resample method
     pub resample_method: Option<String>,
-    /// Driver name
     pub driver: String,
-    /// Format information for the stream
     pub format: Option<String>,
 }
 
 impl StreamInfo {
-    /// Get stream key for identification
-    pub fn key(&self) -> StreamKey {
+    pub(crate) fn key(&self) -> StreamKey {
         StreamKey {
             index: self.index,
             stream_type: self.stream_type(),
         }
     }
 
-    /// Determine stream type based on properties
-    pub fn stream_type(&self) -> StreamType {
+    pub(crate) fn stream_type(&self) -> StreamType {
         if self.properties.get("media.role") == Some(&String::from("source-output")) {
             StreamType::Record
         } else {

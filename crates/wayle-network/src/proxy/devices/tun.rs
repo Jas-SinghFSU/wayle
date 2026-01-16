@@ -2,7 +2,6 @@
 
 use zbus::proxy;
 
-/// TUN/TAP Device.
 #[proxy(
     default_service = "org.freedesktop.NetworkManager",
     interface = "org.freedesktop.NetworkManager.Device.Tun"

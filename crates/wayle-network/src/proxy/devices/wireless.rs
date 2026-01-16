@@ -7,9 +7,6 @@ use zbus::{
     zvariant::{OwnedObjectPath, OwnedValue},
 };
 
-/// Wi-Fi Device.
-///
-/// Specialized interface for WiFi network devices.
 #[proxy(
     default_service = "org.freedesktop.NetworkManager",
     interface = "org.freedesktop.NetworkManager.Device.Wireless"

@@ -4,7 +4,6 @@ pub mod activate;
 pub mod commands;
 /// List tray items command
 pub mod list;
-/// D-Bus proxy utilities
 mod proxy;
 /// Status command
 pub mod status;

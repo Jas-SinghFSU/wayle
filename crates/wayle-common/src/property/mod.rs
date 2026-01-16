@@ -1,7 +1,7 @@
 //! Reactive property system with layered configuration support.
 //!
-//! This module provides reactive properties that can be watched for changes,
-//! with special support for three-layer configuration (default, config, runtime).
+//! Reactive properties that can be watched for changes, with special support
+//! for three-layer configuration (default, config, runtime).
 //!
 //! # Data Flow
 //!

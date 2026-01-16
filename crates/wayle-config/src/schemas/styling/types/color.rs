@@ -11,9 +11,7 @@ use crate::infrastructure::themes::Palette;
 
 /// Semantic color names from the palette.
 ///
-/// These map to the 10 palette colors that drive the visual theme.
-/// Using an enum ensures compile-time validation and catches invalid
-/// color names at config parse time rather than silently falling back.
+/// Invalid color names fail at config parse time rather than silently falling back.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 pub enum PaletteColor {
@@ -40,9 +38,7 @@ pub enum PaletteColor {
 }
 
 impl PaletteColor {
-    /// Returns the CSS variable reference for this palette color.
-    ///
-    /// Used when generating inline CSS that references theme colors.
+    /// CSS variable reference (e.g., `var(--palette-primary)`).
     pub fn css_var(self) -> &'static str {
         match self {
             Self::Bg => "var(--palette-bg)",
@@ -102,29 +98,16 @@ impl FromStr for PaletteColor {
     }
 }
 
-/// A color value that can reference a palette color or be a custom hex.
+/// Palette reference or custom hex color.
 ///
-/// When the user selects a color from their palette (e.g., "surface", "primary"),
-/// it stays linked to the theme and updates when themes change. Custom hex values
-/// remain fixed regardless of theme.
-///
-/// # Serialization
-///
-/// Serializes to a plain string. The `#` prefix distinguishes custom values:
-/// - `"surface"` -> Palette
-/// - `"#414868"` -> Custom
+/// Palette references (e.g., `"surface"`) update when themes change.
+/// Custom hex values (e.g., `"#414868"`) remain fixed.
 #[derive(Debug, Clone, PartialEq)]
 pub enum ColorValue {
-    /// References a color from the user's palette.
-    ///
-    /// Must be resolved against a [`Palette`] to get the actual hex value.
-    /// Changes when the user switches themes.
+    /// Palette color reference. Resolves to different hex values per theme.
     Palette(PaletteColor),
 
-    /// A fixed hex color value (e.g., "#414868").
-    ///
-    /// Ignores theme changes. Used when the user wants a specific color
-    /// that doesn't follow the palette.
+    /// Fixed hex color (e.g., `"#414868"`). Ignores theme changes.
     Custom(String),
 }
 
@@ -135,10 +118,7 @@ impl Default for ColorValue {
 }
 
 impl ColorValue {
-    /// Returns the CSS value for inline style generation.
-    ///
-    /// Palette colors return CSS variable references (e.g., `var(--primary)`).
-    /// Custom colors return the hex value directly.
+    /// CSS value for inline styles. Palette returns `var(--*)`, custom returns hex.
     pub fn to_css(&self) -> Cow<'static, str> {
         match self {
             ColorValue::Palette(color) => Cow::Borrowed(color.css_var()),
@@ -146,9 +126,7 @@ impl ColorValue {
         }
     }
 
-    /// Resolves the color value to a hex string using the given palette.
-    ///
-    /// Palette references are looked up by name. Custom values pass through unchanged.
+    /// Resolves to a hex string using the given palette.
     pub fn resolve<'a>(&'a self, palette: &'a Palette) -> &'a str {
         match self {
             ColorValue::Palette(color) => palette.get(*color),
@@ -156,12 +134,12 @@ impl ColorValue {
         }
     }
 
-    /// Returns true if this color references a palette color.
+    /// Whether this references a palette color.
     pub fn is_palette(&self) -> bool {
         matches!(self, ColorValue::Palette(_))
     }
 
-    /// Returns a display label for the GUI (e.g., "Palette: Surface" or "Custom: #414868").
+    /// GUI label (e.g., `"Palette: Surface"` or `"Custom: #414868"`).
     pub fn display_label(&self) -> String {
         match self {
             ColorValue::Palette(color) => format!("Palette: {}", color),
@@ -208,10 +186,9 @@ impl schemars::JsonSchema for ColorValue {
     }
 }
 
-/// Determines the source of color palette values.
+/// Source of color palette values.
 ///
-/// When set to a dynamic provider (Matugen, Pywal, Wallust), user-configured
-/// custom colors are ignored and palette tokens from the provider are used instead.
+/// Dynamic providers (Matugen, Pywal, Wallust) inject palette tokens at runtime.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum ThemeProvider {

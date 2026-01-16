@@ -7,9 +7,6 @@ use zbus::{
     zvariant::{OwnedObjectPath, OwnedValue},
 };
 
-/// Connection Manager.
-///
-/// The main NetworkManager D-Bus interface for managing network connections.
 #[proxy(
     default_service = "org.freedesktop.NetworkManager",
     interface = "org.freedesktop.NetworkManager",
@@ -89,7 +86,7 @@ pub(crate) trait NetworkManager {
 
     /// Adds a new connection using the given details (if any) as a template, then activate the new connection.
     ///
-    /// This method extends AddAndActivateConnection to allow passing further parameters.
+    /// Extends `AddAndActivateConnection` to allow passing further parameters.
     ///
     /// # Arguments
     /// * `connection` - Connection settings and properties

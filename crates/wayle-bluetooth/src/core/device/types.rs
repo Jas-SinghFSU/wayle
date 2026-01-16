@@ -71,28 +71,19 @@ impl DeviceSet {
     }
 }
 
-/// Context for static device operations
 #[doc(hidden)]
 pub struct DeviceParams<'a> {
-    /// D-Bus connection for device communication
     pub connection: &'a Connection,
-    /// Device object path
     pub path: OwnedObjectPath,
-    /// Channel for sending service notifications
-    pub notifier_tx: &'a broadcast::Sender<ServiceNotification>,
+    pub(crate) notifier_tx: &'a broadcast::Sender<ServiceNotification>,
 }
 
-/// Context for live device operations with monitoring
 #[doc(hidden)]
 pub struct LiveDeviceParams<'a> {
-    /// D-Bus connection for device communication
     pub connection: &'a Connection,
-    /// Device object path
     pub path: OwnedObjectPath,
-    /// Token for cancelling monitoring operations
     pub cancellation_token: &'a CancellationToken,
-    /// Channel for sending service notifications
-    pub notifier_tx: &'a broadcast::Sender<ServiceNotification>,
+    pub(crate) notifier_tx: &'a broadcast::Sender<ServiceNotification>,
 }
 
 pub(crate) struct DeviceProperties {

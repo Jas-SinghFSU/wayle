@@ -6,20 +6,12 @@ use crate::types::states::{
     NMVpnConnectionStateReason,
 };
 
-/// Parameters for creating an ActiveConnection instance.
-///
-/// **Note**: This type is exposed for trait implementation requirements
-/// but should not be constructed directly by external consumers.
 #[doc(hidden)]
 pub struct ActiveConnectionParams<'a> {
     pub(crate) connection: &'a Connection,
     pub(crate) path: OwnedObjectPath,
 }
 
-/// Parameters for creating a LiveActiveConnection instance.
-///
-/// **Note**: This type is exposed for trait implementation requirements
-/// but should not be constructed directly by external consumers.
 #[doc(hidden)]
 pub struct LiveActiveConnectionParams<'a> {
     pub(crate) connection: &'a Connection,

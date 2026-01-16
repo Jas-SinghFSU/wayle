@@ -124,7 +124,6 @@ impl IconManager {
         Ok(result)
     }
 
-    /// Installs a single icon from a source.
     async fn install_single(
         &self,
         source: &dyn IconSource,
@@ -224,7 +223,6 @@ impl IconManager {
             .exists()
     }
 
-    /// Validates that content is valid SVG.
     fn validate_svg(content: &str, slug: &str) -> Result<()> {
         let trimmed = content.trim();
 

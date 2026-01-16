@@ -168,7 +168,7 @@ impl NMIPTunnelMode {
 /// Contains information advertised by directly connected network devices
 /// using the LLDP protocol. Used for network topology discovery.
 ///
-/// **Note**: The accuracy of these fields is uncertain. LLDP population
+/// The accuracy of these fields is uncertain as LLDP population
 /// is not currently implemented in this service.
 #[derive(Debug, Clone)]
 pub struct LldpNeighbor {

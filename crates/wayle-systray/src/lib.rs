@@ -1,14 +1,9 @@
-//! System tray management service for StatusNotifier items.
+//! System tray management via StatusNotifier/SNI protocol and DBusMenu.
 //!
-//! This crate provides a service for managing system tray items through the
-//! StatusNotifier/SNI protocol and DBusMenu specification. It monitors tray
-//! items, handles menu interactions, and provides reactive streams for tray
-//! item events and state changes.
+//! Monitors tray items, handles menu interactions, and provides reactive streams
+//! for item events and state changes.
 
-/// UI framework adapters for the systray service.
-///
-/// These adapters enable integration with various GUI toolkits,
-/// allowing systray menus to be displayed natively in different frameworks.
+/// UI framework adapters (GTK4, etc.) for native systray menu rendering.
 pub mod adapters;
 mod builder;
 /// Core types and functionality for system tray items

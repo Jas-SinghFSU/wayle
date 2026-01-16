@@ -2,7 +2,6 @@
 
 use zbus::proxy;
 
-/// IEEE 802.15.4 (WPAN) MAC Layer Device.
 #[proxy(
     default_service = "org.freedesktop.NetworkManager",
     interface = "org.freedesktop.NetworkManager.Device.Wpan"

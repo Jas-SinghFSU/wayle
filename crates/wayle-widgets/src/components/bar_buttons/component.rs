@@ -77,7 +77,6 @@ pub enum BarButtonInput {
     FromVariant(BarButtonOutput),
 }
 
-/// Holds the active variant's controller.
 enum VariantController {
     Basic(Controller<BasicBarButton>),
     BlockPrefix(Controller<BlockPrefixBarButton>),

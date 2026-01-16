@@ -1,2 +1,2 @@
-/// Battery device core functionality
+/// Battery device core functionality.
 pub mod device;

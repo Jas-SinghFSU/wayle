@@ -4,7 +4,6 @@ pub mod app;
 pub mod audio;
 /// Configuration management commands
 pub mod config;
-/// Shared D-Bus utilities
 mod dbus;
 /// Icon management commands
 pub mod icons;

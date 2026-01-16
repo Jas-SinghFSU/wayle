@@ -1,9 +1,9 @@
 mod dispatcher;
-pub mod layer;
-pub mod monitor;
-pub mod types;
-pub mod window;
-pub mod workspace;
+pub(crate) mod layer;
+pub(crate) mod monitor;
+pub(crate) mod types;
+pub(crate) mod window;
+pub(crate) mod workspace;
 
 use std::env;
 

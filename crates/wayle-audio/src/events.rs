@@ -3,31 +3,14 @@ use super::types::{
     stream::{StreamInfo, StreamKey},
 };
 
-/// Audio system events emitted when PulseAudio state changes.
-#[doc(hidden)]
 #[derive(Debug, Clone)]
-pub enum AudioEvent {
-    /// Device was added
+pub(crate) enum AudioEvent {
     DeviceAdded(Device),
-
-    /// Device properties changed
     DeviceChanged(Device),
-
-    /// Device was removed
     DeviceRemoved(DeviceKey),
-
-    /// Stream was added
     StreamAdded(StreamInfo),
-
-    /// Stream properties changed
     StreamChanged(StreamInfo),
-
-    /// Stream was removed
     StreamRemoved(StreamKey),
-
-    /// Default input device changed
     DefaultInputChanged(Option<Device>),
-
-    /// Default output device changed
     DefaultOutputChanged(Option<Device>),
 }

@@ -17,15 +17,6 @@ pub(crate) mod stream;
 
 type SubscriptionCallback = Option<Box<dyn FnMut(Option<Facility>, Option<Operation>, u32)>>;
 
-/// Start the event processor task
-///
-/// This function:
-/// 1. Sets up PulseAudio event subscription
-/// 2. Spawns a task to process change notifications
-/// 3. Manages its own lifecycle
-///
-/// # Errors
-/// Returns error if PulseAudio subscription setup fails
 pub(crate) fn start_event_processor(
     context: &mut Context,
     devices: DeviceStore,
@@ -66,7 +57,6 @@ pub(crate) fn start_event_processor(
     Ok(())
 }
 
-/// Setup PulseAudio event subscription (internal)
 fn setup_subscription(
     context: &mut Context,
     change_tx: mpsc::UnboundedSender<ChangeNotification>,
@@ -108,7 +98,6 @@ fn setup_subscription(
     Ok(())
 }
 
-/// Process change notifications from PulseAudio (internal)
 #[allow(clippy::too_many_arguments)]
 async fn process_change_notification(
     notification: ChangeNotification,

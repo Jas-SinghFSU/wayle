@@ -1,4 +1,4 @@
-pub mod client;
-pub mod layer;
-pub mod monitor;
-pub mod workspace;
+pub(crate) mod client;
+pub(crate) mod layer;
+pub(crate) mod monitor;
+pub(crate) mod workspace;

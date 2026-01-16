@@ -16,12 +16,12 @@ use super::error::{Error, IoOperation};
 use crate::Config;
 
 impl Config {
-    /// Loads configuration with imports resolved and deserializes to Config.
+    /// Loads and deserializes configuration with imports resolved.
     ///
     /// # Errors
     ///
-    /// Returns an error if files cannot be read, TOML is invalid,
-    /// imports fail, deserialization fails, or circular imports are detected.
+    /// Returns error on read failures, invalid TOML, import failures,
+    /// deserialization failures, or circular imports.
     pub fn load_with_imports(path: &Path) -> Result<Config, Error> {
         let merged = Self::load_toml_with_imports(path)?;
         merged
@@ -31,12 +31,10 @@ impl Config {
 
     /// Loads and merges configuration TOML with imports resolved.
     ///
-    /// Returns the merged TOML value without deserializing to Config.
-    ///
     /// # Errors
     ///
-    /// Returns an error if files cannot be read, TOML is invalid,
-    /// imports fail, or circular imports are detected.
+    /// Returns error on read failures, invalid TOML, import failures,
+    /// or circular imports.
     pub fn load_toml_with_imports(path: &Path) -> Result<Value, Error> {
         if !path.exists() {
             create_default_config_file(path)?;

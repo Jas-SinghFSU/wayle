@@ -13,10 +13,7 @@ pub use types::{
 use wayle_common::ConfigProperty;
 use wayle_derive::wayle_config;
 
-/// Global styling configuration for the Wayle shell.
-///
-/// Groups all CSS-affecting properties. Changes to any field trigger
-/// stylesheet recompilation.
+/// Global styling configuration. Changes trigger stylesheet recompilation.
 #[wayle_config]
 pub struct StylingConfig {
     /// Determines which provider handles theming.

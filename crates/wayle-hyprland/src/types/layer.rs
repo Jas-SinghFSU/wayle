@@ -61,7 +61,6 @@ impl Display for LayerLevel {
     }
 }
 
-/// Layer surface data from hyprctl.
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) struct LayerData {
     pub address: Address,

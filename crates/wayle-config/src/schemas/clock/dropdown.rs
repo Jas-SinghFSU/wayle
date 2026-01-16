@@ -1,11 +1,7 @@
 use wayle_common::ConfigProperty;
 use wayle_derive::wayle_config;
 
-/// Clock dropdown panel configuration.
-///
-/// Controls both behavior and styling for the clock's dropdown menu.
-/// Properties use noun-first naming with prefixes for logical grouping
-/// (e.g., `calendar-*`, `clock-*` properties).
+/// Clock dropdown panel behavior and styling.
 #[wayle_config]
 pub struct ClockDropdownConfig {
     /// Whether to display the calendar widget.

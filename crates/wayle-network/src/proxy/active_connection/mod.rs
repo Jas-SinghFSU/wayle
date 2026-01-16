@@ -4,9 +4,6 @@ use zbus::{proxy, zvariant::OwnedObjectPath};
 
 pub mod vpn;
 
-/// Active Connection.
-///
-/// Tracks the state of an active network connection.
 #[proxy(
     default_service = "org.freedesktop.NetworkManager",
     interface = "org.freedesktop.NetworkManager.Connection.Active"

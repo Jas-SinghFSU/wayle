@@ -1,9 +1,3 @@
-//! Background tasks for the wallpaper service.
-//!
-//! - Wallpaper cycling (timer-based rotation)
-//! - Directory watching (refresh images when files change)
-//! - Output discovery (Wayland monitor hotplug)
-
 mod cycle_runner;
 mod timer;
 mod watcher;
