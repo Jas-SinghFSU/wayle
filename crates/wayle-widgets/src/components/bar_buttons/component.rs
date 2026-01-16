@@ -3,6 +3,7 @@
 use gtk4::prelude::Cast;
 use relm4::{ComponentParts, ComponentSender, Controller, gtk, prelude::*};
 use wayle_common::ConfigProperty;
+use wayle_config::schemas::bar::BorderLocation;
 use wayle_config::schemas::styling::ThemeProvider;
 
 use super::{
@@ -29,6 +30,10 @@ pub struct BarButtonInit {
     pub variant_config: BarButtonVariantConfig,
     /// Theme provider for determining color resolution strategy.
     pub theme_provider: ConfigProperty<ThemeProvider>,
+    /// Border placement (global setting).
+    pub border_location: ConfigProperty<BorderLocation>,
+    /// Border width in pixels (global setting).
+    pub border_width: ConfigProperty<u8>,
 }
 
 impl Default for BarButtonInit {
@@ -41,6 +46,8 @@ impl Default for BarButtonInit {
             scroll_sensitivity: 1.0,
             variant_config: BarButtonVariantConfig::Basic(BasicBarButtonConfig::default()),
             theme_provider: ConfigProperty::new(ThemeProvider::default()),
+            border_location: ConfigProperty::new(BorderLocation::default()),
+            border_width: ConfigProperty::new(1),
         }
     }
 }
@@ -109,6 +116,8 @@ pub struct BarButton {
     scroll_sensitivity: f64,
     active: VariantController,
     theme_provider: ConfigProperty<ThemeProvider>,
+    border_location: ConfigProperty<BorderLocation>,
+    border_width: ConfigProperty<u8>,
 }
 
 #[relm4::component(pub)]
@@ -146,6 +155,8 @@ impl Component for BarButton {
             scroll_sensitivity,
             &sender,
             &init.theme_provider,
+            &init.border_location,
+            &init.border_width,
         );
 
         root.add_child(active.widget());
@@ -158,6 +169,8 @@ impl Component for BarButton {
             scroll_sensitivity,
             active,
             theme_provider: init.theme_provider,
+            border_location: init.border_location,
+            border_width: init.border_width,
         };
 
         let widgets = view_output!();
@@ -202,6 +215,8 @@ impl BarButton {
         scroll_sensitivity: f64,
         sender: &ComponentSender<Self>,
         theme_provider: &ConfigProperty<ThemeProvider>,
+        border_location: &ConfigProperty<BorderLocation>,
+        border_width: &ConfigProperty<u8>,
     ) -> VariantController {
         match variant {
             BarButtonVariant::Basic => {
@@ -218,6 +233,8 @@ impl BarButton {
                         scroll_sensitivity,
                         config: basic_config,
                         theme_provider: theme_provider.clone(),
+                        border_location: border_location.clone(),
+                        border_width: border_width.clone(),
                     })
                     .forward(sender.input_sender(), BarButtonInput::FromVariant);
 
@@ -238,6 +255,8 @@ impl BarButton {
                         scroll_sensitivity,
                         config: block_config,
                         theme_provider: theme_provider.clone(),
+                        border_location: border_location.clone(),
+                        border_width: border_width.clone(),
                     })
                     .forward(sender.input_sender(), BarButtonInput::FromVariant);
 
@@ -258,6 +277,8 @@ impl BarButton {
                         scroll_sensitivity,
                         config: square_config,
                         theme_provider: theme_provider.clone(),
+                        border_location: border_location.clone(),
+                        border_width: border_width.clone(),
                     })
                     .forward(sender.input_sender(), BarButtonInput::FromVariant);
 
@@ -282,6 +303,8 @@ impl BarButton {
             self.scroll_sensitivity,
             sender,
             &self.theme_provider,
+            &self.border_location,
+            &self.border_width,
         );
 
         stack.add_child(new_controller.widget());

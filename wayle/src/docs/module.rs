@@ -1,7 +1,7 @@
 pub use crate::config::docs::{
     BehaviorConfigs, ModuleInfo, ModuleInfoProvider, SchemeFn, StylingConfigs,
 };
-use crate::config::schemas::clock::ClockConfig;
+use crate::config::schemas::modules::ClockConfig;
 
 /// Retrieves information for all available Wayle modules.
 ///

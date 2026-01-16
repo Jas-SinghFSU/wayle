@@ -29,10 +29,26 @@ menubutton.bar-button {
 
     .bar-button-label {
         color: var(--bar-btn-label-color);
+        font-size: var(--bar-btn-label-size);
     }
 
     image {
         all: unset;
         color: var(--bar-btn-icon-color);
+        -gtk-icon-size: var(--bar-btn-icon-size);
+    }
+
+    // Basic variant: padding on content box, gap as margin on label
+    &.basic .bar-button-content {
+        padding: var(--bar-btn-label-padding);
+    }
+
+    &.basic .bar-button-label {
+        margin-left: var(--bar-btn-gap);
+    }
+
+    &.basic.vertical .bar-button-label {
+        margin-left: 0;
+        margin-top: var(--bar-btn-gap);
     }
 }

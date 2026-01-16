@@ -2,6 +2,10 @@
 // button.toggle styles inherited from _base.scss.
 
 menubutton.bar-button.icon-square {
+    .bar-button-content {
+        padding: var(--bar-btn-label-padding);
+    }
+
     .icon-container {
         background-color: var(--bar-btn-icon-bg);
         border-radius: var(--bar-rounding-element);
@@ -9,7 +13,17 @@ menubutton.bar-button.icon-square {
 
         image {
             color: var(--bar-btn-icon-color);
+            margin: var(--bar-btn-icon-padding);
         }
+    }
+
+    .bar-button-label {
+        margin-left: var(--bar-btn-gap);
+    }
+
+    &.vertical .bar-button-label {
+        margin-left: 0;
+        margin-top: var(--bar-btn-gap);
     }
 
     > button.toggle:hover .icon-container {

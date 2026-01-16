@@ -12,7 +12,7 @@ pub use errors::Error;
 use tracing::{error, info};
 use wayle_config::{
     infrastructure::themes::Palette,
-    schemas::styling::{FontConfig, RoundingLevel, ThemeProvider},
+    schemas::{bar::BarConfig, general::GeneralConfig, styling::{RoundingLevel, ThemeProvider}},
 };
 
 fn scss_dir() -> PathBuf {
@@ -21,17 +21,14 @@ fn scss_dir() -> PathBuf {
 
 /// Compiles the complete stylesheet from palette, font, scale, and rounding inputs.
 ///
-/// Generates SCSS variables and compiles them with the main stylesheet.
-/// All compilation happens in-memory without writing to disk.
-///
 /// # Errors
 ///
 /// Returns an error if SCSS compilation fails.
 pub fn compile(
     palette: &Palette,
-    fonts: &FontConfig,
+    general: &GeneralConfig,
+    bar: &BarConfig,
     scale: f32,
-    bar_scale: f32,
     rounding: RoundingLevel,
     theme_provider: ThemeProvider,
 ) -> Result<String, Error> {
@@ -48,8 +45,8 @@ pub fn compile(
     let variables = format!(
         "{}\n{}\n{}\n{}\n",
         palette_to_scss(resolved_palette),
-        fonts_to_scss(fonts),
-        scale_to_scss(scale, bar_scale),
+        fonts_to_scss(general),
+        scale_to_scss(scale, bar),
         rounding_to_scss(rounding)
     );
 
@@ -102,18 +99,33 @@ $palette-blue: {};
     )
 }
 
-fn fonts_to_scss(fonts: &FontConfig) -> String {
+fn fonts_to_scss(general: &GeneralConfig) -> String {
     format!(
         r#"$font-sans: "{}";
 $font-mono: "{}";
 "#,
-        fonts.sans.get(),
-        fonts.mono.get()
+        general.font_sans.get(),
+        general.font_mono.get()
     )
 }
 
-fn scale_to_scss(scale: f32, bar_scale: f32) -> String {
-    format!("$global-scale: {};\n$bar-scale: {};\n", scale, bar_scale)
+fn scale_to_scss(scale: f32, bar: &BarConfig) -> String {
+    format!(
+        "$global-scale: {};\n\
+         $bar-scale: {};\n\
+         $bar-btn-icon-scale: {};\n\
+         $bar-btn-icon-padding-scale: {};\n\
+         $bar-btn-label-scale: {};\n\
+         $bar-btn-label-padding-scale: {};\n\
+         $bar-btn-gap-scale: {};\n",
+        scale,
+        bar.scale.get(),
+        bar.button_icon_scale.get(),
+        bar.button_icon_padding_scale.get(),
+        bar.button_label_scale.get(),
+        bar.button_label_padding_scale.get(),
+        bar.button_gap_scale.get()
+    )
 }
 
 fn rounding_to_scss(rounding: RoundingLevel) -> String {
@@ -128,7 +140,7 @@ fn rounding_to_scss(rounding: RoundingLevel) -> String {
 
 #[cfg(test)]
 mod tests {
-    use wayle_config::infrastructure::themes::palettes;
+    use wayle_config::{infrastructure::themes::palettes, schemas::bar::BarConfig};
 
     use super::*;
 
@@ -137,11 +149,12 @@ mod tests {
         gtk4::init().unwrap();
 
         let palette = palettes::builtins().into_iter().next().unwrap();
-        let fonts = FontConfig::default();
+        let general = GeneralConfig::default();
+        let bar = BarConfig::default();
         let css = compile(
             &palette,
-            &fonts,
-            1.0,
+            &general,
+            &bar,
             1.0,
             RoundingLevel::default(),
             ThemeProvider::default(),
@@ -155,11 +168,12 @@ mod tests {
     #[test]
     fn debug_print_css() {
         let palette = palettes::builtins().into_iter().next().unwrap();
-        let fonts = FontConfig::default();
+        let general = GeneralConfig::default();
+        let bar = BarConfig::default();
         let css = compile(
             &palette,
-            &fonts,
-            1.0,
+            &general,
+            &bar,
             1.0,
             RoundingLevel::default(),
             ThemeProvider::default(),

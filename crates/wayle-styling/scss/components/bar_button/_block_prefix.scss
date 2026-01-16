@@ -9,8 +9,31 @@ menubutton.bar-button.block-prefix {
         border-bottom-left-radius: var(--bar-rounding-element);
     }
 
+    &.border-top .icon-container,
+    &.border-left .icon-container,
+    &.border-all .icon-container {
+        border-top-left-radius: max(
+            0px,
+            calc(var(--bar-rounding-element) - var(--bar-btn-border-width, 0px) - 1px)
+        );
+    }
+
+    &.border-bottom .icon-container,
+    &.border-left .icon-container,
+    &.border-all .icon-container {
+        border-bottom-left-radius: max(
+            0px,
+            calc(var(--bar-rounding-element) - var(--bar-btn-border-width, 0px) - 1px)
+        );
+    }
+
     .icon-container image {
         color: var(--bar-btn-icon-color);
+        margin: var(--bar-btn-icon-padding);
+    }
+
+    .label-container {
+        padding: var(--bar-btn-label-padding);
     }
 
     .bar-button-label {
@@ -23,8 +46,50 @@ menubutton.bar-button.block-prefix {
         border-top-right-radius: var(--bar-rounding-element);
     }
 
+    &.vertical.border-top .icon-container,
+    &.vertical.border-left .icon-container,
+    &.vertical.border-all .icon-container {
+        border-top-left-radius: max(
+            0px,
+            calc(var(--bar-rounding-element) - var(--bar-btn-border-width, 0px) - 1px)
+        );
+    }
+
+    &.vertical.border-top .icon-container,
+    &.vertical.border-right .icon-container,
+    &.vertical.border-all .icon-container {
+        border-top-right-radius: max(
+            0px,
+            calc(var(--bar-rounding-element) - var(--bar-btn-border-width, 0px) - 1px)
+        );
+    }
+
     &.icon-only .icon-container {
         border-radius: var(--bar-rounding-element);
+    }
+
+    &.icon-only.border-all .icon-container {
+        border-radius: max(0px, calc(var(--bar-rounding-element) - var(--bar-btn-border-width, 0px) - 1px));
+    }
+
+    &.icon-only.border-top .icon-container {
+        border-top-left-radius: max(0px, calc(var(--bar-rounding-element) - var(--bar-btn-border-width, 0px) - 1px));
+        border-top-right-radius: max(0px, calc(var(--bar-rounding-element) - var(--bar-btn-border-width, 0px) - 1px));
+    }
+
+    &.icon-only.border-bottom .icon-container {
+        border-bottom-left-radius: max(0px, calc(var(--bar-rounding-element) - var(--bar-btn-border-width, 0px) - 1px));
+        border-bottom-right-radius: max(0px, calc(var(--bar-rounding-element) - var(--bar-btn-border-width, 0px) - 1px));
+    }
+
+    &.icon-only.border-left .icon-container {
+        border-top-left-radius: max(0px, calc(var(--bar-rounding-element) - var(--bar-btn-border-width, 0px) - 1px));
+        border-bottom-left-radius: max(0px, calc(var(--bar-rounding-element) - var(--bar-btn-border-width, 0px) - 1px));
+    }
+
+    &.icon-only.border-right .icon-container {
+        border-top-right-radius: max(0px, calc(var(--bar-rounding-element) - var(--bar-btn-border-width, 0px) - 1px));
+        border-bottom-right-radius: max(0px, calc(var(--bar-rounding-element) - var(--bar-btn-border-width, 0px) - 1px));
     }
 
     > button.toggle:hover .icon-container {

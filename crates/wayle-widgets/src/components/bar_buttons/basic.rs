@@ -6,9 +6,8 @@ use futures::StreamExt;
 use gtk4::prelude::{OrientableExt, WidgetExt};
 use relm4::{ComponentParts, ComponentSender, RelmWidgetExt, prelude::*};
 use wayle_common::ConfigProperty;
-use wayle_config::schemas::styling::{
-    ColorValue, GapClass, IconSizeClass, PaddingClass, PaletteColor, TextSizeClass, ThemeProvider,
-};
+use wayle_config::schemas::bar::BorderLocation;
+use wayle_config::schemas::styling::{ColorValue, PaletteColor, ThemeProvider};
 
 use super::{
     shared::{resolve_color, setup_event_controllers},
@@ -30,6 +29,10 @@ pub struct BasicBarButtonInit {
     pub config: BasicBarButtonConfig,
     /// Theme provider for determining color resolution strategy.
     pub theme_provider: ConfigProperty<ThemeProvider>,
+    /// Border placement (global setting).
+    pub border_location: ConfigProperty<BorderLocation>,
+    /// Border width in pixels (global setting).
+    pub border_width: ConfigProperty<u8>,
 }
 
 impl Default for BasicBarButtonInit {
@@ -41,13 +44,15 @@ impl Default for BasicBarButtonInit {
             scroll_sensitivity: 1.0,
             config: BasicBarButtonConfig::default(),
             theme_provider: ConfigProperty::new(ThemeProvider::default()),
+            border_location: ConfigProperty::new(BorderLocation::default()),
+            border_width: ConfigProperty::new(1),
         }
     }
 }
 
 /// Runtime configuration for BasicBarButton.
 ///
-/// Colors are per-module (inline CSS). Sizing classes are global.
+/// Colors are per-module (inline CSS). Sizing is controlled globally via CSS variables.
 #[derive(Clone)]
 pub struct BasicBarButtonConfig {
     /// Whether to truncate label with ellipsis.
@@ -67,17 +72,8 @@ pub struct BasicBarButtonConfig {
     pub label_color: Arc<ConfigProperty<ColorValue>>,
     /// Button background color (per-module).
     pub button_background: Arc<ConfigProperty<ColorValue>>,
-
-    /// Icon size class (global).
-    pub icon_size: Arc<ConfigProperty<IconSizeClass>>,
-    /// Label size class (global).
-    pub label_size: Arc<ConfigProperty<TextSizeClass>>,
-    /// Horizontal padding class (global).
-    pub padding_x: Arc<ConfigProperty<PaddingClass>>,
-    /// Vertical padding class (global).
-    pub padding_y: Arc<ConfigProperty<PaddingClass>>,
-    /// Gap between icon and label (global).
-    pub gap: Arc<ConfigProperty<GapClass>>,
+    /// Border color (per-module).
+    pub border_color: Arc<ConfigProperty<ColorValue>>,
 }
 
 impl std::fmt::Debug for BasicBarButtonConfig {
@@ -105,11 +101,9 @@ impl Default for BasicBarButtonConfig {
             button_background: Arc::new(ConfigProperty::new(ColorValue::Custom(
                 "transparent".to_string(),
             ))),
-            icon_size: Arc::new(ConfigProperty::new(IconSizeClass::default())),
-            label_size: Arc::new(ConfigProperty::new(TextSizeClass::default())),
-            padding_x: Arc::new(ConfigProperty::new(PaddingClass::Md)),
-            padding_y: Arc::new(ConfigProperty::new(PaddingClass::Sm)),
-            gap: Arc::new(ConfigProperty::new(GapClass::default())),
+            border_color: Arc::new(ConfigProperty::new(ColorValue::Palette(
+                PaletteColor::Elevated,
+            ))),
         }
     }
 }
@@ -151,24 +145,21 @@ pub struct BasicBarButton {
     tooltip: Option<String>,
     config: BasicBarButtonConfig,
     theme_provider: ConfigProperty<ThemeProvider>,
+    border_location: ConfigProperty<BorderLocation>,
+    border_width: ConfigProperty<u8>,
 }
 
 impl BasicBarButton {
     fn root_css_classes(&self) -> Vec<&'static str> {
-        let mut classes = vec![
-            BarButtonClass::BASE,
-            "basic",
-            self.config.icon_size.get().css_class(),
-            self.config.label_size.get().css_class(),
-            self.config.padding_x.get().css_class_x(),
-            self.config.padding_y.get().css_class_y(),
-            self.config.gap.get().css_class(),
-        ];
+        let mut classes = vec![BarButtonClass::BASE, "basic"];
         if !self.config.show_label.get() {
             classes.push(BarButtonClass::ICON_ONLY);
         }
         if self.config.vertical.get() {
             classes.push(BarButtonClass::VERTICAL);
+        }
+        if let Some(border_class) = self.border_location.get().css_class() {
+            classes.push(border_class);
         }
         classes
     }
@@ -253,6 +244,8 @@ impl Component for BasicBarButton {
             tooltip: init.tooltip,
             config: init.config,
             theme_provider: init.theme_provider,
+            border_location: init.border_location,
+            border_width: init.border_width,
         };
 
         let widgets = view_output!();
@@ -264,6 +257,8 @@ impl Component for BasicBarButton {
             init.scroll_sensitivity,
         );
         Self::setup_config_watchers(&model.config, &sender);
+        Self::watch_model_property(model.border_location.clone(), &sender);
+        Self::watch_model_property(model.border_width.clone(), &sender);
 
         ComponentParts { model, widgets }
     }
@@ -300,10 +295,16 @@ impl BasicBarButton {
         let icon_color = resolve_color(&model.config.icon_color, is_wayle_themed);
         let label_color = resolve_color(&model.config.label_color, is_wayle_themed);
         let button_bg = resolve_color(&model.config.button_background, is_wayle_themed);
+        let border_color = resolve_color(&model.config.border_color, is_wayle_themed);
+        let border_width = model.border_width.get();
 
         let css = format!(
-            "--bar-btn-icon-color: {}; --bar-btn-label-color: {}; --bar-btn-bg: {};",
-            icon_color, label_color, button_bg
+            "--bar-btn-icon-color: {}; \
+             --bar-btn-label-color: {}; \
+             --bar-btn-bg: {}; \
+             --bar-btn-border-color: {}; \
+             --bar-btn-border-width: {}px;",
+            icon_color, label_color, button_bg, border_color, border_width
         );
 
         root.inline_css(&css);
@@ -318,11 +319,7 @@ impl BasicBarButton {
         Self::watch_property(&config.icon_color, sender);
         Self::watch_property(&config.label_color, sender);
         Self::watch_property(&config.button_background, sender);
-        Self::watch_property(&config.icon_size, sender);
-        Self::watch_property(&config.label_size, sender);
-        Self::watch_property(&config.padding_x, sender);
-        Self::watch_property(&config.padding_y, sender);
-        Self::watch_property(&config.gap, sender);
+        Self::watch_property(&config.border_color, sender);
     }
 
     fn watch_property<T>(property: &Arc<ConfigProperty<T>>, sender: &ComponentSender<Self>)
@@ -330,6 +327,26 @@ impl BasicBarButton {
         T: Clone + Send + Sync + PartialEq + 'static,
     {
         let property = property.clone();
+        sender.command(move |out, shutdown| {
+            shutdown
+                .register(async move {
+                    let mut stream = property.watch();
+                    stream.next().await;
+
+                    while (stream.next().await).is_some() {
+                        if out.send(BasicBarButtonCmdOutput::ConfigChanged).is_err() {
+                            break;
+                        }
+                    }
+                })
+                .drop_on_shutdown()
+        });
+    }
+
+    fn watch_model_property<T>(property: ConfigProperty<T>, sender: &ComponentSender<Self>)
+    where
+        T: Clone + Send + Sync + PartialEq + 'static,
+    {
         sender.command(move |out, shutdown| {
             shutdown
                 .register(async move {

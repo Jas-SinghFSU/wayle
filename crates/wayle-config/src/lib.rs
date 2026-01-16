@@ -8,17 +8,13 @@ pub mod docs;
 
 /// Configuration schema definitions.
 pub mod schemas {
-    /// Bar layout configuration
+    /// Bar layout configuration.
     pub mod bar;
-    /// Battery module configuration
-    pub mod battery;
-    /// Clock module configuration
-    pub mod clock;
-    /// Media module configuration
-    pub mod media;
-    /// Module-specific configurations
+    /// General Wayle configuration.
+    pub mod general;
+    /// Module-specific configurations.
     pub mod modules;
-    /// Styling configuration
+    /// Styling configuration.
     pub mod styling;
 }
 
@@ -52,12 +48,17 @@ pub use infrastructure::{
 use schemas::{bar::BarConfig, modules::ModulesConfig, styling::StylingConfig};
 use wayle_derive::wayle_config;
 
+use crate::schemas::general::GeneralConfig;
+
 /// Main configuration structure for Wayle.
 ///
 /// Represents the complete configuration schema that can be loaded
 /// from TOML files. All fields have sensible defaults.
 #[wayle_config]
 pub struct Config {
+    /// General Wayle settings.
+    pub general: GeneralConfig,
+
     /// Bar layout and module placement.
     pub bar: BarConfig,
 

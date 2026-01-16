@@ -1,5 +1,5 @@
 use crate::{
-    config::schemas::clock::ClockConfig,
+    config::schemas::modules::ClockConfig,
     docs::module::{ModuleInfo, ModuleInfoProvider},
 };
 
