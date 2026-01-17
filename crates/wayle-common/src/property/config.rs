@@ -224,13 +224,14 @@ where
     T: Clone + Send + Sync + PartialEq + for<'de> Deserialize<'de> + 'static,
 {
     fn apply_config_layer(&self, value: &toml::Value, path: &str) {
+        let _span = tracing::warn_span!("config", field = path).entered();
         match T::deserialize(value.clone()) {
             Ok(new_value) => {
                 self.set_config(new_value);
             }
             Err(e) => {
                 let toml_repr = format_toml_indented(value);
-                tracing::warn!("invalid config at `{path}`:\n  error: {e}\n  value:\n{toml_repr}");
+                tracing::warn!(error = %e, "invalid value\n{toml_repr}");
             }
         }
     }
@@ -241,15 +242,14 @@ where
     T: Clone + Send + Sync + PartialEq + for<'de> Deserialize<'de> + 'static,
 {
     fn apply_runtime_layer(&self, value: &toml::Value, path: &str) {
+        let _span = tracing::warn_span!("runtime_config", field = path).entered();
         match T::deserialize(value.clone()) {
             Ok(new_value) => {
                 self.set(new_value);
             }
             Err(e) => {
                 let toml_repr = format_toml_indented(value);
-                tracing::warn!(
-                    "invalid runtime config at `{path}`:\n  error: {e}\n  value:\n{toml_repr}"
-                );
+                tracing::warn!(error = %e, "invalid value\n{toml_repr}");
             }
         }
     }

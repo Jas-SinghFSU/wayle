@@ -9,16 +9,11 @@ use crate::{
 };
 
 pub(crate) fn load_themes(config: &Config, themes_dir: &Path) {
-    let mut all_themes: Vec<ThemeEntry> = builtins()
-        .into_iter()
-        .map(|palette| ThemeEntry {
-            palette,
-            builtin: true,
-        })
-        .collect();
+    let mut all_themes: Vec<ThemeEntry> = builtins();
 
     let Ok(entries) = fs::read_dir(themes_dir) else {
         info!("Themes directory not found...");
+        config.styling.available.set(all_themes);
         return;
     };
 
@@ -34,24 +29,27 @@ pub(crate) fn load_themes(config: &Config, themes_dir: &Path) {
             continue;
         };
 
-        if all_themes
-            .iter()
-            .any(|t| t.palette.name == theme.palette.name)
-        {
-            error!(theme = %theme.palette.name, "Theme already exists, skipping");
+        if all_themes.iter().any(|t| t.name == theme.name) {
+            error!(theme = %theme.name, "theme already exists, skipping");
             continue;
         }
 
         all_themes.push(theme);
     }
 
-    config.styling.theme.available.set(all_themes);
+    config.styling.available.set(all_themes);
 }
 
 fn get_theme_from_file(path: &Path) -> Result<ThemeEntry, Error> {
     if path.extension().is_none_or(|ext| ext != "toml") {
         return Err(Error::ThemeNotToml { path: path.into() });
     }
+
+    let name = path
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .map(String::from)
+        .unwrap_or_default();
 
     let content = fs::read_to_string(path).map_err(|source| Error::ThemeRead {
         path: path.into(),
@@ -64,6 +62,7 @@ fn get_theme_from_file(path: &Path) -> Result<ThemeEntry, Error> {
     })?;
 
     Ok(ThemeEntry {
+        name,
         palette,
         builtin: false,
     })

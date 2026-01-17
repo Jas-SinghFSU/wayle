@@ -7,6 +7,7 @@ use std::{borrow::Cow, fmt, str::FromStr};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+use super::validated::HexColor;
 use crate::infrastructure::themes::Palette;
 
 /// Semantic color names from the palette.
@@ -98,7 +99,7 @@ impl FromStr for PaletteColor {
     }
 }
 
-/// Palette reference or custom hex color.
+/// Palette reference, custom hex color, or transparent.
 ///
 /// Palette references (e.g., `"surface"`) update when themes change.
 /// Custom hex values (e.g., `"#414868"`) remain fixed.
@@ -108,7 +109,10 @@ pub enum ColorValue {
     Palette(PaletteColor),
 
     /// Fixed hex color (e.g., `"#414868"`). Ignores theme changes.
-    Custom(String),
+    Custom(HexColor),
+
+    /// Fully transparent. Maps to CSS `transparent` keyword.
+    Transparent,
 }
 
 impl Default for ColorValue {
@@ -122,15 +126,17 @@ impl ColorValue {
     pub fn to_css(&self) -> Cow<'static, str> {
         match self {
             ColorValue::Palette(color) => Cow::Borrowed(color.css_var()),
-            ColorValue::Custom(hex) => Cow::Owned(hex.clone()),
+            ColorValue::Custom(hex) => Cow::Owned(hex.to_string()),
+            ColorValue::Transparent => Cow::Borrowed("transparent"),
         }
     }
 
-    /// Resolves to a hex string using the given palette.
+    /// Resolves to a concrete CSS color string using the given palette.
     pub fn resolve<'a>(&'a self, palette: &'a Palette) -> &'a str {
         match self {
             ColorValue::Palette(color) => palette.get(*color),
-            ColorValue::Custom(hex) => hex,
+            ColorValue::Custom(hex) => hex.as_str(),
+            ColorValue::Transparent => "transparent",
         }
     }
 
@@ -142,8 +148,9 @@ impl ColorValue {
     /// GUI label (e.g., `"Palette: Surface"` or `"Custom: #414868"`).
     pub fn display_label(&self) -> String {
         match self {
-            ColorValue::Palette(color) => format!("Palette: {}", color),
-            ColorValue::Custom(hex) => format!("Custom: {}", hex),
+            ColorValue::Palette(color) => format!("Palette: {color}"),
+            ColorValue::Custom(hex) => format!("Custom: {hex}"),
+            ColorValue::Transparent => "Transparent".to_owned(),
         }
     }
 }
@@ -155,7 +162,8 @@ impl Serialize for ColorValue {
     {
         match self {
             ColorValue::Palette(color) => serializer.serialize_str(&color.to_string()),
-            ColorValue::Custom(hex) => serializer.serialize_str(hex),
+            ColorValue::Custom(hex) => serializer.serialize_str(hex.as_str()),
+            ColorValue::Transparent => serializer.serialize_str("transparent"),
         }
     }
 }
@@ -166,8 +174,12 @@ impl<'de> Deserialize<'de> for ColorValue {
         D: serde::Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        if s.starts_with('#') {
-            Ok(ColorValue::Custom(s))
+        if s == "transparent" {
+            Ok(ColorValue::Transparent)
+        } else if s.starts_with('#') {
+            HexColor::new(s)
+                .map(ColorValue::Custom)
+                .map_err(serde::de::Error::custom)
         } else {
             s.parse::<PaletteColor>()
                 .map(ColorValue::Palette)

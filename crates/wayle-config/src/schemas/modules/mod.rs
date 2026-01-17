@@ -5,7 +5,6 @@ mod media;
 pub use battery::BatteryConfig;
 pub use clock::ClockConfig;
 pub use media::MediaConfig;
-
 use wayle_derive::wayle_config;
 
 /// Configuration for all available Wayle modules.

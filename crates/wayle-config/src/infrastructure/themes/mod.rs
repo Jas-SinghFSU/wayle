@@ -9,10 +9,8 @@ pub mod palettes;
 pub(crate) mod utils;
 
 /// Ten-color palette for CSS generation.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema, Default)]
 pub struct Palette {
-    /// Theme identifier.
-    pub name: String,
     /// Base background color (darkest).
     pub bg: String,
     /// Card and sidebar background.

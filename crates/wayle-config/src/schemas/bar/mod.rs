@@ -1,28 +1,63 @@
 mod types;
 
 pub use types::{BarGroup, BarItem, BarLayout, BarModule, BorderLocation};
-
 use wayle_common::ConfigProperty;
 use wayle_derive::wayle_config;
 
-use crate::schemas::bar::types::Location;
-
-use super::styling::{ColorValue, PaletteColor};
+use crate::schemas::{
+    bar::types::Location,
+    styling::{
+        ColorValue, FontWeightClass, PaletteColor, Percentage, RoundingLevel, ScaleFactor, Spacing,
+    },
+};
 
 /// Bar configuration.
 #[wayle_config]
 pub struct BarConfig {
+    //
+    // === === === === === === === === === ===
+    // ===          BAR SETTINGS           ===
+    // === === === === === === === === === ===
+    //
     /// Per-monitor bar layouts.
     #[default(vec![BarLayout::default()])]
     pub layout: ConfigProperty<Vec<BarLayout>>,
 
     /// Bar-specific scale multiplier for spacing, radius, and other bar elements.
-    #[default(1.0)]
-    pub scale: ConfigProperty<f32>,
+    #[default(ScaleFactor::new(1.0))]
+    pub scale: ConfigProperty<ScaleFactor>,
 
-    /// Detach bar from screen edge with margins around it.
-    #[default(false)]
-    pub floating: ConfigProperty<bool>,
+    /// Gap between bar and its attached screen edge.
+    ///
+    /// - **Orientation**: Distance from top (horizontal bar) or left (vertical bar)
+    #[serde(rename = "inset-edge")]
+    #[default(Spacing::new(0.0))]
+    pub inset_edge: ConfigProperty<Spacing>,
+
+    /// Gap at the bar's ends.
+    ///
+    /// - **Orientation**: Left/right (horizontal bar), top/bottom (vertical bar)
+    #[serde(rename = "inset-ends")]
+    #[default(Spacing::new(0.0))]
+    pub inset_ends: ConfigProperty<Spacing>,
+
+    /// Internal spacing along bar thickness.
+    ///
+    /// - **Orientation**: Top/bottom (horizontal bar), left/right (vertical bar)
+    #[default(Spacing::new(0.25))]
+    pub padding: ConfigProperty<Spacing>,
+
+    /// Internal spacing at bar ends.
+    ///
+    /// - **Orientation**: Left/right (horizontal bar), top/bottom (vertical bar)
+    #[serde(rename = "padding-ends")]
+    #[default(Spacing::new(0.5))]
+    pub padding_ends: ConfigProperty<Spacing>,
+
+    /// Gap between modules and groups on the bar.
+    #[serde(rename = "module-gap")]
+    #[default(Spacing::new(0.5))]
+    pub module_gap: ConfigProperty<Spacing>,
 
     /// Bar position on screen edge.
     #[default(Location::Top)]
@@ -32,30 +67,74 @@ pub struct BarConfig {
     #[default(ColorValue::Palette(PaletteColor::Primary))]
     pub bg: ConfigProperty<ColorValue>,
 
-    /// Scale multiplier for button icon size. Range: 0.25–3.0.
-    #[serde(rename = "button-icon-scale")]
-    #[default(1.0)]
-    pub button_icon_scale: ConfigProperty<f32>,
+    /// Bar background opacity (0-100).
+    #[serde(rename = "background-opacity")]
+    #[default(Percentage::new(100))]
+    pub background_opacity: ConfigProperty<Percentage>,
 
-    /// Scale multiplier for button icon container padding. Range: 0.25–3.0.
-    #[serde(rename = "button-icon-padding-scale")]
-    #[default(1.0)]
-    pub button_icon_padding_scale: ConfigProperty<f32>,
+    /// Border placement for bar.
+    #[serde(rename = "border-location")]
+    #[default(BorderLocation::None)]
+    pub border_location: ConfigProperty<BorderLocation>,
 
-    /// Scale multiplier for button label text size. Range: 0.25–3.0.
-    #[serde(rename = "button-label-scale")]
-    #[default(1.0)]
-    pub button_label_scale: ConfigProperty<f32>,
+    /// Border width for bar (pixels).
+    #[serde(rename = "border-width")]
+    #[default(1u8)]
+    pub border_width: ConfigProperty<u8>,
 
-    /// Scale multiplier for button label container padding. Range: 0.25–3.0.
-    #[serde(rename = "button-label-padding-scale")]
-    #[default(1.0)]
-    pub button_label_padding_scale: ConfigProperty<f32>,
+    /// Border color for the bar
+    #[serde(rename = "border-color")]
+    #[default(ColorValue::Palette(PaletteColor::Primary))]
+    pub border_color: ConfigProperty<ColorValue>,
 
-    /// Scale multiplier for gap between icon and label. Range: 0.25–3.0.
-    #[serde(rename = "button-gap-scale")]
-    #[default(1.0)]
-    pub button_gap_scale: ConfigProperty<f32>,
+    /// Corner rounding level for the bar.
+    #[default(RoundingLevel::None)]
+    pub rounding: ConfigProperty<RoundingLevel>,
+
+    /// Whether or not to enable the shadow for the bar
+    #[serde(rename = "shadow-enabled")]
+    #[default(false)]
+    pub shadow_enabled: ConfigProperty<bool>,
+
+    //
+    // === === === === === === === === === === ===
+    // ===       BUTTON/MODULE SETTINGS        ===
+    // === === === === === === === === === === ===
+    //
+    /// Button opacity (0-100).
+    #[serde(rename = "button-opacity")]
+    #[default(Percentage::new(100))]
+    pub button_opacity: ConfigProperty<Percentage>,
+
+    /// Button icon size.
+    #[serde(rename = "button-icon-size")]
+    #[default(ScaleFactor::new(1.0))]
+    pub button_icon_size: ConfigProperty<ScaleFactor>,
+
+    /// Button icon container padding.
+    #[serde(rename = "button-icon-padding")]
+    #[default(ScaleFactor::new(1.0))]
+    pub button_icon_padding: ConfigProperty<ScaleFactor>,
+
+    /// Button label text size.
+    #[serde(rename = "button-label-size")]
+    #[default(ScaleFactor::new(1.0))]
+    pub button_label_size: ConfigProperty<ScaleFactor>,
+
+    /// Button label font weight.
+    #[serde(rename = "button-label-weight")]
+    #[default(FontWeightClass::Normal)]
+    pub button_label_weight: ConfigProperty<FontWeightClass>,
+
+    /// Button label container padding.
+    #[serde(rename = "button-label-padding")]
+    #[default(ScaleFactor::new(1.0))]
+    pub button_label_padding: ConfigProperty<ScaleFactor>,
+
+    /// Gap between button icon and label.
+    #[serde(rename = "button-gap")]
+    #[default(ScaleFactor::new(1.0))]
+    pub button_gap: ConfigProperty<ScaleFactor>,
 
     /// Border placement for bar buttons.
     #[serde(rename = "button-border-location")]
@@ -67,15 +146,50 @@ pub struct BarConfig {
     #[default(1u8)]
     pub button_border_width: ConfigProperty<u8>,
 
-    /// Whether or not to enable the shadow for the bar
-    #[serde(rename = "shadow-enabled")]
-    #[default(false)]
-    pub shadow_enabled: ConfigProperty<bool>,
+    /// Border placement for button groups.
+    #[serde(rename = "button-group-border-location")]
+    #[default(BorderLocation::None)]
+    pub button_group_border_location: ConfigProperty<BorderLocation>,
 
-    /// Scale multiplier for dropdown panels spawned from bar modules.
-    #[serde(rename = "dropdown-scale")]
-    #[default(1.0)]
-    pub dropdown_scale: ConfigProperty<f32>,
+    /// Border width for button groups (pixels).
+    #[serde(rename = "button-group-border-width")]
+    #[default(1u8)]
+    pub button_group_border_width: ConfigProperty<u8>,
+
+    /// Internal padding for button groups.
+    #[serde(rename = "button-group-padding")]
+    #[default(ScaleFactor::new(1.0))]
+    pub button_group_padding: ConfigProperty<ScaleFactor>,
+
+    /// Gap between modules within a group.
+    #[serde(rename = "group-module-gap")]
+    #[default(Spacing::new(0.25))]
+    pub group_module_gap: ConfigProperty<Spacing>,
+
+    /// Background color for button groups.
+    #[serde(rename = "button-group-background")]
+    #[default(ColorValue::Palette(PaletteColor::Elevated))]
+    pub button_group_background: ConfigProperty<ColorValue>,
+
+    /// Button group opacity (0-100).
+    #[serde(rename = "button-group-opacity")]
+    #[default(Percentage::new(100))]
+    pub button_group_opacity: ConfigProperty<Percentage>,
+
+    /// Border color for button groups.
+    #[serde(rename = "button-group-border-color")]
+    #[default(ColorValue::Palette(PaletteColor::Primary))]
+    pub button_group_border_color: ConfigProperty<ColorValue>,
+
+    //
+    // === === === === === === === === === ===
+    // ===        DROPDOWN SETTINGS        ===
+    // === === === === === === === === === ===
+    //
+    /// Dropdown panel size.
+    #[serde(rename = "dropdown-size")]
+    #[default(ScaleFactor::new(1.0))]
+    pub dropdown_size: ConfigProperty<ScaleFactor>,
 
     /// Whether or not to enable the shadow for the dropdown menus
     #[serde(rename = "dropdown-shadow-enabled")]

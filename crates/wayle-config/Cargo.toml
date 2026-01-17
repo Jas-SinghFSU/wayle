@@ -23,5 +23,8 @@ tracing.workspace = true
 wayle-common = { workspace = true, features = ["schema"] }
 wayle-derive.workspace = true
 
+[dev-dependencies]
+serde_json.workspace = true
+
 [lints]
 workspace = true

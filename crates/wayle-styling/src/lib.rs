@@ -12,14 +12,14 @@ pub use errors::Error;
 use tracing::{error, info};
 use wayle_config::{
     infrastructure::themes::Palette,
-    schemas::{bar::BarConfig, general::GeneralConfig, styling::{RoundingLevel, ThemeProvider}},
+    schemas::{bar::BarConfig, general::GeneralConfig, styling::ThemeProvider},
 };
 
 fn scss_dir() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("scss")
 }
 
-/// Compiles the complete stylesheet from palette, font, scale, and rounding inputs.
+/// Compiles the complete stylesheet from palette, font, and bar config.
 ///
 /// # Errors
 ///
@@ -28,8 +28,6 @@ pub fn compile(
     palette: &Palette,
     general: &GeneralConfig,
     bar: &BarConfig,
-    scale: f32,
-    rounding: RoundingLevel,
     theme_provider: ThemeProvider,
 ) -> Result<String, Error> {
     let resolved_palette = match resolve_palette(palette, &theme_provider) {
@@ -46,8 +44,8 @@ pub fn compile(
         "{}\n{}\n{}\n{}\n",
         palette_to_scss(resolved_palette),
         fonts_to_scss(general),
-        scale_to_scss(scale, bar),
-        rounding_to_scss(rounding)
+        scale_to_scss(bar),
+        rounding_to_scss(bar)
     );
 
     let scss_path = scss_dir();
@@ -109,32 +107,35 @@ $font-mono: "{}";
     )
 }
 
-fn scale_to_scss(scale: f32, bar: &BarConfig) -> String {
+fn scale_to_scss(bar: &BarConfig) -> String {
     format!(
-        "$global-scale: {};\n\
-         $bar-scale: {};\n\
+        "$bar-scale: {};\n\
          $bar-btn-icon-scale: {};\n\
          $bar-btn-icon-padding-scale: {};\n\
          $bar-btn-label-scale: {};\n\
          $bar-btn-label-padding-scale: {};\n\
-         $bar-btn-gap-scale: {};\n",
-        scale,
+         $bar-btn-gap-scale: {};\n\
+         $bar-module-gap: {};\n\
+         $bar-group-module-gap: {};\n",
         bar.scale.get(),
-        bar.button_icon_scale.get(),
-        bar.button_icon_padding_scale.get(),
-        bar.button_label_scale.get(),
-        bar.button_label_padding_scale.get(),
-        bar.button_gap_scale.get()
+        bar.button_icon_size.get(),
+        bar.button_icon_padding.get(),
+        bar.button_label_size.get(),
+        bar.button_label_padding.get(),
+        bar.button_gap.get(),
+        bar.module_gap.get(),
+        bar.group_module_gap.get()
     )
 }
 
-fn rounding_to_scss(rounding: RoundingLevel) -> String {
+fn rounding_to_scss(bar: &BarConfig) -> String {
+    let rounding = bar.rounding.get();
     let global = rounding.to_css_values();
-    let bar = rounding.to_bar_css_values();
+    let bar_values = rounding.to_bar_css_values();
     format!(
         "$rounding-element: {};\n$rounding-container: {};\n\
          $bar-rounding-element: {};\n$bar-rounding-container: {};\n",
-        global.element, global.container, bar.element, bar.container
+        global.element, global.container, bar_values.element, bar_values.container
     )
 }
 
@@ -148,18 +149,10 @@ mod tests {
     fn compiled_css_loads_into_gtk4() {
         gtk4::init().unwrap();
 
-        let palette = palettes::builtins().into_iter().next().unwrap();
+        let theme = palettes::builtins().into_iter().next().unwrap();
         let general = GeneralConfig::default();
         let bar = BarConfig::default();
-        let css = compile(
-            &palette,
-            &general,
-            &bar,
-            1.0,
-            RoundingLevel::default(),
-            ThemeProvider::default(),
-        )
-        .unwrap();
+        let css = compile(&theme.palette, &general, &bar, ThemeProvider::default()).unwrap();
 
         let provider = gtk4::CssProvider::new();
         provider.load_from_string(&css);
@@ -167,18 +160,10 @@ mod tests {
 
     #[test]
     fn debug_print_css() {
-        let palette = palettes::builtins().into_iter().next().unwrap();
+        let theme = palettes::builtins().into_iter().next().unwrap();
         let general = GeneralConfig::default();
         let bar = BarConfig::default();
-        let css = compile(
-            &palette,
-            &general,
-            &bar,
-            1.0,
-            RoundingLevel::default(),
-            ThemeProvider::default(),
-        )
-        .unwrap();
+        let css = compile(&theme.palette, &general, &bar, ThemeProvider::default()).unwrap();
 
         println!("\n=== COMPILED CSS ===\n{}\n=== END ===", css);
     }

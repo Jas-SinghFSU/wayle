@@ -1,0 +1,11 @@
+.bar-section {
+    .bar-item + .bar-item {
+        margin-left: calc(#{$bar-module-gap} * #{$bar-scale} * 1rem);
+    }
+}
+
+.bar-group {
+    > .module + .module {
+        margin-left: calc(#{$bar-group-module-gap} * #{$bar-scale} * 1rem);
+    }
+}

@@ -1,30 +1,50 @@
-mod theme;
+mod palette;
 mod types;
 
-pub use theme::ThemeConfig;
+pub use palette::PaletteConfig;
 pub use types::{
-    ColorValue, FontWeightClass, GapClass, IconSizeClass, InvalidPaletteColor, PaddingClass,
-    PaletteColor, RadiusClass, RoundingLevel, TextSizeClass, ThemeEntry, ThemeProvider,
+    ColorValue, FontWeightClass, GapClass, HexColor, IconSizeClass, InvalidHexColor,
+    InvalidPaletteColor, PaddingClass, PaletteColor, Percentage, RadiusClass, RoundingLevel,
+    ScaleFactor, Spacing, TextSizeClass, ThemeEntry, ThemeProvider,
 };
 use wayle_common::ConfigProperty;
 use wayle_derive::wayle_config;
 
-/// Global styling configuration. Changes trigger stylesheet recompilation.
+use crate::infrastructure::themes::Palette;
+
+/// Styling configuration. Changes trigger stylesheet recompilation.
 #[wayle_config]
 pub struct StylingConfig {
-    /// Determines which provider handles theming.
+    /// Theme provider (wayle, matugen, pywal, wallust).
     #[serde(rename = "theme-provider")]
     #[default(ThemeProvider::default())]
     pub theme_provider: ConfigProperty<ThemeProvider>,
 
-    /// Color palette configuration.
-    pub theme: ThemeConfig,
+    /// Active color palette.
+    pub palette: PaletteConfig,
 
-    /// Global UI scale multiplier affecting all rem-based sizing.
-    #[default(1.0)]
-    pub scale: ConfigProperty<f32>,
+    /// Discovered themes (runtime-populated).
+    #[serde(skip)]
+    #[schemars(skip)]
+    #[wayle(skip)]
+    #[default(Vec::new())]
+    pub available: ConfigProperty<Vec<ThemeEntry>>,
+}
 
-    /// Global rounding preference (none, sm, md, lg).
-    #[default(RoundingLevel::default())]
-    pub rounding: ConfigProperty<RoundingLevel>,
+impl StylingConfig {
+    /// Assembles a palette from the individual color fields.
+    pub fn palette(&self) -> Palette {
+        Palette {
+            bg: self.palette.bg.get().to_string(),
+            surface: self.palette.surface.get().to_string(),
+            elevated: self.palette.elevated.get().to_string(),
+            fg: self.palette.fg.get().to_string(),
+            fg_muted: self.palette.fg_muted.get().to_string(),
+            primary: self.palette.primary.get().to_string(),
+            red: self.palette.red.get().to_string(),
+            yellow: self.palette.yellow.get().to_string(),
+            green: self.palette.green.get().to_string(),
+            blue: self.palette.blue.get().to_string(),
+        }
+    }
 }

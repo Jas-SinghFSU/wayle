@@ -3,8 +3,10 @@ use crate::infrastructure::themes::Palette;
 /// A discovered theme available for selection.
 #[derive(Debug, Clone, PartialEq)]
 pub struct ThemeEntry {
-    /// Color palette for this theme.
+    /// Theme identifier.
+    pub name: String,
+    /// Color palette.
     pub palette: Palette,
-    /// Whether this is a built-in theme or user-defined.
+    /// Built-in or user-defined.
     pub builtin: bool,
 }

@@ -6,8 +6,10 @@ use futures::StreamExt;
 use gtk4::prelude::{OrientableExt, WidgetExt};
 use relm4::{ComponentParts, ComponentSender, RelmWidgetExt, prelude::*};
 use wayle_common::ConfigProperty;
-use wayle_config::schemas::bar::BorderLocation;
-use wayle_config::schemas::styling::{ColorValue, PaletteColor, ThemeProvider};
+use wayle_config::schemas::{
+    bar::BorderLocation,
+    styling::{ColorValue, PaletteColor, ThemeProvider},
+};
 
 use super::{
     shared::{resolve_color, setup_event_controllers},
@@ -98,9 +100,7 @@ impl Default for BasicBarButtonConfig {
             label_color: Arc::new(ConfigProperty::new(ColorValue::Palette(
                 PaletteColor::FgMuted,
             ))),
-            button_background: Arc::new(ConfigProperty::new(ColorValue::Custom(
-                "transparent".to_string(),
-            ))),
+            button_background: Arc::new(ConfigProperty::new(ColorValue::Transparent)),
             border_color: Arc::new(ConfigProperty::new(ColorValue::Palette(
                 PaletteColor::Elevated,
             ))),

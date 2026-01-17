@@ -1,22 +1,55 @@
 use super::Palette;
+use crate::schemas::styling::ThemeEntry;
 
-/// All built-in theme palettes.
-pub fn builtins() -> Vec<Palette> {
+/// All built-in theme entries.
+pub fn builtins() -> Vec<ThemeEntry> {
     vec![
-        catppuccin(),
-        catppuccin_latte(),
-        gruvbox(),
-        tokyo_night(),
-        rose_pine(),
-        dracula(),
-        nord(),
-        everforest(),
+        ThemeEntry {
+            name: String::from("catppuccin"),
+            palette: catppuccin(),
+            builtin: true,
+        },
+        ThemeEntry {
+            name: String::from("catppuccin-latte"),
+            palette: catppuccin_latte(),
+            builtin: true,
+        },
+        ThemeEntry {
+            name: String::from("gruvbox"),
+            palette: gruvbox(),
+            builtin: true,
+        },
+        ThemeEntry {
+            name: String::from("tokyo-night"),
+            palette: tokyo_night(),
+            builtin: true,
+        },
+        ThemeEntry {
+            name: String::from("rose-pine"),
+            palette: rose_pine(),
+            builtin: true,
+        },
+        ThemeEntry {
+            name: String::from("dracula"),
+            palette: dracula(),
+            builtin: true,
+        },
+        ThemeEntry {
+            name: String::from("nord"),
+            palette: nord(),
+            builtin: true,
+        },
+        ThemeEntry {
+            name: String::from("everforest"),
+            palette: everforest(),
+            builtin: true,
+        },
     ]
 }
 
-pub(crate) fn catppuccin() -> Palette {
+/// Default palette (Catppuccin Mocha).
+pub fn catppuccin() -> Palette {
     Palette {
-        name: String::from("catppuccin"),
         bg: String::from("#11111b"),
         surface: String::from("#181825"),
         elevated: String::from("#1e1e2e"),
@@ -32,7 +65,6 @@ pub(crate) fn catppuccin() -> Palette {
 
 fn catppuccin_latte() -> Palette {
     Palette {
-        name: String::from("catppuccin-latte"),
         bg: String::from("#eff1f5"),
         surface: String::from("#e6e9ef"),
         elevated: String::from("#dce0e8"),
@@ -48,7 +80,6 @@ fn catppuccin_latte() -> Palette {
 
 fn gruvbox() -> Palette {
     Palette {
-        name: String::from("gruvbox"),
         bg: String::from("#282828"),
         surface: String::from("#3c3836"),
         elevated: String::from("#504945"),
@@ -64,7 +95,6 @@ fn gruvbox() -> Palette {
 
 fn tokyo_night() -> Palette {
     Palette {
-        name: String::from("tokyo-night"),
         bg: String::from("#16161e"),
         surface: String::from("#1a1b26"),
         elevated: String::from("#202230"),
@@ -80,7 +110,6 @@ fn tokyo_night() -> Palette {
 
 fn rose_pine() -> Palette {
     Palette {
-        name: String::from("rose-pine"),
         bg: String::from("#191724"),
         surface: String::from("#1f1d2e"),
         elevated: String::from("#26233a"),
@@ -96,7 +125,6 @@ fn rose_pine() -> Palette {
 
 fn dracula() -> Palette {
     Palette {
-        name: String::from("dracula"),
         bg: String::from("#282a36"),
         surface: String::from("#343746"),
         elevated: String::from("#44475a"),
@@ -112,7 +140,6 @@ fn dracula() -> Palette {
 
 fn nord() -> Palette {
     Palette {
-        name: String::from("nord"),
         bg: String::from("#2e3440"),
         surface: String::from("#3b4252"),
         elevated: String::from("#434c5e"),
@@ -128,7 +155,6 @@ fn nord() -> Palette {
 
 fn everforest() -> Palette {
     Palette {
-        name: String::from("everforest"),
         bg: String::from("#2d353b"),
         surface: String::from("#343f44"),
         elevated: String::from("#3d484d"),

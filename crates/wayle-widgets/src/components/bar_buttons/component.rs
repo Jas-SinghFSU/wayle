@@ -3,8 +3,7 @@
 use gtk4::prelude::Cast;
 use relm4::{ComponentParts, ComponentSender, Controller, gtk, prelude::*};
 use wayle_common::ConfigProperty;
-use wayle_config::schemas::bar::BorderLocation;
-use wayle_config::schemas::styling::ThemeProvider;
+use wayle_config::schemas::{bar::BorderLocation, styling::ThemeProvider};
 
 use super::{
     basic::{BasicBarButton, BasicBarButtonConfig, BasicBarButtonInit},

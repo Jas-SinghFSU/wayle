@@ -1,6 +1,8 @@
 use wayle_common::ConfigProperty;
 use wayle_derive::wayle_config;
 
+use crate::schemas::styling::Percentage;
+
 /// Battery module configuration for status bar display.
 #[wayle_config]
 pub struct BatteryConfig {
@@ -15,6 +17,6 @@ pub struct BatteryConfig {
 
     /// Percentage threshold for low battery warning.
     #[serde(rename = "warning-threshold")]
-    #[default(20)]
-    pub warning_threshold: ConfigProperty<u8>,
+    #[default(Percentage::new(20))]
+    pub warning_threshold: ConfigProperty<Percentage>,
 }
