@@ -20,6 +20,9 @@ pub const ACTIONS_INTERFACE: &str = "org.gtk.Actions";
 pub mod actions {
     /// Action to quit the shell gracefully.
     pub const QUIT: &str = "quit";
+
+    /// Action to open the GTK Inspector for debugging.
+    pub const INSPECTOR: &str = "inspector";
 }
 
 /// Proxy for GApplication's org.gtk.Actions interface.

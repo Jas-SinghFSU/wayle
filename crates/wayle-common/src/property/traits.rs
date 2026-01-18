@@ -23,10 +23,11 @@ pub trait ApplyRuntimeLayer {
     /// Apply TOML values to the runtime layer.
     ///
     /// The `path` parameter indicates the config key path (e.g., "general.bar.layout")
-    /// for error messages.
+    /// for error messages. Missing fields in nested structs are skipped.
     ///
-    /// Returns `Err` with a description if the value cannot be deserialized.
-    /// Missing fields in nested structs are skipped (not an error).
+    /// # Errors
+    ///
+    /// Returns error description if the value cannot be deserialized.
     fn apply_runtime_layer(&self, value: &toml::Value, path: &str) -> Result<(), String>;
 }
 
