@@ -32,7 +32,6 @@ impl Percentage {
     }
 }
 
-
 impl Deref for Percentage {
     type Target = u8;
 

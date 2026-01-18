@@ -2,6 +2,7 @@
 
 /// Panel command definitions.
 pub mod commands;
+mod inspect;
 mod proxy;
 /// Restart command.
 pub mod restart;
@@ -30,5 +31,6 @@ pub async fn execute(command: PanelCommands) -> CliAction {
         PanelCommands::Restart => restart::execute().await,
         PanelCommands::Status => status::execute().await,
         PanelCommands::Settings => settings::execute().await,
+        PanelCommands::Inspect => inspect::execute().await,
     }
 }

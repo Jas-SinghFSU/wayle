@@ -61,8 +61,13 @@ fn resolve_palette(fallback: &Palette, theme_provider: &ThemeProvider) -> Palett
                 error!(error = %e, "matugen palette load failed");
                 fallback.clone()
             }),
-        ThemeProvider::Pywal | ThemeProvider::Wallust => {
-            palette_provider::pywal::PyWallustProvider::load().unwrap_or_else(|e| {
+        ThemeProvider::Wallust => palette_provider::wallust::WallustProvider::load()
+            .unwrap_or_else(|e| {
+                error!(error = %e, "wallust palette load failed");
+                fallback.clone()
+            }),
+        ThemeProvider::Pywal => {
+            palette_provider::pywal::PywalProvider::load().unwrap_or_else(|e| {
                 error!(error = %e, "pywal palette load failed");
                 fallback.clone()
             })

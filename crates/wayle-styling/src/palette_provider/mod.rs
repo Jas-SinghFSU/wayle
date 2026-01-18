@@ -1,5 +1,6 @@
 pub(crate) mod matugen;
 pub(crate) mod pywal;
+pub(crate) mod wallust;
 
 use wayle_config::infrastructure::themes::Palette;
 

@@ -5,9 +5,9 @@ use wayle_config::infrastructure::{paths::ConfigPaths, themes::Palette};
 
 use crate::{Error, palette_provider::PaletteProvider};
 
-pub(crate) struct PyWallustProvider;
+pub(crate) struct PywalProvider;
 
-impl PaletteProvider for PyWallustProvider {
+impl PaletteProvider for PywalProvider {
     fn load() -> Result<Palette, Error> {
         let path = ConfigPaths::pywal_colors().map_err(|_| {
             Error::Io(std::io::Error::new(

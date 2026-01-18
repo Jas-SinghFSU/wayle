@@ -7,7 +7,7 @@ use wayle_derive::wayle_config;
 use crate::schemas::{
     bar::types::Location,
     styling::{
-        ColorValue, FontWeightClass, PaletteColor, Percentage, RoundingLevel, ScaleFactor, Spacing,
+        ColorValue, CssToken, FontWeightClass, Percentage, RoundingLevel, ScaleFactor, Spacing,
     },
 };
 
@@ -64,7 +64,7 @@ pub struct BarConfig {
     pub location: ConfigProperty<Location>,
 
     /// Bar background color.
-    #[default(ColorValue::Palette(PaletteColor::Primary))]
+    #[default(ColorValue::Token(CssToken::BgSurface))]
     pub bg: ConfigProperty<ColorValue>,
 
     /// Bar background opacity (0-100).
@@ -82,9 +82,9 @@ pub struct BarConfig {
     #[default(1u8)]
     pub border_width: ConfigProperty<u8>,
 
-    /// Border color for the bar
+    /// Border color for the bar.
     #[serde(rename = "border-color")]
-    #[default(ColorValue::Palette(PaletteColor::Primary))]
+    #[default(ColorValue::Token(CssToken::BorderAccent))]
     pub border_color: ConfigProperty<ColorValue>,
 
     /// Corner rounding level for the bar.
@@ -168,7 +168,7 @@ pub struct BarConfig {
 
     /// Background color for button groups.
     #[serde(rename = "button-group-background")]
-    #[default(ColorValue::Palette(PaletteColor::Elevated))]
+    #[default(ColorValue::Token(CssToken::BgElevated))]
     pub button_group_background: ConfigProperty<ColorValue>,
 
     /// Button group opacity (0-100).
@@ -178,7 +178,7 @@ pub struct BarConfig {
 
     /// Border color for button groups.
     #[serde(rename = "button-group-border-color")]
-    #[default(ColorValue::Palette(PaletteColor::Primary))]
+    #[default(ColorValue::Token(CssToken::BorderAccent))]
     pub button_group_border_color: ConfigProperty<ColorValue>,
 
     //

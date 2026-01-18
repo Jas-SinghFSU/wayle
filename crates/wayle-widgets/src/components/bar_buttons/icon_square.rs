@@ -8,7 +8,7 @@ use relm4::{ComponentParts, ComponentSender, RelmWidgetExt, prelude::*};
 use wayle_common::ConfigProperty;
 use wayle_config::schemas::{
     bar::BorderLocation,
-    styling::{ColorValue, PaletteColor, ThemeProvider},
+    styling::{ColorValue, CssToken, ThemeProvider},
 };
 
 use super::{
@@ -98,16 +98,14 @@ impl Default for IconSquareBarButtonConfig {
             show_label: Arc::new(ConfigProperty::new(true)),
             visible: Arc::new(ConfigProperty::new(true)),
             vertical: Arc::new(ConfigProperty::new(false)),
-            icon_color: Arc::new(ConfigProperty::new(ColorValue::Palette(PaletteColor::Bg))),
-            label_color: Arc::new(ConfigProperty::new(ColorValue::Palette(PaletteColor::Fg))),
-            icon_background: Arc::new(ConfigProperty::new(ColorValue::Palette(
-                PaletteColor::Primary,
+            icon_color: Arc::new(ConfigProperty::new(ColorValue::Token(CssToken::BgSurface))),
+            label_color: Arc::new(ConfigProperty::new(ColorValue::Token(CssToken::Accent))),
+            icon_background: Arc::new(ConfigProperty::new(ColorValue::Token(CssToken::Accent))),
+            button_background: Arc::new(ConfigProperty::new(ColorValue::Token(
+                CssToken::BgSurfaceElevated,
             ))),
-            button_background: Arc::new(ConfigProperty::new(ColorValue::Palette(
-                PaletteColor::Surface,
-            ))),
-            border_color: Arc::new(ConfigProperty::new(ColorValue::Palette(
-                PaletteColor::Elevated,
+            border_color: Arc::new(ConfigProperty::new(ColorValue::Token(
+                CssToken::BorderAccent,
             ))),
         }
     }
@@ -220,6 +218,7 @@ impl Component for IconSquareBarButton {
                 gtk::Label {
                     add_css_class: "bar-button-label",
                     set_halign: gtk::Align::Center,
+                    set_valign: gtk::Align::BaselineCenter,
 
                     #[watch]
                     set_label: &model.label,

@@ -59,6 +59,16 @@ pub enum Error {
         stderr: String,
     },
 
+    /// Configuration path error.
+    #[error("cannot access {context}")]
+    ConfigPathError {
+        /// What path operation failed.
+        context: &'static str,
+        /// The underlying I/O error.
+        #[source]
+        source: io::Error,
+    },
+
     /// I/O operation failed.
     #[error("I/O error: {0}")]
     Io(#[from] io::Error),

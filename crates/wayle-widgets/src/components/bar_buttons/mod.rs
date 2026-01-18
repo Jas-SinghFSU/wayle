@@ -18,4 +18,4 @@ pub use icon_square::{
     IconSquareBarButtonInput,
 };
 pub use types::{BarButtonClass, BarButtonOutput, BarButtonVariant, CommonBarButtonMsg};
-pub use wayle_config::schemas::styling::{ColorValue, PaletteColor};
+pub use wayle_config::schemas::styling::{ColorValue, CssToken};

@@ -1,11 +1,9 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::schemas::styling::PaletteColor;
-
 /// Built-in theme palettes.
 pub mod palettes;
-/// Theme discovery utilities
+/// Theme discovery utilities.
 pub(crate) mod utils;
 
 /// Ten-color palette for CSS generation.
@@ -31,22 +29,4 @@ pub struct Palette {
     pub green: String,
     /// Blue palette color.
     pub blue: String,
-}
-
-impl Palette {
-    /// Hex color string for the given semantic color.
-    pub fn get(&self, color: PaletteColor) -> &str {
-        match color {
-            PaletteColor::Bg => &self.bg,
-            PaletteColor::Surface => &self.surface,
-            PaletteColor::Elevated => &self.elevated,
-            PaletteColor::Fg => &self.fg,
-            PaletteColor::FgMuted => &self.fg_muted,
-            PaletteColor::Primary => &self.primary,
-            PaletteColor::Red => &self.red,
-            PaletteColor::Yellow => &self.yellow,
-            PaletteColor::Green => &self.green,
-            PaletteColor::Blue => &self.blue,
-        }
-    }
 }

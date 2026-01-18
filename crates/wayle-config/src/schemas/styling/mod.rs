@@ -3,9 +3,9 @@ mod types;
 
 pub use palette::PaletteConfig;
 pub use types::{
-    ColorValue, FontWeightClass, GapClass, HexColor, IconSizeClass, InvalidHexColor,
-    InvalidPaletteColor, PaddingClass, PaletteColor, Percentage, RadiusClass, RoundingLevel,
-    ScaleFactor, Spacing, TextSizeClass, ThemeEntry, ThemeProvider,
+    ColorValue, CssToken, FontWeightClass, GapClass, HexColor, IconSizeClass, InvalidCssToken,
+    InvalidHexColor, PaddingClass, Percentage, RadiusClass, RoundingLevel, ScaleFactor, Spacing,
+    TextSizeClass, ThemeEntry, ThemeProvider,
 };
 use wayle_common::ConfigProperty;
 use wayle_derive::wayle_config;

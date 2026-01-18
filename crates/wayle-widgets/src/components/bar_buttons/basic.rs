@@ -8,7 +8,7 @@ use relm4::{ComponentParts, ComponentSender, RelmWidgetExt, prelude::*};
 use wayle_common::ConfigProperty;
 use wayle_config::schemas::{
     bar::BorderLocation,
-    styling::{ColorValue, PaletteColor, ThemeProvider},
+    styling::{ColorValue, CssToken, ThemeProvider},
 };
 
 use super::{
@@ -96,13 +96,13 @@ impl Default for BasicBarButtonConfig {
             show_label: Arc::new(ConfigProperty::new(true)),
             visible: Arc::new(ConfigProperty::new(true)),
             vertical: Arc::new(ConfigProperty::new(false)),
-            icon_color: Arc::new(ConfigProperty::new(ColorValue::Palette(PaletteColor::Fg))),
-            label_color: Arc::new(ConfigProperty::new(ColorValue::Palette(
-                PaletteColor::FgMuted,
+            icon_color: Arc::new(ConfigProperty::new(ColorValue::Token(CssToken::Accent))),
+            label_color: Arc::new(ConfigProperty::new(ColorValue::Token(CssToken::Accent))),
+            button_background: Arc::new(ConfigProperty::new(ColorValue::Token(
+                CssToken::BgSurface,
             ))),
-            button_background: Arc::new(ConfigProperty::new(ColorValue::Transparent)),
-            border_color: Arc::new(ConfigProperty::new(ColorValue::Palette(
-                PaletteColor::Elevated,
+            border_color: Arc::new(ConfigProperty::new(ColorValue::Token(
+                CssToken::BorderAccent,
             ))),
         }
     }
@@ -208,6 +208,7 @@ impl Component for BasicBarButton {
                 #[name = "label_widget"]
                 gtk::Label {
                     add_css_class: "bar-button-label",
+                    set_valign: gtk::Align::BaselineCenter,
 
                     #[watch]
                     set_label: &model.label,

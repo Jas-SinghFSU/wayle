@@ -5,7 +5,7 @@ mod theme;
 mod typography;
 mod validated;
 
-pub use color::{ColorValue, InvalidPaletteColor, PaletteColor, ThemeProvider};
+pub use color::{ColorValue, CssToken, InvalidCssToken, ThemeProvider};
 pub use rounding::{RadiusClass, RoundingLevel};
 pub use sizing::{GapClass, IconSizeClass, PaddingClass};
 pub use theme::ThemeEntry;

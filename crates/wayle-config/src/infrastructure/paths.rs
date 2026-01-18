@@ -26,38 +26,64 @@ impl ConfigPaths {
         Ok(PathBuf::from(config_home).join("wayle"))
     }
 
-    /// Application data directory (`~/.wayle`). Creates directory if absent.
+    /// Data directory (`$XDG_DATA_HOME/wayle` or `~/.local/share/wayle`).
+    /// Creates directory if absent.
     ///
     /// # Errors
     ///
-    /// Returns error if `HOME` is not set or directory creation fails.
-    pub fn app_data_dir() -> Result<PathBuf, Error> {
-        let data_dir = env::var("HOME")
-            .map(|home| format!("{home}/.wayle"))
+    /// Returns error if environment variables are not set or directory creation fails.
+    pub fn data_dir() -> Result<PathBuf, Error> {
+        let data_home = env::var("XDG_DATA_HOME")
+            .or_else(|_| env::var("HOME").map(|home| format!("{home}/.local/share")))
             .map_err(|e| {
                 Error::new(
                     ErrorKind::NotFound,
-                    format!("HOME environment variable not found: {e}"),
+                    format!("Neither XDG_DATA_HOME nor HOME environment variable found: {e}"),
                 )
             })?;
 
-        let app_dir = PathBuf::from(data_dir);
+        let data_dir = PathBuf::from(data_home).join("wayle");
 
-        if !app_dir.exists() {
-            fs::create_dir_all(&app_dir)?;
+        if !data_dir.exists() {
+            fs::create_dir_all(&data_dir)?;
         }
 
-        Ok(app_dir)
+        Ok(data_dir)
     }
 
-    /// Application log directory (`~/.wayle/logs`). Creates directory if absent.
+    /// State directory (`$XDG_STATE_HOME/wayle` or `~/.local/state/wayle`).
+    /// Creates directory if absent.
+    ///
+    /// # Errors
+    ///
+    /// Returns error if environment variables are not set or directory creation fails.
+    pub fn state_dir() -> Result<PathBuf, Error> {
+        let state_home = env::var("XDG_STATE_HOME")
+            .or_else(|_| env::var("HOME").map(|home| format!("{home}/.local/state")))
+            .map_err(|e| {
+                Error::new(
+                    ErrorKind::NotFound,
+                    format!("Neither XDG_STATE_HOME nor HOME environment variable found: {e}"),
+                )
+            })?;
+
+        let state_dir = PathBuf::from(state_home).join("wayle");
+
+        if !state_dir.exists() {
+            fs::create_dir_all(&state_dir)?;
+        }
+
+        Ok(state_dir)
+    }
+
+    /// Log directory (`$XDG_STATE_HOME/wayle` or `~/.local/state/wayle`).
+    /// Creates directory if absent.
     ///
     /// # Errors
     ///
     /// Returns error if directory creation fails.
     pub fn log_dir() -> Result<PathBuf, Box<dyn std::error::Error>> {
-        let app_dir = Self::app_data_dir()?;
-        let log_dir = app_dir.join("logs");
+        let log_dir = Self::state_dir()?;
 
         if !log_dir.exists() {
             fs::create_dir_all(&log_dir)?;
@@ -145,7 +171,7 @@ impl ConfigPaths {
         Ok(Self::cache_dir()?.join("matugen-colors.json"))
     }
 
-    /// Path to pywal/wallust colors JSON (`~/.cache/wal/colors.json`).
+    /// Path to pywal colors JSON (`~/.cache/wal/colors.json`).
     ///
     /// # Errors
     ///
@@ -161,5 +187,14 @@ impl ConfigPaths {
             })?;
 
         Ok(PathBuf::from(cache_home).join("wal/colors.json"))
+    }
+
+    /// Path to cached wallust colors JSON.
+    ///
+    /// # Errors
+    ///
+    /// Returns error if cache directory cannot be determined or created.
+    pub fn wallust_colors() -> Result<PathBuf, Error> {
+        Ok(Self::cache_dir()?.join("wallust-colors.json"))
     }
 }

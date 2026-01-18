@@ -9,11 +9,12 @@
 
 use std::sync::OnceLock;
 
-use i18n_embed::fluent::{FluentLanguageLoader, fluent_language_loader};
-use i18n_embed::{DesktopLanguageRequester, LanguageLoader};
-use rust_embed::RustEmbed;
-
+use i18n_embed::{
+    DesktopLanguageRequester, LanguageLoader,
+    fluent::{FluentLanguageLoader, fluent_language_loader},
+};
 pub use i18n_embed_fl::fl;
+use rust_embed::RustEmbed;
 
 #[derive(RustEmbed)]
 #[folder = "locales/"]

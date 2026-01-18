@@ -17,4 +17,7 @@ pub enum PanelCommands {
 
     /// Open panel settings
     Settings,
+
+    /// Open GTK Inspector for debugging
+    Inspect,
 }

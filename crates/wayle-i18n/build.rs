@@ -1,7 +1,9 @@
 #![allow(clippy::expect_used, missing_docs)]
 
-use std::fs::{self, DirEntry};
-use std::path::Path;
+use std::{
+    fs::{self, DirEntry},
+    path::Path,
+};
 
 fn main() {
     let locales_dir = Path::new("locales");
