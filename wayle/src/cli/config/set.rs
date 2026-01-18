@@ -23,7 +23,11 @@ pub async fn execute(path: String, value: String) -> CliAction {
         .await
         .map_err(|e| format!("Failed to save config: {e}"))?;
 
-    println!("Set {path} = {value}");
+    let stored = config_service
+        .get_by_path(&path)
+        .map_err(|e| format!("Failed to read back value: {e}"))?;
+
+    println!("Set {path} = {stored}");
 
     Ok(())
 }

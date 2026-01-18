@@ -146,6 +146,10 @@ pub enum Error {
     /// Watcher state is poisoned.
     #[error("watcher state is poisoned")]
     WatcherPoisoned,
+
+    /// Config value is invalid for the target field type.
+    #[error("{0}")]
+    InvalidValue(String),
 }
 
 /// Reasons why a config field is invalid.

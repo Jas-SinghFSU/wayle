@@ -103,6 +103,8 @@ pub(crate) fn spawn_color_extractor(service: Arc<WallpaperService>) {
         let mut monitor_watch = service.monitors.watch();
         let mut color_extractor = service.color_extractor.watch();
 
+        info!("Color extractor task started");
+
         loop {
             tokio::select! {
                 _ = cancellation.cancelled() => {

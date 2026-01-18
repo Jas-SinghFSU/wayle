@@ -1,1 +1,0 @@
-pub(super) struct WallustProvider;

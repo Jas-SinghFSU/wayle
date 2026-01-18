@@ -241,15 +241,17 @@ impl<T> ApplyRuntimeLayer for ConfigProperty<T>
 where
     T: Clone + Send + Sync + PartialEq + for<'de> Deserialize<'de> + 'static,
 {
-    fn apply_runtime_layer(&self, value: &toml::Value, path: &str) {
+    fn apply_runtime_layer(&self, value: &toml::Value, path: &str) -> Result<(), String> {
         let _span = tracing::warn_span!("runtime_config", field = path).entered();
         match T::deserialize(value.clone()) {
             Ok(new_value) => {
                 self.set(new_value);
+                Ok(())
             }
             Err(e) => {
                 let toml_repr = format_toml_indented(value);
                 tracing::warn!(error = %e, "invalid value\n{toml_repr}");
+                Err(format!("invalid value for '{path}': {e}"))
             }
         }
     }
@@ -277,7 +279,9 @@ impl<T: Clone + Send + Sync + PartialEq + 'static> SubscribeChanges for ConfigPr
             watch_stream.next().await;
 
             while watch_stream.next().await.is_some() {
-                let _ = tx.send(());
+                if tx.send(()).is_err() {
+                    break;
+                }
             }
         });
     }

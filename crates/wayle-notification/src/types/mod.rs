@@ -20,6 +20,7 @@ pub(crate) type SpecVersion = String;
 pub(crate) enum Signal {
     NotificationClosed,
     ActionInvoked,
+    #[allow(dead_code)]
     ActivationToken,
 }
 

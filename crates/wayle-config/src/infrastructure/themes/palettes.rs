@@ -1,6 +1,21 @@
 use super::Palette;
 use crate::schemas::styling::ThemeEntry;
 
+/// Catppuccin Mocha color constants.
+#[allow(missing_docs)]
+pub mod catppuccin_mocha {
+    pub const BG: &str = "#11111b";
+    pub const SURFACE: &str = "#181825";
+    pub const ELEVATED: &str = "#1e1e2e";
+    pub const FG: &str = "#cdd6f4";
+    pub const FG_MUTED: &str = "#bac2de";
+    pub const PRIMARY: &str = "#b4befe";
+    pub const RED: &str = "#f38ba8";
+    pub const YELLOW: &str = "#f9e2af";
+    pub const GREEN: &str = "#a6e3a1";
+    pub const BLUE: &str = "#74c7ec";
+}
+
 /// All built-in theme entries.
 pub fn builtins() -> Vec<ThemeEntry> {
     vec![
@@ -49,17 +64,18 @@ pub fn builtins() -> Vec<ThemeEntry> {
 
 /// Default palette (Catppuccin Mocha).
 pub fn catppuccin() -> Palette {
+    use catppuccin_mocha::*;
     Palette {
-        bg: String::from("#11111b"),
-        surface: String::from("#181825"),
-        elevated: String::from("#1e1e2e"),
-        fg: String::from("#cdd6f4"),
-        fg_muted: String::from("#bac2de"),
-        primary: String::from("#b4befe"),
-        red: String::from("#f38ba8"),
-        yellow: String::from("#f9e2af"),
-        green: String::from("#a6e3a1"),
-        blue: String::from("#74c7ec"),
+        bg: BG.to_owned(),
+        surface: SURFACE.to_owned(),
+        elevated: ELEVATED.to_owned(),
+        fg: FG.to_owned(),
+        fg_muted: FG_MUTED.to_owned(),
+        primary: PRIMARY.to_owned(),
+        red: RED.to_owned(),
+        yellow: YELLOW.to_owned(),
+        green: GREEN.to_owned(),
+        blue: BLUE.to_owned(),
     }
 }
 

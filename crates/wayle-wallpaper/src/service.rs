@@ -230,20 +230,23 @@ impl WallpaperService {
             .and_then(|state| state.wallpaper.clone());
 
         if self.last_extracted_wallpaper.get() == path {
+            let _ = self.extraction_complete.send(());
             return Ok(());
         };
 
         self.last_extracted_wallpaper.set(path.clone());
 
         let Some(path) = path else {
+            let _ = self.extraction_complete.send(());
             return Ok(());
         };
 
         let extractor = self.color_extractor.get();
-        extractor.extract(&path).await?;
+        let result = extractor.extract(&path).await;
 
         let _ = self.extraction_complete.send(());
-        Ok(())
+
+        result
     }
 
     /// Sets which monitor's wallpaper to use for color extraction.

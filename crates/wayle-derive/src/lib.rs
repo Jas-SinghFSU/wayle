@@ -43,6 +43,33 @@ fn should_skip(field: &Field) -> bool {
     })
 }
 
+fn serde_key(field: &Field) -> String {
+    for attr in &field.attrs {
+        if !attr.path().is_ident("serde") {
+            continue;
+        }
+
+        let mut rename = None;
+        let _ = attr.parse_nested_meta(|meta| {
+            if meta.path.is_ident("rename") {
+                let value: syn::LitStr = meta.value()?.parse()?;
+                rename = Some(value.value());
+            }
+            Ok(())
+        });
+
+        if let Some(name) = rename {
+            return name;
+        }
+    }
+
+    field
+        .ident
+        .as_ref()
+        .map(|i| i.to_string())
+        .unwrap_or_default()
+}
+
 /// Derive macro for `ApplyConfigLayer` trait.
 ///
 /// Walks struct fields and applies TOML values to their config layer.
@@ -71,13 +98,14 @@ pub fn derive_apply_config_layer(input: TokenStream) -> TokenStream {
         .filter(|field| !should_skip(field))
         .map(|field| {
             let field_name = &field.ident;
+            let key = serde_key(field);
 
             quote! {
-                if let Some(field_value) = table.get(stringify!(#field_name)) {
+                if let Some(field_value) = table.get(#key) {
                     let child_path = if path.is_empty() {
-                        stringify!(#field_name).to_string()
+                        String::from(#key)
                     } else {
-                        format!("{}.{}", path, stringify!(#field_name))
+                        format!("{}.{}", path, #key)
                     };
                     self.#field_name.apply_config_layer(field_value, &child_path);
                 }
@@ -108,7 +136,7 @@ pub fn derive_apply_config_layer(input: TokenStream) -> TokenStream {
 ///
 /// # Generated Code
 ///
-/// For each field, generates: `self.field.apply_runtime_layer(&toml["field"], "path.field")`
+/// For each field, generates: `self.field.apply_runtime_layer(&toml["field"], "path.field")?`
 #[proc_macro_derive(ApplyRuntimeLayer, attributes(wayle))]
 pub fn derive_apply_runtime_layer(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
@@ -125,25 +153,27 @@ pub fn derive_apply_runtime_layer(input: TokenStream) -> TokenStream {
         .filter(|field| !should_skip(field))
         .map(|field| {
             let field_name = &field.ident;
+            let key = serde_key(field);
 
             quote! {
-                if let Some(field_value) = table.get(stringify!(#field_name)) {
+                if let Some(field_value) = table.get(#key) {
                     let child_path = if path.is_empty() {
-                        stringify!(#field_name).to_string()
+                        String::from(#key)
                     } else {
-                        format!("{}.{}", path, stringify!(#field_name))
+                        format!("{}.{}", path, #key)
                     };
-                    self.#field_name.apply_runtime_layer(field_value, &child_path);
+                    self.#field_name.apply_runtime_layer(field_value, &child_path)?;
                 }
             }
         });
 
     let expanded = quote! {
         impl wayle_common::ApplyRuntimeLayer for #name {
-            fn apply_runtime_layer(&self, value: &toml::Value, path: &str) {
+            fn apply_runtime_layer(&self, value: &toml::Value, path: &str) -> Result<(), String> {
                 if let toml::Value::Table(table) = value {
                     #(#field_updates)*
                 }
+                Ok(())
             }
         }
     };
@@ -180,10 +210,11 @@ pub fn derive_extract_runtime_values(input: TokenStream) -> TokenStream {
         .filter(|field| !should_skip(field))
         .map(|field| {
             let field_name = &field.ident;
+            let key = serde_key(field);
 
             quote! {
                 if let Some(value) = self.#field_name.extract_runtime_values() {
-                    table.insert(String::from(stringify!(#field_name)), value);
+                    table.insert(String::from(#key), value);
                 }
             }
         });

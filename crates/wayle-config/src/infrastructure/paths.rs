@@ -144,4 +144,22 @@ impl ConfigPaths {
     pub fn matugen_colors() -> Result<PathBuf, Error> {
         Ok(Self::cache_dir()?.join("matugen-colors.json"))
     }
+
+    /// Path to pywal/wallust colors JSON (`~/.cache/wal/colors.json`).
+    ///
+    /// # Errors
+    ///
+    /// Returns error if `HOME` or `XDG_CACHE_HOME` is not set.
+    pub fn pywal_colors() -> Result<PathBuf, Error> {
+        let cache_home = env::var("XDG_CACHE_HOME")
+            .or_else(|_| env::var("HOME").map(|home| format!("{home}/.cache")))
+            .map_err(|e| {
+                Error::new(
+                    ErrorKind::NotFound,
+                    format!("Neither XDG_CACHE_HOME nor HOME environment variable found: {e}"),
+                )
+            })?;
+
+        Ok(PathBuf::from(cache_home).join("wal/colors.json"))
+    }
 }

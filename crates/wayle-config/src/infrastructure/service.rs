@@ -47,7 +47,11 @@ impl ConfigService {
 
         let runtime_path = ConfigPaths::runtime_config();
         match Self::load_toml_file(&runtime_path) {
-            Ok(runtime_toml) => config.apply_runtime_layer(&runtime_toml, ""),
+            Ok(runtime_toml) => {
+                if let Err(e) = config.apply_runtime_layer(&runtime_toml, "") {
+                    warn!(error = %e, "invalid runtime.toml value");
+                }
+            }
             Err(e) => warn!(error = %e, "cannot load runtime.toml"),
         }
 
@@ -113,7 +117,7 @@ impl ConfigService {
         Ok(())
     }
 
-    fn load_toml_file(path: &std::path::Path) -> Result<toml::Value, Error> {
+    pub(crate) fn load_toml_file(path: &std::path::Path) -> Result<toml::Value, Error> {
         let content = fs::read_to_string(path).map_err(|source| Error::Io {
             operation: IoOperation::ReadFile,
             path: path.to_path_buf(),
@@ -172,7 +176,8 @@ impl ConfigServiceCli for ConfigService {
     fn set_by_path(&self, path: &str, value: toml::Value) -> Result<(), Error> {
         let mut root = toml::Value::Table(toml::Table::new());
         toml_path::insert(&mut root, path, value)?;
-        self.config.apply_runtime_layer(&root, "");
-        Ok(())
+        self.config
+            .apply_runtime_layer(&root, "")
+            .map_err(Error::InvalidValue)
     }
 }

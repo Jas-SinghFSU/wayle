@@ -25,9 +25,9 @@ pub trait ApplyRuntimeLayer {
     /// The `path` parameter indicates the config key path (e.g., "general.bar.layout")
     /// for error messages.
     ///
-    /// Missing fields are skipped. Deserialization failures are logged
-    /// and skipped, allowing partial updates to succeed.
-    fn apply_runtime_layer(&self, value: &toml::Value, path: &str);
+    /// Returns `Err` with a description if the value cannot be deserialized.
+    /// Missing fields in nested structs are skipped (not an error).
+    fn apply_runtime_layer(&self, value: &toml::Value, path: &str) -> Result<(), String>;
 }
 
 /// Extracts runtime layer values for persistence to runtime.toml.

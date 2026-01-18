@@ -55,7 +55,7 @@ impl ColorExtractor {
         let image_str = image_path.to_string_lossy();
 
         let args: Vec<&str> = match self {
-            Self::Wallust => vec!["run", &image_str],
+            Self::Wallust => vec!["pywal", "-i", &image_str, "-n"],
             Self::Matugen => vec!["image", &image_str, "--json", "hex"],
             Self::Pywal => vec!["-i", &image_str, "-n"],
             Self::None => return Ok(()),

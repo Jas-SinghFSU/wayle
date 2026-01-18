@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use super::error::{Error, InvalidFieldReason};
 
 pub(crate) fn insert(root: &mut toml::Value, path: &str, value: toml::Value) -> Result<(), Error> {
@@ -50,24 +48,6 @@ fn navigate_to_parent<'a>(
     }
 
     Ok(current)
-}
-
-pub(crate) fn flatten(value: &toml::Value, prefix: &str, map: &mut HashMap<String, toml::Value>) {
-    match value {
-        toml::Value::Table(table) => {
-            for (key, val) in table {
-                let path = if prefix.is_empty() {
-                    key.clone()
-                } else {
-                    format!("{prefix}.{key}")
-                };
-                flatten(val, &path, map);
-            }
-        }
-        _ => {
-            map.insert(prefix.to_string(), value.clone());
-        }
-    }
 }
 
 #[cfg(test)]
@@ -138,82 +118,6 @@ mod tests {
             let result = insert(&mut root, "key.nested", toml::Value::Boolean(true));
 
             assert!(result.is_err());
-        }
-    }
-
-    mod flatten {
-        use super::*;
-
-        #[test]
-        fn flattens_simple_table() {
-            let value = toml::toml! {
-                enabled = true
-                count = 42
-            };
-
-            let mut map = HashMap::new();
-            flatten(&toml::Value::Table(value), "", &mut map);
-
-            assert_eq!(map.get("enabled"), Some(&toml::Value::Boolean(true)));
-            assert_eq!(map.get("count"), Some(&toml::Value::Integer(42)));
-        }
-
-        #[test]
-        fn flattens_nested_table() {
-            let value = toml::toml! {
-                [clock]
-                enabled = true
-                [clock.button]
-                text = "Click"
-            };
-
-            let mut map = HashMap::new();
-            flatten(&toml::Value::Table(value), "", &mut map);
-
-            assert_eq!(map.get("clock.enabled"), Some(&toml::Value::Boolean(true)));
-            assert_eq!(
-                map.get("clock.button.text"),
-                Some(&toml::Value::String("Click".into()))
-            );
-        }
-
-        #[test]
-        fn respects_prefix() {
-            let value = toml::toml! {
-                enabled = true
-            };
-
-            let mut map = HashMap::new();
-            flatten(&toml::Value::Table(value), "module", &mut map);
-
-            assert_eq!(map.get("module.enabled"), Some(&toml::Value::Boolean(true)));
-        }
-
-        #[test]
-        fn handles_empty_table() {
-            let value = toml::Value::Table(toml::Table::new());
-
-            let mut map = HashMap::new();
-            flatten(&value, "", &mut map);
-
-            assert!(map.is_empty());
-        }
-
-        #[test]
-        fn stores_only_leaf_values() {
-            let value = toml::toml! {
-                [parent]
-                child = "leaf"
-            };
-
-            let mut map = HashMap::new();
-            flatten(&toml::Value::Table(value), "", &mut map);
-
-            assert!(!map.contains_key("parent"));
-            assert_eq!(
-                map.get("parent.child"),
-                Some(&toml::Value::String("leaf".into()))
-            );
         }
     }
 }

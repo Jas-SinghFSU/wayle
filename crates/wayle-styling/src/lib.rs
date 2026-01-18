@@ -9,7 +9,7 @@ mod palette_provider;
 use std::{fs, path::PathBuf};
 
 pub use errors::Error;
-use tracing::{error, info};
+use tracing::error;
 use wayle_config::{
     infrastructure::themes::Palette,
     schemas::{bar::BarConfig, general::GeneralConfig, styling::ThemeProvider},
@@ -30,19 +30,11 @@ pub fn compile(
     bar: &BarConfig,
     theme_provider: ThemeProvider,
 ) -> Result<String, Error> {
-    let resolved_palette = match resolve_palette(palette, &theme_provider) {
-        Ok(palette) => palette,
-        Err(e) => {
-            error!(error = %e, provider = ?theme_provider, "cannot resolve palette from provider");
-            info!("Falling back to Wayle styling");
-
-            palette
-        }
-    };
+    let resolved_palette = resolve_palette(palette, &theme_provider);
 
     let variables = format!(
         "{}\n{}\n{}\n{}\n",
-        palette_to_scss(resolved_palette),
+        palette_to_scss(&resolved_palette),
         fonts_to_scss(general),
         scale_to_scss(bar),
         rounding_to_scss(bar)
@@ -59,14 +51,21 @@ pub fn compile(
     grass::from_string(&full_scss, &options).map_err(Error::Compilation)
 }
 
-fn resolve_palette<'a>(
-    fallback: &'a Palette,
-    theme_provider: &ThemeProvider,
-) -> Result<&'a Palette, Error> {
+fn resolve_palette(fallback: &Palette, theme_provider: &ThemeProvider) -> Palette {
+    use palette_provider::PaletteProvider;
+
     match theme_provider {
-        ThemeProvider::Wayle => Ok(fallback),
-        ThemeProvider::Matugen | ThemeProvider::Pywal | ThemeProvider::Wallust => {
-            Err(Error::ProviderNotImplemented(*theme_provider))
+        ThemeProvider::Wayle => fallback.clone(),
+        ThemeProvider::Matugen => palette_provider::matugen::MatugenProvider::load()
+            .unwrap_or_else(|e| {
+                error!(error = %e, "matugen palette load failed");
+                fallback.clone()
+            }),
+        ThemeProvider::Pywal | ThemeProvider::Wallust => {
+            palette_provider::pywal::PyWallustProvider::load().unwrap_or_else(|e| {
+                error!(error = %e, "pywal palette load failed");
+                fallback.clone()
+            })
         }
     }
 }

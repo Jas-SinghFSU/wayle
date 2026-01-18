@@ -12,7 +12,9 @@ pub type RawMenuItemProps = (i32, HashMap<String, OwnedValue>);
 /// Collection of menu items with properties.
 pub type RawMenuItemsPropsList = Vec<RawMenuItemProps>;
 
+#[allow(dead_code)]
 pub(crate) type RawMenuItemKeys = (i32, Vec<String>);
+#[allow(dead_code)]
 pub(crate) type RawMenuItemKeysList = Vec<RawMenuItemKeys>;
 
 /// Raw menu layout data from D-Bus GetLayout method.
