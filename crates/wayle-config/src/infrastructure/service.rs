@@ -4,7 +4,7 @@ use std::{
 };
 
 use tracing::{info, instrument, warn};
-use wayle_common::{ApplyConfigLayer, ApplyRuntimeLayer, ExtractRuntimeValues};
+use wayle_common::{ApplyConfigLayer, ApplyRuntimeLayer, ClearRuntimeByPath, ExtractRuntimeValues};
 
 use super::{
     error::{Error, InvalidFieldReason, IoOperation},
@@ -148,6 +148,15 @@ pub trait ConfigServiceCli {
     ///
     /// Returns error if path is invalid.
     fn set_by_path(&self, path: &str, value: toml::Value) -> Result<(), Error>;
+
+    /// Clears the runtime override at a dot-separated path.
+    ///
+    /// Returns `true` if a value was cleared, `false` if no override existed.
+    ///
+    /// # Errors
+    ///
+    /// Returns error if path is invalid.
+    fn reset_by_path(&self, path: &str) -> Result<bool, Error>;
 }
 
 impl ConfigServiceCli for ConfigService {
@@ -178,6 +187,12 @@ impl ConfigServiceCli for ConfigService {
         toml_path::insert(&mut root, path, value)?;
         self.config
             .apply_runtime_layer(&root, "")
+            .map_err(Error::InvalidValue)
+    }
+
+    fn reset_by_path(&self, path: &str) -> Result<bool, Error> {
+        self.config
+            .clear_runtime_by_path(path)
             .map_err(Error::InvalidValue)
     }
 }

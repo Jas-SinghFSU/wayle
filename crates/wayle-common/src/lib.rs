@@ -3,6 +3,7 @@
 //! Provides reusable components including property watchers, macros,
 //! runtime state management, and the global service registry.
 
+mod diagnostic;
 #[macro_use]
 /// Common macros for services
 pub mod macros;
@@ -15,10 +16,11 @@ mod state;
 /// Ergonomic watcher utilities for Relm4 components.
 pub mod watchers;
 
+pub use diagnostic::Diagnostic;
 pub use property::{
-    ApplyConfigLayer, ApplyRuntimeLayer, CommitConfigReload, ComputedProperty, ConfigProperty,
-    ExtractRuntimeValues, Property, PropertyStream, ResetConfigLayer, SubscribeChanges,
-    ValueSource,
+    ApplyConfigLayer, ApplyRuntimeLayer, ClearRuntimeByPath, CommitConfigReload, ComputedProperty,
+    ConfigProperty, ExtractRuntimeValues, Property, PropertyStream, ResetConfigLayer,
+    ResetRuntimeLayer, SubscribeChanges, ValueSource,
 };
 pub use state::RuntimeState;
 

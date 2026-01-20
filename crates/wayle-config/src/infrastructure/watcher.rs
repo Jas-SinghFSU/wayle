@@ -5,7 +5,9 @@ use notify::{
 };
 use tokio::sync::mpsc;
 use tracing::{debug, error, info, instrument};
-use wayle_common::{ApplyConfigLayer, ApplyRuntimeLayer, CommitConfigReload, ResetConfigLayer};
+use wayle_common::{
+    ApplyConfigLayer, ApplyRuntimeLayer, CommitConfigReload, ResetConfigLayer, ResetRuntimeLayer,
+};
 
 use super::{error::Error, paths::ConfigPaths, service::ConfigService};
 use crate::{Config, infrastructure::themes::utils::load_themes};
@@ -81,6 +83,7 @@ impl FileWatcher {
         config.reset_config_layer();
         config.apply_config_layer(&toml_value, "");
 
+        config.reset_runtime_layer();
         let runtime_path = ConfigPaths::runtime_config();
         if let Ok(runtime_toml) = ConfigService::load_toml_file(&runtime_path) {
             let _ = config.apply_runtime_layer(&runtime_toml, "");

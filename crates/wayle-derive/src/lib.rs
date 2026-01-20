@@ -280,6 +280,105 @@ pub fn derive_reset_config_layer(input: TokenStream) -> TokenStream {
     TokenStream::from(expanded)
 }
 
+/// Derive macro for `ResetRuntimeLayer` trait.
+///
+/// Recursively clears the runtime layer of all fields without notifying watchers.
+/// Part of the runtime reload cycle: reset -> apply -> commit.
+///
+/// # Attributes
+///
+/// - `#[wayle(skip)]` - Skip this field in runtime reset
+///
+/// # Generated Code
+///
+/// For each field, generates: `self.field.reset_runtime_layer()`
+#[proc_macro_derive(ResetRuntimeLayer, attributes(wayle))]
+pub fn derive_reset_runtime_layer(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    let name = &input.ident;
+
+    let fields = match validate_named_struct(&input) {
+        Ok(fields) => fields,
+        Err(err) => return err,
+    };
+
+    let field_resets = fields
+        .named
+        .iter()
+        .filter(|field| !should_skip(field))
+        .map(|field| {
+            let field_name = &field.ident;
+            quote! {
+                self.#field_name.reset_runtime_layer();
+            }
+        });
+
+    let expanded = quote! {
+        impl wayle_common::ResetRuntimeLayer for #name {
+            fn reset_runtime_layer(&self) {
+                #(#field_resets)*
+            }
+        }
+    };
+
+    TokenStream::from(expanded)
+}
+
+/// Derive macro for `ClearRuntimeByPath` trait.
+///
+/// Navigates to a nested field by path and clears its runtime value.
+/// Used by CLI reset commands for string-based path access.
+///
+/// # Attributes
+///
+/// - `#[wayle(skip)]` - Skip this field in path navigation
+///
+/// # Generated Code
+///
+/// Generates a match on the first path segment, delegating to child fields.
+#[proc_macro_derive(ClearRuntimeByPath, attributes(wayle))]
+pub fn derive_clear_runtime_by_path(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    let name = &input.ident;
+
+    let fields = match validate_named_struct(&input) {
+        Ok(fields) => fields,
+        Err(err) => return err,
+    };
+
+    let match_arms = fields
+        .named
+        .iter()
+        .filter(|field| !should_skip(field))
+        .map(|field| {
+            let field_name = &field.ident;
+            let key = serde_key(field);
+
+            quote! {
+                #key => self.#field_name.clear_runtime_by_path(rest),
+            }
+        });
+
+    let expanded = quote! {
+        impl wayle_common::ClearRuntimeByPath for #name {
+            fn clear_runtime_by_path(&self, path: &str) -> Result<bool, String> {
+                let (segment, rest) = match path.split_once('.') {
+                    Some((seg, rest)) => (seg, rest),
+                    None => (path, ""),
+                };
+
+                match segment {
+                    #(#match_arms)*
+                    "" => Err(String::from("empty path")),
+                    other => Err(format!("unknown field '{other}'")),
+                }
+            }
+        }
+    };
+
+    TokenStream::from(expanded)
+}
+
 /// Derive macro for `CommitConfigReload` trait.
 ///
 /// Recursively commits config reload by recomputing effective values.
@@ -472,6 +571,8 @@ fn generate_wayle_config(input: ItemStruct) -> syn::Result<TokenStream2> {
             wayle_derive::ExtractRuntimeValues,
             wayle_derive::SubscribeChanges,
             wayle_derive::ResetConfigLayer,
+            wayle_derive::ResetRuntimeLayer,
+            wayle_derive::ClearRuntimeByPath,
             wayle_derive::CommitConfigReload,
         )]
         #[serde(default)]

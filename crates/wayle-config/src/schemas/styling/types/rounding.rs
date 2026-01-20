@@ -27,6 +27,8 @@ pub enum RoundingLevel {
     Md,
     /// Pronounced rounding.
     Lg,
+    /// Pill shape (fully rounded ends).
+    Full,
 }
 
 impl RoundingLevel {
@@ -51,6 +53,10 @@ impl RoundingLevel {
                 element: "var(--radius-lg)",
                 container: "var(--radius-xl)",
             },
+            Self::Full => RoundingCssValues {
+                element: "var(--radius-full)",
+                container: "var(--radius-xl)",
+            },
         }
     }
 
@@ -72,6 +78,36 @@ impl RoundingLevel {
             Self::Lg => RoundingCssValues {
                 element: "var(--bar-radius-lg)",
                 container: "var(--bar-radius-xl)",
+            },
+            Self::Full => RoundingCssValues {
+                element: "var(--radius-full)",
+                container: "var(--radius-full)",
+            },
+        }
+    }
+
+    /// Bar-specific Button CSS variable references using `--bar-radius-*` tokens.
+    pub fn to_bar_button_css_values(self) -> RoundingCssValues {
+        match self {
+            Self::None => RoundingCssValues {
+                element: "var(--radius-none)",
+                container: "var(--radius-none)",
+            },
+            Self::Sm => RoundingCssValues {
+                element: "var(--bar-button-radius-sm)",
+                container: "var(--bar-button-radius-md)",
+            },
+            Self::Md => RoundingCssValues {
+                element: "var(--bar-button-radius-md)",
+                container: "var(--bar-button-radius-lg)",
+            },
+            Self::Lg => RoundingCssValues {
+                element: "var(--bar-button-radius-lg)",
+                container: "var(--bar-button-radius-xl)",
+            },
+            Self::Full => RoundingCssValues {
+                element: "var(--radius-full)",
+                container: "var(--radius-full)",
             },
         }
     }

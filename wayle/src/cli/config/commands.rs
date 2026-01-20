@@ -15,4 +15,9 @@ pub enum ConfigCommands {
         /// The value to set (use JSON format for complex types)
         value: String,
     },
+    /// Reset a configuration path to its default value
+    Reset {
+        /// The configuration path to reset (e.g., "bar.button_gap")
+        path: String,
+    },
 }

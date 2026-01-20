@@ -2,6 +2,8 @@
 pub mod commands;
 /// Get configuration value command
 pub mod get;
+/// Reset configuration value command
+pub mod reset;
 /// Set configuration value command
 pub mod set;
 
@@ -17,5 +19,6 @@ pub async fn execute(command: ConfigCommands) -> CliAction {
     match command {
         ConfigCommands::Get { path } => get::execute(path).await,
         ConfigCommands::Set { path, value } => set::execute(path, value).await,
+        ConfigCommands::Reset { path } => reset::execute(path).await,
     }
 }

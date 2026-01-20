@@ -188,7 +188,7 @@ impl fmt::Display for CssToken {
 
 /// Error when parsing an invalid CSS token name.
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
-#[error("unknown CSS token: '{0}'")]
+#[error("unknown CSS token: '{0}' (see documentation for valid values)")]
 pub struct InvalidCssToken(pub String);
 
 impl FromStr for CssToken {

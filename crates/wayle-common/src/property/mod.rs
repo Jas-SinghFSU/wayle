@@ -61,8 +61,8 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use tokio::sync::watch;
 use tokio_stream::wrappers::WatchStream;
 pub use traits::{
-    ApplyConfigLayer, ApplyRuntimeLayer, CommitConfigReload, ExtractRuntimeValues,
-    ResetConfigLayer, SubscribeChanges,
+    ApplyConfigLayer, ApplyRuntimeLayer, ClearRuntimeByPath, CommitConfigReload,
+    ExtractRuntimeValues, ResetConfigLayer, ResetRuntimeLayer, SubscribeChanges,
 };
 
 /// Stream of property value changes.

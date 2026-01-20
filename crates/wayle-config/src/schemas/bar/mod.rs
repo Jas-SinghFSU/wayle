@@ -1,14 +1,14 @@
 mod types;
 
-pub use types::{BarButtonVariant, BarGroup, BarItem, BarLayout, BarModule, BorderLocation};
+pub use types::{
+    BarButtonVariant, BarGroup, BarItem, BarLayout, BarModule, BorderLocation, Location,
+    ShadowPreset,
+};
 use wayle_common::ConfigProperty;
 use wayle_derive::wayle_config;
 
-use crate::schemas::{
-    bar::types::Location,
-    styling::{
-        ColorValue, CssToken, FontWeightClass, Percentage, RoundingLevel, ScaleFactor, Spacing,
-    },
+use crate::schemas::styling::{
+    ColorValue, CssToken, FontWeightClass, Percentage, RoundingLevel, ScaleFactor, Spacing,
 };
 
 /// Bar configuration.
@@ -44,7 +44,7 @@ pub struct BarConfig {
     /// Internal spacing along bar thickness.
     ///
     /// - **Orientation**: Top/bottom (horizontal bar), left/right (vertical bar)
-    #[default(Spacing::new(0.25))]
+    #[default(Spacing::new(0.35))]
     pub padding: ConfigProperty<Spacing>,
 
     /// Internal spacing at bar ends.
@@ -91,10 +91,9 @@ pub struct BarConfig {
     #[default(RoundingLevel::None)]
     pub rounding: ConfigProperty<RoundingLevel>,
 
-    /// Whether or not to enable the shadow for the bar
-    #[serde(rename = "shadow-enabled")]
-    #[default(false)]
-    pub shadow_enabled: ConfigProperty<bool>,
+    /// Shadow style for the bar.
+    #[default(ShadowPreset::None)]
+    pub shadow: ConfigProperty<ShadowPreset>,
 
     //
     // === === === === === === === === === === ===
@@ -136,9 +135,14 @@ pub struct BarConfig {
     #[default(ScaleFactor::new(1.0))]
     pub button_label_padding: ConfigProperty<ScaleFactor>,
 
+    /// Corner rounding level for the buttons in the bar.
+    #[serde(rename = "button-rounding")]
+    #[default(RoundingLevel::None)]
+    pub button_rounding: ConfigProperty<RoundingLevel>,
+
     /// Gap between button icon and label.
     #[serde(rename = "button-gap")]
-    #[default(ScaleFactor::new(1.0))]
+    #[default(ScaleFactor::new(0.25))]
     pub button_gap: ConfigProperty<ScaleFactor>,
 
     /// Border placement for bar buttons.
@@ -167,9 +171,9 @@ pub struct BarConfig {
     pub button_group_padding: ConfigProperty<ScaleFactor>,
 
     /// Gap between modules within a group.
-    #[serde(rename = "group-module-gap")]
+    #[serde(rename = "button-group-module-gap")]
     #[default(Spacing::new(0.25))]
-    pub group_module_gap: ConfigProperty<Spacing>,
+    pub button_group_module_gap: ConfigProperty<Spacing>,
 
     /// Background color for button groups.
     #[serde(rename = "button-group-background")]

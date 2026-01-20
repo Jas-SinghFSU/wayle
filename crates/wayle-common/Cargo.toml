@@ -19,6 +19,7 @@ tracing.workspace = true
 zbus.workspace = true
 
 schemars = { workspace = true, optional = true }
+owo-colors = "4.2.3"
 
 [features]
 default = []

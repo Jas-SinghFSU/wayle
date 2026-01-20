@@ -11,18 +11,17 @@ use tokio::sync::mpsc;
 use super::{
     Property,
     traits::{
-        ApplyConfigLayer, ApplyRuntimeLayer, CommitConfigReload, ExtractRuntimeValues,
-        ResetConfigLayer, SubscribeChanges,
+        ApplyConfigLayer, ApplyRuntimeLayer, ClearRuntimeByPath, CommitConfigReload,
+        ExtractRuntimeValues, ResetConfigLayer, ResetRuntimeLayer, SubscribeChanges,
     },
 };
+use crate::Diagnostic;
 
-fn format_toml_indented(value: &toml::Value) -> String {
+fn format_toml_value(value: &toml::Value) -> String {
     toml::to_string_pretty(value)
         .unwrap_or_else(|_| format!("{value:?}"))
-        .lines()
-        .map(|line| format!("    {line}"))
-        .collect::<Vec<_>>()
-        .join("\n")
+        .trim()
+        .to_string()
 }
 
 /// Indicates where a configuration value originates from.
@@ -227,11 +226,25 @@ where
         let _span = tracing::warn_span!("config", field = path).entered();
         match T::deserialize(value.clone()) {
             Ok(new_value) => {
+                let has_runtime_override = self.runtime().is_some();
                 self.set_config(new_value);
+
+                if has_runtime_override {
+                    let diag = Diagnostic::warning("config.toml change ignored")
+                        .field("Field", path)
+                        .field("Reason", "runtime override active")
+                        .hint(format!("wayle config reset {path}"));
+                    diag.emit();
+                    tracing::info!("{}", diag.to_plain());
+                }
             }
             Err(e) => {
-                let toml_repr = format_toml_indented(value);
-                tracing::warn!(error = %e, "invalid value\n{toml_repr}");
+                let diag = Diagnostic::error("invalid config value")
+                    .field("Field", path)
+                    .field("Error", e.to_string().trim())
+                    .field("Value", format_toml_value(value));
+                diag.emit();
+                tracing::info!("{}", diag.to_plain());
             }
         }
     }
@@ -249,8 +262,12 @@ where
                 Ok(())
             }
             Err(e) => {
-                let toml_repr = format_toml_indented(value);
-                tracing::warn!(error = %e, "invalid value\n{toml_repr}");
+                let diag = Diagnostic::error("invalid runtime value")
+                    .field("Field", path)
+                    .field("Error", e.to_string().trim())
+                    .field("Value", format_toml_value(value));
+                diag.emit();
+                tracing::info!("{}", diag.to_plain());
                 Err(format!("invalid value for '{path}': {e}"))
             }
         }
@@ -295,9 +312,29 @@ impl<T: Clone + Send + Sync + PartialEq + 'static> ResetConfigLayer for ConfigPr
     }
 }
 
+impl<T: Clone + Send + Sync + PartialEq + 'static> ResetRuntimeLayer for ConfigProperty<T> {
+    fn reset_runtime_layer(&self) {
+        if let Ok(mut guard) = self.runtime.write() {
+            *guard = None;
+        }
+    }
+}
+
 impl<T: Clone + Send + Sync + PartialEq + 'static> CommitConfigReload for ConfigProperty<T> {
     fn commit_config_reload(&self) {
         self.recompute_effective();
+    }
+}
+
+impl<T: Clone + Send + Sync + PartialEq + 'static> ClearRuntimeByPath for ConfigProperty<T> {
+    fn clear_runtime_by_path(&self, path: &str) -> Result<bool, String> {
+        if !path.is_empty() {
+            return Err(format!("no nested field at '{path}'"));
+        }
+
+        let had_runtime = self.runtime().is_some();
+        self.clear_runtime();
+        Ok(had_runtime)
     }
 }
 
@@ -448,5 +485,49 @@ mod tests {
 
         assert_eq!(prop.get(), 50);
         assert_eq!(prop.source(), ValueSource::Config);
+    }
+
+    #[test]
+    fn reset_runtime_layer_clears_without_recomputing() {
+        let prop = ConfigProperty::new(10);
+        prop.set(30);
+        assert_eq!(prop.get(), 30);
+
+        prop.reset_runtime_layer();
+
+        assert_eq!(prop.runtime(), None);
+        assert_eq!(
+            prop.get(),
+            30,
+            "effective value should NOT change until commit"
+        );
+    }
+
+    #[test]
+    fn reset_runtime_then_commit_falls_back_to_config() {
+        let prop = ConfigProperty::new(10);
+        prop.set_config(20);
+        prop.set(30);
+        assert_eq!(prop.get(), 30);
+        assert_eq!(prop.source(), ValueSource::Override);
+
+        prop.reset_runtime_layer();
+        prop.commit_config_reload();
+
+        assert_eq!(prop.get(), 20);
+        assert_eq!(prop.source(), ValueSource::Config);
+    }
+
+    #[test]
+    fn reset_runtime_then_commit_falls_back_to_default() {
+        let prop = ConfigProperty::new(10);
+        prop.set(30);
+        assert_eq!(prop.source(), ValueSource::Custom);
+
+        prop.reset_runtime_layer();
+        prop.commit_config_reload();
+
+        assert_eq!(prop.get(), 10);
+        assert_eq!(prop.source(), ValueSource::Default);
     }
 }

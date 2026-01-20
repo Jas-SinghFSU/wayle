@@ -1,5 +1,8 @@
+mod shadow;
+
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+pub use shadow::ShadowPreset;
 
 /// Layout configuration for a bar on a specific monitor.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, PartialEq)]
@@ -106,10 +109,31 @@ pub enum BarModule {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 pub enum Location {
+    /// Top edge of the screen.
     Top,
+    /// Bottom edge of the screen.
     Bottom,
+    /// Left edge of the screen.
     Left,
+    /// Right edge of the screen.
     Right,
+}
+
+impl Location {
+    /// CSS class name for this location.
+    pub fn css_class(self) -> &'static str {
+        match self {
+            Self::Top => "top",
+            Self::Bottom => "bottom",
+            Self::Left => "left",
+            Self::Right => "right",
+        }
+    }
+
+    /// Whether this location results in a vertical bar layout.
+    pub fn is_vertical(self) -> bool {
+        matches!(self, Self::Left | Self::Right)
+    }
 }
 
 /// Border placement for bar buttons.

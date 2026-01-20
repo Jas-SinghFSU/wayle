@@ -69,6 +69,20 @@ pub trait ResetConfigLayer {
     fn reset_config_layer(&self);
 }
 
+/// Resets the runtime layer to None without notifying watchers.
+///
+/// Part of the runtime reload cycle: reset -> apply -> commit.
+/// Clearing the runtime layer allows externally removed overrides
+/// to fall back to config or default values after commit.
+pub trait ResetRuntimeLayer {
+    /// Clears the runtime layer value without triggering notifications.
+    ///
+    /// After calling this, the effective value is NOT recomputed.
+    /// Call `commit_config_reload` after applying new values to
+    /// recompute and notify watchers.
+    fn reset_runtime_layer(&self);
+}
+
 /// Commits a config reload by recomputing effective values.
 ///
 /// Part of the reload cycle: reset -> apply -> commit.
@@ -80,4 +94,20 @@ pub trait CommitConfigReload {
     /// Thanks to change detection in Property::set, watchers are only
     /// notified if the effective value actually changed.
     fn commit_config_reload(&self);
+}
+
+/// Clears the runtime override at a specific path.
+///
+/// Used by CLI reset commands to remove runtime overrides by string path.
+/// For direct struct access (GUI), use `ConfigProperty::clear_runtime()` instead.
+pub trait ClearRuntimeByPath {
+    /// Clears the runtime value at the given dot-separated path.
+    ///
+    /// Returns `Ok(true)` if a value was cleared, `Ok(false)` if no runtime
+    /// value existed at that path.
+    ///
+    /// # Errors
+    ///
+    /// Returns error if the path doesn't match any field.
+    fn clear_runtime_by_path(&self, path: &str) -> Result<bool, String>;
 }
