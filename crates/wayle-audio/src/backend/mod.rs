@@ -13,9 +13,13 @@ use commands::Command;
 use conversion::convert_volume_to_pulse;
 use dispatcher::{VolumeRateLimiter, handle_external_command, handle_internal_command};
 use libpulse_binding::context::{Context, FlagSet as ContextFlags};
-use tokio::sync::mpsc;
+use tokio::{
+    runtime::Handle,
+    sync::mpsc,
+    task::{spawn, spawn_blocking, JoinHandle},
+};
 use tokio_util::sync::CancellationToken;
-use tracing::{error, info};
+use tracing::info;
 use types::{
     CommandReceiver, DefaultDevice, DeviceStore, EventSender, ExternalCommand, InternalRefresh,
     StreamStore,
@@ -43,7 +47,7 @@ impl BackendState {
 
 struct ContextHandlerComponents {
     mainloop: TokioMain,
-    task_handle: tokio::task::JoinHandle<()>,
+    task_handle: JoinHandle<Context>,
 }
 
 pub(crate) struct PulseBackend {
@@ -53,32 +57,21 @@ pub(crate) struct PulseBackend {
 }
 
 impl PulseBackend {
-    pub async fn start(
+    pub fn start(
         command_rx: CommandReceiver,
         event_tx: EventSender,
         cancellation_token: CancellationToken,
-    ) -> Result<(), Error> {
-        tokio::task::spawn_blocking(move || {
-            let runtime = tokio::runtime::Handle::current();
+    ) -> JoinHandle<Result<(), Error>> {
+        spawn_blocking(move || {
+            let runtime = Handle::current();
 
             runtime.block_on(async move {
                 info!("Starting PulseAudio backend");
 
-                match Self::new().await {
-                    Ok(backend) => {
-                        if let Err(e) = backend.run(command_rx, event_tx, cancellation_token).await
-                        {
-                            error!(error = %e, "PulseAudio backend runtime error");
-                        }
-                    }
-                    Err(e) => {
-                        error!(error = %e, "cannot create PulseAudio backend");
-                    }
-                }
-            });
-        });
-
-        Ok(())
+                let backend = Self::new().await?;
+                backend.run(command_rx, event_tx, cancellation_token).await
+            })
+        })
     }
 
     async fn new() -> Result<Self, Error> {
@@ -148,11 +141,11 @@ impl PulseBackend {
         mut command_rx: CommandReceiver,
         external_tx: mpsc::UnboundedSender<ExternalCommand>,
         cancellation_token: CancellationToken,
-    ) -> tokio::task::JoinHandle<()> {
+    ) -> JoinHandle<()> {
         let devices = self.state.devices.clone();
         let streams = self.state.streams.clone();
 
-        tokio::spawn(async move {
+        spawn(async move {
             loop {
                 tokio::select! {
                     _ = cancellation_token.cancelled() => {
@@ -303,13 +296,13 @@ impl PulseBackend {
         let state = self.state;
         let rate_limiter = VolumeRateLimiter::new();
 
-        let task_handle = tokio::spawn(async move {
+        let task_handle = spawn(async move {
             loop {
                 tokio::select! {
                     _ = cancellation_token.cancelled() => {
                         info!("PulseBackend context handler cancelled");
                         context.disconnect();
-                        return;
+                        return context;
                     }
                     Some(command) = internal_command_rx.recv() => {
                         handle_internal_command(
@@ -327,7 +320,7 @@ impl PulseBackend {
                     }
                     else => {
                         info!("Internal command channel closed");
-                        return;
+                        return context;
                     }
                 }
             }
@@ -381,7 +374,11 @@ impl PulseBackend {
         command_token.cancel();
         context_token.cancel();
 
-        let _ = tokio::join!(command_handle, context_handle);
+        let (_, context_result) = tokio::join!(command_handle, context_handle);
+
+        if let Ok(_context) = context_result {
+            info!("PulseAudio context cleaned up");
+        }
 
         info!("PulseAudio backend stopped");
         Ok(())

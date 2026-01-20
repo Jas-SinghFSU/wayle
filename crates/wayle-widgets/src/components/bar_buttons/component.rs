@@ -1,18 +1,19 @@
-//! Bar button compositor that manages variant switching.
+//! Bar button component with runtime-switchable visual variants.
 
-use gtk4::prelude::Cast;
-use relm4::{ComponentParts, ComponentSender, Controller, gtk, prelude::*};
+use futures::StreamExt;
+#[allow(deprecated)]
+use gtk4::prelude::StyleContextExt;
+use gtk4::prelude::{OrientableExt, WidgetExt};
+use relm4::{ComponentParts, ComponentSender, gtk, prelude::*};
 use wayle_common::ConfigProperty;
-use wayle_config::schemas::{bar::BorderLocation, styling::ThemeProvider};
+use wayle_config::schemas::styling::ThemeProvider;
 
 use super::{
-    basic::{BasicBarButton, BasicBarButtonConfig, BasicBarButtonInit},
-    block_prefix::{BlockPrefixBarButton, BlockPrefixBarButtonConfig, BlockPrefixBarButtonInit},
-    icon_square::{IconSquareBarButton, IconSquareBarButtonConfig, IconSquareBarButtonInit},
-    types::{BarButtonOutput, BarButtonVariant, CommonBarButtonMsg},
+    shared::{resolve_color, setup_event_controllers},
+    types::{BarButtonClass, BarButtonConfig, BarButtonOutput, BarButtonVariant},
 };
 
-/// Initialization data for the BarButton compositor.
+/// Initialization data for BarButton.
 #[derive(Debug, Clone)]
 pub struct BarButtonInit {
     /// Icon name (symbolic icon).
@@ -21,54 +22,13 @@ pub struct BarButtonInit {
     pub label: String,
     /// Optional tooltip.
     pub tooltip: Option<String>,
-    /// Initial variant to display.
-    pub variant: BarButtonVariant,
     /// Scroll sensitivity multiplier.
     pub scroll_sensitivity: f64,
-    /// Variant-specific configuration.
-    pub variant_config: BarButtonVariantConfig,
-    /// Theme provider for determining color resolution strategy.
-    pub theme_provider: ConfigProperty<ThemeProvider>,
-    /// Border placement (global setting).
-    pub border_location: ConfigProperty<BorderLocation>,
-    /// Border width in pixels (global setting).
-    pub border_width: ConfigProperty<u8>,
+    /// Shared configuration.
+    pub config: BarButtonConfig,
 }
 
-impl Default for BarButtonInit {
-    fn default() -> Self {
-        Self {
-            icon: String::new(),
-            label: String::new(),
-            tooltip: None,
-            variant: BarButtonVariant::default(),
-            scroll_sensitivity: 1.0,
-            variant_config: BarButtonVariantConfig::Basic(BasicBarButtonConfig::default()),
-            theme_provider: ConfigProperty::new(ThemeProvider::default()),
-            border_location: ConfigProperty::new(BorderLocation::default()),
-            border_width: ConfigProperty::new(1),
-        }
-    }
-}
-
-/// Configuration for a specific variant.
-#[derive(Debug, Clone)]
-pub enum BarButtonVariantConfig {
-    /// Configuration for Basic variant.
-    Basic(BasicBarButtonConfig),
-    /// Configuration for BlockPrefix variant.
-    BlockPrefix(BlockPrefixBarButtonConfig),
-    /// Configuration for IconSquare variant.
-    IconSquare(IconSquareBarButtonConfig),
-}
-
-impl Default for BarButtonVariantConfig {
-    fn default() -> Self {
-        Self::Basic(BasicBarButtonConfig::default())
-    }
-}
-
-/// Input messages for the BarButton compositor.
+/// Input messages for BarButton.
 #[derive(Debug)]
 pub enum BarButtonInput {
     /// Update the icon.
@@ -77,46 +37,99 @@ pub enum BarButtonInput {
     SetLabel(String),
     /// Update the tooltip.
     SetTooltip(Option<String>),
-    /// Switch to a different variant.
-    SetVariant(BarButtonVariant, BarButtonVariantConfig),
-    /// Forwarded output from active sub-component.
-    FromVariant(BarButtonOutput),
+    /// Config property changed.
+    ConfigChanged,
 }
 
-enum VariantController {
-    Basic(Controller<BasicBarButton>),
-    BlockPrefix(Controller<BlockPrefixBarButton>),
-    IconSquare(Controller<IconSquareBarButton>),
+/// Command outputs from async watchers.
+#[derive(Debug)]
+pub enum BarButtonCmd {
+    VariantChanged(BarButtonVariant),
+    ConfigChanged,
 }
 
-impl VariantController {
-    fn widget(&self) -> &gtk::Widget {
-        match self {
-            Self::Basic(ctrl) => ctrl.widget().upcast_ref(),
-            Self::BlockPrefix(ctrl) => ctrl.widget().upcast_ref(),
-            Self::IconSquare(ctrl) => ctrl.widget().upcast_ref(),
-        }
-    }
-
-    fn variant(&self) -> BarButtonVariant {
-        match self {
-            Self::Basic(_) => BarButtonVariant::Basic,
-            Self::BlockPrefix(_) => BarButtonVariant::BlockPrefix,
-            Self::IconSquare(_) => BarButtonVariant::IconSquare,
-        }
-    }
-}
-
-/// BarButton compositor state.
+/// Bar button with switchable visual variants.
 pub struct BarButton {
     icon: String,
     label: String,
     tooltip: Option<String>,
-    scroll_sensitivity: f64,
-    active: VariantController,
-    theme_provider: ConfigProperty<ThemeProvider>,
-    border_location: ConfigProperty<BorderLocation>,
-    border_width: ConfigProperty<u8>,
+    variant: BarButtonVariant,
+    config: BarButtonConfig,
+    css_provider: gtk::CssProvider,
+}
+
+impl BarButton {
+    fn css_classes(&self) -> Vec<&'static str> {
+        let mut classes = vec![BarButtonClass::BASE];
+
+        classes.push(match self.variant {
+            BarButtonVariant::Basic => "basic",
+            BarButtonVariant::BlockPrefix => "block-prefix",
+            BarButtonVariant::IconSquare => "icon-square",
+        });
+
+        if !self.config.behavior.show_label.get() {
+            classes.push(BarButtonClass::ICON_ONLY);
+        }
+        if self.config.behavior.vertical.get() {
+            classes.push(BarButtonClass::VERTICAL);
+        }
+        if let Some(border_class) = self.config.border_location.get().css_class() {
+            classes.push(border_class);
+        }
+        classes
+    }
+
+    fn orientation(&self) -> gtk::Orientation {
+        if self.config.behavior.vertical.get() {
+            gtk::Orientation::Vertical
+        } else {
+            gtk::Orientation::Horizontal
+        }
+    }
+
+    fn ellipsize(&self) -> gtk::pango::EllipsizeMode {
+        if self.config.behavior.truncation_enabled.get() {
+            gtk::pango::EllipsizeMode::End
+        } else {
+            gtk::pango::EllipsizeMode::None
+        }
+    }
+
+    fn max_width_chars(&self) -> i32 {
+        if self.config.behavior.truncation_enabled.get() {
+            self.config.behavior.truncation_size.get() as i32
+        } else {
+            -1
+        }
+    }
+
+    fn build_css(&self) -> String {
+        let is_wayle = matches!(self.config.theme_provider.get(), ThemeProvider::Wayle);
+
+        let icon_color = resolve_color(&self.config.colors.icon_color, is_wayle);
+        let label_color = resolve_color(&self.config.colors.label_color, is_wayle);
+        let icon_bg = resolve_color(&self.config.colors.icon_background, is_wayle);
+        let button_bg = resolve_color(&self.config.colors.button_background, is_wayle);
+        let border_color = resolve_color(&self.config.colors.border_color, is_wayle);
+        let border_width = self.config.border_width.get();
+
+        format!(
+            "* {{ \
+             --bar-btn-icon-color: {}; \
+             --bar-btn-label-color: {}; \
+             --bar-btn-icon-bg: {}; \
+             --bar-btn-bg: {}; \
+             --bar-btn-border-color: {}; \
+             --bar-btn-border-width: {}px; \
+             }}",
+            icon_color, label_color, icon_bg, button_bg, border_color, border_width
+        )
+    }
+
+    fn reload_css(&self) {
+        self.css_provider.load_from_string(&self.build_css());
+    }
 }
 
 #[relm4::component(pub)]
@@ -124,14 +137,168 @@ impl Component for BarButton {
     type Init = BarButtonInit;
     type Input = BarButtonInput;
     type Output = BarButtonOutput;
-    type CommandOutput = ();
+    type CommandOutput = BarButtonCmd;
 
     view! {
         #[root]
-        #[name = "stack"]
-        gtk::Stack {
-            set_transition_type: gtk::StackTransitionType::Crossfade,
-            set_transition_duration: 150,
+        gtk::MenuButton {
+            set_always_show_arrow: false,
+            set_cursor_from_name: Some("pointer"),
+
+            #[watch]
+            set_css_classes: &model.css_classes(),
+
+            #[watch]
+            set_visible: model.config.behavior.visible.get(),
+
+            #[watch]
+            set_tooltip_text: model.tooltip.as_deref(),
+
+            #[wrap(Some)]
+            set_child = match model.variant {
+                BarButtonVariant::Basic => gtk::Box {
+                    add_css_class: "bar-button-content",
+
+                    #[watch]
+                    set_orientation: model.orientation(),
+
+                    gtk::Image {
+                        #[watch]
+                        set_icon_name: Some(&model.icon),
+                    },
+
+                    gtk::Label {
+                        add_css_class: "bar-button-label",
+                        set_valign: gtk::Align::BaselineCenter,
+
+                        #[watch]
+                        set_label: &model.label,
+
+                        #[watch]
+                        set_visible: model.config.behavior.show_label.get(),
+
+                        #[watch]
+                        set_ellipsize: model.ellipsize(),
+
+                        #[watch]
+                        set_max_width_chars: model.max_width_chars(),
+                    },
+                },
+
+                BarButtonVariant::BlockPrefix => gtk::Box {
+                    add_css_class: "bar-button-content",
+
+                    #[watch]
+                    set_orientation: model.orientation(),
+
+                    #[watch]
+                    set_valign: if model.config.behavior.vertical.get() {
+                        gtk::Align::Start
+                    } else {
+                        gtk::Align::Fill
+                    },
+
+                    gtk::Box {
+                        add_css_class: "icon-container",
+
+                        #[watch]
+                        set_halign: if model.config.behavior.vertical.get() {
+                            gtk::Align::Fill
+                        } else {
+                            gtk::Align::Start
+                        },
+
+                        #[watch]
+                        set_valign: if model.config.behavior.vertical.get() {
+                            gtk::Align::Start
+                        } else {
+                            gtk::Align::Fill
+                        },
+
+                        gtk::Image {
+                            set_valign: gtk::Align::Center,
+                            set_halign: gtk::Align::Center,
+                            set_hexpand: true,
+
+                            #[watch]
+                            set_icon_name: Some(&model.icon),
+                        },
+                    },
+
+                    gtk::Box {
+                        add_css_class: "label-container",
+                        set_hexpand: true,
+
+                        #[watch]
+                        set_halign: if model.config.behavior.vertical.get() {
+                            gtk::Align::Fill
+                        } else {
+                            gtk::Align::Center
+                        },
+
+                        #[watch]
+                        set_valign: if model.config.behavior.vertical.get() {
+                            gtk::Align::Start
+                        } else {
+                            gtk::Align::Fill
+                        },
+
+                        #[watch]
+                        set_visible: model.config.behavior.show_label.get(),
+
+                        gtk::Label {
+                            add_css_class: "bar-button-label",
+                            set_halign: gtk::Align::Center,
+                            set_valign: gtk::Align::BaselineCenter,
+                            set_hexpand: true,
+
+                            #[watch]
+                            set_label: &model.label,
+
+                            #[watch]
+                            set_ellipsize: model.ellipsize(),
+
+                            #[watch]
+                            set_max_width_chars: model.max_width_chars(),
+                        },
+                    },
+                },
+
+                BarButtonVariant::IconSquare => gtk::Box {
+                    add_css_class: "bar-button-content",
+
+                    #[watch]
+                    set_orientation: model.orientation(),
+
+                    gtk::Box {
+                        add_css_class: "icon-container",
+                        set_halign: gtk::Align::Center,
+
+                        gtk::Image {
+                            #[watch]
+                            set_icon_name: Some(&model.icon),
+                        },
+                    },
+
+                    gtk::Label {
+                        add_css_class: "bar-button-label",
+                        set_halign: gtk::Align::Center,
+                        set_valign: gtk::Align::BaselineCenter,
+
+                        #[watch]
+                        set_label: &model.label,
+
+                        #[watch]
+                        set_visible: model.config.behavior.show_label.get(),
+
+                        #[watch]
+                        set_ellipsize: model.ellipsize(),
+
+                        #[watch]
+                        set_max_width_chars: model.max_width_chars(),
+                    },
+                },
+            },
         }
     }
 
@@ -140,186 +307,116 @@ impl Component for BarButton {
         root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let icon = init.icon.clone();
-        let label = init.label.clone();
-        let tooltip = init.tooltip.clone();
-        let scroll_sensitivity = init.scroll_sensitivity;
-
-        let active = Self::create_variant(
-            init.variant,
-            &init.variant_config,
-            &icon,
-            &label,
-            tooltip.clone(),
-            scroll_sensitivity,
-            &sender,
-            &init.theme_provider,
-            &init.border_location,
-            &init.border_width,
-        );
-
-        root.add_child(active.widget());
-        root.set_visible_child(active.widget());
+        let css_provider = gtk::CssProvider::new();
 
         let model = BarButton {
-            icon,
-            label,
-            tooltip,
-            scroll_sensitivity,
-            active,
-            theme_provider: init.theme_provider,
-            border_location: init.border_location,
-            border_width: init.border_width,
+            icon: init.icon,
+            label: init.label,
+            tooltip: init.tooltip,
+            variant: init.config.variant.get(),
+            config: init.config,
+            css_provider,
         };
 
+        #[allow(deprecated)]
+        root.style_context().add_provider(
+            &model.css_provider,
+            gtk::STYLE_PROVIDER_PRIORITY_USER,
+        );
+        model.reload_css();
+
         let widgets = view_output!();
+
+        setup_event_controllers(
+            &root,
+            sender.output_sender().clone(),
+            init.scroll_sensitivity,
+        );
+        Self::watch_variant(&model.config.variant, &sender);
+        Self::watch_config(&model.config, &sender);
 
         ComponentParts { model, widgets }
     }
 
-    fn update(&mut self, msg: Self::Input, sender: ComponentSender<Self>, root: &Self::Root) {
+    fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, _root: &Self::Root) {
         match msg {
-            BarButtonInput::SetIcon(icon) => {
-                self.icon = icon.clone();
-                self.forward_to_active(CommonBarButtonMsg::SetIcon(icon));
+            BarButtonInput::SetIcon(icon) => self.icon = icon,
+            BarButtonInput::SetLabel(label) => self.label = label,
+            BarButtonInput::SetTooltip(tooltip) => self.tooltip = tooltip,
+            BarButtonInput::ConfigChanged => {}
+        }
+    }
+
+    fn update_cmd(
+        &mut self,
+        msg: Self::CommandOutput,
+        _sender: ComponentSender<Self>,
+        _root: &Self::Root,
+    ) {
+        match msg {
+            BarButtonCmd::VariantChanged(variant) => {
+                self.variant = variant;
             }
-            BarButtonInput::SetLabel(label) => {
-                self.label = label.clone();
-                self.forward_to_active(CommonBarButtonMsg::SetLabel(label));
-            }
-            BarButtonInput::SetTooltip(tooltip) => {
-                self.tooltip = tooltip.clone();
-                self.forward_to_active(CommonBarButtonMsg::SetTooltip(tooltip));
-            }
-            BarButtonInput::SetVariant(variant, config) => {
-                if self.active.variant() != variant {
-                    self.swap_variant(variant, config, root, &sender);
-                }
-            }
-            BarButtonInput::FromVariant(output) => {
-                let _ = sender.output(output);
+            BarButtonCmd::ConfigChanged => {
+                self.reload_css();
             }
         }
     }
 }
 
 impl BarButton {
-    #[allow(clippy::too_many_arguments)]
-    fn create_variant(
-        variant: BarButtonVariant,
-        config: &BarButtonVariantConfig,
-        icon: &str,
-        label: &str,
-        tooltip: Option<String>,
-        scroll_sensitivity: f64,
-        sender: &ComponentSender<Self>,
-        theme_provider: &ConfigProperty<ThemeProvider>,
-        border_location: &ConfigProperty<BorderLocation>,
-        border_width: &ConfigProperty<u8>,
-    ) -> VariantController {
-        match variant {
-            BarButtonVariant::Basic => {
-                let basic_config = match config {
-                    BarButtonVariantConfig::Basic(c) => c.clone(),
-                    _ => BasicBarButtonConfig::default(),
-                };
+    fn watch_variant(variant: &ConfigProperty<BarButtonVariant>, sender: &ComponentSender<Self>) {
+        let variant = variant.clone();
+        sender.command(move |out, shutdown| {
+            shutdown
+                .register(async move {
+                    let mut stream = variant.watch();
+                    stream.next().await;
 
-                let ctrl = BasicBarButton::builder()
-                    .launch(BasicBarButtonInit {
-                        icon: icon.to_string(),
-                        label: label.to_string(),
-                        tooltip,
-                        scroll_sensitivity,
-                        config: basic_config,
-                        theme_provider: theme_provider.clone(),
-                        border_location: border_location.clone(),
-                        border_width: border_width.clone(),
-                    })
-                    .forward(sender.input_sender(), BarButtonInput::FromVariant);
-
-                VariantController::Basic(ctrl)
-            }
-
-            BarButtonVariant::BlockPrefix => {
-                let block_config = match config {
-                    BarButtonVariantConfig::BlockPrefix(c) => c.clone(),
-                    _ => BlockPrefixBarButtonConfig::default(),
-                };
-
-                let ctrl = BlockPrefixBarButton::builder()
-                    .launch(BlockPrefixBarButtonInit {
-                        icon: icon.to_string(),
-                        label: label.to_string(),
-                        tooltip,
-                        scroll_sensitivity,
-                        config: block_config,
-                        theme_provider: theme_provider.clone(),
-                        border_location: border_location.clone(),
-                        border_width: border_width.clone(),
-                    })
-                    .forward(sender.input_sender(), BarButtonInput::FromVariant);
-
-                VariantController::BlockPrefix(ctrl)
-            }
-
-            BarButtonVariant::IconSquare => {
-                let square_config = match config {
-                    BarButtonVariantConfig::IconSquare(c) => c.clone(),
-                    _ => IconSquareBarButtonConfig::default(),
-                };
-
-                let ctrl = IconSquareBarButton::builder()
-                    .launch(IconSquareBarButtonInit {
-                        icon: icon.to_string(),
-                        label: label.to_string(),
-                        tooltip,
-                        scroll_sensitivity,
-                        config: square_config,
-                        theme_provider: theme_provider.clone(),
-                        border_location: border_location.clone(),
-                        border_width: border_width.clone(),
-                    })
-                    .forward(sender.input_sender(), BarButtonInput::FromVariant);
-
-                VariantController::IconSquare(ctrl)
-            }
-        }
+                    while let Some(value) = stream.next().await {
+                        if out.send(BarButtonCmd::VariantChanged(value)).is_err() {
+                            break;
+                        }
+                    }
+                })
+                .drop_on_shutdown()
+        });
     }
 
-    fn swap_variant(
-        &mut self,
-        variant: BarButtonVariant,
-        config: BarButtonVariantConfig,
-        stack: &gtk::Stack,
-        sender: &ComponentSender<Self>,
-    ) {
-        let new_controller = Self::create_variant(
-            variant,
-            &config,
-            &self.icon,
-            &self.label,
-            self.tooltip.clone(),
-            self.scroll_sensitivity,
-            sender,
-            &self.theme_provider,
-            &self.border_location,
-            &self.border_width,
-        );
-
-        stack.add_child(new_controller.widget());
-        stack.set_visible_child(new_controller.widget());
-
-        let old_widget = self.active.widget().clone();
-        self.active = new_controller;
-
-        stack.remove(&old_widget);
+    fn watch_config(config: &BarButtonConfig, sender: &ComponentSender<Self>) {
+        Self::watch_property(&config.behavior.show_label, sender);
+        Self::watch_property(&config.behavior.visible, sender);
+        Self::watch_property(&config.behavior.vertical, sender);
+        Self::watch_property(&config.behavior.truncation_enabled, sender);
+        Self::watch_property(&config.behavior.truncation_size, sender);
+        Self::watch_property(&config.colors.icon_color, sender);
+        Self::watch_property(&config.colors.label_color, sender);
+        Self::watch_property(&config.colors.icon_background, sender);
+        Self::watch_property(&config.colors.button_background, sender);
+        Self::watch_property(&config.colors.border_color, sender);
+        Self::watch_property(&config.border_location, sender);
+        Self::watch_property(&config.border_width, sender);
+        Self::watch_property(&config.theme_provider, sender);
     }
 
-    fn forward_to_active(&self, msg: CommonBarButtonMsg) {
-        match &self.active {
-            VariantController::Basic(ctrl) => ctrl.emit(msg.into()),
-            VariantController::BlockPrefix(ctrl) => ctrl.emit(msg.into()),
-            VariantController::IconSquare(ctrl) => ctrl.emit(msg.into()),
-        }
+    fn watch_property<T>(property: &ConfigProperty<T>, sender: &ComponentSender<Self>)
+    where
+        T: Clone + Send + Sync + PartialEq + 'static,
+    {
+        let property = property.clone();
+        sender.command(move |out, shutdown| {
+            shutdown
+                .register(async move {
+                    let mut stream = property.watch();
+                    stream.next().await;
+
+                    while (stream.next().await).is_some() {
+                        if out.send(BarButtonCmd::ConfigChanged).is_err() {
+                            break;
+                        }
+                    }
+                })
+                .drop_on_shutdown()
+        });
     }
 }

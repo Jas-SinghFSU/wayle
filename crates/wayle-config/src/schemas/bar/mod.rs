@@ -1,6 +1,6 @@
 mod types;
 
-pub use types::{BarGroup, BarItem, BarLayout, BarModule, BorderLocation};
+pub use types::{BarButtonVariant, BarGroup, BarItem, BarLayout, BarModule, BorderLocation};
 use wayle_common::ConfigProperty;
 use wayle_derive::wayle_config;
 
@@ -101,6 +101,11 @@ pub struct BarConfig {
     // ===       BUTTON/MODULE SETTINGS        ===
     // === === === === === === === === === === ===
     //
+    /// Visual style variant for bar buttons.
+    #[serde(rename = "button-variant")]
+    #[default(BarButtonVariant::Basic)]
+    pub button_variant: ConfigProperty<BarButtonVariant>,
+
     /// Button opacity (0-100).
     #[serde(rename = "button-opacity")]
     #[default(Percentage::new(100))]

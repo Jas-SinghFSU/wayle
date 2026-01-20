@@ -144,3 +144,27 @@ impl BorderLocation {
         }
     }
 }
+
+/// Visual style variants for bar buttons.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
+pub enum BarButtonVariant {
+    /// Icon + label, minimal background.
+    #[default]
+    Basic,
+    /// Icon in colored pill container that blends into button edge.
+    BlockPrefix,
+    /// Button background with colored icon container inside.
+    IconSquare,
+}
+
+impl BarButtonVariant {
+    /// CSS class name for this variant.
+    pub fn css_class(self) -> &'static str {
+        match self {
+            Self::Basic => "basic",
+            Self::BlockPrefix => "block-prefix",
+            Self::IconSquare => "icon-square",
+        }
+    }
+}

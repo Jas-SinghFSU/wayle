@@ -1,8 +1,8 @@
-use std::{borrow::Cow, sync::Arc};
+use std::borrow::Cow;
 
 use glib::{Propagation, object::IsA};
 use gtk4::{
-    EventControllerScroll, EventControllerScrollFlags, GestureClick,
+    EventControllerScroll, EventControllerScrollFlags, GestureClick, Widget,
     prelude::{GestureSingleExt, WidgetExt},
 };
 use relm4::Sender;
@@ -11,10 +11,7 @@ use wayle_config::schemas::styling::ColorValue;
 
 use super::types::BarButtonOutput;
 
-pub(super) fn attach_click_gesture(
-    widget: &impl IsA<gtk4::Widget>,
-    sender: Sender<BarButtonOutput>,
-) {
+pub(super) fn attach_click_gesture(widget: &impl IsA<Widget>, sender: Sender<BarButtonOutput>) {
     let click = GestureClick::new();
     click.set_button(0);
 
@@ -32,7 +29,7 @@ pub(super) fn attach_click_gesture(
 }
 
 pub(super) fn attach_scroll_controller(
-    widget: &impl IsA<gtk4::Widget>,
+    widget: &impl IsA<Widget>,
     sender: Sender<BarButtonOutput>,
     sensitivity: f64,
 ) {
@@ -56,7 +53,7 @@ pub(super) fn attach_scroll_controller(
 }
 
 pub(super) fn setup_event_controllers(
-    widget: &impl IsA<gtk4::Widget>,
+    widget: &impl IsA<Widget>,
     sender: Sender<BarButtonOutput>,
     scroll_sensitivity: f64,
 ) {
@@ -65,7 +62,7 @@ pub(super) fn setup_event_controllers(
 }
 
 pub(super) fn resolve_color(
-    color_prop: &Arc<ConfigProperty<ColorValue>>,
+    color_prop: &ConfigProperty<ColorValue>,
     is_wayle_themed: bool,
 ) -> Cow<'static, str> {
     if is_wayle_themed {

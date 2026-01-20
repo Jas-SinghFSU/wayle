@@ -60,12 +60,11 @@ impl AudioServiceBuilder {
         let playback_streams = Property::new(Vec::new());
         let recording_streams = Property::new(Vec::new());
 
-        PulseBackend::start(
+        let backend_handle = PulseBackend::start(
             command_rx,
             event_tx.clone(),
             cancellation_token.child_token(),
-        )
-        .await?;
+        );
 
         let connection = if self.register_daemon {
             let conn = Connection::session()
@@ -80,6 +79,7 @@ impl AudioServiceBuilder {
             command_tx,
             event_tx,
             cancellation_token,
+            backend_handle: Some(backend_handle),
             _connection: connection.clone(),
             output_devices,
             input_devices,

@@ -22,7 +22,6 @@ use std::{
         unix::io::{AsRawFd, RawFd},
     },
     pin::Pin,
-    ptr,
     rc::{Rc, Weak},
     task,
     time::{Duration, SystemTime, UNIX_EPOCH},
@@ -153,10 +152,41 @@ impl MainloopInnerType for MainInner {
 
 impl Drop for MainInner {
     fn drop(&mut self) {
+        // SAFETY: userdata is the Weak ptr from new_cyclic's into_raw()
         unsafe {
             Weak::from_raw(self.api.userdata as *mut MainInner);
+
+            let api = &self.api;
             for item in self.items.get_mut().drain(..) {
-                drop(Box::from_raw(item));
+                let mut boxed = Box::from_raw(item);
+                let raw_item = &mut *boxed as *mut Item;
+
+                // SAFETY: free callbacks expect the same api/item/userdata from registration
+                match boxed.as_ref() {
+                    Item::Defer {
+                        free: Some(cb),
+                        userdata,
+                        ..
+                    } => {
+                        cb(api, raw_item as *mut _, *userdata);
+                    }
+                    Item::Timer {
+                        free: Some(cb),
+                        userdata,
+                        ..
+                    } => {
+                        cb(api, raw_item as *mut _, *userdata);
+                    }
+                    Item::Event {
+                        free: Some(cb),
+                        userdata,
+                        ..
+                    } => {
+                        cb(api, raw_item as *mut _, *userdata);
+                    }
+                    _ => {}
+                }
+                drop(boxed);
             }
         }
     }
@@ -169,36 +199,34 @@ impl Default for TokioMain {
 }
 
 impl TokioMain {
-    /// Create a new tokio mainloop for PulseAudio
-    ///
-    /// # Panics
-    /// Panics if unable to get mutable reference to MainInner during initialization
+    /// Create a new tokio mainloop for PulseAudio.
     pub fn new() -> Self {
-        let mut mi = Rc::new(MainInner {
-            api: MainloopApi {
-                userdata: ptr::null_mut(),
-                io_new: Some(MainInner::io_new),
-                io_enable: Some(MainInner::io_enable),
-                io_free: Some(MainInner::io_free),
-                io_set_destroy: Some(MainInner::io_set_destroy),
-                time_new: Some(MainInner::time_new),
-                time_restart: Some(MainInner::time_restart),
-                time_free: Some(MainInner::time_free),
-                time_set_destroy: Some(MainInner::time_set_destroy),
-                defer_new: Some(MainInner::defer_new),
-                defer_enable: Some(MainInner::defer_enable),
-                defer_free: Some(MainInner::defer_free),
-                defer_set_destroy: Some(MainInner::defer_set_destroy),
-                quit: Some(MainInner::quit),
-            },
-            items: UnsafeCell::new(Vec::new()),
-            sleep: UnsafeCell::new(None),
-            waker: Cell::new(None),
-            quit: Cell::new(None),
+        let mi = Rc::new_cyclic(|weak| {
+            let weak_ptr = weak.clone().into_raw();
+
+            MainInner {
+                api: MainloopApi {
+                    userdata: weak_ptr as *mut c_void,
+                    io_new: Some(MainInner::io_new),
+                    io_enable: Some(MainInner::io_enable),
+                    io_free: Some(MainInner::io_free),
+                    io_set_destroy: Some(MainInner::io_set_destroy),
+                    time_new: Some(MainInner::time_new),
+                    time_restart: Some(MainInner::time_restart),
+                    time_free: Some(MainInner::time_free),
+                    time_set_destroy: Some(MainInner::time_set_destroy),
+                    defer_new: Some(MainInner::defer_new),
+                    defer_enable: Some(MainInner::defer_enable),
+                    defer_free: Some(MainInner::defer_free),
+                    defer_set_destroy: Some(MainInner::defer_set_destroy),
+                    quit: Some(MainInner::quit),
+                },
+                items: UnsafeCell::new(Vec::new()),
+                sleep: UnsafeCell::new(None),
+                waker: Cell::new(None),
+                quit: Cell::new(None),
+            }
         });
-        let v = Rc::get_mut(&mut mi).expect("Failed to get mutable reference to MainInner");
-        v.api.userdata = v as *mut MainInner as *mut _;
-        let _cyclic = Rc::downgrade(&mi).into_raw();
         TokioMain { mi }
     }
 
@@ -245,14 +273,11 @@ impl TokioMain {
     }
 
     /// Run callbacks and register wakers for the pulse mainloop.
-    ///
-    /// # Panics
-    /// Panics if system time is before UNIX_EPOCH or if PulseAudio provides invalid file descriptors
     pub fn tick(&mut self, ctx: &mut task::Context) -> task::Poll<Option<Retval>> {
         let inow = tokio::time::Instant::now();
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
-            .expect("System time before UNIX_EPOCH");
+            .unwrap_or(Duration::ZERO);
         let mut wake = None::<Duration>;
         let mut rv = task::Poll::Pending;
         let mut i = 0;
@@ -309,9 +334,16 @@ impl TokioMain {
                 } => {
                     let mut local_fd = afd.take();
 
-                    let async_fd = local_fd.get_or_insert_with(|| {
-                        AsyncFd::new(Fd(*fd)).expect("Failed to create AsyncFd for PulseAudio")
-                    });
+                    let async_fd = match local_fd {
+                        Some(ref fd) => fd,
+                        None => {
+                            let Ok(fd) = AsyncFd::new(Fd(*fd)) else {
+                                afd.set(None);
+                                continue;
+                            };
+                            local_fd.insert(fd)
+                        }
+                    };
                     let mut ready = IoEventFlagSet::NULL;
                     let mut rg = None;
                     let mut wg = None;
@@ -437,6 +469,7 @@ impl TokioMain {
             }
         }
     }
+
 }
 
 impl Drop for TokioMain {
@@ -449,9 +482,13 @@ impl Drop for TokioMain {
 impl MainInner {
     unsafe fn from_api(api: *const MainloopApi) -> Rc<Self> {
         let ptr = unsafe { Weak::from_raw((*api).userdata as *const Self) };
-        let rv = ptr.upgrade();
+        let rv = ptr.upgrade().expect(
+            "MainloopApi callback called after TokioMain was dropped. \
+             This indicates a shutdown ordering bug - ensure Context is \
+             fully disconnected before dropping the mainloop.",
+        );
         let _ = ptr.into_raw();
-        rv.expect("MainloopApi was dropped")
+        rv
     }
 
     fn push(&self, item: Box<Item>) {
@@ -616,12 +653,8 @@ impl MainInner {
                         MainInner::wake(main);
                     }
                 }
-                Item::Timer { .. } => {
-                    // ignore
-                }
-                Item::Event { .. } => {
-                    // ignore
-                }
+                Item::Timer { .. } => {}
+                Item::Event { .. } => {}
             }
         }
     }

@@ -1,8 +1,9 @@
 use std::sync::Arc;
 
 use derive_more::Debug;
+use tokio::task::JoinHandle;
 use tokio_util::sync::CancellationToken;
-use tracing::instrument;
+use tracing::{error, instrument};
 use wayle_common::Property;
 use wayle_traits::Reactive;
 use zbus::Connection;
@@ -34,6 +35,8 @@ pub struct AudioService {
     pub(crate) event_tx: EventSender,
     #[debug(skip)]
     pub(crate) cancellation_token: CancellationToken,
+    #[debug(skip)]
+    pub(crate) backend_handle: Option<JoinHandle<Result<(), Error>>>,
     #[debug(skip)]
     pub(crate) _connection: Option<Connection>,
 
@@ -176,5 +179,20 @@ impl AudioService {
 impl Drop for AudioService {
     fn drop(&mut self) {
         self.cancellation_token.cancel();
+
+        let Some(handle) = self.backend_handle.take() else {
+            return;
+        };
+
+        let Ok(rt) = tokio::runtime::Handle::try_current() else {
+            return;
+        };
+
+        let result = tokio::task::block_in_place(|| rt.block_on(handle));
+        match result {
+            Ok(Ok(())) => {}
+            Ok(Err(e)) => error!(error = %e, "PulseAudio backend shutdown error"),
+            Err(e) => error!(error = %e, "PulseAudio backend task panicked"),
+        }
     }
 }
