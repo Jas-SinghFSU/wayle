@@ -6,6 +6,7 @@ pub(crate) mod types;
 
 use std::{
     collections::HashMap,
+    future::poll_fn,
     sync::{Arc, RwLock},
 };
 
@@ -16,7 +17,7 @@ use libpulse_binding::context::{Context, FlagSet as ContextFlags};
 use tokio::{
     runtime::Handle,
     sync::mpsc,
-    task::{spawn, spawn_blocking, JoinHandle},
+    task::{JoinHandle, spawn, spawn_blocking},
 };
 use tokio_util::sync::CancellationToken;
 use tracing::info;
@@ -43,11 +44,6 @@ impl BackendState {
             default_output: Arc::new(RwLock::new(None)),
         }
     }
-}
-
-struct ContextHandlerComponents {
-    mainloop: TokioMain,
-    task_handle: JoinHandle<Context>,
 }
 
 pub(crate) struct PulseBackend {
@@ -285,53 +281,6 @@ impl PulseBackend {
         }
     }
 
-    fn spawn_context_handler(
-        self,
-        mut internal_command_rx: mpsc::UnboundedReceiver<InternalRefresh>,
-        mut external_rx: mpsc::UnboundedReceiver<ExternalCommand>,
-        event_tx: EventSender,
-        cancellation_token: CancellationToken,
-    ) -> ContextHandlerComponents {
-        let mut context = self.context;
-        let state = self.state;
-        let rate_limiter = VolumeRateLimiter::new();
-
-        let task_handle = spawn(async move {
-            loop {
-                tokio::select! {
-                    _ = cancellation_token.cancelled() => {
-                        info!("PulseBackend context handler cancelled");
-                        context.disconnect();
-                        return context;
-                    }
-                    Some(command) = internal_command_rx.recv() => {
-                        handle_internal_command(
-                            &mut context,
-                            command,
-                            &state.devices,
-                            &state.streams,
-                            &event_tx,
-                            &state.default_input,
-                            &state.default_output,
-                        );
-                    }
-                    Some(command) = external_rx.recv() => {
-                        handle_external_command(&mut context, command, &state.devices, &state.streams, &rate_limiter);
-                    }
-                    else => {
-                        info!("Internal command channel closed");
-                        return context;
-                    }
-                }
-            }
-        });
-
-        ContextHandlerComponents {
-            mainloop: self.mainloop,
-            task_handle,
-        }
-    }
-
     async fn run(
         mut self,
         command_rx: CommandReceiver,
@@ -340,45 +289,61 @@ impl PulseBackend {
     ) -> Result<(), Error> {
         let event_token = cancellation_token.child_token();
         let command_token = cancellation_token.child_token();
-        let context_token = cancellation_token.child_token();
 
-        let (_, internal_command_rx) =
-            self.setup_event_monitoring(event_tx.clone(), event_token)?;
+        let (_, mut internal_rx) = self.setup_event_monitoring(event_tx.clone(), event_token)?;
 
-        let (external_tx, external_rx) = mpsc::unbounded_channel::<ExternalCommand>();
+        let (external_tx, mut external_rx) = mpsc::unbounded_channel::<ExternalCommand>();
 
         info!("PulseAudio backend fully initialized and monitoring");
 
         let command_handle =
             self.spawn_command_processor(command_rx, external_tx, command_token.clone());
 
-        let ContextHandlerComponents {
-            mut mainloop,
-            task_handle: context_handle,
-        } = self.spawn_context_handler(
-            internal_command_rx,
-            external_rx,
-            event_tx.clone(),
-            context_token.clone(),
-        );
+        let rate_limiter = VolumeRateLimiter::new();
 
-        tokio::select! {
-            _ = mainloop.run() => {
-                info!("PulseAudio mainloop exited");
-            }
-            _ = cancellation_token.cancelled() => {
-                info!("PulseAudio backend cancelled");
+        loop {
+            tokio::select! {
+                biased;
+
+                _ = cancellation_token.cancelled() => {
+                    info!("PulseAudio backend cancelled");
+                    break;
+                }
+
+                result = poll_fn(|cx| self.mainloop.tick(cx)) => {
+                    if result.is_some() {
+                        info!("PulseAudio mainloop quit requested");
+                        break;
+                    }
+                }
+
+                Some(cmd) = internal_rx.recv() => {
+                    handle_internal_command(
+                        &mut self.context,
+                        cmd,
+                        &self.state.devices,
+                        &self.state.streams,
+                        &event_tx,
+                        &self.state.default_input,
+                        &self.state.default_output,
+                    );
+                }
+
+                Some(cmd) = external_rx.recv() => {
+                    handle_external_command(
+                        &mut self.context,
+                        cmd,
+                        &self.state.devices,
+                        &self.state.streams,
+                        &rate_limiter,
+                    );
+                }
             }
         }
 
+        self.context.disconnect();
         command_token.cancel();
-        context_token.cancel();
-
-        let (_, context_result) = tokio::join!(command_handle, context_handle);
-
-        if let Ok(_context) = context_result {
-            info!("PulseAudio context cleaned up");
-        }
+        let _ = command_handle.await;
 
         info!("PulseAudio backend stopped");
         Ok(())

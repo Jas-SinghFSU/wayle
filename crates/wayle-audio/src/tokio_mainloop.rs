@@ -460,16 +460,6 @@ impl TokioMain {
             }
         }
     }
-
-    /// Run the mainloop until a quit is requested through the pulse API
-    pub async fn run(&mut self) -> Retval {
-        loop {
-            if let Some(rv) = poll_fn(|ctx| self.tick(ctx)).await {
-                return rv;
-            }
-        }
-    }
-
 }
 
 impl Drop for TokioMain {
