@@ -1,26 +1,16 @@
-//! Tracing initialization for the shell daemon.
-
 use std::{env, error::Error, io, mem};
 
 use tracing_subscriber::{EnvFilter, Layer, fmt, layer::SubscriberExt, util::SubscriberInitExt};
 use wayle_config::infrastructure::paths::ConfigPaths;
 
-/// Initializes tracing with console and file output.
-///
-/// Console output respects RUST_LOG (defaults to "warn").
-/// File output uses WAYLE_FILE_LOG level (defaults to "info").
-///
-/// # Errors
-///
-/// Returns error if log directory creation or subscriber init fails.
-pub fn init() -> Result<(), Box<dyn Error>> {
+pub(crate) fn init() -> Result<(), Box<dyn Error>> {
     const DAYS_TO_KEEP: usize = 7;
 
     let console_filter =
         EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("warn"));
     let file_filter = env::var("WAYLE_FILE_LOG")
         .map(EnvFilter::new)
-        .unwrap_or_else(|_| EnvFilter::new("info"));
+        .unwrap_or_else(|_| EnvFilter::new("warn,wayle_=info"));
 
     let log_dir = ConfigPaths::log_dir()?;
 

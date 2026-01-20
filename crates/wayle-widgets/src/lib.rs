@@ -19,6 +19,7 @@
 
 pub mod components;
 pub mod primitives;
+pub mod styling;
 
 /// Convenient re-exports of all widget templates and class constants.
 pub mod prelude {
@@ -29,5 +30,6 @@ pub mod prelude {
             empty_state::*, popover::*, progress_bar::*, progress_ring::*, radio_group::*,
             separator::*, slider::*, spinner::*, status_dot::*, switch::*, text_input::*,
         },
+        styling::{InlineStyling, resolve_color},
     };
 }

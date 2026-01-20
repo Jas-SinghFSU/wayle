@@ -1,7 +1,7 @@
 //! Button widget templates.
 #![allow(missing_docs)]
 
-use gtk4::prelude::{BoxExt, WidgetExt};
+use gtk4::prelude::WidgetExt;
 use relm4::{WidgetTemplate, gtk};
 
 /// CSS class constants for link button modifiers.
@@ -22,7 +22,6 @@ impl WidgetTemplate for PrimaryButton {
             add_css_class: "primary",
             set_cursor_from_name: Some("pointer"),
             gtk::Box {
-                set_spacing: 8,
                 #[name = "icon"]
                 gtk::Image {
                     set_visible: false,
@@ -42,7 +41,6 @@ impl WidgetTemplate for SecondaryButton {
             add_css_class: "secondary",
             set_cursor_from_name: Some("pointer"),
             gtk::Box {
-                set_spacing: 8,
                 #[name = "icon"]
                 gtk::Image {
                     set_visible: false,
@@ -62,7 +60,6 @@ impl WidgetTemplate for DangerButton {
             add_css_class: "danger",
             set_cursor_from_name: Some("pointer"),
             gtk::Box {
-                set_spacing: 8,
                 #[name = "icon"]
                 gtk::Image {
                     set_visible: false,
@@ -82,7 +79,6 @@ impl WidgetTemplate for GhostButton {
             add_css_class: "ghost",
             set_cursor_from_name: Some("pointer"),
             gtk::Box {
-                set_spacing: 8,
                 #[name = "icon"]
                 gtk::Image {
                     set_visible: false,
@@ -124,7 +120,6 @@ impl WidgetTemplate for LinkButton {
             add_css_class: "link",
             set_cursor_from_name: Some("pointer"),
             gtk::Box {
-                set_spacing: 8,
                 #[name = "icon"]
                 gtk::Image {
                     set_visible: false,
@@ -144,7 +139,6 @@ impl WidgetTemplate for MutedLinkButton {
             set_css_classes: &["link", LinkButtonClass::MUTED],
             set_cursor_from_name: Some("pointer"),
             gtk::Box {
-                set_spacing: 8,
                 #[name = "icon"]
                 gtk::Image {
                     set_visible: false,
@@ -164,7 +158,6 @@ impl WidgetTemplate for DangerLinkButton {
             set_css_classes: &["link", LinkButtonClass::DANGER],
             set_cursor_from_name: Some("pointer"),
             gtk::Box {
-                set_spacing: 8,
                 #[name = "icon"]
                 gtk::Image {
                     set_visible: false,

@@ -15,7 +15,10 @@ use wayle_config::{
     schemas::{bar::BarConfig, general::GeneralConfig, styling::ThemeProvider},
 };
 
-fn scss_dir() -> PathBuf {
+/// Returns the SCSS source directory path.
+///
+/// Only useful during development for hot-reload watching.
+pub fn scss_dir() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("scss")
 }
 
@@ -118,28 +121,33 @@ fn scale_to_scss(bar: &BarConfig) -> String {
          $bar-btn-icon-padding-scale: {};\n\
          $bar-btn-label-scale: {};\n\
          $bar-btn-label-padding-scale: {};\n\
-         $bar-btn-gap-scale: {};\n\
-         $bar-module-gap: {};\n\
-         $bar-group-module-gap: {};\n",
+         $bar-btn-gap-scale: {};\n",
         bar.scale.get(),
         bar.button_icon_size.get(),
         bar.button_icon_padding.get(),
         bar.button_label_size.get(),
         bar.button_label_padding.get(),
-        bar.button_gap.get(),
-        bar.module_gap.get(),
-        bar.group_module_gap.get()
+        bar.button_gap.get()
     )
 }
 
 fn rounding_to_scss(bar: &BarConfig) -> String {
     let rounding = bar.rounding.get();
+    let button_rounding = bar.button_rounding.get();
     let global = rounding.to_css_values();
     let bar_values = rounding.to_bar_css_values();
+    let bar_button_values = button_rounding.to_bar_button_css_values();
     format!(
-        "$rounding-element: {};\n$rounding-container: {};\n\
-         $bar-rounding-element: {};\n$bar-rounding-container: {};\n",
-        global.element, global.container, bar_values.element, bar_values.container
+        "$rounding-element: {};\n\
+        $rounding-container: {};\n\
+        $bar-rounding-element: {};\n\
+        $bar-rounding-container: {};\n\
+        $bar-button-rounding-element: {};\n",
+        global.element,
+        global.container,
+        bar_values.element,
+        bar_values.container,
+        bar_button_values.element
     )
 }
 

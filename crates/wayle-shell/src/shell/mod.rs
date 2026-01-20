@@ -1,52 +1,48 @@
-//! Root shell component that orchestrates bars and global styling.
 mod bar;
 mod helpers;
 
-use std::collections::HashMap;
+use std::{
+    collections::{HashMap, HashSet, hash_map::Entry},
+    time::Duration,
+};
 
 use gdk4::Display;
-use gtk4::{CssProvider, STYLE_PROVIDER_PRIORITY_APPLICATION};
+use gtk4::{CssProvider, glib};
 use gtk4_layer_shell::{Layer, LayerShell};
 use relm4::{
-    actions::{RelmAction, RelmActionGroup},
+    Controller,
     gtk::{gdk, prelude::*},
     prelude::*,
 };
-use tracing::info;
+use tracing::{debug, info, warn};
 
 use crate::{
-    shell::{
-        bar::{Bar, BarInit},
-        helpers::get_current_monitors,
-    },
+    shell::bar::{Bar, BarInit},
     watchers,
 };
 
-relm4::new_action_group!(AppActionGroup, "app");
-relm4::new_stateless_action!(QuitAction, AppActionGroup, "quit");
+/// Monitor sync retry limit before giving up.
+const MAX_SYNC_RETRIES: u32 = 5;
+/// Initial delay between sync retries (doubles each attempt).
+const BASE_RETRY_DELAY_MS: u64 = 50;
 
-/// Root shell component managing the desktop environment.
-pub struct Shell {
+pub(crate) struct Shell {
     css_provider: CssProvider,
     bars: HashMap<String, Controller<Bar>>,
 }
 
-/// Input messages for Shell.
 #[derive(Debug)]
-pub enum ShellInput {
-    /// Reload CSS with new compiled stylesheet.
+pub(crate) enum ShellInput {
     ReloadCss(String),
 }
 
-/// Command outputs from async operations.
 #[derive(Debug)]
-pub enum ShellCmd {
-    /// CSS recompilation completed.
+pub(crate) enum ShellCmd {
     CssRecompiled(String),
-    MonitorsChanged,
+    SyncMonitors { expected_count: u32, attempt: u32 },
 }
 
-#[relm4::component(pub)]
+#[relm4::component(pub(crate))]
 impl Component for Shell {
     type Init = ();
     type Input = ShellInput;
@@ -68,42 +64,19 @@ impl Component for Shell {
     ) -> ComponentParts<Self> {
         root.init_layer_shell();
         root.set_layer(Layer::Background);
-        root.set_default_size(0, 0);
+        root.set_default_size(1, 1);
         root.set_visible(false);
 
-        let css_provider = CssProvider::new();
+        let display = Display::default().expect("No display");
 
-        gtk4::style_context_add_provider_for_display(
-            &Display::default().expect("No display available"),
-            &css_provider,
-            STYLE_PROVIDER_PRIORITY_APPLICATION,
-        );
-
-        let quit_action: RelmAction<QuitAction> = RelmAction::new_stateless(|_| {
-            info!("Quit action received, shutting down");
-            relm4::main_application().quit();
-        });
-
-        let mut actions = RelmActionGroup::<AppActionGroup>::new();
-        actions.add_action(quit_action);
-        actions.register_for_main_application();
-
-        info!("Shell initialized with CSS provider and app actions");
-
-        info!("Initializing Wayle shell watchers...");
+        helpers::init_icons();
+        helpers::register_app_actions();
         watchers::init(&sender);
-        info!("Watchers initialized");
 
-        let mut bars = HashMap::new();
-        let connectors = get_current_monitors();
+        let css_provider = helpers::init_css_provider(&display);
+        let bars = helpers::create_bars();
 
-        for connector in connectors {
-            let (connector_name, monitor) = connector;
-            if !bars.contains_key(&connector_name) {
-                let bar = Bar::builder().launch(BarInit { monitor }).detach();
-                bars.insert(connector_name.clone(), bar);
-            }
-        }
+        info!("Shell initialized");
 
         let model = Shell { css_provider, bars };
         let widgets = view_output!();
@@ -115,37 +88,106 @@ impl Component for Shell {
         match msg {
             ShellInput::ReloadCss(css) => {
                 self.css_provider.load_from_string(&css);
+
+                for bar in self.bars.values() {
+                    let window = bar.widget().clone();
+                    glib::idle_add_local_once(move || {
+                        trigger_layer_shell_reconfigure(&window);
+                    });
+                }
+
                 info!("CSS reloaded");
             }
         }
     }
 
-    #[allow(clippy::expect_used)]
     fn update_cmd(&mut self, msg: ShellCmd, sender: ComponentSender<Self>, _root: &Self::Root) {
         match msg {
             ShellCmd::CssRecompiled(css) => {
                 sender.input(ShellInput::ReloadCss(css));
             }
-            ShellCmd::MonitorsChanged => {
-                let display = gdk::Display::default().expect("display");
-                let current_monitors: Vec<(String, gdk::Monitor)> =
-                    (0..display.monitors().n_items())
-                        .filter_map(|i| display.monitors().item(i))
-                        .filter_map(|obj| obj.downcast::<gdk::Monitor>().ok())
-                        .filter_map(|m| m.connector().map(|c| (c.to_string(), m)))
-                        .collect();
-
-                self.bars
-                    .retain(|connector, _| current_monitors.iter().any(|(c, _)| c == connector));
-
-                for connector in current_monitors {
-                    let (connector_name, monitor) = connector;
-                    if !self.bars.contains_key(&connector_name) {
-                        let bar = Bar::builder().launch(BarInit { monitor }).detach();
-                        self.bars.insert(connector_name.clone(), bar);
-                    }
-                }
+            ShellCmd::SyncMonitors {
+                expected_count,
+                attempt,
+            } => {
+                self.sync_monitors(expected_count, attempt, &sender);
             }
         }
     }
+}
+
+impl Shell {
+    #[allow(clippy::expect_used)]
+    fn sync_monitors(&mut self, expected_count: u32, attempt: u32, sender: &ComponentSender<Self>) {
+        let monitors = helpers::get_current_monitors();
+        let found_count = monitors.len() as u32;
+
+        debug!(expected_count, found_count, attempt, "Syncing monitors");
+
+        if found_count < expected_count {
+            if attempt < MAX_SYNC_RETRIES {
+                self.schedule_retry(expected_count, attempt, sender);
+                return;
+            }
+            warn!(
+                found_count,
+                expected_count, "Monitor sync incomplete after max retries"
+            );
+        }
+
+        self.update_bars(monitors);
+    }
+
+    fn schedule_retry(&self, expected_count: u32, attempt: u32, sender: &ComponentSender<Self>) {
+        let delay_ms = BASE_RETRY_DELAY_MS * (1 << attempt);
+        let next_attempt = attempt + 1;
+
+        debug!(delay_ms, next_attempt, "Scheduling monitor sync retry");
+
+        let cmd_sender = sender.command_sender().clone();
+        glib::timeout_add_local_once(Duration::from_millis(delay_ms), move || {
+            let _ = cmd_sender.send(ShellCmd::SyncMonitors {
+                expected_count,
+                attempt: next_attempt,
+            });
+        });
+    }
+
+    fn update_bars(&mut self, monitors: Vec<(String, gdk::Monitor)>) {
+        let current: HashSet<&str> = monitors.iter().map(|(c, _)| c.as_str()).collect();
+        debug!(?current, "Updating bars");
+
+        let stale: Vec<String> = self
+            .bars
+            .keys()
+            .filter(|c| !current.contains(c.as_str()))
+            .cloned()
+            .collect();
+
+        for connector in stale {
+            if let Some(_orphan) = self.bars.remove(&connector) {
+                info!(connector = %connector, "Removing bar for disconnected monitor");
+            }
+        }
+
+        for (connector, monitor) in monitors {
+            if let Entry::Vacant(entry) = self.bars.entry(connector) {
+                info!(connector = %entry.key(), "Creating bar for monitor");
+                let bar = Bar::builder().launch(BarInit { monitor }).detach();
+                entry.insert(bar);
+            }
+        }
+
+        debug!(bar_count = self.bars.len(), "Bar sync complete");
+    }
+}
+
+/// Triggers gtk4-layer-shell to reconfigure the surface size.
+///
+/// Layer-shell caches preferred size and only reconfigures when `default-width`
+/// or `default-height` signals fire. This toggles the size to force reconfiguration
+/// after CSS changes that affect widget dimensions.
+fn trigger_layer_shell_reconfigure(window: &gtk4::Window) {
+    window.set_default_size(1, 1);
+    window.set_default_size(0, 0);
 }

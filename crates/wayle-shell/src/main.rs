@@ -1,9 +1,4 @@
-//! Wayle Shell - Desktop environment panel daemon.
-//!
-//! This binary runs the Wayle GUI shell. It initializes all services
-//! and launches the Relm4 application.
-//!
-//! Typically invoked via `wayle panel start`, not directly.
+//! Wayle desktop shell - a GTK4/Relm4 status bar for Wayland compositors.
 
 use std::error::Error;
 

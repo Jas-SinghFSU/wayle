@@ -1,5 +1,3 @@
-//! Startup timing utilities with visual progress indicators.
-
 use std::time::{Duration, Instant};
 
 use console::style;
@@ -8,16 +6,14 @@ use indicatif::{ProgressBar, ProgressStyle};
 const SLOW_THRESHOLD: Duration = Duration::from_millis(100);
 const MODERATE_THRESHOLD: Duration = Duration::from_millis(50);
 
-/// Tracks service initialization timing with visual feedback.
-pub struct StartupTimer {
+pub(crate) struct StartupTimer {
     start: Instant,
     spinner_style: ProgressStyle,
 }
 
 impl StartupTimer {
-    /// Creates a new startup timer and prints the startup header.
     #[allow(clippy::expect_used)]
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         eprintln!("\n{}\n", style("Wayle Shell Starting...").bold());
 
         let spinner_style = ProgressStyle::with_template("{spinner:.cyan} {msg}")
@@ -30,8 +26,7 @@ impl StartupTimer {
         }
     }
 
-    /// Times an async operation with a spinner, then prints the result.
-    pub async fn time<T, E, F>(&self, name: &'static str, fut: F) -> Result<T, E>
+    pub(crate) async fn time<T, E, F>(&self, name: &'static str, fut: F) -> Result<T, E>
     where
         F: std::future::Future<Output = Result<T, E>>,
     {
@@ -64,8 +59,7 @@ impl StartupTimer {
         result
     }
 
-    /// Prints the final startup summary with total time.
-    pub fn finish(self) {
+    pub(crate) fn finish(self) {
         let total_ms = self.start.elapsed().as_millis();
         let time_str = if total_ms >= 1000 {
             format!("{:.2}s", total_ms as f64 / 1000.0)

@@ -1,11 +1,31 @@
-.bar-section {
-    .bar-item + .bar-item {
-        margin-left: calc(#{$bar-module-gap} * #{$bar-scale} * 1rem);
-    }
-}
+.bar {
+    &.top,
+    &.bottom {
+        .bar-section {
+            .bar-item + .bar-item {
+                margin-left: calc(var(--bar-module-gap) * var(--bar-scale) * 1rem);
+            }
+        }
 
-.bar-group {
-    > .module + .module {
-        margin-left: calc(#{$bar-group-module-gap} * #{$bar-scale} * 1rem);
+        .bar-group {
+            > .module + .module {
+                margin-left: calc(var(--bar-group-module-gap) * var(--bar-scale) * 1rem);
+            }
+        }
+    }
+
+    &.left,
+    &.right {
+        .bar-section {
+            .bar-item + .bar-item {
+                margin-top: calc(var(--bar-module-gap) * var(--bar-scale) * 1rem);
+            }
+        }
+
+        .bar-group {
+            > .module + .module {
+                margin-top: calc(var(--bar-group-module-gap) * var(--bar-scale) * 1rem);
+            }
+        }
     }
 }

@@ -3,7 +3,7 @@
 use futures::StreamExt;
 #[allow(deprecated)]
 use gtk4::prelude::StyleContextExt;
-use gtk4::prelude::{OrientableExt, WidgetExt};
+use gtk4::prelude::{BoxExt, OrientableExt, WidgetExt};
 use relm4::{ComponentParts, ComponentSender, gtk, prelude::*};
 use wayle_common::ConfigProperty;
 use wayle_config::schemas::styling::ThemeProvider;
@@ -169,7 +169,7 @@ impl Component for BarButton {
 
                     gtk::Label {
                         add_css_class: "bar-button-label",
-                        set_valign: gtk::Align::BaselineCenter,
+                        set_valign: gtk::Align::Center,
 
                         #[watch]
                         set_label: &model.label,
@@ -187,6 +187,7 @@ impl Component for BarButton {
 
                 BarButtonVariant::BlockPrefix => gtk::Box {
                     add_css_class: "bar-button-content",
+                    set_spacing: 0,
 
                     #[watch]
                     set_orientation: model.orientation(),
@@ -249,7 +250,7 @@ impl Component for BarButton {
                         gtk::Label {
                             add_css_class: "bar-button-label",
                             set_halign: gtk::Align::Center,
-                            set_valign: gtk::Align::BaselineCenter,
+                            set_valign: gtk::Align::Center,
                             set_hexpand: true,
 
                             #[watch]
@@ -283,7 +284,7 @@ impl Component for BarButton {
                     gtk::Label {
                         add_css_class: "bar-button-label",
                         set_halign: gtk::Align::Center,
-                        set_valign: gtk::Align::BaselineCenter,
+                        set_valign: gtk::Align::Center,
 
                         #[watch]
                         set_label: &model.label,
@@ -319,10 +320,8 @@ impl Component for BarButton {
         };
 
         #[allow(deprecated)]
-        root.style_context().add_provider(
-            &model.css_provider,
-            gtk::STYLE_PROVIDER_PRIORITY_USER,
-        );
+        root.style_context()
+            .add_provider(&model.css_provider, gtk::STYLE_PROVIDER_PRIORITY_USER);
         model.reload_css();
 
         let widgets = view_output!();

@@ -1,22 +1,28 @@
 use gdk4::{gio::prelude::ListModelExt, prelude::DisplayExt};
 use relm4::{ComponentSender, gtk::gdk};
-use tracing::debug;
+use tracing::{debug, info};
 
 use crate::shell::{Shell, ShellCmd};
 
-/// Spawns the GTK4 monitor watcher
-///
-/// Watches when monitors get added/removed
 #[allow(clippy::expect_used)]
-pub fn spawn(sender: &ComponentSender<Shell>) {
+pub(crate) fn spawn(sender: &ComponentSender<Shell>) {
     let display = gdk::Display::default().expect("No GDK display found...");
     let monitors = display.monitors();
-    let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel();
+    let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel::<u32>();
 
-    monitors.connect_items_changed(move |_, _, _, _| {
-        debug!("Monitors changed...");
+    let initial_count = monitors.n_items();
+    info!(count = initial_count, "Monitor watcher started");
 
-        let _ = tx.send(());
+    monitors.connect_items_changed(move |model, pos, removed, added| {
+        let expected_count = model.n_items();
+        info!(
+            pos,
+            removed,
+            added,
+            total = expected_count,
+            "Monitors changed"
+        );
+        let _ = tx.send(expected_count);
     });
 
     sender.command(move |out, shutdown| async move {
@@ -24,9 +30,10 @@ pub fn spawn(sender: &ComponentSender<Shell>) {
         tokio::pin!(shutdown_fut);
         loop {
             tokio::select! {
-                _ =  &mut shutdown_fut => break,
-                Some(()) = rx.recv() => {
-                    let _ = out.send(ShellCmd::MonitorsChanged);
+                _ = &mut shutdown_fut => break,
+                Some(expected_count) = rx.recv() => {
+                    debug!(expected_count, "Monitors changed, starting sync");
+                    let _ = out.send(ShellCmd::SyncMonitors { expected_count, attempt: 0 });
                 }
             }
         }

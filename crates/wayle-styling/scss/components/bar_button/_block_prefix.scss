@@ -3,10 +3,14 @@
 // Both icon-container and label-container use vexpand+valign:Fill in Rust to match heights.
 
 menubutton.bar-button.block-prefix {
+    .bar-button-content {
+        all: unset;
+    }
+
     .icon-container {
         background-color: var(--bar-btn-icon-bg);
-        border-top-left-radius: var(--bar-rounding-element);
-        border-bottom-left-radius: var(--bar-rounding-element);
+        border-top-left-radius: var(--bar-button-rounding-element);
+        border-bottom-left-radius: var(--bar-button-rounding-element);
     }
 
     &.border-top .icon-container,
@@ -14,7 +18,7 @@ menubutton.bar-button.block-prefix {
     &.border-all .icon-container {
         border-top-left-radius: max(
             0px,
-            calc(var(--bar-rounding-element) - var(--bar-btn-border-width, 0px) - 1px)
+            calc(var(--bar-button-rounding-element) - var(--bar-btn-border-width, 0px) - 1px)
         );
     }
 
@@ -23,12 +27,12 @@ menubutton.bar-button.block-prefix {
     &.border-all .icon-container {
         border-bottom-left-radius: max(
             0px,
-            calc(var(--bar-rounding-element) - var(--bar-btn-border-width, 0px) - 1px)
+            calc(var(--bar-button-rounding-element) - var(--bar-btn-border-width, 0px) - 1px)
         );
     }
 
     .icon-container image {
-        color: var(--bar-btn-icon-color);
+        color: var(--fg-on-accent);
         margin: var(--bar-btn-icon-padding);
     }
 
@@ -42,8 +46,8 @@ menubutton.bar-button.block-prefix {
 
     &.vertical .icon-container {
         border-radius: 0;
-        border-top-left-radius: var(--bar-rounding-element);
-        border-top-right-radius: var(--bar-rounding-element);
+        border-top-left-radius: var(--bar-button-rounding-element);
+        border-top-right-radius: var(--bar-button-rounding-element);
     }
 
     &.vertical.border-top .icon-container,
@@ -51,7 +55,7 @@ menubutton.bar-button.block-prefix {
     &.vertical.border-all .icon-container {
         border-top-left-radius: max(
             0px,
-            calc(var(--bar-rounding-element) - var(--bar-btn-border-width, 0px) - 1px)
+            calc(var(--bar-button-rounding-element) - var(--bar-btn-border-width, 0px) - 1px)
         );
     }
 
@@ -60,36 +64,63 @@ menubutton.bar-button.block-prefix {
     &.vertical.border-all .icon-container {
         border-top-right-radius: max(
             0px,
-            calc(var(--bar-rounding-element) - var(--bar-btn-border-width, 0px) - 1px)
+            calc(var(--bar-button-rounding-element) - var(--bar-btn-border-width, 0px) - 1px)
         );
     }
 
     &.icon-only .icon-container {
-        border-radius: var(--bar-rounding-element);
+        border-radius: var(--bar-button-rounding-element);
     }
 
     &.icon-only.border-all .icon-container {
-        border-radius: max(0px, calc(var(--bar-rounding-element) - var(--bar-btn-border-width, 0px) - 1px));
+        border-radius: max(
+            0px,
+            calc(var(--bar-button-rounding-element) - var(--bar-btn-border-width, 0px) - 1px)
+        );
     }
 
     &.icon-only.border-top .icon-container {
-        border-top-left-radius: max(0px, calc(var(--bar-rounding-element) - var(--bar-btn-border-width, 0px) - 1px));
-        border-top-right-radius: max(0px, calc(var(--bar-rounding-element) - var(--bar-btn-border-width, 0px) - 1px));
+        border-top-left-radius: max(
+            0px,
+            calc(var(--bar-button-rounding-element) - var(--bar-btn-border-width, 0px) - 1px)
+        );
+        border-top-right-radius: max(
+            0px,
+            calc(var(--bar-button-rounding-element) - var(--bar-btn-border-width, 0px) - 1px)
+        );
     }
 
     &.icon-only.border-bottom .icon-container {
-        border-bottom-left-radius: max(0px, calc(var(--bar-rounding-element) - var(--bar-btn-border-width, 0px) - 1px));
-        border-bottom-right-radius: max(0px, calc(var(--bar-rounding-element) - var(--bar-btn-border-width, 0px) - 1px));
+        border-bottom-left-radius: max(
+            0px,
+            calc(var(--bar-button-rounding-element) - var(--bar-btn-border-width, 0px) - 1px)
+        );
+        border-bottom-right-radius: max(
+            0px,
+            calc(var(--bar-button-rounding-element) - var(--bar-btn-border-width, 0px) - 1px)
+        );
     }
 
     &.icon-only.border-left .icon-container {
-        border-top-left-radius: max(0px, calc(var(--bar-rounding-element) - var(--bar-btn-border-width, 0px) - 1px));
-        border-bottom-left-radius: max(0px, calc(var(--bar-rounding-element) - var(--bar-btn-border-width, 0px) - 1px));
+        border-top-left-radius: max(
+            0px,
+            calc(var(--bar-button-rounding-element) - var(--bar-btn-border-width, 0px) - 1px)
+        );
+        border-bottom-left-radius: max(
+            0px,
+            calc(var(--bar-button-rounding-element) - var(--bar-btn-border-width, 0px) - 1px)
+        );
     }
 
     &.icon-only.border-right .icon-container {
-        border-top-right-radius: max(0px, calc(var(--bar-rounding-element) - var(--bar-btn-border-width, 0px) - 1px));
-        border-bottom-right-radius: max(0px, calc(var(--bar-rounding-element) - var(--bar-btn-border-width, 0px) - 1px));
+        border-top-right-radius: max(
+            0px,
+            calc(var(--bar-button-rounding-element) - var(--bar-btn-border-width, 0px) - 1px)
+        );
+        border-bottom-right-radius: max(
+            0px,
+            calc(var(--bar-button-rounding-element) - var(--bar-btn-border-width, 0px) - 1px)
+        );
     }
 
     > button.toggle:hover .icon-container {

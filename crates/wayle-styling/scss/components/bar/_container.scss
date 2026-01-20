@@ -1,0 +1,71 @@
+.bar {
+    background-color: color-mix(in srgb, var(--bar-bg) var(--bar-opacity), transparent);
+    border-radius: var(--bar-rounding-container);
+    border-style: solid;
+    border-color: var(--bar-border-color);
+    border-top-width: calc(var(--bar-border-top) * 1px);
+    border-bottom-width: calc(var(--bar-border-bottom) * 1px);
+    border-left-width: calc(var(--bar-border-left) * 1px);
+    border-right-width: calc(var(--bar-border-right) * 1px);
+    box-shadow: var(--bar-shadow);
+
+    &.top {
+        margin-top: calc(var(--bar-inset-edge) * var(--bar-scale) * 1rem);
+        margin-bottom: calc(var(--bar-shadow-margin) * 1px);
+        margin-left: calc(var(--bar-inset-ends) * var(--bar-scale) * 1rem);
+        margin-right: calc(var(--bar-inset-ends) * var(--bar-scale) * 1rem);
+    }
+
+    &.bottom {
+        margin-bottom: calc(var(--bar-inset-edge) * var(--bar-scale) * 1rem);
+        margin-top: calc(var(--bar-shadow-margin) * 1px);
+        margin-left: calc(var(--bar-inset-ends) * var(--bar-scale) * 1rem);
+        margin-right: calc(var(--bar-inset-ends) * var(--bar-scale) * 1rem);
+    }
+
+    &.left {
+        margin-left: calc(var(--bar-inset-edge) * var(--bar-scale) * 1rem);
+        margin-right: calc(var(--bar-shadow-margin) * 1px);
+        margin-top: calc(var(--bar-inset-ends) * var(--bar-scale) * 1rem);
+        margin-bottom: calc(var(--bar-inset-ends) * var(--bar-scale) * 1rem);
+    }
+
+    &.right {
+        margin-right: calc(var(--bar-inset-edge) * var(--bar-scale) * 1rem);
+        margin-left: calc(var(--bar-shadow-margin) * 1px);
+        margin-top: calc(var(--bar-inset-ends) * var(--bar-scale) * 1rem);
+        margin-bottom: calc(var(--bar-inset-ends) * var(--bar-scale) * 1rem);
+    }
+}
+
+.bar.top,
+.bar.bottom {
+    .bar-section {
+        margin-top: calc(var(--bar-padding) * var(--bar-scale) * 1rem);
+        margin-bottom: calc(var(--bar-padding) * var(--bar-scale) * 1rem);
+
+        &.bar-left {
+            margin-left: calc(var(--bar-padding-ends) * var(--bar-scale) * 1rem);
+        }
+
+        &.bar-right {
+            margin-right: calc(var(--bar-padding-ends) * var(--bar-scale) * 1rem);
+        }
+    }
+}
+
+.bar.left,
+.bar.right {
+    .bar-section {
+        margin-left: calc(var(--bar-padding) * var(--bar-scale) * 1rem);
+        margin-right: calc(var(--bar-padding) * var(--bar-scale) * 1rem);
+
+        &.bar-left {
+            margin-top: calc(var(--bar-padding-ends) * var(--bar-scale) * 1rem);
+        }
+
+        &.bar-right {
+            margin-bottom: calc(var(--bar-padding-ends) * var(--bar-scale) * 1rem);
+        }
+    }
+}

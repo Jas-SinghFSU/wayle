@@ -1,19 +1,20 @@
-//! Shell watchers for reactive state synchronization.
-//!
-//! Spawns background tasks that watch service state and trigger shell updates.
-
+mod color_extractor;
 mod css;
 mod monitors;
+mod scss_dev;
+
+use std::env;
 
 use relm4::ComponentSender;
 
 use crate::shell::Shell;
 
-/// Initializes all shell watchers.
-///
-/// Call this once during shell initialization to spawn all background
-/// watching tasks.
-pub fn init(sender: &ComponentSender<Shell>) {
+pub(crate) fn init(sender: &ComponentSender<Shell>) {
     css::spawn(sender);
     monitors::spawn(sender);
+    color_extractor::spawn();
+
+    if env::var("WAYLE_DEV").is_ok_and(|v| v == "1") {
+        scss_dev::spawn(sender);
+    }
 }
