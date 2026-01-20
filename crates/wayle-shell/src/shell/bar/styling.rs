@@ -10,6 +10,15 @@ use wayle_widgets::styling::{InlineStyling, resolve_color};
 
 use super::Bar;
 
+const REM_BASE: f32 = 16.0;
+
+/// GTK4 rendering is being weird. Ends up making icons blurry when icons are not
+/// perfectly within the pixel boundary. So we make sure that they are with this
+/// little workaround.
+fn rem_to_px_rounded(rem: f32, scale: f32) -> i32 {
+    (rem * scale * REM_BASE).round() as i32
+}
+
 impl InlineStyling for Bar {
     fn css_provider(&self) -> &gtk::CssProvider {
         &self.css_provider
@@ -38,12 +47,13 @@ impl InlineStyling for Bar {
         };
 
         let scale = bar.scale.get().value();
-        let inset_edge = bar.inset_edge.get().value();
-        let inset_ends = bar.inset_ends.get().value();
-        let padding = bar.padding.get().value();
-        let padding_ends = bar.padding_ends.get().value();
-        let module_gap = bar.module_gap.get().value();
-        let group_module_gap = bar.button_group_module_gap.get().value();
+        let inset_edge_px = rem_to_px_rounded(bar.inset_edge.get().value(), scale);
+        let inset_ends_px = rem_to_px_rounded(bar.inset_ends.get().value(), scale);
+        let padding_px = rem_to_px_rounded(bar.padding.get().value(), scale);
+        let padding_ends_px = rem_to_px_rounded(bar.padding_ends.get().value(), scale);
+        let module_gap_px = rem_to_px_rounded(bar.module_gap.get().value(), scale);
+        let group_module_gap_px =
+            rem_to_px_rounded(bar.button_group_module_gap.get().value(), scale);
 
         let location = bar.location.get();
         let shadow_preset = bar.shadow.get();
@@ -60,12 +70,12 @@ impl InlineStyling for Bar {
             --bar-border-bottom: {border_bottom}; \
             --bar-border-left: {border_left}; \
             --bar-border-right: {border_right}; \
-            --bar-inset-edge: {inset_edge}; \
-            --bar-inset-ends: {inset_ends}; \
-            --bar-padding: {padding}; \
-            --bar-padding-ends: {padding_ends}; \
-            --bar-module-gap: {module_gap}; \
-            --bar-group-module-gap: {group_module_gap}; \
+            --bar-inset-edge-px: {inset_edge_px}; \
+            --bar-inset-ends-px: {inset_ends_px}; \
+            --bar-padding-px: {padding_px}; \
+            --bar-padding-ends-px: {padding_ends_px}; \
+            --bar-module-gap-px: {module_gap_px}; \
+            --bar-group-module-gap-px: {group_module_gap_px}; \
             --bar-shadow: {shadow}; \
             --bar-shadow-margin: {shadow_margin}; \
             }}"

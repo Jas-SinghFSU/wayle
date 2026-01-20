@@ -3,13 +3,13 @@
     &.bottom {
         .bar-section {
             .bar-item + .bar-item {
-                margin-left: calc(var(--bar-module-gap) * var(--bar-scale) * 1rem);
+                margin-left: calc(var(--bar-module-gap-px) * 1px);
             }
         }
 
         .bar-group {
             > .module + .module {
-                margin-left: calc(var(--bar-group-module-gap) * var(--bar-scale) * 1rem);
+                margin-left: calc(var(--bar-group-module-gap-px) * 1px);
             }
         }
     }
@@ -18,13 +18,13 @@
     &.right {
         .bar-section {
             .bar-item + .bar-item {
-                margin-top: calc(var(--bar-module-gap) * var(--bar-scale) * 1rem);
+                margin-top: calc(var(--bar-module-gap-px) * 1px);
             }
         }
 
         .bar-group {
             > .module + .module {
-                margin-top: calc(var(--bar-group-module-gap) * var(--bar-scale) * 1rem);
+                margin-top: calc(var(--bar-group-module-gap-px) * 1px);
             }
         }
     }

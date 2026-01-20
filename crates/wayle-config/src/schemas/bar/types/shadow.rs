@@ -21,8 +21,8 @@ impl ShadowPreset {
     pub fn margin_px(self) -> u32 {
         match self {
             Self::None => 0,
-            Self::Drop => 16,
-            Self::Floating => 16,
+            Self::Drop => 4,
+            Self::Floating => 4,
         }
     }
 
@@ -31,12 +31,12 @@ impl ShadowPreset {
         match self {
             Self::None => "none",
             Self::Drop => match location {
-                Location::Top => "0 8px 24px rgba(0, 0, 0, 0.5)",
-                Location::Bottom => "0 -8px 24px rgba(0, 0, 0, 0.5)",
-                Location::Left => "8px 0 24px rgba(0, 0, 0, 0.5)",
-                Location::Right => "-8px 0 24px rgba(0, 0, 0, 0.5)",
+                Location::Top => "0 1px 2px 1px rgba(0, 0, 0, 0.25)",
+                Location::Bottom => "0 -1px 2px 1px rgba(0, 0, 0, 0.25)",
+                Location::Left => "1px 0 2px 1px rgba(0, 0, 0, 0.25)",
+                Location::Right => "-1px 0 2px 1px rgba(0, 0, 0, 0.25)",
             },
-            Self::Floating => "0 0 32px rgba(0, 0, 0, 0.5)",
+            Self::Floating => "0 1px 2px 1px rgba(0, 0, 0, 0.25)",
         }
     }
 

@@ -1,5 +1,6 @@
 target/
 dist/
+assets/
 
 # Temporary sandboxes
 Wayle

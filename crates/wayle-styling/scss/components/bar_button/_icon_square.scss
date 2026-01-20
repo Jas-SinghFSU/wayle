@@ -3,7 +3,7 @@
 
 menubutton.bar-button.icon-square {
     .bar-button-content {
-        padding: calc(var(--bar-btn-label-padding) * 0.75);
+        margin: calc(var(--bar-btn-label-padding) * 0.75);
     }
 
     .icon-container {

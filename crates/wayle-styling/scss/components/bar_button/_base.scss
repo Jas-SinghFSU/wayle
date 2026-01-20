@@ -40,7 +40,7 @@ menubutton.bar-button {
 
     // Basic variant: padding on content box, gap as margin on label
     &.basic .bar-button-content {
-        padding: var(--bar-btn-label-padding);
+        margin: var(--bar-btn-label-padding);
     }
 
     &.basic .bar-button-label {
