@@ -20,6 +20,7 @@
 pub mod components;
 pub mod primitives;
 pub mod styling;
+pub mod utils;
 
 /// Convenient re-exports of all widget templates and class constants.
 pub mod prelude {
@@ -31,5 +32,6 @@ pub mod prelude {
             separator::*, slider::*, spinner::*, status_dot::*, switch::*, text_input::*,
         },
         styling::{InlineStyling, resolve_color},
+        utils::force_window_resize,
     };
 }

@@ -12,6 +12,7 @@ use super::{
     shared::{resolve_color, setup_event_controllers},
     types::{BarButtonClass, BarButtonConfig, BarButtonOutput, BarButtonVariant},
 };
+use crate::utils::force_window_resize;
 
 /// Initialization data for BarButton.
 #[derive(Debug, Clone)]
@@ -262,7 +263,7 @@ impl Component for BarButton {
         &mut self,
         msg: Self::CommandOutput,
         _sender: ComponentSender<Self>,
-        _root: &Self::Root,
+        root: &Self::Root,
     ) {
         match msg {
             BarButtonCmd::VariantChanged(variant) => {
@@ -270,6 +271,7 @@ impl Component for BarButton {
             }
             BarButtonCmd::ConfigChanged => {
                 self.reload_css();
+                force_window_resize(root);
             }
         }
     }
