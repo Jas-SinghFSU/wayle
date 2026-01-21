@@ -142,7 +142,7 @@ pub struct BarConfig {
 
     /// Gap between button icon and label.
     #[serde(rename = "button-gap")]
-    #[default(ScaleFactor::new(0.25))]
+    #[default(ScaleFactor::new(1.0))]
     pub button_gap: ConfigProperty<ScaleFactor>,
 
     /// Border placement for bar buttons.

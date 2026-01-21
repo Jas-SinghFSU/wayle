@@ -3,7 +3,7 @@
 use futures::StreamExt;
 #[allow(deprecated)]
 use gtk4::prelude::StyleContextExt;
-use gtk4::prelude::{BoxExt, OrientableExt, WidgetExt};
+use gtk4::prelude::{OrientableExt, WidgetExt};
 use relm4::{ComponentParts, ComponentSender, gtk, prelude::*};
 use wayle_common::ConfigProperty;
 use wayle_config::schemas::styling::ThemeProvider;
@@ -106,16 +106,12 @@ impl BarButton {
         }
     }
 
-    fn icon_halign(&self) -> gtk::Align {
-        if self.config.behavior.show_label.get() {
-            gtk::Align::Start
-        } else {
-            gtk::Align::Center
-        }
-    }
-
     fn is_icon_only(&self) -> bool {
         !self.config.behavior.show_label.get()
+    }
+
+    fn icon_should_center(&self) -> bool {
+        self.is_icon_only() || self.config.behavior.vertical.get()
     }
 
     fn build_css(&self) -> String {
@@ -169,26 +165,37 @@ impl Component for BarButton {
             set_tooltip_text: model.tooltip.as_deref(),
 
             #[wrap(Some)]
-            set_child = match model.variant {
-                BarButtonVariant::Basic => gtk::Box {
-                    add_css_class: "bar-button-content",
+            set_child = &gtk::Box {
+                add_css_class: "bar-button-content",
+
+                #[watch]
+                set_orientation: model.orientation(),
+
+                gtk::Box {
+                    add_css_class: "icon-container",
 
                     #[watch]
-                    set_orientation: model.orientation(),
+                    set_visible: model.config.behavior.show_icon.get(),
+
+                    #[watch]
+                    set_hexpand: model.icon_should_center(),
 
                     gtk::Image {
+                        set_halign: gtk::Align::Center,
+
+                        #[watch]
+                        set_hexpand: model.icon_should_center(),
+
                         #[watch]
                         set_icon_name: Some(&model.icon),
-
-                        #[watch]
-                        set_halign: model.icon_halign(),
-
-                        #[watch]
-                        set_hexpand: model.is_icon_only(),
-
-                        #[watch]
-                        set_visible: model.config.behavior.show_icon.get(),
                     },
+                },
+
+                gtk::Box {
+                    add_css_class: "label-container",
+
+                    #[watch]
+                    set_visible: model.config.behavior.show_label.get(),
 
                     gtk::Label {
                         add_css_class: "bar-button-label",
@@ -196,133 +203,6 @@ impl Component for BarButton {
 
                         #[watch]
                         set_label: &model.label,
-
-                        #[watch]
-                        set_visible: model.config.behavior.show_label.get(),
-
-                        #[watch]
-                        set_ellipsize: model.ellipsize(),
-
-                        #[watch]
-                        set_max_width_chars: model.max_width_chars(),
-                    },
-                },
-
-                BarButtonVariant::BlockPrefix => gtk::Box {
-                    add_css_class: "bar-button-content",
-                    set_spacing: 0,
-
-                    #[watch]
-                    set_orientation: model.orientation(),
-
-                    #[watch]
-                    set_valign: if model.config.behavior.vertical.get() {
-                        gtk::Align::Start
-                    } else {
-                        gtk::Align::Fill
-                    },
-
-                    gtk::Box {
-                        add_css_class: "icon-container",
-
-                        #[watch]
-                        set_visible: model.config.behavior.show_icon.get(),
-
-                        #[watch]
-                        set_halign: if model.config.behavior.vertical.get() {
-                            gtk::Align::Fill
-                        } else {
-                            gtk::Align::Start
-                        },
-
-                        #[watch]
-                        set_valign: if model.config.behavior.vertical.get() {
-                            gtk::Align::Start
-                        } else {
-                            gtk::Align::Fill
-                        },
-
-                        gtk::Image {
-                            set_valign: gtk::Align::Center,
-                            set_halign: gtk::Align::Center,
-                            set_hexpand: true,
-
-                            #[watch]
-                            set_icon_name: Some(&model.icon),
-                        },
-                    },
-
-                    gtk::Box {
-                        add_css_class: "label-container",
-                        set_hexpand: true,
-
-                        #[watch]
-                        set_halign: if model.config.behavior.vertical.get() {
-                            gtk::Align::Fill
-                        } else {
-                            gtk::Align::Center
-                        },
-
-                        #[watch]
-                        set_valign: if model.config.behavior.vertical.get() {
-                            gtk::Align::Start
-                        } else {
-                            gtk::Align::Fill
-                        },
-
-                        #[watch]
-                        set_visible: model.config.behavior.show_label.get(),
-
-                        gtk::Label {
-                            add_css_class: "bar-button-label",
-                            set_halign: gtk::Align::Center,
-                            set_valign: gtk::Align::Center,
-                            set_hexpand: true,
-
-                            #[watch]
-                            set_label: &model.label,
-
-                            #[watch]
-                            set_ellipsize: model.ellipsize(),
-
-                            #[watch]
-                            set_max_width_chars: model.max_width_chars(),
-                        },
-                    },
-                },
-
-                BarButtonVariant::IconSquare => gtk::Box {
-                    add_css_class: "bar-button-content",
-
-                    #[watch]
-                    set_orientation: model.orientation(),
-
-                    gtk::Box {
-                        add_css_class: "icon-container",
-                        set_halign: gtk::Align::Center,
-
-                        #[watch]
-                        set_visible: model.config.behavior.show_icon.get(),
-
-                        #[watch]
-                        set_hexpand: model.is_icon_only(),
-
-                        gtk::Image {
-                            #[watch]
-                            set_icon_name: Some(&model.icon),
-                        },
-                    },
-
-                    gtk::Label {
-                        add_css_class: "bar-button-label",
-                        set_halign: gtk::Align::Center,
-                        set_valign: gtk::Align::Center,
-
-                        #[watch]
-                        set_label: &model.label,
-
-                        #[watch]
-                        set_visible: model.config.behavior.show_label.get(),
 
                         #[watch]
                         set_ellipsize: model.ellipsize(),

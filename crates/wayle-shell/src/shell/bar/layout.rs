@@ -106,18 +106,19 @@ impl Bar {
                 center_box
                     .end_widget()
                     .and_then(|w| w.downcast::<gtk::Box>().ok()),
-            ) {
-                Self::apply_orientations(
-                    &center_box,
-                    &left_box,
-                    &middle_box,
-                    &right_box,
-                    self.left.widget(),
-                    self.center.widget(),
-                    self.right.widget(),
-                    is_vert,
-                );
-            }
+            )
+        {
+            Self::apply_orientations(
+                &center_box,
+                &left_box,
+                &middle_box,
+                &right_box,
+                self.left.widget(),
+                self.center.widget(),
+                self.right.widget(),
+                is_vert,
+            );
+        }
 
         self.reload_css();
     }
