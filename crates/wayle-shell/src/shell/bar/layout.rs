@@ -96,8 +96,7 @@ impl Bar {
         if let Some(center_box) = root
             .child()
             .and_then(|c| c.downcast::<gtk::CenterBox>().ok())
-        {
-            if let (Some(left_box), Some(middle_box), Some(right_box)) = (
+            && let (Some(left_box), Some(middle_box), Some(right_box)) = (
                 center_box
                     .start_widget()
                     .and_then(|w| w.downcast::<gtk::Box>().ok()),
@@ -119,7 +118,6 @@ impl Bar {
                     is_vert,
                 );
             }
-        }
 
         self.reload_css();
     }

@@ -137,11 +137,10 @@ impl IconRegistry {
 
             let mut watcher: RecommendedWatcher =
                 match notify::recommended_watcher(move |res: std::result::Result<Event, _>| {
-                    if let Ok(event) = res {
-                        if event.kind.is_create() || event.kind.is_remove() {
+                    if let Ok(event) = res
+                        && (event.kind.is_create() || event.kind.is_remove()) {
                             let _ = tx.send(());
                         }
-                    }
                 }) {
                     Ok(watcher) => watcher,
                     Err(err) => {

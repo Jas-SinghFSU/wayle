@@ -49,13 +49,12 @@ impl TrayItemController {
 
         proxy.activate(x, y).await.map_err(|source| {
             const UNKNOWN_METHOD: &str = "org.freedesktop.DBus.Error.UnknownMethod";
-            if let zbus::Error::MethodError(name, _, _) = &source {
-                if name.as_str() == UNKNOWN_METHOD {
+            if let zbus::Error::MethodError(name, _, _) = &source
+                && name.as_str() == UNKNOWN_METHOD {
                     return Error::OperationNotSupported {
                         operation: "activate",
                     };
                 }
-            }
             Error::Operation {
                 operation: "activate",
                 source,

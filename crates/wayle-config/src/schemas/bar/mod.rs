@@ -147,7 +147,7 @@ pub struct BarConfig {
 
     /// Border placement for bar buttons.
     #[serde(rename = "button-border-location")]
-    #[default(BorderLocation::None)]
+    #[default(BorderLocation::All)]
     pub button_border_location: ConfigProperty<BorderLocation>,
 
     /// Border width for bar buttons (pixels).

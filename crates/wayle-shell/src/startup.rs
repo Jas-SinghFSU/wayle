@@ -8,6 +8,7 @@ const MODERATE_THRESHOLD: Duration = Duration::from_millis(50);
 
 pub(crate) struct StartupTimer {
     start: Instant,
+    services_done: Instant,
     spinner_style: ProgressStyle,
 }
 
@@ -20,10 +21,25 @@ impl StartupTimer {
             .expect("hardcoded template")
             .tick_chars("⠁⠂⠄⡀⢀⠠⠐⠈");
 
+        let now = Instant::now();
         Self {
-            start: Instant::now(),
+            start: now,
+            services_done: now,
             spinner_style,
         }
+    }
+
+    pub(crate) fn mark_services_done(&mut self) {
+        self.services_done = Instant::now();
+    }
+
+    pub(crate) fn print_gtk_overhead(&self) {
+        let overhead = self.services_done.elapsed();
+        eprintln!(
+            "{} GTK init ({}ms)",
+            style("✓").green().bold(),
+            overhead.as_millis()
+        );
     }
 
     pub(crate) async fn time<T, E, F>(&self, name: &'static str, fut: F) -> Result<T, E>

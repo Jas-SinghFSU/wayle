@@ -3,10 +3,14 @@
 use std::collections::HashMap;
 
 use gdk4::Display;
-use gtk4::{CssProvider, STYLE_PROVIDER_PRIORITY_USER, prelude::ApplicationExt};
+use gtk4::{
+    CssProvider, STYLE_PROVIDER_PRIORITY_USER, Window, glib, prelude::ApplicationExt,
+    style_context_add_provider_for_display,
+};
 use relm4::{
     Controller,
     actions::{RelmAction, RelmActionGroup},
+    main_application,
     prelude::*,
 };
 use tracing::{info, warn};
@@ -46,7 +50,7 @@ pub(crate) fn init_css_provider(display: &Display) -> CssProvider {
         Err(err) => warn!(error = %err, "CSS load failed"),
     }
 
-    gtk4::style_context_add_provider_for_display(display, &provider, STYLE_PROVIDER_PRIORITY_USER);
+    style_context_add_provider_for_display(display, &provider, STYLE_PROVIDER_PRIORITY_USER);
 
     provider
 }
@@ -54,12 +58,14 @@ pub(crate) fn init_css_provider(display: &Display) -> CssProvider {
 pub(crate) fn register_app_actions() {
     let quit_action: RelmAction<QuitAction> = RelmAction::new_stateless(|_| {
         info!("Quit action received");
-        relm4::main_application().quit();
+        glib::idle_add_local_once(|| {
+            main_application().quit();
+        });
     });
 
     let inspector_action: RelmAction<InspectorAction> = RelmAction::new_stateless(|_| {
         info!("Inspector action received");
-        gtk4::Window::set_interactive_debugging(true);
+        Window::set_interactive_debugging(true);
     });
 
     let mut actions = RelmActionGroup::<AppActionGroup>::new();

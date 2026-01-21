@@ -2,6 +2,13 @@
 // Sizing is now handled by CSS variables in tokens and variant files.
 
 menubutton.bar-button {
+    // Icon-only mode: tighter padding, remove label margins
+    &.icon-only {
+        .bar-button-label {
+            margin: 0rem;
+        }
+    }
+
     // Label weight classes
     &.weight-normal .bar-button-label {
         font-weight: var(--weight-normal);

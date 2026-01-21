@@ -64,8 +64,8 @@ fn resolve_layout(layouts: &[BarLayout], connector: &str) -> Option<BarLayout> {
 fn resolve_extends(layout: &BarLayout, all_layouts: &[BarLayout]) -> BarLayout {
     let mut resolved = layout.clone();
 
-    if let Some(ref extends_name) = layout.extends {
-        if let Some(parent) = all_layouts.iter().find(|l| l.monitor == *extends_name) {
+    if let Some(ref extends_name) = layout.extends
+        && let Some(parent) = all_layouts.iter().find(|l| l.monitor == *extends_name) {
             let parent_resolved = resolve_extends(parent, all_layouts);
 
             if resolved.left.is_empty() {
@@ -78,7 +78,6 @@ fn resolve_extends(layout: &BarLayout, all_layouts: &[BarLayout]) -> BarLayout {
                 resolved.right = parent_resolved.right;
             }
         }
-    }
 
     resolved
 }

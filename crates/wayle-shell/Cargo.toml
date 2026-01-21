@@ -26,6 +26,7 @@ tokio-stream.workspace = true
 tracing.workspace = true
 tracing-appender.workspace = true
 tracing-subscriber.workspace = true
+zbus.workspace = true
 
 # Common dependencies
 wayle-common = { workspace = true, features = ["schema"] }

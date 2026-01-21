@@ -7,6 +7,8 @@ mod diagnostic;
 #[macro_use]
 /// Common macros for services
 pub mod macros;
+/// Shell command execution utilities.
+pub mod process;
 mod property;
 /// Global service registry for dependency injection.
 pub mod services;

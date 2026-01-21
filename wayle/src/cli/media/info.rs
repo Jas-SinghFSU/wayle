@@ -46,14 +46,13 @@ pub async fn execute(player: Option<String>) -> CliAction {
         info.get("album").map(String::as_str).unwrap_or("Unknown")
     ));
 
-    if let Some(length_us) = info.get("length_us") {
-        if let Ok(us) = length_us.parse::<u64>() {
+    if let Some(length_us) = info.get("length_us")
+        && let Ok(us) = length_us.parse::<u64>() {
             let secs = us / 1_000_000;
             let len_mins = secs / 60;
             let len_secs = secs % 60;
             output.push(format!("Length: {len_mins:02}:{len_secs:02}"));
         }
-    }
 
     output.push(format!(
         "Volume: {}%",

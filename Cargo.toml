@@ -28,10 +28,10 @@ members = [
 [workspace.package]
 edition = "2024"
 version = "0.1.0"
-license = "GPL-3.0-only"
+license = "MIT"
 authors = ["Jas Singh"]
 repository = "https://github.com/Jas-SinghFSU/wayle"
-rust-version = "1.85"
+rust-version = "1.92"
 
 [workspace.dependencies]
 async-stream = "0.3.6"
@@ -58,7 +58,7 @@ libc = "0.2.176"
 notify = "8"
 palette = "0.7"
 rand = "0.9.2"
-relm4 = { version = "0.10.0", features = ["macros"] }
+relm4 = { version = "0.10", features = ["macros"] }
 relm4-components = { version = "0.10.0" }
 reqwest = { version = "0.13", default-features = false, features = ["rustls"] }
 schemars = { version = "1.0.4", features = ["derive"] }

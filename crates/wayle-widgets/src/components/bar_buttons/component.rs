@@ -74,7 +74,9 @@ impl BarButton {
         if self.config.behavior.vertical.get() {
             classes.push(BarButtonClass::VERTICAL);
         }
-        if let Some(border_class) = self.config.border_location.get().css_class() {
+        if self.config.behavior.show_border.get()
+            && let Some(border_class) = self.config.border_location.get().css_class()
+        {
             classes.push(border_class);
         }
         classes
@@ -102,6 +104,18 @@ impl BarButton {
         } else {
             -1
         }
+    }
+
+    fn icon_halign(&self) -> gtk::Align {
+        if self.config.behavior.show_label.get() {
+            gtk::Align::Start
+        } else {
+            gtk::Align::Center
+        }
+    }
+
+    fn is_icon_only(&self) -> bool {
+        !self.config.behavior.show_label.get()
     }
 
     fn build_css(&self) -> String {
@@ -165,6 +179,15 @@ impl Component for BarButton {
                     gtk::Image {
                         #[watch]
                         set_icon_name: Some(&model.icon),
+
+                        #[watch]
+                        set_halign: model.icon_halign(),
+
+                        #[watch]
+                        set_hexpand: model.is_icon_only(),
+
+                        #[watch]
+                        set_visible: model.config.behavior.show_icon.get(),
                     },
 
                     gtk::Label {
@@ -201,6 +224,9 @@ impl Component for BarButton {
 
                     gtk::Box {
                         add_css_class: "icon-container",
+
+                        #[watch]
+                        set_visible: model.config.behavior.show_icon.get(),
 
                         #[watch]
                         set_halign: if model.config.behavior.vertical.get() {
@@ -274,6 +300,12 @@ impl Component for BarButton {
                     gtk::Box {
                         add_css_class: "icon-container",
                         set_halign: gtk::Align::Center,
+
+                        #[watch]
+                        set_visible: model.config.behavior.show_icon.get(),
+
+                        #[watch]
+                        set_hexpand: model.is_icon_only(),
 
                         gtk::Image {
                             #[watch]
@@ -383,7 +415,9 @@ impl BarButton {
     }
 
     fn watch_config(config: &BarButtonConfig, sender: &ComponentSender<Self>) {
+        Self::watch_property(&config.behavior.show_icon, sender);
         Self::watch_property(&config.behavior.show_label, sender);
+        Self::watch_property(&config.behavior.show_border, sender);
         Self::watch_property(&config.behavior.visible, sender);
         Self::watch_property(&config.behavior.vertical, sender);
         Self::watch_property(&config.behavior.truncation_enabled, sender);

@@ -51,8 +51,12 @@ pub struct BarButtonBehavior {
     pub truncation_enabled: ConfigProperty<bool>,
     /// Max characters before truncation.
     pub truncation_size: ConfigProperty<u32>,
+    /// Show the icon.
+    pub show_icon: ConfigProperty<bool>,
     /// Show the label (false = icon-only mode).
     pub show_label: ConfigProperty<bool>,
+    /// Show the border.
+    pub show_border: ConfigProperty<bool>,
     /// Button visibility.
     pub visible: ConfigProperty<bool>,
     /// Vertical orientation for vertical bars.
@@ -64,7 +68,9 @@ impl Default for BarButtonBehavior {
         Self {
             truncation_enabled: ConfigProperty::new(false),
             truncation_size: ConfigProperty::new(20),
+            show_icon: ConfigProperty::new(true),
             show_label: ConfigProperty::new(true),
+            show_border: ConfigProperty::new(false),
             visible: ConfigProperty::new(true),
             vertical: ConfigProperty::new(false),
         }

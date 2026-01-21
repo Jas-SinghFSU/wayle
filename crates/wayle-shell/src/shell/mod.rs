@@ -3,9 +3,10 @@ mod helpers;
 
 use std::{
     collections::{HashMap, HashSet, hash_map::Entry},
-    time::Duration,
+    time::{Duration, Instant},
 };
 
+use console::style;
 use gdk4::Display;
 use gtk4::{CssProvider, glib};
 use gtk4_layer_shell::{Layer, LayerShell};
@@ -18,6 +19,7 @@ use tracing::{debug, info, warn};
 
 use crate::{
     shell::bar::{Bar, BarInit},
+    startup::StartupTimer,
     watchers,
 };
 
@@ -44,7 +46,7 @@ pub(crate) enum ShellCmd {
 
 #[relm4::component(pub(crate))]
 impl Component for Shell {
-    type Init = ();
+    type Init = StartupTimer;
     type Input = ShellInput;
     type Output = ();
     type CommandOutput = ShellCmd;
@@ -58,10 +60,13 @@ impl Component for Shell {
 
     #[allow(clippy::expect_used)]
     fn init(
-        _init: Self::Init,
+        timer: Self::Init,
         root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
+        timer.print_gtk_overhead();
+        let start = Instant::now();
+
         root.init_layer_shell();
         root.set_layer(Layer::Background);
         root.set_default_size(1, 1);
@@ -76,7 +81,15 @@ impl Component for Shell {
         let css_provider = helpers::init_css_provider(&display);
         let bars = helpers::create_bars();
 
-        info!("Shell initialized");
+        let elapsed = start.elapsed();
+        eprintln!(
+            "{} Shell ({}ms)",
+            style("✓").green().bold(),
+            elapsed.as_millis()
+        );
+        info!(elapsed_ms = elapsed.as_millis(), "Shell initialized");
+
+        timer.finish();
 
         let model = Shell { css_provider, bars };
         let widgets = view_output!();

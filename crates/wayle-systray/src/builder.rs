@@ -62,18 +62,6 @@ impl SystemTrayServiceBuilder {
         let cancellation_token = CancellationToken::new();
         let (event_tx, _) = broadcast::channel(256);
 
-        let is_watcher = match self.mode {
-            TrayMode::Watcher => {
-                Self::become_watcher(&connection).await?;
-                true
-            }
-            TrayMode::Host => {
-                Self::verify_watcher_exists(&connection).await?;
-                false
-            }
-            TrayMode::Auto => Self::try_become_watcher(&connection).await?,
-        };
-
         let unique_name = connection
             .unique_name()
             .ok_or_else(|| {
@@ -83,6 +71,23 @@ impl SystemTrayServiceBuilder {
             })?
             .to_string();
 
+        let is_watcher = match self.mode {
+            TrayMode::Host => {
+                Self::verify_watcher_exists(&connection).await?;
+                false
+            }
+            TrayMode::Watcher | TrayMode::Auto => {
+                Self::setup_as_watcher(
+                    &connection,
+                    event_tx.clone(),
+                    &cancellation_token,
+                    &unique_name,
+                    self.mode == TrayMode::Watcher,
+                )
+                .await?
+            }
+        };
+
         let service = Arc::new(SystemTrayService {
             cancellation_token,
             event_tx,
@@ -91,21 +96,7 @@ impl SystemTrayServiceBuilder {
             items: Property::new(Vec::new()),
         });
 
-        if is_watcher {
-            let watcher = StatusNotifierWatcher::with_initial_host(
-                service.event_tx.clone(),
-                &service.connection,
-                &service.cancellation_token,
-                unique_name.clone(),
-            )
-            .await?;
-
-            service
-                .connection
-                .object_server()
-                .at(WATCHER_OBJECT_PATH, watcher)
-                .await?;
-        } else {
+        if !is_watcher {
             SystemTrayServiceDiscovery::register_as_host(&service.connection, &unique_name).await?;
         }
 
@@ -152,33 +143,50 @@ impl SystemTrayServiceBuilder {
         Ok(service)
     }
 
-    #[instrument(skip(connection), err)]
-    async fn try_become_watcher(connection: &Connection) -> Result<bool, Error> {
+    /// Sets up as watcher
+    ///
+    /// Returns `true` if successfully became watcher, `false` if fell back to host.
+    #[instrument(skip(connection, event_tx, cancellation_token), err)]
+    async fn setup_as_watcher(
+        connection: &Connection,
+        event_tx: broadcast::Sender<crate::events::TrayEvent>,
+        cancellation_token: &CancellationToken,
+        unique_name: &str,
+        force: bool,
+    ) -> Result<bool, Error> {
+        let watcher = StatusNotifierWatcher::with_initial_host(
+            event_tx,
+            connection,
+            cancellation_token,
+            unique_name.to_string(),
+        )
+        .await?;
+
+        connection
+            .object_server()
+            .at(WATCHER_OBJECT_PATH, watcher)
+            .await?;
+
         match connection.request_name(WATCHER_BUS_NAME).await {
             Ok(_) => {
                 info!("Operating as StatusNotifierWatcher");
                 Ok(true)
             }
-            Err(_) => {
+            Err(err) => {
+                if force {
+                    return Err(Error::WatcherRegistration(format!(
+                        "D-Bus name '{WATCHER_BUS_NAME}' already taken: {err}"
+                    )));
+                }
+
                 info!("Connecting to existing StatusNotifierWatcher");
+                let _ = connection
+                    .object_server()
+                    .remove::<StatusNotifierWatcher, _>(WATCHER_OBJECT_PATH)
+                    .await;
                 Ok(false)
             }
         }
-    }
-
-    #[instrument(skip(connection), err)]
-    async fn become_watcher(connection: &Connection) -> Result<(), Error> {
-        connection
-            .request_name(WATCHER_BUS_NAME)
-            .await
-            .map_err(|_| {
-                Error::WatcherRegistration(format!(
-                    "D-Bus name '{WATCHER_BUS_NAME}' already taken by another application"
-                ))
-            })?;
-
-        info!("Operating as StatusNotifierWatcher");
-        Ok(())
     }
 
     #[instrument(skip(connection), err)]
