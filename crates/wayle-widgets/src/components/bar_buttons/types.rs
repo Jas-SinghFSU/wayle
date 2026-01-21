@@ -6,7 +6,7 @@ use wayle_common::ConfigProperty;
 pub use wayle_config::schemas::bar::BarButtonVariant;
 use wayle_config::schemas::{
     bar::BorderLocation,
-    styling::{ColorValue, CssToken, ThemeProvider},
+    styling::{ColorValue, ThemeProvider},
 };
 
 /// Colors for bar buttons (shared across all variants).
@@ -24,18 +24,6 @@ pub struct BarButtonColors {
     pub button_background: ConfigProperty<ColorValue>,
     /// Border color.
     pub border_color: ConfigProperty<ColorValue>,
-}
-
-impl Default for BarButtonColors {
-    fn default() -> Self {
-        Self {
-            icon_color: ConfigProperty::new(ColorValue::Token(CssToken::Accent)),
-            label_color: ConfigProperty::new(ColorValue::Token(CssToken::Accent)),
-            icon_background: ConfigProperty::new(ColorValue::Token(CssToken::Accent)),
-            button_background: ConfigProperty::new(ColorValue::Token(CssToken::BgSurfaceElevated)),
-            border_color: ConfigProperty::new(ColorValue::Token(CssToken::BorderAccent)),
-        }
-    }
 }
 
 impl Debug for BarButtonColors {
@@ -59,22 +47,6 @@ pub struct BarButtonBehavior {
     pub show_border: ConfigProperty<bool>,
     /// Button visibility.
     pub visible: ConfigProperty<bool>,
-    /// Vertical orientation for vertical bars.
-    pub vertical: ConfigProperty<bool>,
-}
-
-impl Default for BarButtonBehavior {
-    fn default() -> Self {
-        Self {
-            truncation_enabled: ConfigProperty::new(false),
-            truncation_size: ConfigProperty::new(20),
-            show_icon: ConfigProperty::new(true),
-            show_label: ConfigProperty::new(true),
-            show_border: ConfigProperty::new(false),
-            visible: ConfigProperty::new(true),
-            vertical: ConfigProperty::new(false),
-        }
-    }
 }
 
 impl Debug for BarButtonBehavior {
@@ -82,29 +54,25 @@ impl Debug for BarButtonBehavior {
         f.debug_struct("BarButtonBehavior")
             .field("show_label", &self.show_label.get())
             .field("visible", &self.visible.get())
-            .field("vertical", &self.vertical.get())
             .finish_non_exhaustive()
     }
 }
 
-/// Complete configuration for a bar button module.
-///
-/// Does not implement `Default` - modules must explicitly provide bar-wide
-/// settings from the global config to ensure consistency across all buttons.
+/// Bar-wide settings shared by all modules.
 #[derive(Debug, Clone)]
-pub struct BarButtonConfig {
-    /// Initial variant to display.
+pub struct BarSettings {
+    /// Button visual variant.
     pub variant: ConfigProperty<BarButtonVariant>,
-    /// Color settings (per-module).
-    pub colors: BarButtonColors,
-    /// Behavioral settings (per-module).
-    pub behavior: BarButtonBehavior,
-    /// Theme provider for color resolution (bar-wide).
+    /// Theme provider for color resolution.
     pub theme_provider: ConfigProperty<ThemeProvider>,
-    /// Border placement (bar-wide).
+    /// Border placement.
     pub border_location: ConfigProperty<BorderLocation>,
-    /// Border width in pixels (bar-wide).
+    /// Border width in pixels.
     pub border_width: ConfigProperty<u8>,
+    /// Vertical orientation.
+    pub is_vertical: ConfigProperty<bool>,
+    /// Scroll sensitivity multiplier for all modules.
+    pub scroll_sensitivity: f64,
 }
 
 /// CSS class constants for bar button modifiers.

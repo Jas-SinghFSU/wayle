@@ -2,17 +2,18 @@ use std::time::Duration;
 
 use gtk::glib::DateTime;
 use relm4::prelude::*;
+use tokio::time::interval;
 use tokio_stream::wrappers::IntervalStream;
 use tracing::error;
 use wayle_common::{ConfigProperty, process, services, watch};
-use wayle_config::ConfigService;
+use wayle_config::{ConfigService, schemas::modules::ClockConfig};
 use wayle_widgets::prelude::{
-    BarButton, BarButtonBehavior, BarButtonColors, BarButtonConfig, BarButtonInit, BarButtonInput,
-    BarButtonOutput,
+    BarButton, BarButtonBehavior, BarButtonColors, BarButtonInit, BarButtonInput, BarButtonOutput,
+    BarSettings,
 };
 
 pub(crate) struct ClockInit {
-    pub(crate) is_vertical: ConfigProperty<bool>,
+    pub(crate) settings: BarSettings,
 }
 
 pub(crate) struct ClockModule {
@@ -58,38 +59,29 @@ impl Component for ClockModule {
         let config_service = services::get::<ConfigService>();
         let config = config_service.config();
         let clock = &config.modules.clock;
-
-        let format = clock.format.clone();
-        let formatted_time = Self::format_time(&format.get());
+        let formatted_time = Self::format_time(&clock.format.get());
 
         let bar_button = BarButton::builder()
             .launch(BarButtonInit {
                 icon: clock.icon_name.get().clone(),
                 label: formatted_time,
                 tooltip: clock.tooltip.get().clone(),
-                scroll_sensitivity: 1.0,
-                config: BarButtonConfig {
-                    variant: config.bar.button_variant.clone(),
-                    colors: BarButtonColors {
-                        icon_color: clock.icon_color.clone(),
-                        label_color: clock.label_color.clone(),
-                        icon_background: clock.icon_bg_color.clone(),
-                        button_background: clock.button_bg_color.clone(),
-                        border_color: clock.border_color.clone(),
-                    },
-                    behavior: BarButtonBehavior {
-                        truncation_enabled: clock.label_truncate.clone(),
-                        truncation_size: clock.label_max_length.clone(),
-                        show_icon: clock.icon_show.clone(),
-                        show_label: clock.label_show.clone(),
-                        show_border: clock.border_show.clone(),
-                        visible: ConfigProperty::new(true),
-                        vertical: init.is_vertical,
-                    },
-                    theme_provider: config.styling.theme_provider.clone(),
-                    border_location: config.bar.button_border_location.clone(),
-                    border_width: config.bar.button_border_width.clone(),
+                colors: BarButtonColors {
+                    icon_color: clock.icon_color.clone(),
+                    label_color: clock.label_color.clone(),
+                    icon_background: clock.icon_bg_color.clone(),
+                    button_background: clock.button_bg_color.clone(),
+                    border_color: clock.border_color.clone(),
                 },
+                behavior: BarButtonBehavior {
+                    truncation_enabled: clock.label_truncate.clone(),
+                    truncation_size: clock.label_max_length.clone(),
+                    show_icon: clock.icon_show.clone(),
+                    show_label: clock.label_show.clone(),
+                    show_border: clock.border_show.clone(),
+                    visible: ConfigProperty::new(true),
+                },
+                settings: init.settings,
             })
             .forward(sender.input_sender(), |output| match output {
                 BarButtonOutput::LeftClick => ClockMsg::LeftClick,
@@ -99,23 +91,7 @@ impl Component for ClockModule {
                 BarButtonOutput::ScrollDown => ClockMsg::ScrollDown,
             });
 
-        let interval = tokio::time::interval(Duration::from_secs(1));
-        let interval_stream = IntervalStream::new(interval);
-
-        watch!(sender, [interval_stream], |out| {
-            let formatted_time = ClockModule::format_time(&format.get());
-            let _ = out.send(ClockCmd::UpdateTime(formatted_time));
-        });
-
-        let icon_name = clock.icon_name.clone();
-        watch!(sender, [icon_name.watch()], |out| {
-            let _ = out.send(ClockCmd::UpdateIcon(icon_name.get().clone()));
-        });
-
-        let tooltip = clock.tooltip.clone();
-        watch!(sender, [tooltip.watch()], |out| {
-            let _ = out.send(ClockCmd::UpdateTooltip(tooltip.get().clone()));
-        });
+        Self::spawn_watchers(&sender, clock);
 
         let model = Self { bar_button };
         let bar_button = model.bar_button.widget();
@@ -159,6 +135,27 @@ impl Component for ClockModule {
 }
 
 impl ClockModule {
+    fn spawn_watchers(sender: &ComponentSender<Self>, clock: &ClockConfig) {
+        let format = clock.format.clone();
+        let tick = interval(Duration::from_secs(1));
+        let interval_stream = IntervalStream::new(tick);
+
+        watch!(sender, [interval_stream], |out| {
+            let formatted_time = ClockModule::format_time(&format.get());
+            let _ = out.send(ClockCmd::UpdateTime(formatted_time));
+        });
+
+        let icon_name = clock.icon_name.clone();
+        watch!(sender, [icon_name.watch()], |out| {
+            let _ = out.send(ClockCmd::UpdateIcon(icon_name.get().clone()));
+        });
+
+        let tooltip = clock.tooltip.clone();
+        watch!(sender, [tooltip.watch()], |out| {
+            let _ = out.send(ClockCmd::UpdateTooltip(tooltip.get().clone()));
+        });
+    }
+
     fn format_time(format: &str) -> String {
         DateTime::now_local()
             .and_then(|dt| dt.format(format))

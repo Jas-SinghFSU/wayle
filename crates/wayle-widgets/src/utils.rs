@@ -1,8 +1,10 @@
 //! GTK utility functions and workarounds.
 
-use gtk4::glib;
-use gtk4::glib::object::IsA;
-use gtk4::prelude::{Cast, GtkWindowExt, WidgetExt};
+use gtk4::{
+    glib,
+    glib::object::IsA,
+    prelude::{Cast, GtkWindowExt, WidgetExt},
+};
 use relm4::gtk;
 
 /// Forces a layer-shell window to recalculate its size.

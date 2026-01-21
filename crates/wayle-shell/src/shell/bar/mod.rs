@@ -13,11 +13,11 @@ use wayle_config::{
     ConfigService,
     schemas::bar::{BarItem, BarLayout, Location},
 };
-use wayle_widgets::styling::InlineStyling;
+use wayle_widgets::{prelude::BarSettings, styling::InlineStyling};
 
 pub(crate) struct Bar {
     location: Location,
-    is_vertical: ConfigProperty<bool>,
+    settings: BarSettings,
     layout: BarLayout,
     css_provider: gtk::CssProvider,
 
@@ -90,7 +90,14 @@ impl Component for Bar {
         let inset_ends = config.bar.inset_ends.get().value();
         let is_floating = inset_edge > 0.0 || inset_ends > 0.0;
 
-        let is_vertical = ConfigProperty::new(location.is_vertical());
+        let settings = BarSettings {
+            variant: config.bar.button_variant.clone(),
+            theme_provider: config.styling.theme_provider.clone(),
+            border_location: config.bar.button_border_location.clone(),
+            border_width: config.bar.button_border_width.clone(),
+            is_vertical: ConfigProperty::new(location.is_vertical()),
+            scroll_sensitivity: 1.0,
+        };
 
         root.init_layer_shell();
         root.set_layer(Layer::Top);
@@ -128,7 +135,7 @@ impl Component for Bar {
 
         let model = Self {
             location,
-            is_vertical,
+            settings,
             layout: BarLayout {
                 monitor: String::new(),
                 extends: None,
@@ -146,7 +153,7 @@ impl Component for Bar {
 
         let widgets = view_output!();
 
-        let is_vert = model.is_vertical.get();
+        let is_vert = model.settings.is_vertical.get();
         Self::apply_orientations(
             &widgets.center_box,
             &widgets.left_box,
@@ -188,16 +195,16 @@ impl Bar {
             return;
         }
 
-        let is_vertical = self.is_vertical.clone();
+        let settings = &self.settings;
 
         if self.layout.left != new_layout.left {
-            Self::rebuild_section(&mut self.left, &new_layout.left, &is_vertical);
+            Self::rebuild_section(&mut self.left, &new_layout.left, settings);
         }
         if self.layout.center != new_layout.center {
-            Self::rebuild_section(&mut self.center, &new_layout.center, &is_vertical);
+            Self::rebuild_section(&mut self.center, &new_layout.center, settings);
         }
         if self.layout.right != new_layout.right {
-            Self::rebuild_section(&mut self.right, &new_layout.right, &is_vertical);
+            Self::rebuild_section(&mut self.right, &new_layout.right, settings);
         }
 
         self.layout = new_layout;
@@ -206,7 +213,7 @@ impl Bar {
     fn rebuild_section(
         factory: &mut FactoryVecDeque<BarItemFactory>,
         items: &[BarItem],
-        is_vertical: &ConfigProperty<bool>,
+        settings: &BarSettings,
     ) {
         let mut guard = factory.guard();
         guard.clear();
@@ -214,7 +221,7 @@ impl Bar {
         for item in items {
             guard.push_back(BarItemFactoryInit {
                 item: item.clone(),
-                is_vertical: is_vertical.clone(),
+                settings: settings.clone(),
             });
         }
     }

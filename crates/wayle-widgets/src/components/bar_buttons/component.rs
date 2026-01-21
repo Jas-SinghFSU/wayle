@@ -10,7 +10,10 @@ use wayle_config::schemas::styling::ThemeProvider;
 
 use super::{
     shared::{resolve_color, setup_event_controllers},
-    types::{BarButtonClass, BarButtonConfig, BarButtonOutput, BarButtonVariant},
+    types::{
+        BarButtonBehavior, BarButtonClass, BarButtonColors, BarButtonOutput, BarButtonVariant,
+        BarSettings,
+    },
 };
 use crate::utils::force_window_resize;
 
@@ -23,10 +26,12 @@ pub struct BarButtonInit {
     pub label: String,
     /// Optional tooltip.
     pub tooltip: Option<String>,
-    /// Scroll sensitivity multiplier.
-    pub scroll_sensitivity: f64,
-    /// Shared configuration.
-    pub config: BarButtonConfig,
+    /// Module-specific color configuration.
+    pub colors: BarButtonColors,
+    /// Module-specific behavior configuration.
+    pub behavior: BarButtonBehavior,
+    /// Bar-wide settings.
+    pub settings: BarSettings,
 }
 
 /// Input messages for BarButton.
@@ -55,7 +60,9 @@ pub struct BarButton {
     label: String,
     tooltip: Option<String>,
     variant: BarButtonVariant,
-    config: BarButtonConfig,
+    colors: BarButtonColors,
+    behavior: BarButtonBehavior,
+    settings: BarSettings,
     css_provider: gtk::CssProvider,
 }
 
@@ -69,14 +76,14 @@ impl BarButton {
             BarButtonVariant::IconSquare => "icon-square",
         });
 
-        if !self.config.behavior.show_label.get() {
+        if !self.behavior.show_label.get() {
             classes.push(BarButtonClass::ICON_ONLY);
         }
-        if self.config.behavior.vertical.get() {
+        if self.settings.is_vertical.get() {
             classes.push(BarButtonClass::VERTICAL);
         }
-        if self.config.behavior.show_border.get()
-            && let Some(border_class) = self.config.border_location.get().css_class()
+        if self.behavior.show_border.get()
+            && let Some(border_class) = self.settings.border_location.get().css_class()
         {
             classes.push(border_class);
         }
@@ -84,7 +91,7 @@ impl BarButton {
     }
 
     fn orientation(&self) -> gtk::Orientation {
-        if self.config.behavior.vertical.get() {
+        if self.settings.is_vertical.get() {
             gtk::Orientation::Vertical
         } else {
             gtk::Orientation::Horizontal
@@ -92,7 +99,7 @@ impl BarButton {
     }
 
     fn ellipsize(&self) -> gtk::pango::EllipsizeMode {
-        if self.config.behavior.truncation_enabled.get() {
+        if self.behavior.truncation_enabled.get() {
             gtk::pango::EllipsizeMode::End
         } else {
             gtk::pango::EllipsizeMode::None
@@ -100,30 +107,30 @@ impl BarButton {
     }
 
     fn max_width_chars(&self) -> i32 {
-        if self.config.behavior.truncation_enabled.get() {
-            self.config.behavior.truncation_size.get() as i32
+        if self.behavior.truncation_enabled.get() {
+            self.behavior.truncation_size.get() as i32
         } else {
             -1
         }
     }
 
     fn is_icon_only(&self) -> bool {
-        !self.config.behavior.show_label.get()
+        !self.behavior.show_label.get()
     }
 
     fn icon_should_center(&self) -> bool {
-        self.is_icon_only() || self.config.behavior.vertical.get()
+        self.is_icon_only() || self.settings.is_vertical.get()
     }
 
     fn build_css(&self) -> String {
-        let is_wayle = matches!(self.config.theme_provider.get(), ThemeProvider::Wayle);
+        let is_wayle = matches!(self.settings.theme_provider.get(), ThemeProvider::Wayle);
 
-        let icon_color = resolve_color(&self.config.colors.icon_color, is_wayle);
-        let label_color = resolve_color(&self.config.colors.label_color, is_wayle);
-        let icon_bg = resolve_color(&self.config.colors.icon_background, is_wayle);
-        let button_bg = resolve_color(&self.config.colors.button_background, is_wayle);
-        let border_color = resolve_color(&self.config.colors.border_color, is_wayle);
-        let border_width = self.config.border_width.get();
+        let icon_color = resolve_color(&self.colors.icon_color, is_wayle);
+        let label_color = resolve_color(&self.colors.label_color, is_wayle);
+        let icon_bg = resolve_color(&self.colors.icon_background, is_wayle);
+        let button_bg = resolve_color(&self.colors.button_background, is_wayle);
+        let border_color = resolve_color(&self.colors.border_color, is_wayle);
+        let border_width = self.settings.border_width.get();
 
         format!(
             "* {{ \
@@ -160,7 +167,7 @@ impl Component for BarButton {
             set_css_classes: &model.css_classes(),
 
             #[watch]
-            set_visible: model.config.behavior.visible.get(),
+            set_visible: model.behavior.visible.get(),
 
             #[watch]
             set_tooltip_text: model.tooltip.as_deref(),
@@ -176,7 +183,7 @@ impl Component for BarButton {
                     add_css_class: "icon-container",
 
                     #[watch]
-                    set_visible: model.config.behavior.show_icon.get(),
+                    set_visible: model.behavior.show_icon.get(),
 
                     #[watch]
                     set_hexpand: model.icon_should_center(),
@@ -196,7 +203,7 @@ impl Component for BarButton {
                     add_css_class: "label-container",
 
                     #[watch]
-                    set_visible: model.config.behavior.show_label.get(),
+                    set_visible: model.behavior.show_label.get(),
 
                     gtk::Label {
                         add_css_class: "bar-button-label",
@@ -222,13 +229,16 @@ impl Component for BarButton {
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
         let css_provider = gtk::CssProvider::new();
+        let scroll_sensitivity = init.settings.scroll_sensitivity;
 
         let model = BarButton {
             icon: init.icon,
             label: init.label,
             tooltip: init.tooltip,
-            variant: init.config.variant.get(),
-            config: init.config,
+            variant: init.settings.variant.get(),
+            colors: init.colors,
+            behavior: init.behavior,
+            settings: init.settings,
             css_provider,
         };
 
@@ -239,13 +249,9 @@ impl Component for BarButton {
 
         let widgets = view_output!();
 
-        setup_event_controllers(
-            &root,
-            sender.output_sender().clone(),
-            init.scroll_sensitivity,
-        );
-        Self::watch_variant(&model.config.variant, &sender);
-        Self::watch_config(&model.config, &sender);
+        setup_event_controllers(&root, sender.output_sender().clone(), scroll_sensitivity);
+        Self::watch_variant(&model.settings.variant, &sender);
+        Self::watch_config(&model, &sender);
 
         ComponentParts { model, widgets }
     }
@@ -296,22 +302,22 @@ impl BarButton {
         });
     }
 
-    fn watch_config(config: &BarButtonConfig, sender: &ComponentSender<Self>) {
-        Self::watch_property(&config.behavior.show_icon, sender);
-        Self::watch_property(&config.behavior.show_label, sender);
-        Self::watch_property(&config.behavior.show_border, sender);
-        Self::watch_property(&config.behavior.visible, sender);
-        Self::watch_property(&config.behavior.vertical, sender);
-        Self::watch_property(&config.behavior.truncation_enabled, sender);
-        Self::watch_property(&config.behavior.truncation_size, sender);
-        Self::watch_property(&config.colors.icon_color, sender);
-        Self::watch_property(&config.colors.label_color, sender);
-        Self::watch_property(&config.colors.icon_background, sender);
-        Self::watch_property(&config.colors.button_background, sender);
-        Self::watch_property(&config.colors.border_color, sender);
-        Self::watch_property(&config.border_location, sender);
-        Self::watch_property(&config.border_width, sender);
-        Self::watch_property(&config.theme_provider, sender);
+    fn watch_config(model: &BarButton, sender: &ComponentSender<Self>) {
+        Self::watch_property(&model.behavior.show_icon, sender);
+        Self::watch_property(&model.behavior.show_label, sender);
+        Self::watch_property(&model.behavior.show_border, sender);
+        Self::watch_property(&model.behavior.visible, sender);
+        Self::watch_property(&model.behavior.truncation_enabled, sender);
+        Self::watch_property(&model.behavior.truncation_size, sender);
+        Self::watch_property(&model.colors.icon_color, sender);
+        Self::watch_property(&model.colors.label_color, sender);
+        Self::watch_property(&model.colors.icon_background, sender);
+        Self::watch_property(&model.colors.button_background, sender);
+        Self::watch_property(&model.colors.border_color, sender);
+        Self::watch_property(&model.settings.border_location, sender);
+        Self::watch_property(&model.settings.border_width, sender);
+        Self::watch_property(&model.settings.theme_provider, sender);
+        Self::watch_property(&model.settings.is_vertical, sender);
     }
 
     fn watch_property<T>(property: &ConfigProperty<T>, sender: &ComponentSender<Self>)

@@ -2,19 +2,19 @@
 
 use gtk::prelude::*;
 use relm4::prelude::*;
-use wayle_common::ConfigProperty;
 use wayle_config::schemas::bar::BarItem;
+use wayle_widgets::prelude::BarSettings;
 
 use crate::shell::bar::modules::{ModuleController, create_module};
 
 pub(crate) struct BarItemFactoryInit {
     pub(crate) item: BarItem,
-    pub(crate) is_vertical: ConfigProperty<bool>,
+    pub(crate) settings: BarSettings,
 }
 
 pub(crate) struct BarItemFactory {
     item: BarItem,
-    is_vertical: ConfigProperty<bool>,
+    settings: BarSettings,
     modules: Vec<ModuleController>,
 }
 
@@ -36,18 +36,18 @@ impl FactoryComponent for BarItemFactory {
     fn init_model(init: Self::Init, _index: &DynamicIndex, _sender: FactorySender<Self>) -> Self {
         let modules = match &init.item {
             BarItem::Module(module) => {
-                vec![create_module(module, &init.is_vertical)]
+                vec![create_module(module, &init.settings)]
             }
             BarItem::Group(group) => group
                 .modules
                 .iter()
-                .map(|m| create_module(m, &init.is_vertical))
+                .map(|m| create_module(m, &init.settings))
                 .collect(),
         };
 
         Self {
             item: init.item,
-            is_vertical: init.is_vertical,
+            settings: init.settings,
             modules,
         }
     }
@@ -61,7 +61,7 @@ impl FactoryComponent for BarItemFactory {
     ) -> Self::Widgets {
         let widgets = view_output!();
 
-        let orientation = if self.is_vertical.get() {
+        let orientation = if self.settings.is_vertical.get() {
             gtk::Orientation::Vertical
         } else {
             gtk::Orientation::Horizontal

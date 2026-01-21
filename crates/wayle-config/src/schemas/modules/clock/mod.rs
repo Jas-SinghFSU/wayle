@@ -18,6 +18,11 @@ pub struct ClockConfig {
     #[default(None)]
     pub tooltip: ConfigProperty<Option<String>>,
 
+    /// Symbolic icon name.
+    #[serde(rename = "icon-name")]
+    #[default(String::from("tb-calendar-time-symbolic"))]
+    pub icon_name: ConfigProperty<String>,
+
     /// Display border around button.
     #[serde(rename = "border-show")]
     #[default(false)]
@@ -28,12 +33,7 @@ pub struct ClockConfig {
     #[default(ColorValue::Token(CssToken::BorderAccent))]
     pub border_color: ConfigProperty<ColorValue>,
 
-    /// Symbolic icon name.
-    #[serde(rename = "icon-name")]
-    #[default(String::from("tb-calendar-time-symbolic"))]
-    pub icon_name: ConfigProperty<String>,
-
-    /// Display clock icon.
+    /// Display module icon.
     #[serde(rename = "icon-show")]
     #[default(true)]
     pub icon_show: ConfigProperty<bool>,
@@ -48,7 +48,7 @@ pub struct ClockConfig {
     #[default(ColorValue::Token(CssToken::Accent))]
     pub icon_bg_color: ConfigProperty<ColorValue>,
 
-    /// Display time label.
+    /// Display text label.
     #[serde(rename = "label-show")]
     #[default(true)]
     pub label_show: ConfigProperty<bool>,

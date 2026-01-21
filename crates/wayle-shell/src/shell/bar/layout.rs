@@ -90,7 +90,7 @@ impl Bar {
         Self::apply_anchors(root, location);
 
         let is_vert = location.is_vertical();
-        self.is_vertical.set(is_vert);
+        self.settings.is_vertical.set(is_vert);
         self.location = location;
 
         if let Some(center_box) = root
