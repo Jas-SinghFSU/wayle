@@ -108,6 +108,10 @@ wayle-widgets = { path = "crates/wayle-widgets" }
 unsafe_code = "deny"
 missing_docs = "warn"
 
+[profile.release]
+lto = true
+codegen-units = 1
+
 [workspace.lints.clippy]
 inefficient_to_string = "warn"
 large_types_passed_by_value = "warn"
