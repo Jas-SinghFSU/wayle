@@ -12,7 +12,7 @@ menubutton.bar-button.icon-square {
         transition: background-color var(--duration-fast);
 
         image {
-            color: var(--fg-on-accent);
+            color: var(--bar-btn-icon-color);
             margin: calc(var(--bar-btn-icon-padding) * 0.3);
         }
     }

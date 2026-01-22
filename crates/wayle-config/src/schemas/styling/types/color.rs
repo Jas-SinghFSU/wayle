@@ -240,7 +240,7 @@ impl FromStr for CssToken {
     }
 }
 
-/// CSS token reference, custom hex color, or transparent.
+/// CSS token reference, custom hex color, transparent, or context-aware auto.
 ///
 /// Token references (e.g., `"accent"`) use CSS variables that update with themes.
 /// Custom hex values (e.g., `"#414868"`) remain fixed.
@@ -254,6 +254,10 @@ pub enum ColorValue {
 
     /// Fully transparent. Maps to CSS `transparent` keyword.
     Transparent,
+
+    /// Context-awareness marker that defers the color resolution to
+    /// its consumer.
+    Auto,
 }
 
 impl Default for ColorValue {
@@ -266,12 +270,19 @@ impl ColorValue {
     /// CSS value for inline styles.
     ///
     /// Token returns `var(--*)`, custom returns hex string.
+    /// Auto falls back to accent - components should resolve Auto before calling this.
     pub fn to_css(&self) -> Cow<'static, str> {
         match self {
             Self::Token(token) => Cow::Borrowed(token.css_var()),
             Self::Custom(hex) => Cow::Owned(hex.to_string()),
             Self::Transparent => Cow::Borrowed("transparent"),
+            Self::Auto => Cow::Borrowed(CssToken::Accent.css_var()),
         }
+    }
+
+    /// Returns true if this is the Auto variant.
+    pub fn is_auto(&self) -> bool {
+        matches!(self, Self::Auto)
     }
 }
 
@@ -287,6 +298,7 @@ impl Serialize for ColorValue {
             }
             Self::Custom(hex) => serializer.serialize_str(hex.as_str()),
             Self::Transparent => serializer.serialize_str("transparent"),
+            Self::Auto => serializer.serialize_str("auto"),
         }
     }
 }
@@ -299,6 +311,8 @@ impl<'de> Deserialize<'de> for ColorValue {
         let s = String::deserialize(deserializer)?;
         if s == "transparent" {
             Ok(Self::Transparent)
+        } else if s == "auto" {
+            Ok(Self::Auto)
         } else if s.starts_with('#') {
             HexColor::new(s)
                 .map(Self::Custom)

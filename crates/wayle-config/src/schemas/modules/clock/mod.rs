@@ -38,9 +38,9 @@ pub struct ClockConfig {
     #[default(true)]
     pub icon_show: ConfigProperty<bool>,
 
-    /// Icon foreground color token.
+    /// Icon foreground color. Auto selects based on variant for contrast.
     #[serde(rename = "icon-color")]
-    #[default(ColorValue::Token(CssToken::Accent))]
+    #[default(ColorValue::Auto)]
     pub icon_color: ConfigProperty<ColorValue>,
 
     /// Icon container background color token.

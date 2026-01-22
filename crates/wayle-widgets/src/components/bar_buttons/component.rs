@@ -1,12 +1,14 @@
 //! Bar button component with runtime-switchable visual variants.
 
+use std::borrow::Cow;
+
 use futures::StreamExt;
 #[allow(deprecated)]
 use gtk4::prelude::StyleContextExt;
 use gtk4::prelude::{OrientableExt, WidgetExt};
 use relm4::{ComponentParts, ComponentSender, gtk, prelude::*};
 use wayle_common::ConfigProperty;
-use wayle_config::schemas::styling::ThemeProvider;
+use wayle_config::schemas::styling::{CssToken, ThemeProvider};
 
 use super::{
     shared::{resolve_color, setup_event_controllers},
@@ -122,10 +124,30 @@ impl BarButton {
         self.is_icon_only() || self.settings.is_vertical.get()
     }
 
+    fn resolve_icon_color(&self, is_wayle_themed: bool) -> Cow<'static, str> {
+        let color = if is_wayle_themed {
+            self.colors.icon_color.get()
+        } else {
+            self.colors.icon_color.default().clone()
+        };
+
+        if color.is_auto() {
+            let token = match self.variant {
+                BarButtonVariant::Basic => CssToken::Accent,
+                BarButtonVariant::BlockPrefix | BarButtonVariant::IconSquare => {
+                    CssToken::FgOnAccent
+                }
+            };
+            Cow::Borrowed(token.css_var())
+        } else {
+            color.to_css()
+        }
+    }
+
     fn build_css(&self) -> String {
         let is_wayle = matches!(self.settings.theme_provider.get(), ThemeProvider::Wayle);
 
-        let icon_color = resolve_color(&self.colors.icon_color, is_wayle);
+        let icon_color = self.resolve_icon_color(is_wayle);
         let label_color = resolve_color(&self.colors.label_color, is_wayle);
         let icon_bg = resolve_color(&self.colors.icon_background, is_wayle);
         let button_bg = resolve_color(&self.colors.button_background, is_wayle);
