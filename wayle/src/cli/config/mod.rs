@@ -4,6 +4,8 @@ pub mod commands;
 pub mod get;
 /// Reset configuration value command
 pub mod reset;
+/// JSON Schema output command
+pub mod schema;
 /// Set configuration value command
 pub mod set;
 
@@ -20,5 +22,6 @@ pub async fn execute(command: ConfigCommands) -> CliAction {
         ConfigCommands::Get { path } => get::execute(path).await,
         ConfigCommands::Set { path, value } => set::execute(path, value).await,
         ConfigCommands::Reset { path } => reset::execute(path).await,
+        ConfigCommands::Schema { stdout } => schema::execute(stdout),
     }
 }

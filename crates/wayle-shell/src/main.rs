@@ -4,7 +4,7 @@ use std::error::Error;
 
 use relm4::RelmApp;
 use tokio::runtime::Runtime;
-use tracing::info;
+use tracing::{info, warn};
 use wayle_audio::AudioService;
 use wayle_battery::BatteryService;
 use wayle_bluetooth::BluetoothService;
@@ -12,7 +12,7 @@ use wayle_common::{
     services::{self, ServiceRegistry},
     shell::APP_ID,
 };
-use wayle_config::ConfigService;
+use wayle_config::{ConfigService, infrastructure::schema};
 use wayle_media::MediaService;
 use wayle_network::NetworkService;
 use wayle_systray::{SystemTrayService, types::TrayMode};
@@ -68,6 +68,13 @@ async fn is_already_running() -> bool {
 
 async fn init_services() -> Result<StartupTimer, Box<dyn Error>> {
     let mut timer = StartupTimer::new();
+
+    if let Err(e) = timer
+        .time("Schema", async { schema::ensure_schema_current() })
+        .await
+    {
+        warn!(error = %e, "Could not write schema file");
+    }
 
     let mut registry = ServiceRegistry::new();
 

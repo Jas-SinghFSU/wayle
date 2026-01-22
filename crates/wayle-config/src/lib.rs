@@ -28,6 +28,8 @@ pub mod infrastructure {
     pub mod paths;
     /// Configuration persistence
     pub mod persistence;
+    /// JSON Schema generation for editor support
+    pub mod schema;
     /// Configuration service
     pub mod service;
     /// Wayle theme management and discovery

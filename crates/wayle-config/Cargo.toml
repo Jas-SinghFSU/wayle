@@ -15,6 +15,7 @@ default = []
 notify.workspace = true
 schemars.workspace = true
 serde.workspace = true
+serde_json.workspace = true
 thiserror.workspace = true
 tokio.workspace = true
 toml.workspace = true
@@ -22,9 +23,6 @@ tracing.workspace = true
 
 wayle-common = { workspace = true, features = ["schema"] }
 wayle-derive.workspace = true
-
-[dev-dependencies]
-serde_json.workspace = true
 
 [lints]
 workspace = true

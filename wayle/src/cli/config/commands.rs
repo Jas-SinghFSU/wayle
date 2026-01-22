@@ -20,4 +20,10 @@ pub enum ConfigCommands {
         /// The configuration path to reset (e.g., "bar.button_gap")
         path: String,
     },
+    /// Output JSON Schema for the configuration (for editor intellisense)
+    Schema {
+        /// Print to stdout instead of writing to config directory
+        #[arg(long)]
+        stdout: bool,
+    },
 }

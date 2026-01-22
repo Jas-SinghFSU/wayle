@@ -137,6 +137,36 @@ impl ConfigPaths {
         }
     }
 
+    /// Path to `schema.json` for editor autocomplete and validation.
+    ///
+    /// # Panics
+    ///
+    /// Panics if config directory cannot be determined.
+    #[allow(clippy::panic)]
+    pub fn schema_json() -> PathBuf {
+        match Self::config_dir() {
+            Ok(dir) => dir.join("schema.json"),
+            Err(_) => {
+                panic!("Failed to determine config directory - is $HOME or $XDG_CONFIG_HOME set?")
+            }
+        }
+    }
+
+    /// Path to `.taplo.toml` for Taplo TOML editor support.
+    ///
+    /// # Panics
+    ///
+    /// Panics if config directory cannot be determined.
+    #[allow(clippy::panic)]
+    pub fn taplo_config() -> PathBuf {
+        match Self::config_dir() {
+            Ok(dir) => dir.join(".taplo.toml"),
+            Err(_) => {
+                panic!("Failed to determine config directory - is $HOME or $XDG_CONFIG_HOME set?")
+            }
+        }
+    }
+
     /// Cache directory (`$XDG_CACHE_HOME/wayle` or `~/.cache/wayle`).
     /// Creates directory if absent.
     ///
