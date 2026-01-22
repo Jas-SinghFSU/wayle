@@ -5,12 +5,54 @@ use serde::{Deserialize, Serialize};
 pub use shadow::ShadowPreset;
 
 /// Layout configuration for a bar on a specific monitor.
+///
+/// # Examples
+///
+/// ```toml
+/// # Single modules
+/// [[bar.layout]]
+/// monitor = "*"
+/// left = ["dashboard"]
+/// center = ["clock"]
+/// right = ["systray"]
+///
+/// # Module with custom CSS class for per-instance styling
+/// [[bar.layout]]
+/// monitor = "DP-1"
+/// left = [{ module = "clock", class = "primary-clock" }, "clock"]
+/// center = ["media"]
+///
+/// # Grouped modules (share a visual container, CSS-targetable by name)
+/// [[bar.layout]]
+/// monitor = "DP-2"
+/// left = [{ name = "status", modules = ["battery", "network"] }]
+///
+/// # Groups can also contain classed modules
+/// [[bar.layout]]
+/// monitor = "DP-3"
+/// left = [{ name = "clocks", modules = [
+///   { module = "clock", class = "local" },
+///   { module = "world-clock", class = "remote" }
+/// ]}]
+///
+/// # Inherit from another layout
+/// [[bar.layout]]
+/// monitor = "*"
+/// left = ["dashboard"]
+/// center = ["clock"]
+/// right = ["systray"]
+///
+/// [[bar.layout]]
+/// monitor = "HDMI-1"
+/// extends = "*"
+/// right = ["volume", "systray"]  # Override just this section
+/// ```
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, PartialEq)]
 #[serde(default)]
 pub struct BarLayout {
-    /// Monitor connector name (e.g., "DP-1") or "*" for all monitors.
+    /// Monitor connector name (e.g., `"DP-1"`) or `"*"` for all monitors.
     pub monitor: String,
-    /// Inherit layout from another named layout.
+    /// Inherit from another layout by its monitor value (e.g., `"*"`).
     pub extends: Option<String>,
     /// Modules in the left section.
     pub left: Vec<BarItem>,
@@ -25,9 +67,9 @@ impl Default for BarLayout {
         Self {
             monitor: String::from("*"),
             extends: None,
-            left: vec![BarItem::Module(BarModule::Dashboard)],
-            center: vec![BarItem::Module(BarModule::Clock)],
-            right: vec![BarItem::Module(BarModule::Systray)],
+            left: vec![BarItem::Module(ModuleRef::Plain(BarModule::Dashboard))],
+            center: vec![BarItem::Module(ModuleRef::Plain(BarModule::Clock))],
+            right: vec![BarItem::Module(ModuleRef::Plain(BarModule::Systray))],
         }
     }
 }
@@ -36,8 +78,8 @@ impl Default for BarLayout {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(untagged)]
 pub enum BarItem {
-    /// A single module.
-    Module(BarModule),
+    /// A single module (plain or with custom CSS class).
+    Module(ModuleRef),
     /// A named group of modules with shared visual container.
     Group(BarGroup),
 }
@@ -48,7 +90,54 @@ pub struct BarGroup {
     /// Unique name for CSS targeting (becomes `#name` selector).
     pub name: String,
     /// Modules contained in this group.
-    pub modules: Vec<BarModule>,
+    pub modules: Vec<ModuleRef>,
+}
+
+/// Reference to a module, optionally with a custom CSS class.
+///
+/// # Examples
+///
+/// ```toml
+/// # Plain module (just the name)
+/// left = ["clock"]
+///
+/// # Module with custom CSS class
+/// left = [{ module = "clock", class = "primary-clock" }]
+/// ```
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(untagged)]
+pub enum ModuleRef {
+    /// Module with a custom CSS class.
+    Classed(ClassedModule),
+    /// Plain module reference.
+    Plain(BarModule),
+}
+
+impl ModuleRef {
+    /// Returns the underlying module type.
+    pub fn module(&self) -> BarModule {
+        match self {
+            Self::Plain(m) => *m,
+            Self::Classed(c) => c.module,
+        }
+    }
+
+    /// Returns the custom CSS class, if any.
+    pub fn class(&self) -> Option<&str> {
+        match self {
+            Self::Plain(_) => None,
+            Self::Classed(c) => Some(&c.class),
+        }
+    }
+}
+
+/// A module with an associated CSS class for custom styling.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+pub struct ClassedModule {
+    /// The module type.
+    pub module: BarModule,
+    /// CSS class added to the module's GTK widget.
+    pub class: String,
 }
 
 /// Available bar modules.

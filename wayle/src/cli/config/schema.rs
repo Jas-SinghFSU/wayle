@@ -29,8 +29,7 @@ pub fn execute(stdout: bool) -> CliAction {
             .map_err(|e| format!("Failed to determine config directory: {e}"))?;
 
         let schema_path = config_dir.join("schema.json");
-        fs::write(&schema_path, &json)
-            .map_err(|e| format!("Failed to write schema: {e}"))?;
+        fs::write(&schema_path, &json).map_err(|e| format!("Failed to write schema: {e}"))?;
 
         let taplo_path = config_dir.join(".taplo.toml");
         fs::write(&taplo_path, TAPLO_CONFIG)

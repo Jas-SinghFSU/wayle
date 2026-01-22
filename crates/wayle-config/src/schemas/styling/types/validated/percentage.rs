@@ -11,7 +11,7 @@ use tracing::warn;
 
 const MAX: u8 = 100;
 
-/// Percentage value clamped to 0–100.
+/// Percentage value clamped to 0-100.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, JsonSchema)]
 #[serde(transparent)]
 #[schemars(transparent)]
@@ -19,7 +19,7 @@ const MAX: u8 = 100;
 pub struct Percentage(#[schemars(range(min = 0, max = MAX))] u8);
 
 impl Percentage {
-    /// Creates a percentage value, clamping to 0–100.
+    /// Creates a percentage value, clamping to 0-100.
     #[must_use]
     pub fn new(value: u8) -> Self {
         Self(value.min(MAX))

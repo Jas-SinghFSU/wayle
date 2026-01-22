@@ -134,20 +134,24 @@ fn scale_to_scss(bar: &BarConfig) -> String {
 fn rounding_to_scss(bar: &BarConfig) -> String {
     let rounding = bar.rounding.get();
     let button_rounding = bar.button_rounding.get();
+    let group_rounding = bar.button_group_rounding.get();
     let global = rounding.to_css_values();
     let bar_values = rounding.to_bar_css_values();
-    let bar_button_values = button_rounding.to_bar_button_css_values();
+    let bar_button_values = button_rounding.to_bar_element_css_values();
+    let bar_group_values = group_rounding.to_bar_element_css_values();
     format!(
         "$rounding-element: {};\n\
         $rounding-container: {};\n\
         $bar-rounding-element: {};\n\
         $bar-rounding-container: {};\n\
-        $bar-button-rounding-element: {};\n",
+        $bar-button-rounding-element: {};\n\
+        $bar-group-rounding-element: {};\n",
         global.element,
         global.container,
         bar_values.element,
         bar_values.container,
-        bar_button_values.element
+        bar_button_values.element,
+        bar_group_values.element
     )
 }
 

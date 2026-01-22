@@ -86,8 +86,8 @@ impl RoundingLevel {
         }
     }
 
-    /// Bar-specific Button CSS variable references using `--bar-radius-*` tokens.
-    pub fn to_bar_button_css_values(self) -> RoundingCssValues {
+    /// Bar-specific Button/Group CSS variable references using `--bar-button-radius-*` tokens.
+    pub fn to_bar_element_css_values(self) -> RoundingCssValues {
         match self {
             Self::None => RoundingCssValues {
                 element: "var(--radius-none)",

@@ -1,21 +1,34 @@
 //! GTK4 CSS hex color newtype.
 
 use std::{
+    borrow::Cow,
     fmt::{self, Display, Formatter},
     ops::Deref,
     str::FromStr,
 };
 
-use schemars::JsonSchema;
 use serde::{Deserialize, Deserializer, Serialize};
 
 /// GTK4 CSS hex color.
 ///
 /// Accepts `#rgb`, `#rgba`, `#rrggbb`, or `#rrggbbaa` formats.
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, JsonSchema)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize)]
 #[serde(transparent)]
-#[schemars(transparent)]
 pub struct HexColor(String);
+
+impl schemars::JsonSchema for HexColor {
+    fn schema_name() -> Cow<'static, str> {
+        Cow::Borrowed("HexColor")
+    }
+
+    fn json_schema(_generator: &mut schemars::SchemaGenerator) -> schemars::Schema {
+        schemars::json_schema!({
+            "description": "GTK4 CSS hex color (#rgb, #rgba, #rrggbb, or #rrggbbaa)",
+            "type": "string",
+            "pattern": "^#([0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$"
+        })
+    }
+}
 
 /// Error when parsing an invalid hex color.
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]

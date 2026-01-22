@@ -331,7 +331,23 @@ impl schemars::JsonSchema for ColorValue {
     }
 
     fn json_schema(generator: &mut schemars::SchemaGenerator) -> schemars::Schema {
-        String::json_schema(generator)
+        use schemars::json_schema;
+
+        let token_schema = CssToken::json_schema(generator);
+        let token_enum = token_schema
+            .as_object()
+            .and_then(|obj| obj.get("oneOf"))
+            .cloned()
+            .unwrap_or_default();
+
+        json_schema!({
+            "description": "CSS token, hex color (#rgb, #rgba, #rrggbb, or #rrggbbaa), 'transparent', or 'auto'",
+            "anyOf": [
+                { "oneOf": token_enum },
+                { "enum": ["transparent", "auto"] },
+                { "type": "string", "pattern": "^#([0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$" }
+            ]
+        })
     }
 }
 

@@ -11,7 +11,7 @@ use crate::{
 #[wayle_config]
 pub struct ClockConfig {
     /// Time format string using strftime syntax.
-    #[default(String::from("%H:%M"))]
+    #[default(String::from("%a %b %d %I:%M:%S %p"))]
     pub format: ConfigProperty<String>,
 
     /// Tooltip text shown on hover.

@@ -1,8 +1,8 @@
 mod types;
 
 pub use types::{
-    BarButtonVariant, BarGroup, BarItem, BarLayout, BarModule, BorderLocation, Location,
-    ShadowPreset,
+    BarButtonVariant, BarGroup, BarItem, BarLayout, BarModule, BorderLocation, ClassedModule,
+    Location, ModuleRef, ShadowPreset,
 };
 use wayle_common::ConfigProperty;
 use wayle_derive::wayle_config;
@@ -167,8 +167,8 @@ pub struct BarConfig {
 
     /// Internal padding for button groups.
     #[serde(rename = "button-group-padding")]
-    #[default(ScaleFactor::new(1.0))]
-    pub button_group_padding: ConfigProperty<ScaleFactor>,
+    #[default(Spacing::new(0.0))]
+    pub button_group_padding: ConfigProperty<Spacing>,
 
     /// Gap between modules within a group.
     #[serde(rename = "button-group-module-gap")]
@@ -189,6 +189,11 @@ pub struct BarConfig {
     #[serde(rename = "button-group-border-color")]
     #[default(ColorValue::Token(CssToken::BorderAccent))]
     pub button_group_border_color: ConfigProperty<ColorValue>,
+
+    /// Corner rounding level for button groups.
+    #[serde(rename = "button-group-rounding")]
+    #[default(RoundingLevel::None)]
+    pub button_group_rounding: ConfigProperty<RoundingLevel>,
 
     //
     // === === === === === === === === === ===

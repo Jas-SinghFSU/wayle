@@ -12,14 +12,14 @@ use tracing::warn;
 const MIN: f32 = 0.25;
 const MAX: f32 = 3.0;
 
-/// Scale multiplier clamped to 0.25–3.0.
+/// Scale multiplier clamped to 0.25-3.0.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, JsonSchema)]
 #[serde(transparent)]
 #[schemars(transparent)]
 pub struct ScaleFactor(#[schemars(range(min = MIN, max = MAX))] f32);
 
 impl ScaleFactor {
-    /// Creates a scale factor, clamping to 0.25–3.0.
+    /// Creates a scale factor, clamping to 0.25-3.0.
     #[must_use]
     pub fn new(value: f32) -> Self {
         Self(value.clamp(MIN, MAX))

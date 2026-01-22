@@ -2,8 +2,13 @@ mod clock;
 
 use clock::{ClockInit, ClockModule};
 use relm4::prelude::*;
-use wayle_config::schemas::bar::BarModule;
+use wayle_config::schemas::bar::{BarModule, ModuleRef};
 use wayle_widgets::prelude::BarSettings;
+
+pub(crate) struct ModuleInstance {
+    pub(crate) controller: ModuleController,
+    pub(crate) class: Option<String>,
+}
 
 pub(crate) enum ModuleController {
     Clock(Controller<ClockModule>),
@@ -17,8 +22,11 @@ impl ModuleController {
     }
 }
 
-pub(crate) fn create_module(module: &BarModule, settings: &BarSettings) -> ModuleController {
-    match module {
+pub(crate) fn create_module(module_ref: &ModuleRef, settings: &BarSettings) -> ModuleInstance {
+    let module = module_ref.module();
+    let class = module_ref.class().map(String::from);
+
+    let controller = match module {
         BarModule::Clock => {
             let init = ClockInit {
                 settings: settings.clone(),
@@ -31,5 +39,7 @@ pub(crate) fn create_module(module: &BarModule, settings: &BarSettings) -> Modul
             };
             ModuleController::Clock(ClockModule::builder().launch(init).detach())
         }
-    }
+    };
+
+    ModuleInstance { controller, class }
 }

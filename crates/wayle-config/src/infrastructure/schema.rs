@@ -45,10 +45,10 @@ pub fn ensure_schema_current() -> io::Result<()> {
     let schema_path = ConfigPaths::schema_json();
     let taplo_path = ConfigPaths::taplo_config();
 
-    if let Some(parent) = schema_path.parent() {
-        if !parent.exists() {
-            fs::create_dir_all(parent)?;
-        }
+    if let Some(parent) = schema_path.parent()
+        && !parent.exists()
+    {
+        fs::create_dir_all(parent)?;
     }
 
     let needs_update = match fs::read_to_string(&schema_path) {
@@ -78,10 +78,10 @@ pub fn ensure_schema_current() -> io::Result<()> {
 ///
 /// Returns error if the schema file cannot be written.
 pub fn write_schema_to(path: &std::path::Path) -> io::Result<()> {
-    if let Some(parent) = path.parent() {
-        if !parent.exists() {
-            fs::create_dir_all(parent)?;
-        }
+    if let Some(parent) = path.parent()
+        && !parent.exists()
+    {
+        fs::create_dir_all(parent)?;
     }
 
     let schema = generate_schema();

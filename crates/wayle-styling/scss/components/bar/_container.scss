@@ -69,3 +69,19 @@
         }
     }
 }
+
+.bar-group {
+    background-color: color-mix(
+        in srgb,
+        var(--bar-group-bg) var(--bar-group-opacity),
+        transparent
+    );
+    border-style: solid;
+    border-color: var(--bar-group-border-color);
+    border-top-width: calc(var(--bar-group-border-top) * 1px);
+    border-bottom-width: calc(var(--bar-group-border-bottom) * 1px);
+    border-left-width: calc(var(--bar-group-border-left) * 1px);
+    border-right-width: calc(var(--bar-group-border-right) * 1px);
+    border-radius: var(--bar-group-rounding-element);
+    padding: calc(var(--bar-group-padding-px) * 1px);
+}

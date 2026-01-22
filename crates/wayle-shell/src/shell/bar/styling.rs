@@ -41,9 +41,18 @@ impl InlineStyling for Bar {
         bar.padding_ends.subscribe_changes(tx.clone());
         bar.module_gap.subscribe_changes(tx.clone());
         bar.button_group_module_gap.subscribe_changes(tx.clone());
+        bar.button_group_padding.subscribe_changes(tx.clone());
+        bar.button_group_background.subscribe_changes(tx.clone());
+        bar.button_group_opacity.subscribe_changes(tx.clone());
+        bar.button_group_border_location
+            .subscribe_changes(tx.clone());
+        bar.button_group_border_width.subscribe_changes(tx.clone());
+        bar.button_group_border_color.subscribe_changes(tx.clone());
+        bar.button_group_rounding.subscribe_changes(tx.clone());
         bar.bg.subscribe_changes(tx.clone());
         bar.background_opacity.subscribe_changes(tx.clone());
         bar.button_opacity.subscribe_changes(tx.clone());
+        bar.button_label_weight.subscribe_changes(tx.clone());
         bar.border_location.subscribe_changes(tx.clone());
         bar.border_width.subscribe_changes(tx.clone());
         bar.border_color.subscribe_changes(tx.clone());
@@ -74,6 +83,7 @@ impl InlineStyling for Bar {
         let bg = resolve_color(&bar.bg, is_wayle);
         let bg_opacity = bar.background_opacity.get().value();
         let button_opacity = f64::from(bar.button_opacity.get().value()) / 100.0;
+        let label_weight = bar.button_label_weight.get().css_var();
         let border_color = resolve_color(&bar.border_color, is_wayle);
         let border_width = bar.border_width.get();
         let border_location = bar.border_location.get();
@@ -95,6 +105,28 @@ impl InlineStyling for Bar {
         let module_gap_px = rem_to_px_rounded(bar.module_gap.get().value(), scale);
         let group_module_gap_px =
             rem_to_px_rounded(bar.button_group_module_gap.get().value(), scale);
+        let group_padding_px =
+            rem_to_px_rounded(bar.button_group_padding.get().value() * 0.25, scale);
+        let group_bg = resolve_color(&bar.button_group_background, is_wayle);
+        let group_opacity = bar.button_group_opacity.get().value();
+        let group_border_color = resolve_color(&bar.button_group_border_color, is_wayle);
+        let group_border_width = bar.button_group_border_width.get();
+        let group_border_location = bar.button_group_border_location.get();
+
+        let (group_border_top, group_border_bottom, group_border_left, group_border_right) =
+            match group_border_location {
+                BorderLocation::None => (0, 0, 0, 0),
+                BorderLocation::Top => (group_border_width, 0, 0, 0),
+                BorderLocation::Bottom => (0, group_border_width, 0, 0),
+                BorderLocation::Left => (0, 0, group_border_width, 0),
+                BorderLocation::Right => (0, 0, 0, group_border_width),
+                BorderLocation::All => (
+                    group_border_width,
+                    group_border_width,
+                    group_border_width,
+                    group_border_width,
+                ),
+            };
 
         let location = bar.location.get();
         let shadow_preset = bar.shadow.get();
@@ -117,7 +149,16 @@ impl InlineStyling for Bar {
             --bar-padding-ends-px: {padding_ends_px}; \
             --bar-module-gap-px: {module_gap_px}; \
             --bar-button-opacity: {button_opacity}; \
+            --bar-btn-label-weight: var({label_weight}); \
             --bar-group-module-gap-px: {group_module_gap_px}; \
+            --bar-group-padding-px: {group_padding_px}; \
+            --bar-group-bg: {group_bg}; \
+            --bar-group-opacity: {group_opacity}%; \
+            --bar-group-border-color: {group_border_color}; \
+            --bar-group-border-top: {group_border_top}; \
+            --bar-group-border-bottom: {group_border_bottom}; \
+            --bar-group-border-left: {group_border_left}; \
+            --bar-group-border-right: {group_border_right}; \
             --bar-shadow: {shadow}; \
             --bar-shadow-margin: {shadow_margin}; \
             }}"

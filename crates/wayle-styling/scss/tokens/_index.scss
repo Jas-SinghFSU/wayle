@@ -47,7 +47,7 @@ $base-radius-lg: 0.875rem;
 $base-radius-xl: 1.125rem;
 
 $base-btn-icon-size: 1.6rem;
-$base-btn-label-size: 1.1rem;
+$base-btn-label-size: 1.04rem;
 $base-btn-padding: 0.5rem;
 $base-btn-gap: 0.5rem;
 
@@ -180,6 +180,9 @@ $base-btn-gap: 0.5rem;
 
     // Bar-specific Button semantic rounding (uses --bar-button-radius-* which scale with $bar-scale)
     --bar-button-rounding-element: #{$bar-button-rounding-element};
+
+    // Bar-specific button-group semantic rounding (uses --bar-radius-* which scale with $bar-scale)
+    --bar-group-rounding-element: #{$bar-group-rounding-element};
 
     // Shadows
     --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.5);

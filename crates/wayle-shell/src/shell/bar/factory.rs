@@ -5,7 +5,7 @@ use relm4::prelude::*;
 use wayle_config::schemas::bar::BarItem;
 use wayle_widgets::prelude::BarSettings;
 
-use crate::shell::bar::modules::{ModuleController, create_module};
+use crate::shell::bar::modules::{ModuleInstance, create_module};
 
 pub(crate) struct BarItemFactoryInit {
     pub(crate) item: BarItem,
@@ -15,7 +15,7 @@ pub(crate) struct BarItemFactoryInit {
 pub(crate) struct BarItemFactory {
     item: BarItem,
     settings: BarSettings,
-    modules: Vec<ModuleController>,
+    modules: Vec<ModuleInstance>,
 }
 
 #[relm4::factory(pub(crate))]
@@ -73,8 +73,13 @@ impl FactoryComponent for BarItemFactory {
             root.add_css_class("bar-group");
         }
 
-        for controller in &self.modules {
-            root.append(controller.widget());
+        for instance in &self.modules {
+            let widget = instance.controller.widget();
+            widget.add_css_class("module");
+            if let Some(class) = &instance.class {
+                widget.add_css_class(class);
+            }
+            root.append(widget);
         }
 
         widgets
