@@ -67,7 +67,7 @@ settings-bar-button-icon-size = Button Icon Size
     .description = Size multiplier for button icons
 
 settings-bar-button-icon-padding = Button Icon Padding
-    .description = Padding around button icons
+    .description = Padding around button icons. Only applies to block-prefix and icon-square variants.
 
 settings-bar-button-label-size = Button Label Size
     .description = Size multiplier for button text

@@ -192,6 +192,7 @@ impl Component for BarButton {
         match msg {
             BarButtonCmd::VariantChanged(variant) => {
                 self.variant = variant;
+                self.reload_css();
             }
             BarButtonCmd::ConfigChanged => {
                 self.reload_css();
