@@ -66,10 +66,11 @@ impl<'de> Deserialize<'de> for ScaleFactor {
         let raw = f32::deserialize(deserializer)?;
         if !(MIN..=MAX).contains(&raw) {
             warn!(
-                value = raw,
-                min = MIN,
-                max = MAX,
-                "scale factor out of range, clamping"
+                "scale factor {} out of range (valid: {}-{}), clamped to {}",
+                raw,
+                MIN,
+                MAX,
+                raw.clamp(MIN, MAX)
             );
         }
         Ok(Self::new(raw))

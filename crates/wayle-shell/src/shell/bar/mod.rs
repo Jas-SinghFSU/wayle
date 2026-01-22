@@ -131,7 +131,6 @@ impl Component for Bar {
 
         watchers::layout::spawn(&sender, &init.monitor);
         watchers::location::spawn(&sender);
-        watchers::style::spawn(&sender);
 
         let model = Self {
             location,
@@ -149,6 +148,7 @@ impl Component for Bar {
             right,
         };
 
+        model.spawn_style_watcher(&sender);
         model.reload_css();
 
         let widgets = view_output!();

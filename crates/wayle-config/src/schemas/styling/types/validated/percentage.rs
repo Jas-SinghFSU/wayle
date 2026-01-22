@@ -59,7 +59,7 @@ impl<'de> Deserialize<'de> for Percentage {
     {
         let raw = u8::deserialize(deserializer)?;
         if raw > MAX {
-            warn!(value = raw, max = MAX, "percentage out of range, clamping");
+            warn!("percentage {} exceeds maximum, clamped to {}", raw, MAX);
         }
         Ok(Self::new(raw))
     }

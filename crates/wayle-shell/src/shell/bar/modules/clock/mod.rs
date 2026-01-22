@@ -74,8 +74,7 @@ impl Component for ClockModule {
                     border_color: clock.border_color.clone(),
                 },
                 behavior: BarButtonBehavior {
-                    truncation_enabled: clock.label_truncate.clone(),
-                    truncation_size: clock.label_max_length.clone(),
+                    label_max_chars: clock.label_max_length.clone(),
                     show_icon: clock.icon_show.clone(),
                     show_label: clock.label_show.clone(),
                     show_border: clock.border_show.clone(),

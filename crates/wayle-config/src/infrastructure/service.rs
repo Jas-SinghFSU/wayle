@@ -42,17 +42,17 @@ impl ConfigService {
 
         match Self::load_toml_file(&config_path) {
             Ok(config_toml) => config.apply_config_layer(&config_toml, ""),
-            Err(e) => warn!(error = %e, "cannot load config.toml, using defaults"),
+            Err(e) => warn!("using defaults, config.toml failed:\n{e}"),
         }
 
         let runtime_path = ConfigPaths::runtime_config();
         match Self::load_toml_file(&runtime_path) {
             Ok(runtime_toml) => {
                 if let Err(e) = config.apply_runtime_layer(&runtime_toml, "") {
-                    warn!(error = %e, "invalid runtime.toml value");
+                    warn!("invalid runtime.toml value:\n{e}");
                 }
             }
-            Err(e) => warn!(error = %e, "cannot load runtime.toml"),
+            Err(e) => warn!("runtime.toml failed:\n{e}"),
         }
 
         let service = Arc::new(Self {

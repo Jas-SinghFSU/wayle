@@ -64,7 +64,7 @@ impl<'de> Deserialize<'de> for Spacing {
     {
         let raw = f32::deserialize(deserializer)?;
         if raw < MIN {
-            warn!(value = raw, "spacing cannot be negative, clamping to 0");
+            warn!("spacing {} cannot be negative, clamped to 0", raw);
         }
         Ok(Self::new(raw))
     }

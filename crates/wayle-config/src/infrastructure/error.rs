@@ -13,7 +13,7 @@ pub enum Error {
     },
 
     /// Configuration deserialization failed.
-    #[error("cannot deserialize config: {source}")]
+    #[error("invalid config: {source}")]
     ConfigDeserialization {
         /// The underlying TOML deserialization error.
         #[source]
@@ -44,7 +44,7 @@ pub enum Error {
     },
 
     /// TOML parsing failed.
-    #[error("cannot parse toml at '{path}'")]
+    #[error("{source}\n  --> {}", path.display())]
     TomlParse {
         /// Location of TOML being parsed.
         path: PathBuf,
@@ -54,7 +54,7 @@ pub enum Error {
     },
 
     /// TOML parsing failed for inline content.
-    #[error("cannot parse toml")]
+    #[error("{source}")]
     TomlParseInline {
         /// The underlying TOML parse error.
         #[source]
@@ -116,7 +116,7 @@ pub enum Error {
     },
 
     /// Theme TOML parsing failed.
-    #[error("cannot parse theme file '{}'", path.display())]
+    #[error("cannot parse theme file '{}': {source}", path.display())]
     ThemeParse {
         /// Path of the theme file.
         path: PathBuf,

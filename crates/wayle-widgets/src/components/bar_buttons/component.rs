@@ -8,16 +8,16 @@ use gtk4::prelude::StyleContextExt;
 use gtk4::prelude::{OrientableExt, WidgetExt};
 use relm4::{ComponentParts, ComponentSender, gtk, prelude::*};
 use wayle_common::ConfigProperty;
-use wayle_config::schemas::styling::{CssToken, ThemeProvider};
+use wayle_config::schemas::styling::CssToken;
 
 use super::{
-    shared::{resolve_color, setup_event_controllers},
+    shared::setup_event_controllers,
     types::{
         BarButtonBehavior, BarButtonClass, BarButtonColors, BarButtonOutput, BarButtonVariant,
         BarSettings,
     },
 };
-use crate::utils::force_window_resize;
+use crate::{styling::InlineStyling, utils::force_window_resize};
 
 /// Initialization data for BarButton.
 #[derive(Debug, Clone)]
@@ -61,115 +61,11 @@ pub struct BarButton {
     icon: String,
     label: String,
     tooltip: Option<String>,
-    variant: BarButtonVariant,
-    colors: BarButtonColors,
-    behavior: BarButtonBehavior,
-    settings: BarSettings,
-    css_provider: gtk::CssProvider,
-}
-
-impl BarButton {
-    fn css_classes(&self) -> Vec<&'static str> {
-        let mut classes = vec![BarButtonClass::BASE];
-
-        classes.push(match self.variant {
-            BarButtonVariant::Basic => "basic",
-            BarButtonVariant::BlockPrefix => "block-prefix",
-            BarButtonVariant::IconSquare => "icon-square",
-        });
-
-        if !self.behavior.show_label.get() {
-            classes.push(BarButtonClass::ICON_ONLY);
-        }
-        if self.settings.is_vertical.get() {
-            classes.push(BarButtonClass::VERTICAL);
-        }
-        if self.behavior.show_border.get()
-            && let Some(border_class) = self.settings.border_location.get().css_class()
-        {
-            classes.push(border_class);
-        }
-        classes
-    }
-
-    fn orientation(&self) -> gtk::Orientation {
-        if self.settings.is_vertical.get() {
-            gtk::Orientation::Vertical
-        } else {
-            gtk::Orientation::Horizontal
-        }
-    }
-
-    fn ellipsize(&self) -> gtk::pango::EllipsizeMode {
-        if self.behavior.truncation_enabled.get() {
-            gtk::pango::EllipsizeMode::End
-        } else {
-            gtk::pango::EllipsizeMode::None
-        }
-    }
-
-    fn max_width_chars(&self) -> i32 {
-        if self.behavior.truncation_enabled.get() {
-            self.behavior.truncation_size.get() as i32
-        } else {
-            -1
-        }
-    }
-
-    fn is_icon_only(&self) -> bool {
-        !self.behavior.show_label.get()
-    }
-
-    fn icon_should_center(&self) -> bool {
-        self.is_icon_only() || self.settings.is_vertical.get()
-    }
-
-    fn resolve_icon_color(&self, is_wayle_themed: bool) -> Cow<'static, str> {
-        let color = if is_wayle_themed {
-            self.colors.icon_color.get()
-        } else {
-            self.colors.icon_color.default().clone()
-        };
-
-        if color.is_auto() {
-            let token = match self.variant {
-                BarButtonVariant::Basic => CssToken::Accent,
-                BarButtonVariant::BlockPrefix | BarButtonVariant::IconSquare => {
-                    CssToken::FgOnAccent
-                }
-            };
-            Cow::Borrowed(token.css_var())
-        } else {
-            color.to_css()
-        }
-    }
-
-    fn build_css(&self) -> String {
-        let is_wayle = matches!(self.settings.theme_provider.get(), ThemeProvider::Wayle);
-
-        let icon_color = self.resolve_icon_color(is_wayle);
-        let label_color = resolve_color(&self.colors.label_color, is_wayle);
-        let icon_bg = resolve_color(&self.colors.icon_background, is_wayle);
-        let button_bg = resolve_color(&self.colors.button_background, is_wayle);
-        let border_color = resolve_color(&self.colors.border_color, is_wayle);
-        let border_width = self.settings.border_width.get();
-
-        format!(
-            "* {{ \
-             --bar-btn-icon-color: {}; \
-             --bar-btn-label-color: {}; \
-             --bar-btn-icon-bg: {}; \
-             --bar-btn-bg: {}; \
-             --bar-btn-border-color: {}; \
-             --bar-btn-border-width: {}px; \
-             }}",
-            icon_color, label_color, icon_bg, button_bg, border_color, border_width
-        )
-    }
-
-    fn reload_css(&self) {
-        self.css_provider.load_from_string(&self.build_css());
-    }
+    pub(super) variant: BarButtonVariant,
+    pub(super) colors: BarButtonColors,
+    pub(super) behavior: BarButtonBehavior,
+    pub(super) settings: BarSettings,
+    pub(super) css_provider: gtk::CssProvider,
 }
 
 #[relm4::component(pub)]
@@ -273,7 +169,7 @@ impl Component for BarButton {
 
         setup_event_controllers(&root, sender.output_sender().clone(), scroll_sensitivity);
         Self::watch_variant(&model.settings.variant, &sender);
-        Self::watch_config(&model, &sender);
+        model.spawn_style_watcher(&sender);
 
         ComponentParts { model, widgets }
     }
@@ -304,8 +200,85 @@ impl Component for BarButton {
         }
     }
 }
-
 impl BarButton {
+    fn css_classes(&self) -> Vec<&'static str> {
+        let mut classes = vec![BarButtonClass::BASE];
+
+        classes.push(match self.variant {
+            BarButtonVariant::Basic => "basic",
+            BarButtonVariant::BlockPrefix => "block-prefix",
+            BarButtonVariant::IconSquare => "icon-square",
+        });
+
+        if !self.behavior.show_label.get() {
+            classes.push(BarButtonClass::ICON_ONLY);
+        }
+        if !self.behavior.show_icon.get() {
+            classes.push(BarButtonClass::LABEL_ONLY);
+        }
+        if self.settings.is_vertical.get() {
+            classes.push(BarButtonClass::VERTICAL);
+        }
+        if self.behavior.show_border.get()
+            && let Some(border_class) = self.settings.border_location.get().css_class()
+        {
+            classes.push(border_class);
+        }
+        classes
+    }
+
+    fn orientation(&self) -> gtk::Orientation {
+        if self.settings.is_vertical.get() {
+            gtk::Orientation::Vertical
+        } else {
+            gtk::Orientation::Horizontal
+        }
+    }
+
+    fn ellipsize(&self) -> gtk::pango::EllipsizeMode {
+        if self.behavior.label_max_chars.get().is_some() {
+            gtk::pango::EllipsizeMode::End
+        } else {
+            gtk::pango::EllipsizeMode::None
+        }
+    }
+
+    fn max_width_chars(&self) -> i32 {
+        self.behavior
+            .label_max_chars
+            .get()
+            .map(|n| n as i32)
+            .unwrap_or(-1)
+    }
+
+    fn is_icon_only(&self) -> bool {
+        !self.behavior.show_label.get()
+    }
+
+    fn icon_should_center(&self) -> bool {
+        self.is_icon_only() || self.settings.is_vertical.get()
+    }
+
+    pub(super) fn resolve_icon_color(&self, is_wayle_themed: bool) -> Cow<'static, str> {
+        let color = if is_wayle_themed {
+            self.colors.icon_color.get()
+        } else {
+            self.colors.icon_color.default().clone()
+        };
+
+        if color.is_auto() {
+            let token = match self.variant {
+                BarButtonVariant::Basic => CssToken::Accent,
+                BarButtonVariant::BlockPrefix | BarButtonVariant::IconSquare => {
+                    CssToken::FgOnAccent
+                }
+            };
+            Cow::Borrowed(token.css_var())
+        } else {
+            color.to_css()
+        }
+    }
+
     fn watch_variant(variant: &ConfigProperty<BarButtonVariant>, sender: &ComponentSender<Self>) {
         let variant = variant.clone();
         sender.command(move |out, shutdown| {
@@ -316,45 +289,6 @@ impl BarButton {
 
                     while let Some(value) = stream.next().await {
                         if out.send(BarButtonCmd::VariantChanged(value)).is_err() {
-                            break;
-                        }
-                    }
-                })
-                .drop_on_shutdown()
-        });
-    }
-
-    fn watch_config(model: &BarButton, sender: &ComponentSender<Self>) {
-        Self::watch_property(&model.behavior.show_icon, sender);
-        Self::watch_property(&model.behavior.show_label, sender);
-        Self::watch_property(&model.behavior.show_border, sender);
-        Self::watch_property(&model.behavior.visible, sender);
-        Self::watch_property(&model.behavior.truncation_enabled, sender);
-        Self::watch_property(&model.behavior.truncation_size, sender);
-        Self::watch_property(&model.colors.icon_color, sender);
-        Self::watch_property(&model.colors.label_color, sender);
-        Self::watch_property(&model.colors.icon_background, sender);
-        Self::watch_property(&model.colors.button_background, sender);
-        Self::watch_property(&model.colors.border_color, sender);
-        Self::watch_property(&model.settings.border_location, sender);
-        Self::watch_property(&model.settings.border_width, sender);
-        Self::watch_property(&model.settings.theme_provider, sender);
-        Self::watch_property(&model.settings.is_vertical, sender);
-    }
-
-    fn watch_property<T>(property: &ConfigProperty<T>, sender: &ComponentSender<Self>)
-    where
-        T: Clone + Send + Sync + PartialEq + 'static,
-    {
-        let property = property.clone();
-        sender.command(move |out, shutdown| {
-            shutdown
-                .register(async move {
-                    let mut stream = property.watch();
-                    stream.next().await;
-
-                    while (stream.next().await).is_some() {
-                        if out.send(BarButtonCmd::ConfigChanged).is_err() {
                             break;
                         }
                     }

@@ -140,7 +140,7 @@ async fn flush_pending(watcher: &FileWatcher, pending_paths: &mut Vec<PathBuf>) 
     debug!(?pending_paths, "Debounce complete, reloading config");
 
     if let Err(e) = watcher.reload_and_sync(pending_paths).await {
-        error!(error = %e, "cannot reload config");
+        error!("config reload failed:\n{e}");
     }
 
     pending_paths.clear();

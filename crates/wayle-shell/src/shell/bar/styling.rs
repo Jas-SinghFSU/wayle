@@ -1,14 +1,15 @@
 //! CSS variable generation for bar styling.
 
-use relm4::gtk;
-use wayle_common::services;
+use relm4::{ComponentSender, gtk};
+use tokio::sync::mpsc;
+use wayle_common::{SubscribeChanges, services};
 use wayle_config::{
     ConfigService,
     schemas::{bar::BorderLocation, styling::ThemeProvider},
 };
 use wayle_widgets::styling::{InlineStyling, resolve_color};
 
-use super::Bar;
+use super::{Bar, BarCmd};
 
 const REM_BASE: f32 = 16.0;
 
@@ -20,8 +21,47 @@ fn rem_to_px_rounded(rem: f32, scale: f32) -> i32 {
 }
 
 impl InlineStyling for Bar {
+    type Sender = ComponentSender<Bar>;
+    type Cmd = BarCmd;
+
     fn css_provider(&self) -> &gtk::CssProvider {
         &self.css_provider
+    }
+
+    fn spawn_style_watcher(&self, sender: &Self::Sender) {
+        let config = services::get::<ConfigService>().config().clone();
+        let bar = &config.bar;
+
+        let (tx, mut rx) = mpsc::unbounded_channel();
+
+        bar.scale.subscribe_changes(tx.clone());
+        bar.inset_edge.subscribe_changes(tx.clone());
+        bar.inset_ends.subscribe_changes(tx.clone());
+        bar.padding.subscribe_changes(tx.clone());
+        bar.padding_ends.subscribe_changes(tx.clone());
+        bar.module_gap.subscribe_changes(tx.clone());
+        bar.button_group_module_gap.subscribe_changes(tx.clone());
+        bar.bg.subscribe_changes(tx.clone());
+        bar.background_opacity.subscribe_changes(tx.clone());
+        bar.button_opacity.subscribe_changes(tx.clone());
+        bar.border_location.subscribe_changes(tx.clone());
+        bar.border_width.subscribe_changes(tx.clone());
+        bar.border_color.subscribe_changes(tx.clone());
+        bar.shadow.subscribe_changes(tx);
+
+        sender.command(move |out, shutdown| async move {
+            let shutdown_fut = shutdown.wait();
+            tokio::pin!(shutdown_fut);
+
+            loop {
+                tokio::select! {
+                    () = &mut shutdown_fut => break,
+                    Some(()) = rx.recv() => {
+                        let _ = out.send(BarCmd::StyleChanged);
+                    }
+                }
+            }
+        });
     }
 
     fn build_css(&self) -> String {
@@ -33,6 +73,7 @@ impl InlineStyling for Bar {
 
         let bg = resolve_color(&bar.bg, is_wayle);
         let bg_opacity = bar.background_opacity.get().value();
+        let button_opacity = f64::from(bar.button_opacity.get().value()) / 100.0;
         let border_color = resolve_color(&bar.border_color, is_wayle);
         let border_width = bar.border_width.get();
         let border_location = bar.border_location.get();
@@ -75,6 +116,7 @@ impl InlineStyling for Bar {
             --bar-padding-px: {padding_px}; \
             --bar-padding-ends-px: {padding_ends_px}; \
             --bar-module-gap-px: {module_gap_px}; \
+            --bar-button-opacity: {button_opacity}; \
             --bar-group-module-gap-px: {group_module_gap_px}; \
             --bar-shadow: {shadow}; \
             --bar-shadow-margin: {shadow_margin}; \

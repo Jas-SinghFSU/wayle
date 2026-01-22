@@ -2,6 +2,7 @@
 
 mod component;
 mod shared;
+mod styling;
 mod types;
 
 pub use component::{BarButton, BarButtonInit, BarButtonInput};

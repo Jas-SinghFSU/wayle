@@ -21,9 +21,17 @@ menubutton.bar-button.icon-square {
         margin-left: var(--bar-btn-gap);
     }
 
+    &.label-only .bar-button-label {
+        margin-left: 0;
+    }
+
     &.vertical .bar-button-label {
         margin-left: 0;
         margin-top: var(--bar-btn-gap);
+    }
+
+    &.vertical.label-only .bar-button-label {
+        margin-top: 0;
     }
 
     > button.toggle:hover .icon-container {

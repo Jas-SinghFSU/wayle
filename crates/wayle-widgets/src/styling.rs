@@ -11,44 +11,29 @@ use wayle_config::schemas::styling::ColorValue;
 
 /// Trait for components that inject CSS custom properties at runtime.
 ///
-/// Implementors provide a `CssProvider` and a method to build CSS strings
-/// containing custom property definitions. The trait provides a default
-/// `reload_css` implementation that recompiles and reloads styles.
-///
-/// # Pattern
-///
-/// 1. Rust reads config values and injects them as CSS custom properties
-/// 2. SCSS defines styling rules that consume those properties via `var()`
-/// 3. Watchers trigger `reload_css()` when config changes
-///
-/// # Example
-///
-/// ```rust,ignore
-/// impl InlineStyling for MyComponent {
-///     fn css_provider(&self) -> &gtk::CssProvider {
-///         &self.css_provider
-///     }
-///
-///     fn build_css(&self) -> String {
-///         let config = services::get::<ConfigService>().config();
-///         format!(".my-component {{ --my-bg: {}; }}", config.my.bg.get())
-///     }
-/// }
-/// ```
+/// Implementors define styling via [`build_css`](Self::build_css) and
+/// set up config watchers via [`spawn_style_watcher`](Self::spawn_style_watcher),
+/// keeping the subscription list co-located with the CSS generation.
 pub trait InlineStyling {
+    /// Sender type for dispatching style change commands.
+    type Sender;
+
+    /// Command type sent when style-affecting config changes.
+    type Cmd: Send + 'static;
+
     /// Returns a reference to the component's CSS provider.
     fn css_provider(&self) -> &gtk::CssProvider;
 
     /// Builds CSS string containing custom property definitions.
-    ///
-    /// The returned CSS should define custom properties scoped to the
-    /// component's selector (e.g., `.bar { --bar-bg: #fff; }`).
     fn build_css(&self) -> String;
 
-    /// Recompiles CSS and loads it into the provider.
+    /// Spawns a watcher that triggers style reload on config changes.
     ///
-    /// Call this when config properties change to update the component's
-    /// visual appearance.
+    /// Every property read in [`build_css`](Self::build_css) should be
+    /// subscribed here to ensure runtime updates work correctly.
+    fn spawn_style_watcher(&self, sender: &Self::Sender);
+
+    /// Recompiles CSS and loads it into the provider.
     fn reload_css(&self) {
         self.css_provider().load_from_string(&self.build_css());
     }

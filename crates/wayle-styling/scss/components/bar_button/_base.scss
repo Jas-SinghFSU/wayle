@@ -1,5 +1,9 @@
 // Base bar button styles shared by all variants.
 
+.bar-item {
+    opacity: var(--bar-button-opacity);
+}
+
 menubutton.bar-button {
     all: unset;
 
@@ -47,8 +51,16 @@ menubutton.bar-button {
         margin-left: var(--bar-btn-gap);
     }
 
+    &.basic.label-only .bar-button-label {
+        margin-left: 0;
+    }
+
     &.basic.vertical .bar-button-label {
         margin-left: 0;
         margin-top: var(--bar-btn-gap);
+    }
+
+    &.basic.vertical.label-only .bar-button-label {
+        margin-top: 0;
     }
 }

@@ -84,15 +84,14 @@ bar_button.emit(BarButtonInput::SetVariant(
 
 All variants share these config properties:
 
-| Property             | Type         | Default | Description                      |
-| -------------------- | ------------ | ------- | -------------------------------- |
-| `show_label`         | `bool`       | `true`  | Show/hide label                  |
-| `visible`            | `bool`       | `true`  | Show/hide entire button          |
-| `vertical`           | `bool`       | `false` | Vertical orientation             |
-| `truncation_enabled` | `bool`       | `false` | Truncate long labels             |
-| `truncation_size`    | `u32`        | `20`    | Max characters before truncation |
-| `icon_color`         | `ColorValue` | varies  | Icon foreground color            |
-| `label_color`        | `ColorValue` | varies  | Label text color                 |
+| Property          | Type          | Default | Description                                 |
+| ----------------- | ------------- | ------- | ------------------------------------------- |
+| `show_label`      | `bool`        | `true`  | Show/hide label                             |
+| `visible`         | `bool`        | `true`  | Show/hide entire button                     |
+| `vertical`        | `bool`        | `false` | Vertical orientation                        |
+| `label_max_chars` | `Option<u32>` | `None`  | Max chars before truncation (None=disabled) |
+| `icon_color`      | `ColorValue`  | varies  | Icon foreground color                       |
+| `label_color`     | `ColorValue`  | varies  | Label text color                            |
 
 Config properties are reactive - changes trigger automatic UI updates.
 

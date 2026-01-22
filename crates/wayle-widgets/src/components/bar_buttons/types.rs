@@ -35,10 +35,8 @@ impl Debug for BarButtonColors {
 /// Behavioral settings for bar buttons (shared across all variants).
 #[derive(Clone)]
 pub struct BarButtonBehavior {
-    /// Truncate label with ellipsis.
-    pub truncation_enabled: ConfigProperty<bool>,
-    /// Max characters before truncation.
-    pub truncation_size: ConfigProperty<u32>,
+    /// Max label characters before truncation. None disables truncation.
+    pub label_max_chars: ConfigProperty<Option<u32>>,
     /// Show the icon.
     pub show_icon: ConfigProperty<bool>,
     /// Show the label (false = icon-only mode).
@@ -84,6 +82,9 @@ impl BarButtonClass {
 
     /// Applied when label is hidden.
     pub const ICON_ONLY: &'static str = "icon-only";
+
+    /// Applied when icon is hidden.
+    pub const LABEL_ONLY: &'static str = "label-only";
 
     /// Applied for vertical bar orientation.
     pub const VERTICAL: &'static str = "vertical";
