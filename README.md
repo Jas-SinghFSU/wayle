@@ -38,7 +38,7 @@ experience. A successor to HyprPanel without the pain or dependency on Hyprland.
     - [ ] Dashboard
     - [ ] Hyprland workspaces
     - [ ] Window title
-    - [ ] Media
+    - [x] Media
     - [ ] Notification
     - [ ] Volume
     - [ ] Network
@@ -101,8 +101,8 @@ rounding = "sm"
 [[bar.layout]]
 monitor = "*"
 left = ["clock"]
-center = ["battery"]
-right = ["systray"]
+center = ["media"]
+right = ["battery"]
 
 [modules.clock]
 format = "%H:%M"

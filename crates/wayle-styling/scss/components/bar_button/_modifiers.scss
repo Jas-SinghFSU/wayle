@@ -61,3 +61,21 @@ menubutton.bar-button {
         border: var(--bar-btn-border-width) solid var(--bar-btn-border-color);
     }
 }
+
+.media-disc menubutton.bar-button .icon-container image {
+    animation: media-spin 2s linear infinite;
+    animation-play-state: paused;
+}
+
+.media-spinning menubutton.bar-button .icon-container image {
+    animation-play-state: running;
+}
+
+@keyframes media-spin {
+    from {
+        -gtk-icon-transform: rotate(0deg);
+    }
+    to {
+        -gtk-icon-transform: rotate(360deg);
+    }
+}

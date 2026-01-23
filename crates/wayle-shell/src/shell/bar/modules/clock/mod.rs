@@ -1,3 +1,5 @@
+mod messages;
+
 use std::time::Duration;
 
 use gtk::glib::DateTime;
@@ -6,35 +8,18 @@ use tokio::time::interval;
 use tokio_stream::wrappers::IntervalStream;
 use tracing::error;
 use wayle_common::{ConfigProperty, process, services, watch};
-use wayle_config::{ConfigService, schemas::modules::ClockConfig};
+use wayle_config::{
+    ConfigService,
+    schemas::{modules::ClockConfig, styling::CssToken},
+};
 use wayle_widgets::prelude::{
     BarButton, BarButtonBehavior, BarButtonColors, BarButtonInit, BarButtonInput, BarButtonOutput,
-    BarSettings,
 };
 
-pub(crate) struct ClockInit {
-    pub(crate) settings: BarSettings,
-}
+pub(crate) use self::messages::{ClockCmd, ClockInit, ClockMsg};
 
 pub(crate) struct ClockModule {
     bar_button: Controller<BarButton>,
-}
-
-#[derive(Debug)]
-pub(crate) enum ClockMsg {
-    LeftClick,
-    RightClick,
-    MiddleClick,
-    ScrollUp,
-    ScrollDown,
-}
-
-#[derive(Debug)]
-#[allow(clippy::enum_variant_names)]
-pub(crate) enum ClockCmd {
-    UpdateTime(String),
-    UpdateIcon(String),
-    UpdateTooltip(Option<String>),
 }
 
 #[relm4::component(pub(crate))]
@@ -72,6 +57,7 @@ impl Component for ClockModule {
                     icon_background: clock.icon_bg_color.clone(),
                     button_background: clock.button_bg_color.clone(),
                     border_color: clock.border_color.clone(),
+                    auto_icon_color: CssToken::Accent,
                 },
                 behavior: BarButtonBehavior {
                     label_max_chars: clock.label_max_length.clone(),

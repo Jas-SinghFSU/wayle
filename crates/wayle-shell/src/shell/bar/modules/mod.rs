@@ -1,8 +1,10 @@
 mod battery;
 mod clock;
+mod media;
 
 use battery::{BatteryInit, BatteryModule};
 use clock::{ClockInit, ClockModule};
+use media::{MediaInit, MediaModule};
 use relm4::prelude::*;
 use wayle_config::schemas::bar::{BarModule, ModuleRef};
 use wayle_widgets::prelude::BarSettings;
@@ -15,6 +17,7 @@ pub(crate) struct ModuleInstance {
 pub(crate) enum ModuleController {
     Battery(Controller<BatteryModule>),
     Clock(Controller<ClockModule>),
+    Media(Controller<MediaModule>),
 }
 
 impl ModuleController {
@@ -22,6 +25,7 @@ impl ModuleController {
         match self {
             Self::Battery(c) => c.widget(),
             Self::Clock(c) => c.widget(),
+            Self::Media(c) => c.widget(),
         }
     }
 }
@@ -42,6 +46,12 @@ pub(crate) fn create_module(module_ref: &ModuleRef, settings: &BarSettings) -> M
                 settings: settings.clone(),
             };
             ModuleController::Clock(ClockModule::builder().launch(init).detach())
+        }
+        BarModule::Media => {
+            let init = MediaInit {
+                settings: settings.clone(),
+            };
+            ModuleController::Media(MediaModule::builder().launch(init).detach())
         }
         _ => {
             let init = ClockInit {

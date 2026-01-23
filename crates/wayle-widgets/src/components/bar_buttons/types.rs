@@ -6,7 +6,7 @@ use wayle_common::ConfigProperty;
 pub use wayle_config::schemas::bar::BarButtonVariant;
 use wayle_config::schemas::{
     bar::BorderLocation,
-    styling::{ColorValue, ThemeProvider},
+    styling::{ColorValue, CssToken, ThemeProvider},
 };
 
 /// Colors for bar buttons (shared across all variants).
@@ -24,6 +24,8 @@ pub struct BarButtonColors {
     pub button_background: ConfigProperty<ColorValue>,
     /// Border color.
     pub border_color: ConfigProperty<ColorValue>,
+    /// Icon color when Auto and Basic variant.
+    pub auto_icon_color: CssToken,
 }
 
 impl Debug for BarButtonColors {
@@ -35,8 +37,8 @@ impl Debug for BarButtonColors {
 /// Behavioral settings for bar buttons (shared across all variants).
 #[derive(Clone)]
 pub struct BarButtonBehavior {
-    /// Max label characters before truncation. None disables truncation.
-    pub label_max_chars: ConfigProperty<Option<u32>>,
+    /// Max label characters before truncation. Set to 0 to disable.
+    pub label_max_chars: ConfigProperty<u32>,
     /// Show the icon.
     pub show_icon: ConfigProperty<bool>,
     /// Show the label (false = icon-only mode).

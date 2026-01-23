@@ -107,7 +107,7 @@ impl TrackMetadata {
     /// Watch for any metadata changes.
     ///
     /// Emits whenever any metadata field changes.
-    pub fn watch(&self) -> impl Stream<Item = TrackMetadata> + Send {
+    pub fn watch(&self) -> impl Stream<Item = TrackMetadata> + Send + 'static {
         watch_all!(
             self,
             title,

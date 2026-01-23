@@ -221,20 +221,20 @@ fn build_path_element(d: &str, style: IconStyle, stroke_width: Option<f32>, scal
             let width = stroke_width.unwrap_or(2.0 * scale);
             format!(
                 "  <path d='{d}'\n\
-                 \x20       stroke-width='{width:.2}'\n\
-                 \x20       stroke-linecap='round'\n\
-                 \x20       stroke-linejoin='round'\n\
-                 \x20       stroke='rgb(0,0,0)'\n\
-                 \x20       fill='none'\n\
-                 \x20       gpa:stroke='foreground'/>\n"
+                        stroke-width='{width:.2}'\n\
+                        stroke-linecap='round'\n\
+                        stroke-linejoin='round'\n\
+                        stroke='rgb(0,0,0)'\n\
+                        fill='none'\n\
+                        gpa:stroke='foreground'/>\n"
             )
         }
         IconStyle::Fill => {
             format!(
                 "  <path d='{d}'\n\
-                 \x20       stroke='none'\n\
-                 \x20       fill='rgb(0,0,0)'\n\
-                 \x20       gpa:fill='foreground'/>\n"
+                        stroke='none'\n\
+                        fill='rgb(0,0,0)'\n\
+                        gpa:fill='foreground'/>\n"
             )
         }
     }

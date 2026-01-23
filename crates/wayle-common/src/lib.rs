@@ -4,6 +4,8 @@
 //! runtime state management, and the global service registry.
 
 mod diagnostic;
+/// Glob pattern matching utilities.
+pub mod glob;
 #[macro_use]
 /// Common macros for services
 pub mod macros;

@@ -76,6 +76,7 @@ tracing-appender = "0.2.3"
 zbus = "5.11.0"
 smithay-client-toolkit = "0.20"
 rusqlite = { version = "0.38.0", features = ["bundled"] }
+wildcard = "0.3"
 
 gdk4 = { version = "0.10.1" }
 gtk4 = { version = "0.10.1", features = ["v4_12"] }

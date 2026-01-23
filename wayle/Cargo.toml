@@ -12,16 +12,28 @@ description = "Wayland services CLI"
 name = "wayle"
 path = "src/main.rs"
 
+[[bin]]
+name = "wayle-shell"
+path = "../crates/wayle-shell/src/main.rs"
+
 [dependencies]
 chrono.workspace = true
 clap.workspace = true
+console.workspace = true
 futures.workspace = true
+gdk4.workspace = true
+gtk4.workspace = true
+gtk4-layer-shell.workspace = true
+indicatif.workspace = true
+notify.workspace = true
+relm4.workspace = true
 reqwest.workspace = true
 schemars.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
 tokio = { workspace = true, features = ["full"] }
+tokio-stream.workspace = true
 toml.workspace = true
 tracing.workspace = true
 tracing-appender.workspace = true
@@ -31,11 +43,18 @@ zbus.workspace = true
 # Common dependencies
 wayle-common = { workspace = true, features = ["schema"] }
 wayle-config.workspace = true
+wayle-styling.workspace = true
+wayle-widgets.workspace = true
 
-# Service dependencies (for CLI commands)
+# Service dependencies
 wayle-audio.workspace = true
+wayle-battery.workspace = true
+wayle-bluetooth.workspace = true
+wayle-cava.workspace = true
+wayle-hyprland.workspace = true
 wayle-icons.workspace = true
 wayle-media.workspace = true
+wayle-network.workspace = true
 wayle-notification.workspace = true
 wayle-power-profiles.workspace = true
 wayle-systray.workspace = true

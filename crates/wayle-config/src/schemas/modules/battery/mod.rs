@@ -44,7 +44,7 @@ pub struct BatteryConfig {
 
     /// Border color token.
     #[serde(rename = "border-color")]
-    #[default(ColorValue::Token(CssToken::BorderAccent))]
+    #[default(ColorValue::Token(CssToken::Yellow))]
     pub border_color: ConfigProperty<ColorValue>,
 
     /// Display module icon.
@@ -59,7 +59,7 @@ pub struct BatteryConfig {
 
     /// Icon container background color token.
     #[serde(rename = "icon-bg-color")]
-    #[default(ColorValue::Token(CssToken::Accent))]
+    #[default(ColorValue::Token(CssToken::Yellow))]
     pub icon_bg_color: ConfigProperty<ColorValue>,
 
     /// Display percentage label.
@@ -69,13 +69,13 @@ pub struct BatteryConfig {
 
     /// Label text color token.
     #[serde(rename = "label-color")]
-    #[default(ColorValue::Token(CssToken::Accent))]
+    #[default(ColorValue::Token(CssToken::Yellow))]
     pub label_color: ConfigProperty<ColorValue>,
 
-    /// Max label characters before truncation with ellipsis.
+    /// Max label characters before truncation with ellipsis. Set to 0 to disable.
     #[serde(rename = "label-max-length")]
-    #[default(None)]
-    pub label_max_length: ConfigProperty<Option<u32>>,
+    #[default(0)]
+    pub label_max_length: ConfigProperty<u32>,
 
     /// Button background color token.
     #[serde(rename = "button-bg-color")]

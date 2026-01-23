@@ -83,11 +83,27 @@ async fn init_services() -> Result<StartupTimer, Box<dyn Error>> {
             .time("Audio", AudioService::builder().with_daemon().build())
             .await?,
     );
+    let config_service = timer.time("Config", ConfigService::load()).await?;
+    let ignored_players = config_service
+        .config()
+        .modules
+        .media
+        .players_ignored
+        .get()
+        .clone();
+    registry.register_arc(config_service);
+
     registry.register(timer.time("Battery", BatteryService::new()).await?);
     registry.register(timer.time("Bluetooth", BluetoothService::new()).await?);
     registry.register_arc(
         timer
-            .time("Media", MediaService::builder().with_daemon().build())
+            .time(
+                "Media",
+                MediaService::builder()
+                    .with_daemon()
+                    .ignored_players(ignored_players)
+                    .build(),
+            )
             .await?,
     );
     registry.register(timer.time("Network", NetworkService::new()).await?);
@@ -102,7 +118,6 @@ async fn init_services() -> Result<StartupTimer, Box<dyn Error>> {
             )
             .await?,
     );
-    registry.register_arc(timer.time("Config", ConfigService::load()).await?);
     registry.register_arc(timer.time("Wallpaper", WallpaperService::new()).await?);
 
     services::init(registry);

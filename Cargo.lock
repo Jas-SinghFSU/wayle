@@ -4255,26 +4255,41 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "clap",
+ "console",
  "futures",
+ "gdk4",
+ "gtk4",
+ "gtk4-layer-shell",
+ "indicatif",
+ "notify",
+ "relm4",
  "reqwest",
  "schemars",
  "serde",
  "serde_json",
  "thiserror 2.0.18",
  "tokio",
+ "tokio-stream",
  "toml 0.9.11+spec-1.1.0",
  "tracing",
  "tracing-appender",
  "tracing-subscriber",
  "wayle-audio",
+ "wayle-battery",
+ "wayle-bluetooth",
+ "wayle-cava",
  "wayle-common",
  "wayle-config",
+ "wayle-hyprland",
  "wayle-icons",
  "wayle-media",
+ "wayle-network",
  "wayle-notification",
  "wayle-power-profiles",
+ "wayle-styling",
  "wayle-systray",
  "wayle-wallpaper",
+ "wayle-widgets",
  "zbus",
 ]
 
@@ -4364,6 +4379,7 @@ dependencies = [
  "tokio-stream",
  "toml 0.9.11+spec-1.1.0",
  "tracing",
+ "wildcard",
  "zbus",
 ]
 
@@ -4656,6 +4672,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "36a29fc0408b113f68cf32637857ab740edfafdf460c326cd2afaa2d84cc05dc"
 dependencies = [
  "rustls-pki-types",
+]
+
+[[package]]
+name = "wildcard"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f9b0540e91e49de3817c314da0dd3bc518093ceacc6ea5327cb0e1eb073e5189"
+dependencies = [
+ "thiserror 2.0.18",
 ]
 
 [[package]]

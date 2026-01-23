@@ -1,15 +1,168 @@
+mod icons;
+
+use std::collections::HashMap;
+
+use schemars::{JsonSchema, schema_for};
+use serde::{Deserialize, Serialize};
 use wayle_common::ConfigProperty;
 use wayle_derive::wayle_config;
 
-/// Media player module configuration for status bar display.
-#[wayle_config]
+pub use self::icons::BUILTIN_MAPPINGS;
+use crate::{
+    docs::{ModuleInfo, ModuleInfoProvider},
+    schemas::styling::{ColorValue, CssToken},
+};
+
+/// Media player module configuration.
+///
+#[wayle_config(bar_button)]
 pub struct MediaConfig {
-    /// Whether the media module is displayed.
-    #[default(true)]
-    pub enabled: ConfigProperty<bool>,
+    /// Icon display mode.
+    #[serde(rename = "icon-type")]
+    #[default(MediaIconType::SpinningDisc)]
+    pub icon_type: ConfigProperty<MediaIconType>,
+
+    /// Custom player-to-icon mappings for application-mapped mode.
+    ///
+    /// Keys are glob patterns matching MPRIS bus names, values are icon names.
+    /// These override built-in mappings when matched.
+    #[serde(rename = "player-icons")]
+    #[default(HashMap::new())]
+    pub player_icons: ConfigProperty<HashMap<String, String>>,
 
     /// Player bus name patterns to exclude from discovery.
+    /// This property requires a restart to take effect.
     #[serde(rename = "players-ignored")]
     #[default(Vec::new())]
     pub players_ignored: ConfigProperty<Vec<String>>,
+
+    /// Format string for the label.
+    ///
+    /// The `format` field supports these placeholders:
+    /// - `{title}` - Track title
+    /// - `{artist}` - Artist name(s)
+    /// - `{album}` - Album name
+    /// - `{status}` - Playback status text (Playing, Paused, Stopped)
+    /// - `{status_icon}` - Playback status icon character
+    #[default(String::from("{title} - {artist}"))]
+    pub format: ConfigProperty<String>,
+
+    /// Symbolic icon name for default mode.
+    #[serde(rename = "icon-name")]
+    #[default(String::from("ld-music-symbolic"))]
+    pub icon_name: ConfigProperty<String>,
+
+    /// Icon shown for spinning-disc mode.
+    #[serde(rename = "spinning-disc-icon")]
+    #[default(String::from("ld-disc-3-symbolic"))]
+    pub spinning_disc_icon: ConfigProperty<String>,
+
+    /// Display border around button.
+    #[serde(rename = "border-show")]
+    #[default(false)]
+    pub border_show: ConfigProperty<bool>,
+
+    /// Border color token.
+    #[serde(rename = "border-color")]
+    #[default(ColorValue::Token(CssToken::Blue))]
+    pub border_color: ConfigProperty<ColorValue>,
+
+    /// Display module icon.
+    #[serde(rename = "icon-show")]
+    #[default(true)]
+    pub icon_show: ConfigProperty<bool>,
+
+    /// Icon foreground color. Auto selects based on variant for contrast.
+    #[serde(rename = "icon-color")]
+    #[default(ColorValue::Auto)]
+    pub icon_color: ConfigProperty<ColorValue>,
+
+    /// Icon container background color token.
+    #[serde(rename = "icon-bg-color")]
+    #[default(ColorValue::Token(CssToken::Blue))]
+    pub icon_bg_color: ConfigProperty<ColorValue>,
+
+    /// Display text label.
+    #[serde(rename = "label-show")]
+    #[default(true)]
+    pub label_show: ConfigProperty<bool>,
+
+    /// Label text color token.
+    #[serde(rename = "label-color")]
+    #[default(ColorValue::Token(CssToken::Blue))]
+    pub label_color: ConfigProperty<ColorValue>,
+
+    /// Max label characters before truncation with ellipsis. Set to 0 to disable.
+    #[serde(rename = "label-max-length")]
+    #[default(35)]
+    pub label_max_length: ConfigProperty<u32>,
+
+    /// Button background color token.
+    #[serde(rename = "button-bg-color")]
+    #[default(ColorValue::Token(CssToken::BgSurfaceElevated))]
+    pub button_bg_color: ConfigProperty<ColorValue>,
+
+    /// Reserved for dropdown. Not user-configurable.
+    #[serde(rename = "left-click", skip)]
+    #[default(String::default())]
+    pub left_click: ConfigProperty<String>,
+
+    /// Shell command on right click.
+    #[serde(rename = "right-click")]
+    #[default(String::default())]
+    pub right_click: ConfigProperty<String>,
+
+    /// Shell command on middle click.
+    #[serde(rename = "middle-click")]
+    #[default(String::default())]
+    pub middle_click: ConfigProperty<String>,
+
+    /// Shell command on scroll up.
+    #[serde(rename = "scroll-up")]
+    #[default(String::default())]
+    pub scroll_up: ConfigProperty<String>,
+
+    /// Shell command on scroll down.
+    #[serde(rename = "scroll-down")]
+    #[default(String::default())]
+    pub scroll_down: ConfigProperty<String>,
+}
+
+/// Icon display mode for the media module.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
+pub enum MediaIconType {
+    /// Static icon from icon-name field.
+    #[default]
+    Default,
+    /// Dynamic icon from media player's desktop entry, falling back to icon-name.
+    Application,
+    /// Spinning disc icon that animates during playback.
+    SpinningDisc,
+    /// Maps player to icon via glob patterns, with built-in mappings for common players.
+    ApplicationMapped,
+}
+
+impl MediaIconType {
+    /// Returns the kebab-case string representation.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Default => "default",
+            Self::Application => "application",
+            Self::SpinningDisc => "spinning-disc",
+            Self::ApplicationMapped => "application-mapped",
+        }
+    }
+}
+
+impl ModuleInfoProvider for MediaConfig {
+    fn module_info() -> ModuleInfo {
+        ModuleInfo {
+            name: String::from("media"),
+            icon: String::from("󰎆"),
+            description: String::from("Media player controls and now playing info"),
+            behavior_configs: vec![(String::from("media"), || schema_for!(MediaConfig))],
+            styling_configs: vec![],
+        }
+    }
 }

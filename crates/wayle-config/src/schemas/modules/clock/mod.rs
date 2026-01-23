@@ -58,10 +58,10 @@ pub struct ClockConfig {
     #[default(ColorValue::Token(CssToken::Accent))]
     pub label_color: ConfigProperty<ColorValue>,
 
-    /// Max label characters before truncation with ellipsis. None disables truncation.
+    /// Max label characters before truncation with ellipsis. Set to 0 to disable.
     #[serde(rename = "label-max-length")]
-    #[default(None)]
-    pub label_max_length: ConfigProperty<Option<u32>>,
+    #[default(0)]
+    pub label_max_length: ConfigProperty<u32>,
 
     /// Button background color token.
     #[serde(rename = "button-bg-color")]

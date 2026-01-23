@@ -1,34 +1,23 @@
+mod helpers;
+mod messages;
+
 use relm4::prelude::*;
 use tracing::error;
-use wayle_battery::{BatteryService, types::DeviceState};
+use wayle_battery::BatteryService;
 use wayle_common::{ConfigProperty, process, services, watch};
-use wayle_config::{ConfigService, schemas::modules::BatteryConfig};
+use wayle_config::{
+    ConfigService,
+    schemas::{modules::BatteryConfig, styling::CssToken},
+};
 use wayle_widgets::prelude::{
     BarButton, BarButtonBehavior, BarButtonColors, BarButtonInit, BarButtonInput, BarButtonOutput,
-    BarSettings,
 };
 
-pub(crate) struct BatteryInit {
-    pub(crate) settings: BarSettings,
-}
+use self::helpers::{IconContext, format_label, select_icon};
+pub(crate) use self::messages::{BatteryCmd, BatteryInit, BatteryMsg};
 
 pub(crate) struct BatteryModule {
     bar_button: Controller<BarButton>,
-}
-
-#[derive(Debug)]
-pub(crate) enum BatteryMsg {
-    LeftClick,
-    RightClick,
-    MiddleClick,
-    ScrollUp,
-    ScrollDown,
-}
-
-#[derive(Debug)]
-pub(crate) enum BatteryCmd {
-    UpdateLabel(String),
-    UpdateIcon(String),
 }
 
 #[relm4::component(pub(crate))]
@@ -72,6 +61,7 @@ impl Component for BatteryModule {
                     icon_background: battery_config.icon_bg_color.clone(),
                     button_background: battery_config.button_bg_color.clone(),
                     border_color: battery_config.border_color.clone(),
+                    auto_icon_color: CssToken::Yellow,
                 },
                 behavior: BarButtonBehavior {
                     label_max_chars: battery_config.label_max_length.clone(),
@@ -161,53 +151,22 @@ impl BatteryModule {
                 let state = device.state.get();
                 let is_present = device.is_present.get();
 
-                let label = if is_present {
-                    format!("{:.0}%", percentage)
-                } else {
-                    String::from("N/A")
-                };
+                let label = format_label(percentage, is_present);
                 let _ = out.send(BatteryCmd::UpdateLabel(label));
 
-                let icon = Self::select_icon(
+                let level_icons_val = level_icons.get();
+                let charging_icon_val = charging_icon.get();
+                let alert_icon_val = alert_icon.get();
+                let icon = select_icon(&IconContext {
                     percentage,
                     state,
                     is_present,
-                    &level_icons.get(),
-                    &charging_icon.get(),
-                    &alert_icon.get(),
-                );
+                    level_icons: &level_icons_val,
+                    charging_icon: &charging_icon_val,
+                    alert_icon: &alert_icon_val,
+                });
                 let _ = out.send(BatteryCmd::UpdateIcon(icon));
             }
         );
-    }
-
-    fn select_icon(
-        percentage: f64,
-        state: DeviceState,
-        is_present: bool,
-        level_icons: &[String],
-        charging_icon: &str,
-        alert_icon: &str,
-    ) -> String {
-        if !is_present || matches!(state, DeviceState::Unknown) {
-            return alert_icon.to_string();
-        }
-
-        if matches!(state, DeviceState::Charging | DeviceState::PendingCharge) {
-            return charging_icon.to_string();
-        }
-
-        if level_icons.is_empty() {
-            return String::new();
-        }
-
-        let index = ((percentage / 100.0) * level_icons.len() as f64)
-            .floor()
-            .min((level_icons.len() - 1) as f64) as usize;
-
-        level_icons
-            .get(index)
-            .cloned()
-            .unwrap_or_else(|| level_icons.last().cloned().unwrap_or_default())
     }
 }

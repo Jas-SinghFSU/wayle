@@ -90,9 +90,15 @@ impl Component for BarButton {
             #[watch]
             set_tooltip_text: model.tooltip.as_deref(),
 
+            #[watch]
+            set_hexpand: model.settings.is_vertical.get(),
+
             #[wrap(Some)]
             set_child = &gtk::Box {
                 add_css_class: "bar-button-content",
+
+                #[watch]
+                set_hexpand: model.settings.is_vertical.get(),
 
                 #[watch]
                 set_orientation: model.orientation(),
@@ -123,9 +129,15 @@ impl Component for BarButton {
                     #[watch]
                     set_visible: model.behavior.show_label.get(),
 
+                    #[watch]
+                    set_hexpand: model.settings.is_vertical.get(),
+
                     gtk::Label {
                         add_css_class: "bar-button-label",
-                        set_valign: gtk::Align::Center,
+                        set_align: gtk::Align::Center,
+
+                        #[watch]
+                        set_hexpand: model.settings.is_vertical.get(),
 
                         #[watch]
                         set_label: &model.label,
@@ -237,7 +249,7 @@ impl BarButton {
     }
 
     fn ellipsize(&self) -> gtk::pango::EllipsizeMode {
-        if self.behavior.label_max_chars.get().is_some() {
+        if self.behavior.label_max_chars.get() > 0 {
             gtk::pango::EllipsizeMode::End
         } else {
             gtk::pango::EllipsizeMode::None
@@ -245,11 +257,8 @@ impl BarButton {
     }
 
     fn max_width_chars(&self) -> i32 {
-        self.behavior
-            .label_max_chars
-            .get()
-            .map(|n| n as i32)
-            .unwrap_or(-1)
+        let max = self.behavior.label_max_chars.get();
+        if max > 0 { max as i32 } else { -1 }
     }
 
     fn is_icon_only(&self) -> bool {
@@ -269,7 +278,7 @@ impl BarButton {
 
         if color.is_auto() {
             let token = match self.variant {
-                BarButtonVariant::Basic => CssToken::Accent,
+                BarButtonVariant::Basic => self.colors.auto_icon_color,
                 BarButtonVariant::BlockPrefix | BarButtonVariant::IconSquare => {
                     CssToken::FgOnAccent
                 }

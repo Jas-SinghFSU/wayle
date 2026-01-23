@@ -4,7 +4,7 @@ mod media;
 
 pub use battery::BatteryConfig;
 pub use clock::ClockConfig;
-pub use media::MediaConfig;
+pub use media::{BUILTIN_MAPPINGS, MediaConfig, MediaIconType};
 use wayle_derive::wayle_config;
 
 /// Configuration for all available Wayle modules.
