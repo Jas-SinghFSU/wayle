@@ -4,7 +4,8 @@ use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
 use syn::{
-    Attribute, Data, DeriveInput, Expr, Field, Fields, FieldsNamed, ItemStruct, parse_macro_input,
+    Attribute, Data, DeriveInput, Expr, Field, Fields, FieldsNamed, Ident, ItemStruct,
+    parse_macro_input,
 };
 
 fn validate_named_struct(input: &DeriveInput) -> Result<&FieldsNamed, TokenStream> {
@@ -498,6 +499,11 @@ pub fn derive_subscribe_changes(input: TokenStream) -> TokenStream {
 /// Reduces boilerplate by automatically adding all required derives and generating
 /// the `Default` implementation from inline `#[default(...)]` attributes.
 ///
+/// # Variants
+///
+/// - `#[wayle_config]` - Standard config struct
+/// - `#[wayle_config(bar_button)]` - Bar module config with injected standard fields
+///
 /// # Generates
 ///
 /// - Standard derives: `Debug`, `Clone`, `Serialize`, `Deserialize`, `JsonSchema`
@@ -512,33 +518,72 @@ pub fn derive_subscribe_changes(input: TokenStream) -> TokenStream {
 /// - No `#[default]` - Container field, uses `FieldType::default()`
 /// - `#[serde(...)]` - Preserved and passed through to the struct
 ///
+/// # Bar Button Fields (required by `bar_button`)
+///
+/// When using `#[wayle_config(bar_button)]`, these fields must be defined:
+///
+/// | Field | Type | Default | TOML Name |
+/// |-------|------|---------|-----------|
+/// | `border_show` | `bool` | `false` | `border-show` |
+/// | `border_color` | `ColorValue` | `Token(BorderAccent)` | `border-color` |
+/// | `icon_show` | `bool` | `true` | `icon-show` |
+/// | `icon_color` | `ColorValue` | `Auto` | `icon-color` |
+/// | `icon_bg_color` | `ColorValue` | `Token(Accent)` | `icon-bg-color` |
+/// | `label_show` | `bool` | `true` | `label-show` |
+/// | `label_color` | `ColorValue` | `Token(Accent)` | `label-color` |
+/// | `label_max_length` | `Option<u32>` | `None` | `label-max-length` |
+/// | `button_bg_color` | `ColorValue` | `Token(BgSurfaceElevated)` | `button-bg-color` |
+/// | `left_click` | `String` | `""` | `left-click` |
+/// | `right_click` | `String` | `""` | `right-click` |
+/// | `middle_click` | `String` | `""` | `middle-click` |
+/// | `scroll_up` | `String` | `""` | `scroll-up` |
+/// | `scroll_down` | `String` | `""` | `scroll-down` |
+///
 /// # Example
 ///
 /// ```ignore
 /// use wayle_common::ConfigProperty;
 /// use wayle_derive::wayle_config;
 ///
+/// // Standard config
 /// #[wayle_config]
 /// pub struct ClockConfig {
-///     /// Time format string.
 ///     #[default("%H:%M")]
 ///     pub format: ConfigProperty<String>,
+/// }
 ///
-///     /// Nested container (no #[default] needed).
-///     pub styling: ClockStyling,
+/// // Bar button config with injected fields
+/// #[wayle_config(bar_button)]
+/// pub struct BatteryConfig {
+///     // Module-specific fields only - bar button fields are injected
+///     #[serde(rename = "level-icons")]
+///     #[default(vec![String::from("tb-battery")])]
+///     pub level_icons: ConfigProperty<Vec<String>>,
 /// }
 /// ```
 #[proc_macro_attribute]
-pub fn wayle_config(_attr: TokenStream, item: TokenStream) -> TokenStream {
+pub fn wayle_config(attr: TokenStream, item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as ItemStruct);
+    let is_bar_button = parse_bar_button_attr(attr);
 
-    match generate_wayle_config(input) {
+    match generate_wayle_config(input, is_bar_button) {
         Ok(tokens) => tokens.into(),
         Err(err) => err.to_compile_error().into(),
     }
 }
 
-fn generate_wayle_config(input: ItemStruct) -> syn::Result<TokenStream2> {
+fn parse_bar_button_attr(attr: TokenStream) -> bool {
+    if attr.is_empty() {
+        return false;
+    }
+
+    let attr2: TokenStream2 = attr.into();
+    let ident: Result<Ident, _> = syn::parse2(attr2);
+
+    matches!(ident, Ok(id) if id == "bar_button")
+}
+
+fn generate_wayle_config(input: ItemStruct, is_bar_button: bool) -> syn::Result<TokenStream2> {
     let name = &input.ident;
     let vis = &input.vis;
     let generics = &input.generics;
@@ -553,6 +598,10 @@ fn generate_wayle_config(input: ItemStruct) -> syn::Result<TokenStream2> {
             ));
         }
     };
+
+    if is_bar_button {
+        validate_bar_button_fields(fields)?;
+    }
 
     let processed_fields = process_fields(fields)?;
     let struct_fields = &processed_fields.struct_fields;
@@ -588,6 +637,49 @@ fn generate_wayle_config(input: ItemStruct) -> syn::Result<TokenStream2> {
             }
         }
     })
+}
+
+const BAR_BUTTON_REQUIRED_FIELDS: &[&str] = &[
+    "border_show",
+    "border_color",
+    "icon_show",
+    "icon_color",
+    "icon_bg_color",
+    "label_show",
+    "label_color",
+    "label_max_length",
+    "button_bg_color",
+    "left_click",
+    "right_click",
+    "middle_click",
+    "scroll_up",
+    "scroll_down",
+];
+
+fn validate_bar_button_fields(fields: &FieldsNamed) -> syn::Result<()> {
+    let field_names: Vec<String> = fields
+        .named
+        .iter()
+        .filter_map(|f| f.ident.as_ref().map(|i| i.to_string()))
+        .collect();
+
+    let missing: Vec<&str> = BAR_BUTTON_REQUIRED_FIELDS
+        .iter()
+        .filter(|required| !field_names.contains(&(**required).to_string()))
+        .copied()
+        .collect();
+
+    if missing.is_empty() {
+        Ok(())
+    } else {
+        Err(syn::Error::new_spanned(
+            fields,
+            format!(
+                "bar_button config missing required fields: {}",
+                missing.join(", ")
+            ),
+        ))
+    }
 }
 
 struct ProcessedFields {

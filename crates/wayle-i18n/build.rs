@@ -1,8 +1,8 @@
 #![allow(clippy::expect_used, missing_docs)]
 
 use std::{
-    fs::{self, DirEntry},
-    path::Path,
+    fs,
+    path::{Path, PathBuf},
 };
 
 fn main() {
@@ -17,38 +17,50 @@ fn main() {
 }
 
 fn concatenate_partials(locale_dir: &Path) {
-    let partials = collect_partials(locale_dir);
+    let partials = collect_partials_recursive(locale_dir);
     let combined = merge_partials(&partials);
     let output = locale_dir.join("wayle-i18n.ftl");
     fs::write(&output, combined).expect("failed to write combined ftl");
 }
 
-fn collect_partials(locale_dir: &Path) -> Vec<DirEntry> {
-    let mut partials: Vec<_> = fs::read_dir(locale_dir)
-        .expect("locale directory readable")
-        .filter_map(Result::ok)
-        .filter(is_partial)
-        .collect();
-
-    partials.sort_by_key(DirEntry::file_name);
+fn collect_partials_recursive(dir: &Path) -> Vec<PathBuf> {
+    let mut partials = Vec::new();
+    collect_partials_inner(dir, &mut partials);
+    partials.sort();
     partials
 }
 
-fn is_partial(entry: &DirEntry) -> bool {
-    entry
-        .file_name()
-        .to_str()
+fn collect_partials_inner(dir: &Path, partials: &mut Vec<PathBuf>) {
+    let entries = match fs::read_dir(dir) {
+        Ok(entries) => entries,
+        Err(_) => return,
+    };
+
+    for entry in entries.filter_map(Result::ok) {
+        let path = entry.path();
+
+        if path.is_dir() {
+            collect_partials_inner(&path, partials);
+        } else if is_partial(&path) {
+            partials.push(path);
+        }
+    }
+}
+
+fn is_partial(path: &Path) -> bool {
+    path.file_name()
+        .and_then(|n| n.to_str())
         .is_some_and(|name| name.starts_with('_') && name.ends_with(".ftl"))
 }
 
-fn merge_partials(partials: &[DirEntry]) -> String {
+fn merge_partials(partials: &[PathBuf]) -> String {
     let mut combined = String::new();
 
     for partial in partials {
-        let content = fs::read_to_string(partial.path()).expect("ftl file readable");
+        let content = fs::read_to_string(partial).expect("ftl file readable");
         combined.push_str(&content);
         combined.push('\n');
-        println!("cargo::rerun-if-changed={}", partial.path().display());
+        println!("cargo::rerun-if-changed={}", partial.display());
     }
 
     combined

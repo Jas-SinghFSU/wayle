@@ -1,22 +1,121 @@
+use schemars::schema_for;
 use wayle_common::ConfigProperty;
 use wayle_derive::wayle_config;
 
-use crate::schemas::styling::Percentage;
+use crate::{
+    docs::{ModuleInfo, ModuleInfoProvider},
+    schemas::styling::{ColorValue, CssToken},
+};
 
-/// Battery module configuration for status bar display.
-#[wayle_config]
+/// Battery module configuration.
+#[wayle_config(bar_button)]
 pub struct BatteryConfig {
-    /// Whether the battery module is displayed.
-    #[default(true)]
-    pub enabled: ConfigProperty<bool>,
+    /// Icons for battery levels from empty to full.
+    ///
+    /// The percentage is divided evenly among icons. With 5 icons:
+    /// 0-20% uses icons[0], 21-40% uses icons[1], etc.
+    #[serde(rename = "level-icons")]
+    #[default(vec![
+        String::from("md-battery_android_0-symbolic"),
+        String::from("md-battery_android_frame_1-symbolic"),
+        String::from("md-battery_android_frame_2-symbolic"),
+        String::from("md-battery_android_frame_3-symbolic"),
+        String::from("md-battery_android_frame_4-symbolic"),
+        String::from("md-battery_android_frame_5-symbolic"),
+        String::from("md-battery_android_frame_6-symbolic"),
+        String::from("md-battery_android_frame_full-symbolic"),
+    ])]
+    pub level_icons: ConfigProperty<Vec<String>>,
 
-    /// Whether to show the percentage label alongside the icon.
-    #[serde(rename = "percentage-show")]
-    #[default(true)]
-    pub percentage_show: ConfigProperty<bool>,
+    /// Icon shown when battery is charging.
+    #[serde(rename = "charging-icon")]
+    #[default(String::from("md-battery_android_frame_bolt-symbolic"))]
+    pub charging_icon: ConfigProperty<String>,
 
-    /// Percentage threshold for low battery warning.
-    #[serde(rename = "warning-threshold")]
-    #[default(Percentage::new(20))]
-    pub warning_threshold: ConfigProperty<Percentage>,
+    /// Icon shown when battery is not present or in an error state.
+    #[serde(rename = "alert-icon")]
+    #[default(String::from("md-battery_android_alert-symbolic"))]
+    pub alert_icon: ConfigProperty<String>,
+
+    /// Display border around button.
+    #[serde(rename = "border-show")]
+    #[default(false)]
+    pub border_show: ConfigProperty<bool>,
+
+    /// Border color token.
+    #[serde(rename = "border-color")]
+    #[default(ColorValue::Token(CssToken::BorderAccent))]
+    pub border_color: ConfigProperty<ColorValue>,
+
+    /// Display module icon.
+    #[serde(rename = "icon-show")]
+    #[default(true)]
+    pub icon_show: ConfigProperty<bool>,
+
+    /// Icon foreground color. Auto selects based on variant for contrast.
+    #[serde(rename = "icon-color")]
+    #[default(ColorValue::Auto)]
+    pub icon_color: ConfigProperty<ColorValue>,
+
+    /// Icon container background color token.
+    #[serde(rename = "icon-bg-color")]
+    #[default(ColorValue::Token(CssToken::Accent))]
+    pub icon_bg_color: ConfigProperty<ColorValue>,
+
+    /// Display percentage label.
+    #[serde(rename = "label-show")]
+    #[default(true)]
+    pub label_show: ConfigProperty<bool>,
+
+    /// Label text color token.
+    #[serde(rename = "label-color")]
+    #[default(ColorValue::Token(CssToken::Accent))]
+    pub label_color: ConfigProperty<ColorValue>,
+
+    /// Max label characters before truncation with ellipsis.
+    #[serde(rename = "label-max-length")]
+    #[default(None)]
+    pub label_max_length: ConfigProperty<Option<u32>>,
+
+    /// Button background color token.
+    #[serde(rename = "button-bg-color")]
+    #[default(ColorValue::Token(CssToken::BgSurfaceElevated))]
+    pub button_bg_color: ConfigProperty<ColorValue>,
+
+    /// Reserved for dropdown. Not user-configurable.
+    #[serde(rename = "left-click", skip)]
+    #[default(String::default())]
+    pub left_click: ConfigProperty<String>,
+
+    /// Shell command on right click.
+    #[serde(rename = "right-click")]
+    #[default(String::default())]
+    pub right_click: ConfigProperty<String>,
+
+    /// Shell command on middle click.
+    #[serde(rename = "middle-click")]
+    #[default(String::default())]
+    pub middle_click: ConfigProperty<String>,
+
+    /// Shell command on scroll up.
+    #[serde(rename = "scroll-up")]
+    #[default(String::default())]
+    pub scroll_up: ConfigProperty<String>,
+
+    /// Shell command on scroll down.
+    #[serde(rename = "scroll-down")]
+    #[default(String::default())]
+    pub scroll_down: ConfigProperty<String>,
+}
+
+impl ModuleInfoProvider for BatteryConfig {
+    fn module_info() -> ModuleInfo {
+        ModuleInfo {
+            name: String::from("battery"),
+            icon: String::from("󰁹"),
+            description: String::from("Battery status and charging indicator"),
+            behavior_configs: vec![(String::from("battery"), || schema_for!(BatteryConfig))],
+            styling_configs: vec![],
+        }
+    }
 }

@@ -34,7 +34,7 @@ experience. A successor to HyprPanel without the pain or dependency on Hyprland.
 
 - [x] **Component Library** - Base Relm4 widgets and containers
 - [ ] **Bar Modules (WIP)**:
-    - [ ] Battery
+    - [x] Battery
     - [ ] Dashboard
     - [ ] Hyprland workspaces
     - [ ] Window title
@@ -64,14 +64,14 @@ experience. A successor to HyprPanel without the pain or dependency on Hyprland.
 ### Dropdown Interfaces
 
 - [ ] **Audio Panel**
-- [ ] **Network Panel**
+- [ ] **Battery Panel**
 - [ ] **Bluetooth Panel**
-- [ ] **Media Panel**
-- [ ] **Notifications Panel**
 - [ ] **Calendar Panel**
-- [ ] **Weather Panel**
-- [ ] **Energy Panel**
 - [ ] **Dashboard**
+- [ ] **Media Panel**
+- [ ] **Network Panel**
+- [ ] **Notifications Panel**
+- [ ] **Weather Panel**
 
 ### Additional Features
 
@@ -82,43 +82,64 @@ experience. A successor to HyprPanel without the pain or dependency on Hyprland.
 
 ## Configuration
 
-Configuration is managed through TOML files, UI or CLI with live reloading and
-imports:
+Configuration lives in `~/.config/wayle/config.toml` with live reloading.
 
 ```toml
-# main config.toml
-imports = ["@themes/dark", "@modules/bar"]
+[styling]
+theme-provider = "wayle"
 
-[general]
-theme = "dark"
+[styling.palette]
+bg = "#16161e"
+fg = "#c0caf5"
+primary = "#7aa2f7"
 
-# themes/dark.toml
-[colors]
-background = "#1e1e2e"
-foreground = "#cdd6f4"
-
-# modules/bar.toml
 [bar]
-position = "top"
+scale = 1
+location = "top"
+rounding = "sm"
+
+[[bar.layout]]
+monitor = "*"
+left = ["clock"]
+center = ["battery"]
+right = ["systray"]
 
 [modules.clock]
 format = "%H:%M"
+icon-show = true
+label-show = true
 ```
 
-Use the CLI to manage configuration:
+Config files can be split and imported for better organization:
+
+```toml
+# config.toml
+imports = ["@colors.toml", "@modules/bar.toml"]
+
+[bar]
+location = "top"
+```
+
+Paths prefixed with `@` resolve relative to the config directory.
+
+CLI commands can also be used to modify, get or reset any property:
 
 ```bash
-# General help
-wayle help
+wayle config get bar.scale
+wayle config set bar.location bottom
+wayle config reset bar.scale
+```
 
-# Category help
-wayle config help
+Editor intellisense is available via JSON Schema. Install
+[Tombi](https://marketplace.visualstudio.com/items?itemName=tombi-toml.tombi)
+for VSCode or the `tombi` LSP for Neovim. The schema is generated automatically
+on startup; regenerate manually with:
 
-# Get current config values
-wayle config get modules.clock.format
+This will give you auto-complete, config validation and other nice QoL features
+for your config.toml (and other toml files).
 
-# Set values with validation
-wayle config set general.theme dark
+```bash
+wayle config schema
 ```
 
 ## Building
