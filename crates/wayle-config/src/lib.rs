@@ -44,6 +44,7 @@ pub use infrastructure::{
     error::Error,
     paths::ConfigPaths,
     persistence::PersistenceWatcher,
+    schema::generate_schema,
     service::{ConfigService, ConfigServiceCli},
     watcher::FileWatcher,
 };

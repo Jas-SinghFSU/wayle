@@ -152,15 +152,15 @@ impl ConfigPaths {
         }
     }
 
-    /// Path to `.taplo.toml` for Taplo TOML editor support.
+    /// Path to `tombi.toml` for Tombi TOML editor support.
     ///
     /// # Panics
     ///
     /// Panics if config directory cannot be determined.
     #[allow(clippy::panic)]
-    pub fn taplo_config() -> PathBuf {
+    pub fn tombi_config() -> PathBuf {
         match Self::config_dir() {
-            Ok(dir) => dir.join(".taplo.toml"),
+            Ok(dir) => dir.join("tombi.toml"),
             Err(_) => {
                 panic!("Failed to determine config directory - is $HOME or $XDG_CONFIG_HOME set?")
             }

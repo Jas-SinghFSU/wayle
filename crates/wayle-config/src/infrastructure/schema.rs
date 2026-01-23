@@ -1,8 +1,8 @@
 //! JSON Schema generation for configuration validation and editor support.
 
-use std::{fs, io};
+use std::{fs, io, path::Path};
 
-use schemars::schema_for;
+use schemars::generate::{SchemaGenerator, SchemaSettings};
 use tracing::{debug, info};
 
 use super::paths::ConfigPaths;
@@ -13,8 +13,13 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 /// Generates the JSON Schema for Wayle's configuration.
 ///
 /// The schema includes the package version in the `$id` field for version tracking.
+/// Uses `inline_subschemas` to ensure field descriptions are visible in TOML editors.
 pub fn generate_schema() -> String {
-    let schema = schema_for!(Config);
+    let settings = SchemaSettings::default().with(|s| {
+        s.inline_subschemas = true;
+    });
+    let generator = SchemaGenerator::new(settings);
+    let schema = generator.into_root_schema_for::<Config>();
     let mut json: serde_json::Value =
         serde_json::to_value(&schema).expect("schema serialization cannot fail");
 
@@ -28,13 +33,17 @@ pub fn generate_schema() -> String {
     serde_json::to_string_pretty(&json).expect("JSON serialization cannot fail")
 }
 
-const TAPLO_CONFIG: &str = r#"[schema]
+const TOMBI_CONFIG: &str = r#"[schema]
+enabled = true
+
+[[schemas]]
 path = "./schema.json"
+include = ["*.toml"]
 "#;
 
-/// Ensures the schema and Taplo config files exist and are up-to-date.
+/// Ensures the schema and Tombi config files exist and are up-to-date.
 ///
-/// Writes `schema.json` and `.taplo.toml` to `~/.config/wayle/` if:
+/// Writes `schema.json` and `tombi.toml` to `~/.config/wayle/` if:
 /// - The files don't exist
 /// - The schema exists but contains a different version
 ///
@@ -43,7 +52,7 @@ path = "./schema.json"
 /// Returns error if the files cannot be written.
 pub fn ensure_schema_current() -> io::Result<()> {
     let schema_path = ConfigPaths::schema_json();
-    let taplo_path = ConfigPaths::taplo_config();
+    let tombi_path = ConfigPaths::tombi_config();
 
     if let Some(parent) = schema_path.parent()
         && !parent.exists()
@@ -64,9 +73,9 @@ pub fn ensure_schema_current() -> io::Result<()> {
         debug!(path = %schema_path.display(), "Schema already current");
     }
 
-    if !taplo_path.exists() {
-        fs::write(&taplo_path, TAPLO_CONFIG)?;
-        info!(path = %taplo_path.display(), "Taplo config generated");
+    if !tombi_path.exists() {
+        fs::write(&tombi_path, TOMBI_CONFIG)?;
+        info!(path = %tombi_path.display(), "Tombi config generated");
     }
 
     Ok(())
@@ -77,7 +86,7 @@ pub fn ensure_schema_current() -> io::Result<()> {
 /// # Errors
 ///
 /// Returns error if the schema file cannot be written.
-pub fn write_schema_to(path: &std::path::Path) -> io::Result<()> {
+pub fn write_schema_to(path: &Path) -> io::Result<()> {
     if let Some(parent) = path.parent()
         && !parent.exists()
     {
