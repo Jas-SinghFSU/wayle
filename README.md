@@ -159,6 +159,12 @@ cd wayle
 cargo install --path wayle
 ```
 
+Once Wayle is installed, you can start it via:
+
+```bash
+wayle panel start
+```
+
 ## Icons
 
 Wayle uses GTK symbolic icons that support CSS color theming.
