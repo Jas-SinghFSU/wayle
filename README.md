@@ -40,7 +40,7 @@ experience. A successor to HyprPanel without the pain or dependency on Hyprland.
     - [ ] Window title
     - [x] Media
     - [ ] Notification
-    - [ ] Volume
+    - [x] Volume
     - [ ] Network
     - [ ] Bluetooth
     - [x] Clock
