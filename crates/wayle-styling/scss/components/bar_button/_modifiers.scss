@@ -63,7 +63,7 @@ menubutton.bar-button {
 }
 
 .media-disc menubutton.bar-button .icon-container image {
-    animation: media-spin 2s linear infinite;
+    animation: media-spin 2s steps(20) infinite;
     animation-play-state: paused;
 }
 

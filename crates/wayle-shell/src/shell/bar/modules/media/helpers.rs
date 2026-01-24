@@ -4,19 +4,19 @@ use wayle_common::glob;
 use wayle_config::schemas::modules::{BUILTIN_MAPPINGS, MediaIconType};
 use wayle_media::types::PlaybackState;
 
-pub const PLAY_ICON: &str = "󰐊";
-pub const PAUSE_ICON: &str = "󰏤";
-pub const STOP_ICON: &str = "󰓛";
+pub(crate) const PLAY_ICON: &str = "󰐊";
+pub(crate) const PAUSE_ICON: &str = "󰏤";
+pub(crate) const STOP_ICON: &str = "󰓛";
 
-pub struct FormatContext<'a> {
-    pub format: &'a str,
-    pub title: &'a str,
-    pub artist: &'a str,
-    pub album: &'a str,
-    pub state: PlaybackState,
+pub(crate) struct FormatContext<'a> {
+    pub(crate) format: &'a str,
+    pub(crate) title: &'a str,
+    pub(crate) artist: &'a str,
+    pub(crate) album: &'a str,
+    pub(crate) state: PlaybackState,
 }
 
-pub fn format_label(ctx: &FormatContext<'_>) -> String {
+pub(crate) fn format_label(ctx: &FormatContext<'_>) -> String {
     let status_text = match ctx.state {
         PlaybackState::Playing => "Playing",
         PlaybackState::Paused => "Paused",
@@ -37,16 +37,16 @@ pub fn format_label(ctx: &FormatContext<'_>) -> String {
         .replace("{status_icon}", status_icon)
 }
 
-pub struct IconContext<'a> {
-    pub icon_type: MediaIconType,
-    pub icon_name: &'a str,
-    pub spinning_disc_icon: &'a str,
-    pub player_icons: &'a HashMap<String, String>,
-    pub bus_name: &'a str,
-    pub desktop_entry: Option<&'a str>,
+pub(crate) struct IconContext<'a> {
+    pub(crate) icon_type: MediaIconType,
+    pub(crate) icon_name: &'a str,
+    pub(crate) spinning_disc_icon: &'a str,
+    pub(crate) player_icons: &'a HashMap<String, String>,
+    pub(crate) bus_name: &'a str,
+    pub(crate) desktop_entry: Option<&'a str>,
 }
 
-pub fn resolve_icon(ctx: &IconContext<'_>) -> String {
+pub(crate) fn resolve_icon(ctx: &IconContext<'_>) -> String {
     match ctx.icon_type {
         MediaIconType::Default => ctx.icon_name.to_string(),
         MediaIconType::Application => ctx

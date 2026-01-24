@@ -1,15 +1,15 @@
 use wayle_battery::types::DeviceState;
 
-pub struct IconContext<'a> {
-    pub percentage: f64,
-    pub state: DeviceState,
-    pub is_present: bool,
-    pub level_icons: &'a [String],
-    pub charging_icon: &'a str,
-    pub alert_icon: &'a str,
+pub(crate) struct IconContext<'a> {
+    pub(crate) percentage: f64,
+    pub(crate) state: DeviceState,
+    pub(crate) is_present: bool,
+    pub(crate) level_icons: &'a [String],
+    pub(crate) charging_icon: &'a str,
+    pub(crate) alert_icon: &'a str,
 }
 
-pub fn select_icon(ctx: &IconContext<'_>) -> String {
+pub(crate) fn select_icon(ctx: &IconContext<'_>) -> String {
     if !ctx.is_present || matches!(ctx.state, DeviceState::Unknown) {
         return ctx.alert_icon.to_string();
     }
@@ -35,7 +35,7 @@ pub fn select_icon(ctx: &IconContext<'_>) -> String {
         .unwrap_or_else(|| ctx.level_icons.last().cloned().unwrap_or_default())
 }
 
-pub fn format_label(percentage: f64, is_present: bool) -> String {
+pub(crate) fn format_label(percentage: f64, is_present: bool) -> String {
     if is_present {
         format!("{:.0}%", percentage)
     } else {

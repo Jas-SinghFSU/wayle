@@ -1,10 +1,10 @@
-pub struct IconContext<'a> {
-    pub muted: bool,
-    pub icon_active: &'a str,
-    pub icon_muted: &'a str,
+pub(crate) struct IconContext<'a> {
+    pub(crate) muted: bool,
+    pub(crate) icon_active: &'a str,
+    pub(crate) icon_muted: &'a str,
 }
 
-pub fn select_icon(ctx: &IconContext<'_>) -> String {
+pub(crate) fn select_icon(ctx: &IconContext<'_>) -> String {
     if ctx.muted {
         ctx.icon_muted.to_string()
     } else {

@@ -2,12 +2,14 @@ mod battery;
 mod clock;
 mod media;
 mod microphone;
+mod network;
 mod volume;
 
 pub use battery::BatteryConfig;
 pub use clock::ClockConfig;
 pub use media::{BUILTIN_MAPPINGS, MediaConfig, MediaIconType};
 pub use microphone::MicrophoneConfig;
+pub use network::NetworkConfig;
 pub use volume::VolumeConfig;
 use wayle_derive::wayle_config;
 
@@ -22,6 +24,8 @@ pub struct ModulesConfig {
     pub media: MediaConfig,
     /// Microphone input module.
     pub microphone: MicrophoneConfig,
+    /// Network connection module.
+    pub network: NetworkConfig,
     /// Volume control module.
     pub volume: VolumeConfig,
 }

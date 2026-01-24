@@ -19,7 +19,7 @@ use crate::{
 pub struct MediaConfig {
     /// Icon display mode.
     #[serde(rename = "icon-type")]
-    #[default(MediaIconType::SpinningDisc)]
+    #[default(MediaIconType::ApplicationMapped)]
     pub icon_type: ConfigProperty<MediaIconType>,
 
     /// Custom player-to-icon mappings for application-mapped mode.
@@ -142,13 +142,13 @@ pub struct MediaConfig {
 #[serde(rename_all = "kebab-case")]
 pub enum MediaIconType {
     /// Static icon from icon-name field.
-    #[default]
     Default,
     /// Dynamic icon from media player's desktop entry, falling back to icon-name.
     Application,
-    /// Spinning disc icon that animates during playback.
+    /// Spinning disc icon that animates during playback. Uses slightly more CPU.
     SpinningDisc,
     /// Maps player to icon via glob patterns, with built-in mappings for common players.
+    #[default]
     ApplicationMapped,
 }
 

@@ -78,7 +78,7 @@ $base-btn-gap: 0.5rem;
     --fg-default: var(--palette-fg);
     --fg-muted: var(--palette-fg-muted);
     --fg-subtle: color-mix(in srgb, var(--palette-fg) 50%, transparent);
-    --fg-on-accent: var(--palette-bg);
+    --fg-on-accent: var(--palette-surface);
 
     // Accent
     --accent: var(--palette-primary);

@@ -2,12 +2,14 @@ mod battery;
 mod clock;
 mod media;
 mod microphone;
+mod network;
 mod volume;
 
 use battery::{BatteryInit, BatteryModule};
 use clock::{ClockInit, ClockModule};
 use media::{MediaInit, MediaModule};
 use microphone::{MicrophoneInit, MicrophoneModule};
+use network::{NetworkInit, NetworkModule};
 use relm4::prelude::*;
 use volume::{VolumeInit, VolumeModule};
 use wayle_config::schemas::bar::{BarModule, ModuleRef};
@@ -23,6 +25,7 @@ pub(crate) enum ModuleController {
     Clock(Controller<ClockModule>),
     Media(Controller<MediaModule>),
     Microphone(Controller<MicrophoneModule>),
+    Network(Controller<NetworkModule>),
     Volume(Controller<VolumeModule>),
 }
 
@@ -33,6 +36,7 @@ impl ModuleController {
             Self::Clock(c) => c.widget(),
             Self::Media(c) => c.widget(),
             Self::Microphone(c) => c.widget(),
+            Self::Network(c) => c.widget(),
             Self::Volume(c) => c.widget(),
         }
     }
@@ -72,6 +76,12 @@ pub(crate) fn create_module(module_ref: &ModuleRef, settings: &BarSettings) -> M
                 settings: settings.clone(),
             };
             ModuleController::Microphone(MicrophoneModule::builder().launch(init).detach())
+        }
+        BarModule::Network => {
+            let init = NetworkInit {
+                settings: settings.clone(),
+            };
+            ModuleController::Network(NetworkModule::builder().launch(init).detach())
         }
         _ => {
             let init = ClockInit {

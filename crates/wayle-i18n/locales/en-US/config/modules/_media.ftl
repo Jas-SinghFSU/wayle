@@ -3,7 +3,7 @@
 ## Media Module Configuration
 
 settings-modules-media-icon-type = Icon Type
-    .description = Icon display mode (default, application, spinning-disc, application-mapped)
+    .description = Icon display mode (default, application, spinning-disc, application-mapped). spinning-disc uses slightly more CPU due to animation
 
 settings-modules-media-player-icons = Player Icons
     .description = Custom player-to-icon mappings (glob pattern to icon name)

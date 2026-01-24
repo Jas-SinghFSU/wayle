@@ -1,11 +1,11 @@
-pub struct IconContext<'a> {
-    pub percentage: u16,
-    pub muted: bool,
-    pub level_icons: &'a [String],
-    pub muted_icon: &'a str,
+pub(crate) struct IconContext<'a> {
+    pub(crate) percentage: u16,
+    pub(crate) muted: bool,
+    pub(crate) level_icons: &'a [String],
+    pub(crate) muted_icon: &'a str,
 }
 
-pub fn select_icon(ctx: &IconContext<'_>) -> String {
+pub(crate) fn select_icon(ctx: &IconContext<'_>) -> String {
     if ctx.muted {
         return ctx.muted_icon.to_string();
     }
@@ -28,7 +28,7 @@ pub fn select_icon(ctx: &IconContext<'_>) -> String {
         .unwrap_or_else(|| ctx.muted_icon.to_string())
 }
 
-pub fn format_label(percentage: u16) -> String {
+pub(crate) fn format_label(percentage: u16) -> String {
     format!("{percentage}%")
 }
 
