@@ -7,7 +7,7 @@ use relm4::prelude::*;
 use tokio::time::interval;
 use tokio_stream::wrappers::IntervalStream;
 use tracing::error;
-use wayle_common::{ConfigProperty, process, services, watch};
+use wayle_common::{ConfigProperty, process::spawn_shell_quiet, services, watch};
 use wayle_config::{
     ConfigService,
     schemas::{modules::ClockConfig, styling::CssToken},
@@ -98,7 +98,7 @@ impl Component for ClockModule {
         };
 
         if !cmd.is_empty()
-            && let Err(e) = process::spawn_shell(&cmd)
+            && let Err(e) = spawn_shell_quiet(&cmd)
         {
             error!(error = %e, cmd = %cmd, "failed to spawn command");
         }

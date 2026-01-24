@@ -147,6 +147,11 @@ impl Volume {
         self.volumes.iter().map(|&v| v * 100.0).collect()
     }
 
+    /// Get average volume as percentage (1.0 = 100%).
+    pub fn average_percentage(&self) -> f64 {
+        self.average() * 100.0
+    }
+
     /// Check if volume is muted (all channels at 0.0)
     pub fn is_muted(&self) -> bool {
         self.volumes.iter().all(|&v| v == 0.0)
@@ -343,5 +348,14 @@ mod tests {
         let percentages = volume.to_percentage();
 
         assert_eq!(percentages, vec![50.0, 100.0, 150.0]);
+    }
+
+    #[test]
+    fn average_percentage_returns_average_as_percentage() {
+        let volume = Volume::stereo(0.5, 1.0);
+
+        let avg_pct = volume.average_percentage();
+
+        assert!((avg_pct - 75.0).abs() < 0.01);
     }
 }

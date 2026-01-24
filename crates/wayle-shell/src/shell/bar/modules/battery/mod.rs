@@ -4,7 +4,7 @@ mod messages;
 use relm4::prelude::*;
 use tracing::error;
 use wayle_battery::BatteryService;
-use wayle_common::{ConfigProperty, process, services, watch};
+use wayle_common::{ConfigProperty, process::spawn_shell_quiet, services, watch};
 use wayle_config::{
     ConfigService,
     schemas::{modules::BatteryConfig, styling::CssToken},
@@ -102,7 +102,7 @@ impl Component for BatteryModule {
         };
 
         if !cmd.is_empty()
-            && let Err(e) = process::spawn_shell(&cmd)
+            && let Err(e) = spawn_shell_quiet(&cmd)
         {
             error!(error = %e, cmd = %cmd, "failed to spawn command");
         }
