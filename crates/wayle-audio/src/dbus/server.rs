@@ -1,6 +1,6 @@
 //! D-Bus server interface implementation.
 
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
 use tracing::instrument;
 use zbus::{fdo, interface};
@@ -23,7 +23,7 @@ impl AudioDaemon {
     /// Volume is specified as a percentage (0.0 to 100.0 for normal range,
     /// up to 400.0 for amplification). Returns the volume that was set.
     #[instrument(skip(self), fields(volume = %volume))]
-    pub async fn set_volume(&self, volume: f64) -> fdo::Result<f64> {
+    pub async fn set_output_volume(&self, volume: f64) -> fdo::Result<f64> {
         let device = self
             .service
             .default_output
@@ -42,12 +42,12 @@ impl AudioDaemon {
         Ok(clamped)
     }
 
-    /// Adjusts the volume by a relative delta.
+    /// Adjusts the output volume by a relative delta.
     ///
     /// Delta is specified as percentage points (e.g., +5.0 or -10.0).
     /// Result is clamped to 0-100% range. Returns the new volume.
     #[instrument(skip(self), fields(delta = %delta))]
-    pub async fn adjust_volume(&self, delta: f64) -> fdo::Result<f64> {
+    pub async fn adjust_output_volume(&self, delta: f64) -> fdo::Result<f64> {
         let device = self
             .service
             .default_output
@@ -70,7 +70,7 @@ impl AudioDaemon {
 
     /// Sets the mute state for the default output device.
     #[instrument(skip(self), fields(muted = muted))]
-    pub async fn set_mute(&self, muted: bool) -> fdo::Result<()> {
+    pub async fn set_output_mute(&self, muted: bool) -> fdo::Result<()> {
         let device = self
             .service
             .default_output
@@ -85,7 +85,7 @@ impl AudioDaemon {
 
     /// Toggles mute for the default output device. Returns the new mute state.
     #[instrument(skip(self))]
-    pub async fn toggle_mute(&self) -> fdo::Result<bool> {
+    pub async fn toggle_output_mute(&self) -> fdo::Result<bool> {
         let device = self
             .service
             .default_output
@@ -131,6 +131,88 @@ impl AudioDaemon {
             .map_err(|e| fdo::Error::Failed(e.to_string()))
     }
 
+    /// Sets the volume for the default input device.
+    ///
+    /// Volume is specified as a percentage (0.0 to 100.0). Returns the volume that was set.
+    #[instrument(skip(self), fields(volume = %volume))]
+    pub async fn set_input_volume(&self, volume: f64) -> fdo::Result<f64> {
+        let device = self
+            .service
+            .default_input
+            .get()
+            .ok_or_else(|| fdo::Error::Failed("No default input device".to_string()))?;
+
+        let clamped = volume.clamp(0.0, 100.0);
+        let channels = device.volume.get().channels();
+        let vol = Volume::from_percentage(clamped, channels);
+
+        device
+            .set_volume(vol)
+            .await
+            .map_err(|e| fdo::Error::Failed(e.to_string()))?;
+
+        Ok(clamped)
+    }
+
+    /// Adjusts the input volume by a relative delta.
+    ///
+    /// Delta is specified as percentage points (e.g., +5.0 or -10.0).
+    /// Result is clamped to 0-100% range. Returns the new volume.
+    #[instrument(skip(self), fields(delta = %delta))]
+    pub async fn adjust_input_volume(&self, delta: f64) -> fdo::Result<f64> {
+        let device = self
+            .service
+            .default_input
+            .get()
+            .ok_or_else(|| fdo::Error::Failed("No default input device".to_string()))?;
+
+        let current = device.volume.get();
+        let current_pct = current.average() * 100.0;
+        let new_pct = (current_pct + delta).clamp(0.0, 100.0);
+
+        let vol = Volume::from_percentage(new_pct, current.channels());
+
+        device
+            .set_volume(vol)
+            .await
+            .map_err(|e| fdo::Error::Failed(e.to_string()))?;
+
+        Ok(new_pct)
+    }
+
+    /// Sets the mute state for the default input device.
+    #[instrument(skip(self), fields(muted = muted))]
+    pub async fn set_input_mute(&self, muted: bool) -> fdo::Result<()> {
+        let device = self
+            .service
+            .default_input
+            .get()
+            .ok_or_else(|| fdo::Error::Failed("No default input device".to_string()))?;
+
+        device
+            .set_mute(muted)
+            .await
+            .map_err(|e| fdo::Error::Failed(e.to_string()))
+    }
+
+    /// Toggles mute for the default input device. Returns the new mute state.
+    #[instrument(skip(self))]
+    pub async fn toggle_input_mute(&self) -> fdo::Result<bool> {
+        let device = self
+            .service
+            .default_input
+            .get()
+            .ok_or_else(|| fdo::Error::Failed("No default input device".to_string()))?;
+
+        let new_state = !device.muted.get();
+        device
+            .set_mute(new_state)
+            .await
+            .map_err(|e| fdo::Error::Failed(e.to_string()))?;
+
+        Ok(new_state)
+    }
+
     /// Lists all output devices (sinks).
     ///
     /// Returns a list of tuples: (device_index, name, description).
@@ -173,16 +255,14 @@ impl AudioDaemon {
     ///
     /// Returns a dictionary with device details.
     #[instrument(skip(self))]
-    pub async fn get_default_sink_info(
-        &self,
-    ) -> fdo::Result<std::collections::HashMap<String, String>> {
+    pub async fn get_default_sink_info(&self) -> fdo::Result<HashMap<String, String>> {
         let device = self
             .service
             .default_output
             .get()
             .ok_or_else(|| fdo::Error::Failed("No default output device".to_string()))?;
 
-        let mut info = std::collections::HashMap::new();
+        let mut info = HashMap::new();
         info.insert("index".to_string(), device.key.index.to_string());
         info.insert("name".to_string(), device.name.get());
         info.insert("description".to_string(), device.description.get());
@@ -204,16 +284,14 @@ impl AudioDaemon {
     ///
     /// Returns a dictionary with device details.
     #[instrument(skip(self))]
-    pub async fn get_default_source_info(
-        &self,
-    ) -> fdo::Result<std::collections::HashMap<String, String>> {
+    pub async fn get_default_source_info(&self) -> fdo::Result<HashMap<String, String>> {
         let device = self
             .service
             .default_input
             .get()
             .ok_or_else(|| fdo::Error::Failed("No default input device".to_string()))?;
 
-        let mut info = std::collections::HashMap::new();
+        let mut info = HashMap::new();
         info.insert("index".to_string(), device.key.index.to_string());
         info.insert("name".to_string(), device.name.get());
         info.insert("description".to_string(), device.description.get());
@@ -233,7 +311,7 @@ impl AudioDaemon {
 
     /// Current volume of the default output as a percentage.
     #[zbus(property)]
-    pub async fn volume(&self) -> f64 {
+    pub async fn output_volume(&self) -> f64 {
         self.service
             .default_output
             .get()
@@ -243,9 +321,29 @@ impl AudioDaemon {
 
     /// Whether the default output is muted.
     #[zbus(property)]
-    pub async fn muted(&self) -> bool {
+    pub async fn output_muted(&self) -> bool {
         self.service
             .default_output
+            .get()
+            .map(|d| d.muted.get())
+            .unwrap_or(false)
+    }
+
+    /// Current volume of the default input as a percentage.
+    #[zbus(property)]
+    pub async fn input_volume(&self) -> f64 {
+        self.service
+            .default_input
+            .get()
+            .map(|d| d.volume.get().average() * 100.0)
+            .unwrap_or(0.0)
+    }
+
+    /// Whether the default input is muted.
+    #[zbus(property)]
+    pub async fn input_muted(&self) -> bool {
+        self.service
+            .default_input
             .get()
             .map(|d| d.muted.get())
             .unwrap_or(false)

@@ -28,7 +28,7 @@ pub(crate) use self::messages::{MediaCmd, MediaInit, MediaMsg};
 pub(crate) struct MediaModule {
     bar_button: Controller<BarButton>,
     visible: ConfigProperty<bool>,
-    player_watcher: WatcherToken,
+    active_player_watcher_token: WatcherToken,
 }
 
 #[relm4::component(pub(crate))]
@@ -91,7 +91,7 @@ impl Component for MediaModule {
         let model = Self {
             bar_button,
             visible,
-            player_watcher: WatcherToken::new(),
+            active_player_watcher_token: WatcherToken::new(),
         };
         let bar_button = model.bar_button.widget();
         let widgets = view_output!();
@@ -140,7 +140,7 @@ impl Component for MediaModule {
                     let state = player.playback_state.get();
                     Self::update_spinning_state(root, state);
 
-                    let token = self.player_watcher.reset();
+                    let token = self.active_player_watcher_token.reset();
                     Self::spawn_player_watchers(&sender, &player, token);
                 }
             }

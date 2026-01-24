@@ -3,16 +3,27 @@ use clap::Subcommand;
 /// Audio control subcommands.
 #[derive(Subcommand, Debug)]
 pub enum AudioCommands {
-    /// Get or set volume level
+    /// Get or set output volume level
     #[command(allow_hyphen_values = true)]
-    Volume {
+    OutputVolume {
         /// Volume level (0-100) or relative adjustment (+5, -10)
         #[arg(value_name = "LEVEL")]
         level: Option<String>,
     },
 
-    /// Toggle mute state
-    Mute,
+    /// Toggle output mute state
+    OutputMute,
+
+    /// Get or set input volume level
+    #[command(allow_hyphen_values = true)]
+    InputVolume {
+        /// Volume level (0-100) or relative adjustment (+5, -10)
+        #[arg(value_name = "LEVEL")]
+        level: Option<String>,
+    },
+
+    /// Toggle input mute state
+    InputMute,
 
     /// List available audio sinks (outputs)
     Sinks,

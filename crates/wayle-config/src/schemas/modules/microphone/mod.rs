@@ -7,24 +7,17 @@ use crate::{
     schemas::styling::{ColorValue, CssToken},
 };
 
-/// Volume module configuration.
+/// Microphone module configuration.
 #[wayle_config(bar_button)]
-pub struct VolumeConfig {
-    /// Icons for volume levels from low to maximum.
-    ///
-    /// The percentage is divided evenly among icons. With 3 icons:
-    /// 1-33% uses icons[0], 34-66% uses icons[1], 67-100% uses icons[2].
-    #[serde(rename = "level-icons")]
-    #[default(vec![
-        String::from("ld-volume-symbolic"),
-        String::from("ld-volume-1-symbolic"),
-        String::from("ld-volume-2-symbolic"),
-    ])]
-    pub level_icons: ConfigProperty<Vec<String>>,
+pub struct MicrophoneConfig {
+    /// Icon shown when microphone is active (unmuted).
+    #[serde(rename = "icon-active")]
+    #[default(String::from("ld-mic-symbolic"))]
+    pub icon_active: ConfigProperty<String>,
 
-    /// Icon shown when audio output is muted.
+    /// Icon shown when microphone is muted.
     #[serde(rename = "icon-muted")]
-    #[default(String::from("ld-volume-x-symbolic"))]
+    #[default(String::from("ld-mic-off-symbolic"))]
     pub icon_muted: ConfigProperty<String>,
 
     /// Display border around button.
@@ -72,8 +65,8 @@ pub struct VolumeConfig {
     #[default(ColorValue::Token(CssToken::BgSurfaceElevated))]
     pub button_bg_color: ConfigProperty<ColorValue>,
 
-    /// Reserved for dropdown. Not user-configurable.
-    #[serde(rename = "left-click", skip)]
+    /// Shell command on left click.
+    #[serde(rename = "left-click")]
     #[default(String::default())]
     pub left_click: ConfigProperty<String>,
 
@@ -82,29 +75,29 @@ pub struct VolumeConfig {
     #[default(String::default())]
     pub right_click: ConfigProperty<String>,
 
-    /// Shell command on middle click. Default toggles mute.
+    /// Shell command on middle click. Default toggles input mute.
     #[serde(rename = "middle-click")]
-    #[default(String::from("wayle audio output-mute"))]
+    #[default(String::from("wayle audio input-mute"))]
     pub middle_click: ConfigProperty<String>,
 
-    /// Shell command on scroll up. Default increases volume.
+    /// Shell command on scroll up. Default increases input volume.
     #[serde(rename = "scroll-up")]
-    #[default(String::from("wayle audio output-volume +5"))]
+    #[default(String::from("wayle audio input-volume +5"))]
     pub scroll_up: ConfigProperty<String>,
 
-    /// Shell command on scroll down. Default decreases volume.
+    /// Shell command on scroll down. Default decreases input volume.
     #[serde(rename = "scroll-down")]
-    #[default(String::from("wayle audio output-volume -5"))]
+    #[default(String::from("wayle audio input-volume -5"))]
     pub scroll_down: ConfigProperty<String>,
 }
 
-impl ModuleInfoProvider for VolumeConfig {
+impl ModuleInfoProvider for MicrophoneConfig {
     fn module_info() -> ModuleInfo {
         ModuleInfo {
-            name: String::from("volume"),
-            icon: String::from("󰕾"),
-            description: String::from("Audio volume control and mute toggle"),
-            behavior_configs: vec![(String::from("volume"), || schema_for!(VolumeConfig))],
+            name: String::from("microphone"),
+            icon: String::from(""),
+            description: String::from("Microphone input control and mute toggle"),
+            behavior_configs: vec![(String::from("microphone"), || schema_for!(MicrophoneConfig))],
             styling_configs: vec![],
         }
     }

@@ -47,7 +47,7 @@ experience. A successor to HyprPanel without the pain or dependency on Hyprland.
     - [ ] System tray
     - [ ] World clock
     - [ ] Separator
-    - [ ] Microphone
+    - [x] Microphone
     - [ ] RAM
     - [ ] CPU
     - [ ] CPU

@@ -20,19 +20,37 @@ pub trait Audio {
     ///
     /// Volume is specified as a percentage (0.0 to 100.0 for normal range).
     /// Returns the volume that was set (clamped to valid range).
-    async fn set_volume(&self, volume: f64) -> Result<f64>;
+    async fn set_output_volume(&self, volume: f64) -> Result<f64>;
 
-    /// Adjusts the volume by a relative delta.
+    /// Adjusts the output volume by a relative delta.
     ///
     /// Delta is specified as percentage points (e.g., +5.0 or -10.0).
     /// Returns the new volume (clamped to 0-100%).
-    async fn adjust_volume(&self, delta: f64) -> Result<f64>;
+    async fn adjust_output_volume(&self, delta: f64) -> Result<f64>;
 
     /// Sets the mute state for the default output device.
-    async fn set_mute(&self, muted: bool) -> Result<()>;
+    async fn set_output_mute(&self, muted: bool) -> Result<()>;
 
     /// Toggles mute for the default output device. Returns the new mute state.
-    async fn toggle_mute(&self) -> Result<bool>;
+    async fn toggle_output_mute(&self) -> Result<bool>;
+
+    /// Sets the volume for the default input device.
+    ///
+    /// Volume is specified as a percentage (0.0 to 100.0).
+    /// Returns the volume that was set (clamped to valid range).
+    async fn set_input_volume(&self, volume: f64) -> Result<f64>;
+
+    /// Adjusts the input volume by a relative delta.
+    ///
+    /// Delta is specified as percentage points (e.g., +5.0 or -10.0).
+    /// Returns the new volume (clamped to 0-100%).
+    async fn adjust_input_volume(&self, delta: f64) -> Result<f64>;
+
+    /// Sets the mute state for the default input device.
+    async fn set_input_mute(&self, muted: bool) -> Result<()>;
+
+    /// Toggles mute for the default input device. Returns the new mute state.
+    async fn toggle_input_mute(&self) -> Result<bool>;
 
     /// Sets the default output device (sink) by index.
     async fn set_default_sink(&self, device_index: u32) -> Result<()>;
@@ -58,11 +76,19 @@ pub trait Audio {
 
     /// Current volume of the default output as a percentage.
     #[zbus(property)]
-    fn volume(&self) -> Result<f64>;
+    fn output_volume(&self) -> Result<f64>;
 
     /// Whether the default output is muted.
     #[zbus(property)]
-    fn muted(&self) -> Result<bool>;
+    fn output_muted(&self) -> Result<bool>;
+
+    /// Current volume of the default input as a percentage.
+    #[zbus(property)]
+    fn input_volume(&self) -> Result<f64>;
+
+    /// Whether the default input is muted.
+    #[zbus(property)]
+    fn input_muted(&self) -> Result<bool>;
 
     /// Name of the default output device.
     #[zbus(property)]

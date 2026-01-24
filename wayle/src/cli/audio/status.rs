@@ -9,12 +9,12 @@ pub async fn execute() -> CliAction {
     let (_connection, proxy) = connect().await?;
 
     let volume = proxy
-        .volume()
+        .output_volume()
         .await
         .map_err(|e| format_error("get volume", e))?;
 
     let muted = proxy
-        .muted()
+        .output_muted()
         .await
         .map_err(|e| format_error("get mute state", e))?;
 

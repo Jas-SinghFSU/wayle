@@ -23,7 +23,7 @@ pub(crate) use self::messages::{VolumeCmd, VolumeInit, VolumeMsg};
 
 pub(crate) struct VolumeModule {
     bar_button: Controller<BarButton>,
-    device_watcher: WatcherToken,
+    active_device_watcher_token: WatcherToken,
 }
 
 #[relm4::component(pub(crate))]
@@ -90,7 +90,7 @@ impl Component for VolumeModule {
 
         let model = Self {
             bar_button,
-            device_watcher: WatcherToken::new(),
+            active_device_watcher_token: WatcherToken::new(),
         };
         let bar_button = model.bar_button.widget();
         let widgets = view_output!();
@@ -126,7 +126,7 @@ impl Component for VolumeModule {
                 if let Some(device) = device {
                     self.update_display(volume_config, &device);
 
-                    let token = self.device_watcher.reset();
+                    let token = self.active_device_watcher_token.reset();
                     Self::spawn_device_watchers(&sender, &device, token);
                 }
             }
@@ -149,7 +149,7 @@ impl VolumeModule {
         self.bar_button.emit(BarButtonInput::SetLabel(label));
 
         let icons = config.level_icons.get();
-        let muted_icon_val = config.muted_icon.get();
+        let muted_icon_val = config.icon_muted.get();
         let icon = select_icon(&IconContext {
             percentage,
             muted,
@@ -169,7 +169,7 @@ impl VolumeModule {
         });
 
         let level_icons = config.level_icons.clone();
-        let muted_icon = config.muted_icon.clone();
+        let muted_icon = config.icon_muted.clone();
         watch!(sender, [level_icons.watch(), muted_icon.watch()], |out| {
             let _ = out.send(VolumeCmd::IconConfigChanged);
         });

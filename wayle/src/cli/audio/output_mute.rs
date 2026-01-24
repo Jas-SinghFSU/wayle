@@ -9,7 +9,7 @@ pub async fn execute() -> CliAction {
     let (_connection, proxy) = connect().await?;
 
     let muted = proxy
-        .toggle_mute()
+        .toggle_output_mute()
         .await
         .map_err(|e| format_error("toggle mute", e))?;
 

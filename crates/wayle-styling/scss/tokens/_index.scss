@@ -67,7 +67,7 @@ $base-btn-gap: 0.5rem;
     // Backgrounds
     --bg-base: var(--palette-bg);
     --bg-surface: var(--palette-surface);
-    --bg-surface-elevated: color-mix(in srgb, var(--palette-surface) 96%, var(--palette-fg));
+    --bg-surface-elevated: color-mix(in srgb, var(--palette-surface) 93%, var(--palette-fg));
     --bg-elevated: var(--palette-elevated);
     --bg-overlay: color-mix(in srgb, var(--palette-elevated) 92%, var(--palette-fg));
     --bg-hover: color-mix(in srgb, var(--palette-elevated) 88%, var(--palette-fg));
