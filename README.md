@@ -41,7 +41,7 @@ experience. A successor to HyprPanel without the pain or dependency on Hyprland.
     - [x] Media
     - [ ] Notification
     - [x] Volume
-    - [ ] Network
+    - [x] Network
     - [ ] Bluetooth
     - [x] Clock
     - [ ] System tray
