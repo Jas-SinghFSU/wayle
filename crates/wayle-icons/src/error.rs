@@ -3,12 +3,14 @@ use std::path::PathBuf;
 use thiserror::Error;
 
 /// Reason why SVG validation failed.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SvgValidationError {
     /// Content does not start with '<'.
     NotXml,
     /// Missing `<svg>` element.
     MissingSvgElement,
+    /// SVG parsing failed.
+    ParseError(String),
 }
 
 impl std::fmt::Display for SvgValidationError {
@@ -16,6 +18,7 @@ impl std::fmt::Display for SvgValidationError {
         match self {
             Self::NotXml => write!(f, "content does not start with '<'"),
             Self::MissingSvgElement => write!(f, "missing <svg> element"),
+            Self::ParseError(msg) => write!(f, "{msg}"),
         }
     }
 }
@@ -37,6 +40,16 @@ pub enum Error {
     /// HTTP request failed.
     #[error("HTTP request failed: {0}")]
     HttpError(#[from] reqwest::Error),
+
+    /// Cannot read file.
+    #[error("cannot read file '{path}'")]
+    ReadError {
+        /// Path that failed to read.
+        path: PathBuf,
+        /// The underlying I/O error.
+        #[source]
+        source: std::io::Error,
+    },
 
     /// Cannot write icon to disk.
     #[error("cannot write icon to '{path}'")]

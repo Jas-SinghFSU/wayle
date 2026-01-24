@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use clap::Subcommand;
 
 use crate::styled_header;
@@ -15,6 +17,14 @@ pub enum IconsCommands {
         /// Icon slugs to install (e.g., home settings bell)
         #[arg(required = true)]
         slugs: Vec<String>,
+    },
+    /// Import a local SVG file as a custom icon
+    #[command(after_long_help = IMPORT_HELP)]
+    Import {
+        /// Path to the SVG file
+        path: PathBuf,
+        /// Icon name (without prefix or -symbolic suffix)
+        name: String,
     },
     /// Remove installed icons
     Remove {
@@ -48,4 +58,13 @@ const INSTALL_HELP: &str = concat!(
     "\n",
     "Run 'wayle icons sources' to see all available icon sources.\n",
     "Icons are saved to ~/.local/share/wayle/icons/ as GTK symbolic icons.",
+);
+
+const IMPORT_HELP: &str = concat!(
+    styled_header!("Examples:"),
+    "\n",
+    "    wayle icons import ~/Downloads/my-icon.svg my-icon\n",
+    "        -> cm-my-icon-symbolic\n",
+    "\n",
+    "Custom icons use the 'cm-' prefix to distinguish them from other sources.",
 );

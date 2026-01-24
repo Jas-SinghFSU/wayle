@@ -6,6 +6,7 @@
 use std::{fs, path::Path};
 
 use tracing::{debug, info, warn};
+use usvg::{Options, Tree};
 
 use crate::{
     error::{Error, Result, SvgValidationError},
@@ -13,6 +14,8 @@ use crate::{
     sources::IconSource,
     transform,
 };
+
+const CUSTOM_PREFIX: &str = "cm";
 
 /// Result of a batch icon installation operation.
 #[derive(Debug, Clone, Default)]
@@ -221,6 +224,50 @@ impl IconManager {
             .icons_dir()
             .join(format!("{icon_name}.svg"))
             .exists()
+    }
+
+    /// Imports a local SVG file as a custom icon.
+    ///
+    /// Validates the SVG using usvg, transforms it for GTK compatibility,
+    /// and installs it with the `cm-` prefix.
+    ///
+    /// # Errors
+    ///
+    /// Returns error if the file doesn't exist, isn't a valid SVG, or cannot be written.
+    pub fn import_local(&self, path: &Path, name: &str) -> Result<String> {
+        if !path.exists() {
+            return Err(Error::NotFound {
+                name: path.display().to_string(),
+            });
+        }
+
+        let content = fs::read_to_string(path).map_err(|source| Error::ReadError {
+            path: path.to_path_buf(),
+            source,
+        })?;
+
+        Tree::from_str(&content, &Options::default()).map_err(|err| Error::InvalidSvg {
+            slug: name.to_string(),
+            reason: SvgValidationError::ParseError(err.to_string()),
+        })?;
+
+        let icons_dir = self.registry.icons_dir();
+        fs::create_dir_all(&icons_dir).map_err(|source| Error::DirectoryError {
+            path: icons_dir.clone(),
+            source,
+        })?;
+
+        let transformed = transform::to_symbolic(&content);
+        let icon_name = format!("{CUSTOM_PREFIX}-{name}-symbolic");
+        let dest_path = icons_dir.join(format!("{icon_name}.svg"));
+
+        fs::write(&dest_path, &transformed).map_err(|source| Error::WriteError {
+            path: dest_path,
+            source,
+        })?;
+
+        info!(icon = %icon_name, path = %path.display(), "Imported custom icon");
+        Ok(icon_name)
     }
 
     fn validate_svg(content: &str, slug: &str) -> Result<()> {

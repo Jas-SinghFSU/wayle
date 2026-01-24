@@ -1,5 +1,7 @@
 /// Icon command definitions
 pub mod commands;
+/// Import local SVG files
+pub mod import;
 /// Install icons from CDN
 pub mod install;
 /// List installed icons
@@ -26,6 +28,7 @@ pub async fn execute(command: IconsCommands) -> CliAction {
     match command {
         IconsCommands::Setup => setup::execute(),
         IconsCommands::Install { source, slugs } => install::execute(source, slugs).await,
+        IconsCommands::Import { path, name } => import::execute(path, name),
         IconsCommands::Remove { names } => remove::execute(names),
         IconsCommands::Sources => sources::execute(),
         IconsCommands::List {
