@@ -84,13 +84,9 @@ async fn init_services() -> Result<StartupTimer, Box<dyn Error>> {
             .await?,
     );
     let config_service = timer.time("Config", ConfigService::load()).await?;
-    let ignored_players = config_service
-        .config()
-        .modules
-        .media
-        .players_ignored
-        .get()
-        .clone();
+    let media_config = &config_service.config().modules.media;
+    let ignored_players = media_config.players_ignored.get().clone();
+    let priority_players = media_config.player_priority.get().clone();
     registry.register_arc(config_service);
 
     registry.register(timer.time("Battery", BatteryService::new()).await?);
@@ -102,6 +98,7 @@ async fn init_services() -> Result<StartupTimer, Box<dyn Error>> {
                 MediaService::builder()
                     .with_daemon()
                     .ignored_players(ignored_players)
+                    .priority_players(priority_players)
                     .build(),
             )
             .await?,

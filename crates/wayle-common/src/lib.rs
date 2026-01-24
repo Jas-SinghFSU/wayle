@@ -27,6 +27,7 @@ pub use property::{
     ResetRuntimeLayer, SubscribeChanges, ValueSource,
 };
 pub use state::RuntimeState;
+pub use watchers::WatcherToken;
 
 /// Root path for service object paths in D-Bus hierarchy.
 pub const ROOT_PATH: &str = "/";

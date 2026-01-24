@@ -11,6 +11,9 @@ settings-modules-media-player-icons = Player Icons
 settings-modules-media-players-ignored = Ignored Players
     .description = Player bus name patterns to exclude from discovery
 
+settings-modules-media-player-priority = Player Priority
+    .description = Preferred player order as glob patterns matching bus names
+
 settings-modules-media-format = Format
     .description = Label format with placeholders: {"{title}"}, {"{artist}"}, {"{album}"}, {"{status}"}, {"{status_icon}"}
 

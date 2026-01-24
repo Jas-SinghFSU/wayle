@@ -2,13 +2,13 @@
 name = "wayle-network"
 version.workspace = true
 edition.workspace = true
-license.workspace = true
-authors.workspace = true
-repository.workspace = true
 rust-version.workspace = true
+repository.workspace = true
+license.workspace = true
 
 [dependencies]
 async-trait.workspace = true
+bitflags.workspace = true
 derive_more.workspace = true
 futures.workspace = true
 serde.workspace = true
@@ -17,10 +17,9 @@ tokio.workspace = true
 tokio-stream.workspace = true
 tokio-util.workspace = true
 tracing.workspace = true
-zbus.workspace = true
 wayle-common.workspace = true
 wayle-traits.workspace = true
-bitflags.workspace = true
+zbus.workspace = true
 
 [lints]
 workspace = true

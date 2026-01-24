@@ -22,6 +22,7 @@ use crate::{
 #[derive(Default)]
 pub struct MediaServiceBuilder {
     ignored_players: Vec<String>,
+    priority_players: Vec<String>,
     register_daemon: bool,
 }
 
@@ -42,6 +43,15 @@ impl MediaServiceBuilder {
     /// Adds a single pattern for a media player to ignore.
     pub fn ignore_player(mut self, pattern: String) -> Self {
         self.ignored_players.push(pattern);
+        self
+    }
+
+    /// Sets the priority order for player selection.
+    ///
+    /// Patterns are matched against bus names in order. First match wins.
+    /// Players matching earlier patterns are preferred when selecting active player.
+    pub fn priority_players(mut self, patterns: Vec<String>) -> Self {
+        self.priority_players = patterns;
         self
     }
 
@@ -78,6 +88,7 @@ impl MediaServiceBuilder {
             player_list: Property::new(Vec::new()),
             active_player: Property::new(None),
             ignored_patterns: self.ignored_players,
+            priority_patterns: self.priority_players,
             cancellation_token: cancellation_token.clone(),
         });
 

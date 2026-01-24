@@ -2,11 +2,10 @@
 name = "wayle-shell"
 version.workspace = true
 edition.workspace = true
-license.workspace = true
-authors.workspace = true
-repository.workspace = true
 rust-version.workspace = true
 description = "Wayle desktop shell - GUI panel and widgets"
+repository.workspace = true
+license.workspace = true
 
 [[bin]]
 name = "wayle-shell"
@@ -15,38 +14,37 @@ path = "src/main.rs"
 [dependencies]
 console.workspace = true
 futures.workspace = true
-indicatif.workspace = true
 gdk4.workspace = true
 gtk4.workspace = true
 gtk4-layer-shell.workspace = true
+indicatif.workspace = true
 notify.workspace = true
 relm4.workspace = true
 tokio = { workspace = true, features = ["full"] }
 tokio-stream.workspace = true
+tokio-util.workspace = true
 tracing.workspace = true
 tracing-appender.workspace = true
 tracing-subscriber.workspace = true
-zbus.workspace = true
-
-# Common dependencies
-wayle-common = { workspace = true, features = ["schema"] }
-wayle-config.workspace = true
-wayle-styling = { workspace = true }
-wayle-widgets = { workspace = true }
-
 # Service dependencies
 wayle-audio.workspace = true
 wayle-battery.workspace = true
 wayle-bluetooth.workspace = true
 wayle-cava.workspace = true
+# Common dependencies
+wayle-common = { workspace = true, features = ["schema"] }
+wayle-config.workspace = true
 wayle-hyprland.workspace = true
 wayle-icons.workspace = true
 wayle-media.workspace = true
 wayle-network.workspace = true
 wayle-notification.workspace = true
 wayle-power-profiles.workspace = true
+wayle-styling = { workspace = true }
 wayle-systray.workspace = true
 wayle-wallpaper.workspace = true
+wayle-widgets = { workspace = true }
+zbus.workspace = true
 
 [lints]
 workspace = true

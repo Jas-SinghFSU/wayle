@@ -97,6 +97,7 @@ mod dbus;
 mod error;
 mod monitoring;
 mod proxy;
+mod selection;
 mod service;
 /// Type definitions for media service configuration, states, and identifiers
 pub mod types;

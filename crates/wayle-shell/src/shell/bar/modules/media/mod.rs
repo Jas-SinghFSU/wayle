@@ -1,15 +1,23 @@
 mod helpers;
 mod messages;
 
+use std::sync::Arc;
+
 use gtk::prelude::WidgetExt;
 use relm4::prelude::*;
+use tokio_util::sync::CancellationToken;
 use tracing::error;
-use wayle_common::{ConfigProperty, process, services, watch};
+use wayle_common::{
+    ConfigProperty, WatcherToken, process::spawn_shell_quiet, services, watch, watch_cancellable,
+};
 use wayle_config::{
     ConfigService,
-    schemas::{modules::MediaIconType, styling::CssToken},
+    schemas::{
+        modules::{MediaConfig, MediaIconType},
+        styling::CssToken,
+    },
 };
-use wayle_media::{MediaService, types::PlaybackState};
+use wayle_media::{MediaService, core::player::Player, types::PlaybackState};
 use wayle_widgets::prelude::{
     BarButton, BarButtonBehavior, BarButtonColors, BarButtonInit, BarButtonInput, BarButtonOutput,
 };
@@ -20,6 +28,7 @@ pub(crate) use self::messages::{MediaCmd, MediaInit, MediaMsg};
 pub(crate) struct MediaModule {
     bar_button: Controller<BarButton>,
     visible: ConfigProperty<bool>,
+    player_watcher: WatcherToken,
 }
 
 #[relm4::component(pub(crate))]
@@ -82,6 +91,7 @@ impl Component for MediaModule {
         let model = Self {
             bar_button,
             visible,
+            player_watcher: WatcherToken::new(),
         };
         let bar_button = model.bar_button.widget();
         let widgets = view_output!();
@@ -102,7 +112,7 @@ impl Component for MediaModule {
         };
 
         if !cmd.is_empty()
-            && let Err(e) = process::spawn_shell(&cmd)
+            && let Err(e) = spawn_shell_quiet(&cmd)
         {
             error!(error = %e, cmd = %cmd, "failed to spawn command");
         }
@@ -130,7 +140,8 @@ impl Component for MediaModule {
                     let state = player.playback_state.get();
                     Self::update_spinning_state(root, state);
 
-                    Self::spawn_player_watchers(&sender, &player);
+                    let token = self.player_watcher.reset();
+                    Self::spawn_player_watchers(&sender, &player, token);
                 }
             }
             MediaCmd::MetadataChanged => {
@@ -140,11 +151,12 @@ impl Component for MediaModule {
                     self.bar_button.emit(BarButtonInput::SetLabel(label));
                 }
             }
-            MediaCmd::PlaybackStateChanged(state) => {
+            MediaCmd::PlaybackStateChanged => {
                 let media_service = services::get::<MediaService>();
                 if let Some(player) = media_service.active_player() {
                     let label = Self::build_label(media_config, &player);
                     self.bar_button.emit(BarButtonInput::SetLabel(label));
+                    let state = player.playback_state.get();
                     Self::update_spinning_state(root, state);
                 }
             }
@@ -170,10 +182,7 @@ impl Component for MediaModule {
 }
 
 impl MediaModule {
-    fn spawn_watchers(
-        sender: &ComponentSender<Self>,
-        config: &wayle_config::schemas::modules::MediaConfig,
-    ) {
+    fn spawn_watchers(sender: &ComponentSender<Self>, config: &MediaConfig) {
         let media_service = services::get::<MediaService>();
 
         let active_stream = media_service.active_player.watch();
@@ -210,23 +219,22 @@ impl MediaModule {
 
     fn spawn_player_watchers(
         sender: &ComponentSender<Self>,
-        player: &std::sync::Arc<wayle_media::core::player::Player>,
+        player: &Arc<Player>,
+        token: CancellationToken,
     ) {
         let metadata = player.metadata.clone();
-        watch!(sender, [metadata.watch()], |out| {
+        let metadata_token = token.clone();
+        watch_cancellable!(sender, metadata_token, [metadata.watch()], |out| {
             let _ = out.send(MediaCmd::MetadataChanged);
         });
 
         let playback_state = player.playback_state.clone();
-        watch!(sender, [playback_state.watch()], |out| {
-            let _ = out.send(MediaCmd::PlaybackStateChanged(playback_state.get()));
+        watch_cancellable!(sender, token, [playback_state.watch()], |out| {
+            let _ = out.send(MediaCmd::PlaybackStateChanged);
         });
     }
 
-    fn build_label(
-        config: &wayle_config::schemas::modules::MediaConfig,
-        player: &wayle_media::core::player::Player,
-    ) -> String {
+    fn build_label(config: &MediaConfig, player: &Player) -> String {
         let format = config.format.get();
         let title = player.metadata.title.get();
         let artist = player.metadata.artist.get();
@@ -240,10 +248,7 @@ impl MediaModule {
         })
     }
 
-    fn build_icon(
-        config: &wayle_config::schemas::modules::MediaConfig,
-        player: &wayle_media::core::player::Player,
-    ) -> String {
+    fn build_icon(config: &MediaConfig, player: &Player) -> String {
         let icon_name = config.icon_name.get();
         let spinning_disc_icon = config.spinning_disc_icon.get();
         let player_icons = config.player_icons.get();

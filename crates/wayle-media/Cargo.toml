@@ -2,10 +2,9 @@
 name = "wayle-media"
 version.workspace = true
 edition.workspace = true
-license.workspace = true
-authors.workspace = true
-repository.workspace = true
 rust-version.workspace = true
+repository.workspace = true
+license.workspace = true
 
 [dependencies]
 async-stream.workspace = true
@@ -18,8 +17,8 @@ tokio.workspace = true
 tokio-stream.workspace = true
 tokio-util.workspace = true
 tracing.workspace = true
-wayle-traits.workspace = true
 wayle-common.workspace = true
+wayle-traits.workspace = true
 zbus.workspace = true
 
 [lints]

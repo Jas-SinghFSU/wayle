@@ -30,6 +30,8 @@ pub struct MediaService {
     pub active_player: Property<Option<Arc<Player>>>,
     /// Bus name patterns to exclude from discovery.
     pub ignored_patterns: Vec<String>,
+    /// Priority order for player selection (glob patterns).
+    pub priority_patterns: Vec<String>,
 }
 
 impl MediaService {

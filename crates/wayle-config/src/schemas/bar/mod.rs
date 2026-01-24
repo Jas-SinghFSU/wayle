@@ -127,7 +127,7 @@ pub struct BarConfig {
 
     /// Button label font weight.
     #[serde(rename = "button-label-weight")]
-    #[default(FontWeightClass::Normal)]
+    #[default(FontWeightClass::Semibold)]
     pub button_label_weight: ConfigProperty<FontWeightClass>,
 
     /// Button label container padding.

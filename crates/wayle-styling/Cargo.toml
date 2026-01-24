@@ -2,11 +2,10 @@
 name = "wayle-styling"
 version.workspace = true
 edition.workspace = true
-license.workspace = true
-authors.workspace = true
-repository.workspace = true
 rust-version.workspace = true
 description = "SCSS compilation and theming for Wayle"
+repository.workspace = true
+license.workspace = true
 
 [dependencies]
 grass.workspace = true

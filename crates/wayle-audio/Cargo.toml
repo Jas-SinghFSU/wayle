@@ -2,10 +2,9 @@
 name = "wayle-audio"
 version.workspace = true
 edition.workspace = true
-license.workspace = true
-authors.workspace = true
-repository.workspace = true
 rust-version.workspace = true
+repository.workspace = true
+license.workspace = true
 
 [dependencies]
 async-trait.workspace = true
@@ -23,7 +22,7 @@ wayle-traits.workspace = true
 zbus.workspace = true
 
 [dev-dependencies]
-tokio = { workspace = true, features = ["rt-multi-thread", "macros", "time"] }
+tokio = { workspace = true, features = ["macros", "rt-multi-thread", "time"] }
 
 [lints]
 workspace = true

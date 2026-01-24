@@ -2,14 +2,10 @@
 name = "wayle-config"
 version.workspace = true
 edition.workspace = true
-license.workspace = true
-authors.workspace = true
-repository.workspace = true
 rust-version.workspace = true
 description = "Configuration management for Wayle"
-
-[features]
-default = []
+repository.workspace = true
+license.workspace = true
 
 [dependencies]
 notify.workspace = true
@@ -20,9 +16,11 @@ thiserror.workspace = true
 tokio.workspace = true
 toml.workspace = true
 tracing.workspace = true
-
 wayle-common = { workspace = true, features = ["schema"] }
 wayle-derive.workspace = true
+
+[features]
+default = []
 
 [lints]
 workspace = true

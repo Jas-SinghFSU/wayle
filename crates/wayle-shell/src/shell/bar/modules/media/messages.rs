@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use wayle_media::{core::player::Player, types::PlaybackState};
+use wayle_media::core::player::Player;
 use wayle_widgets::prelude::BarSettings;
 
 pub struct MediaInit {
@@ -20,7 +20,7 @@ pub enum MediaMsg {
 pub enum MediaCmd {
     PlayerChanged(Option<Arc<Player>>),
     MetadataChanged,
-    PlaybackStateChanged(PlaybackState),
+    PlaybackStateChanged,
     UpdateIcon(String),
     IconTypeChanged,
 }

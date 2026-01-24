@@ -1,6 +1,5 @@
 [workspace]
 resolver = "2"
-exclude = ["sandbox"]
 members = [
     "crates/wayle-audio",
     "crates/wayle-battery",
@@ -24,66 +23,62 @@ members = [
     "crates/wayle-widgets",
     "wayle",
 ]
+exclude = ["sandbox"]
 
 [workspace.package]
-edition = "2024"
 version = "0.1.0"
-license = "MIT"
-authors = ["Jas Singh"]
-repository = "https://github.com/Jas-SinghFSU/wayle"
+edition = "2024"
 rust-version = "1.92"
+repository = "https://github.com/Jas-SinghFSU/wayle"
+license = "MIT"
 
 [workspace.dependencies]
 async-stream = "0.3.6"
-i18n-embed = { version = "0.16", features = [
-    "fluent-system",
-    "desktop-requester",
-] }
-i18n-embed-fl = "0.10"
-rust-embed = "8"
-unic-langid = "0.9"
 async-trait = "0.1.89"
 bitflags = "2.9.4"
 chrono = { version = "0.4.42", features = ["clock"] }
-clap = { version = "4.5.48", features = ["derive", "color"] }
+clap = { version = "4.5.48", features = ["color", "derive"] }
 console = "0.16"
 derive_more = { version = "2.0.1", default-features = false, features = [
     "debug",
 ] }
 futures = "0.3.31"
+gdk-pixbuf = { version = "0.21.2" }
+gdk4 = { version = "0.10.1" }
+glib = { version = "0.21.3" }
 grass = "0.13.4"
+gtk4 = { version = "0.10.1", features = ["v4_12"] }
+gtk4-layer-shell = "0.7"
+i18n-embed = { version = "0.16", features = [
+    "desktop-requester",
+    "fluent-system",
+] }
+i18n-embed-fl = "0.10"
 indicatif = "0.18"
-libpulse-binding = "2.30.1"
 libc = "0.2.176"
+libpulse-binding = "2.30.1"
 notify = "8"
 palette = "0.7"
 rand = "0.9.2"
 relm4 = { version = "0.10", features = ["macros"] }
 relm4-components = { version = "0.10.0" }
 reqwest = { version = "0.13", default-features = false, features = ["rustls"] }
+rusqlite = { version = "0.38.0", features = ["bundled"] }
+rust-embed = "8"
 schemars = { version = "1.0.4", features = ["derive"] }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.145"
+smithay-client-toolkit = "0.20"
 thiserror = "2.0.17"
-toml = "0.9.7"
 tokio = { version = "1.47.1", features = ["full", "time"] }
-tokio-util = "0.7.16"
 tokio-stream = { version = "0.1.17", features = ["sync"] }
+tokio-util = "0.7.16"
+toml = "0.9.7"
 tracing = "0.1.41"
+tracing-appender = "0.2.3"
 tracing-attributes = "0.1.30"
 tracing-subscriber = { version = "0.3.20", features = ["env-filter", "json"] }
-tracing-appender = "0.2.3"
-zbus = "5.11.0"
-smithay-client-toolkit = "0.20"
-rusqlite = { version = "0.38.0", features = ["bundled"] }
-wildcard = "0.3"
-
-gdk4 = { version = "0.10.1" }
-gtk4 = { version = "0.10.1", features = ["v4_12"] }
-gtk4-layer-shell = "0.7"
-gdk-pixbuf = { version = "0.21.2" }
-glib = { version = "0.21.3" }
-
+unic-langid = "0.9"
 wayle-audio = { path = "crates/wayle-audio" }
 wayle-battery = { path = "crates/wayle-battery" }
 wayle-bluetooth = { path = "crates/wayle-bluetooth" }
@@ -104,25 +99,27 @@ wayle-systray = { path = "crates/wayle-systray" }
 wayle-traits = { path = "crates/wayle-traits" }
 wayle-wallpaper = { path = "crates/wayle-wallpaper" }
 wayle-widgets = { path = "crates/wayle-widgets" }
+wildcard = "0.3"
+zbus = "5.11.0"
+
+[workspace.lints.clippy]
+cognitive_complexity = "warn"
+expect_used = "deny"
+inefficient_to_string = "warn"
+large_types_passed_by_value = "warn"
+manual_ok_or = "warn"
+missing_errors_doc = "warn"
+missing_panics_doc = "warn"
+module_name_repetitions = "allow"
+panic = "warn"
+similar_names = "allow"
+too_many_lines = "warn"
+unwrap_used = "deny"
 
 [workspace.lints.rust]
-unsafe_code = "deny"
 missing_docs = "warn"
+unsafe_code = "deny"
 
 [profile.release]
 lto = true
 codegen-units = 1
-
-[workspace.lints.clippy]
-inefficient_to_string = "warn"
-large_types_passed_by_value = "warn"
-manual_ok_or = "warn"
-module_name_repetitions = "allow"
-similar_names = "allow"
-unwrap_used = "deny"
-expect_used = "deny"
-panic = "warn"
-cognitive_complexity = "warn"
-too_many_lines = "warn"
-missing_errors_doc = "warn"
-missing_panics_doc = "warn"

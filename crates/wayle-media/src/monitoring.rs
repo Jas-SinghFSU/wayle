@@ -9,7 +9,11 @@ use wayle_traits::{Reactive, ServiceMonitoring};
 use zbus::{Connection, fdo::DBusProxy};
 
 use super::{core::player::Player, error::Error, types::PlayerId};
-use crate::{core::player::LivePlayerParams, service::MediaService};
+use crate::{
+    core::player::LivePlayerParams,
+    selection::{SelectionContext, select_best_player},
+    service::MediaService,
+};
 
 const MPRIS_BUS_PREFIX: &str = "org.mpris.MediaPlayer2.";
 
@@ -24,6 +28,7 @@ impl ServiceMonitoring for MediaService {
             &self.player_list,
             &self.active_player,
             &self.ignored_patterns,
+            &self.priority_patterns,
             &self.cancellation_token,
         )
         .await?;
@@ -49,6 +54,7 @@ impl ServiceMonitoring for MediaService {
             self.player_list.clone(),
             self.active_player.clone(),
             self.ignored_patterns.clone(),
+            self.priority_patterns.clone(),
             self.cancellation_token.child_token(),
         );
 
@@ -62,6 +68,7 @@ async fn discover_existing_players(
     player_list: &Property<Vec<Arc<Player>>>,
     active_player: &Property<Option<Arc<Player>>>,
     ignored_patterns: &[String],
+    priority_patterns: &[String],
     cancellation_token: &CancellationToken,
 ) -> Result<(), Error> {
     let dbus_proxy = DBusProxy::new(connection)
@@ -81,6 +88,7 @@ async fn discover_existing_players(
                 players,
                 player_list,
                 active_player,
+                priority_patterns,
                 player_id,
                 cancellation_token.child_token(),
             )
@@ -97,6 +105,7 @@ fn spawn_name_monitoring(
     player_list: Property<Vec<Arc<Player>>>,
     active_player: Property<Option<Arc<Player>>>,
     ignored_patterns: Vec<String>,
+    priority_patterns: Vec<String>,
     cancellation_token: CancellationToken,
 ) {
     let connection = connection.clone();
@@ -137,12 +146,13 @@ fn spawn_name_monitoring(
                     &players,
                     &player_list,
                     &active_player,
+                    &priority_patterns,
                     player_id.clone(),
                     cancellation_token.child_token(),
                 )
                 .await;
             } else if is_player_removed {
-                handle_player_removed(&players, &player_list, &active_player, player_id)
+                handle_player_removed(&players, &player_list, &active_player, &priority_patterns, player_id)
                     .await;
             }
                 }
@@ -159,51 +169,49 @@ async fn handle_player_added(
     players: &Arc<RwLock<HashMap<PlayerId, Arc<Player>>>>,
     player_list: &Property<Vec<Arc<Player>>>,
     active_player: &Property<Option<Arc<Player>>>,
+    priority_patterns: &[String],
     player_id: PlayerId,
     cancellation_token: CancellationToken,
 ) {
-    match Player::get_live(LivePlayerParams {
+    let player = match Player::get_live(LivePlayerParams {
         connection,
         player_id: player_id.clone(),
         cancellation_token: &cancellation_token,
     })
     .await
     {
-        Ok(player) => {
-            let mut players_map = players.write().await;
-            players_map.insert(player_id.clone(), Arc::clone(&player));
-
-            if active_player.get().is_none() {
-                active_player.set(Some(player.clone()));
-            }
-
-            let mut current_list = player_list.get();
-            current_list.push(player.clone());
-            player_list.set(current_list);
-
-            debug!("Player {} added", player_id);
-        }
+        Ok(player) => player,
         Err(e) => {
             warn!(error = %e, player_id = %player_id, "cannot create player");
+            return;
         }
-    }
+    };
+
+    let mut players_map = players.write().await;
+    players_map.insert(player_id.clone(), Arc::clone(&player));
+
+    let mut current_list = player_list.get();
+    current_list.push(player.clone());
+    player_list.set(current_list.clone());
+
+    let best = select_best_player(&SelectionContext {
+        players: &current_list,
+        priority_patterns,
+    });
+    active_player.set(best);
+
+    debug!("Player {} added", player_id);
 }
 
 async fn handle_player_removed(
     players: &Arc<RwLock<HashMap<PlayerId, Arc<Player>>>>,
     player_list: &Property<Vec<Arc<Player>>>,
     active_player: &Property<Option<Arc<Player>>>,
+    priority_patterns: &[String],
     player_id: PlayerId,
 ) {
     let mut players_map = players.write().await;
     players_map.remove(&player_id);
-
-    if let Some(current_active) = active_player.get()
-        && current_active.id == player_id
-    {
-        let new_active = players_map.values().next().cloned();
-        active_player.set(new_active);
-    }
 
     let mut current_players = player_list.get();
     current_players.retain(|player| {
@@ -218,7 +226,19 @@ async fn handle_player_removed(
         false
     });
 
-    player_list.set(current_players);
+    player_list.set(current_players.clone());
+
+    let needs_reselection = active_player
+        .get()
+        .is_some_and(|current| current.id == player_id);
+
+    if needs_reselection {
+        let best = select_best_player(&SelectionContext {
+            players: &current_players,
+            priority_patterns,
+        });
+        active_player.set(best);
+    }
 
     debug!("Player {} removed", player_id);
 }

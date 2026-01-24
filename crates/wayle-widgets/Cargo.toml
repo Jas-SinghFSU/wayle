@@ -1,20 +1,19 @@
 [package]
 name = "wayle-widgets"
-description = "Reusable GTK4/Relm4 widget library for Wayle"
-edition.workspace = true
 version.workspace = true
-license.workspace = true
-authors.workspace = true
-repository.workspace = true
+edition.workspace = true
 rust-version.workspace = true
+description = "Reusable GTK4/Relm4 widget library for Wayle"
+repository.workspace = true
+license.workspace = true
 
 [dependencies]
 futures.workspace = true
 glib.workspace = true
-tokio.workspace = true
-tracing.workspace = true
 gtk4 = { workspace = true, features = ["v4_10"] }
 relm4.workspace = true
+tokio.workspace = true
+tracing.workspace = true
 wayle-common.workspace = true
 wayle-config.workspace = true
 

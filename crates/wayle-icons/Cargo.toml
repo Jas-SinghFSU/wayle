@@ -2,11 +2,10 @@
 name = "wayle-icons"
 version.workspace = true
 edition.workspace = true
-license.workspace = true
-authors.workspace = true
-repository.workspace = true
 rust-version.workspace = true
 description = "Icon management for Wayle with CDN fetching and GTK integration"
+repository.workspace = true
+license.workspace = true
 
 [dependencies]
 gtk4.workspace = true

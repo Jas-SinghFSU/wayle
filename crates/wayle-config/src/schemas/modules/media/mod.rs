@@ -36,6 +36,15 @@ pub struct MediaConfig {
     #[default(Vec::new())]
     pub players_ignored: ConfigProperty<Vec<String>>,
 
+    /// Preferred player priority order as glob patterns matching bus names.
+    ///
+    /// When no player is manually selected, this determines which player
+    /// becomes active. Patterns are checked in order; first match wins.
+    /// If no pattern matches, the first playing player is selected.
+    #[serde(rename = "player-priority")]
+    #[default(Vec::new())]
+    pub player_priority: ConfigProperty<Vec<String>>,
+
     /// Format string for the label.
     ///
     /// The `format` field supports these placeholders:
