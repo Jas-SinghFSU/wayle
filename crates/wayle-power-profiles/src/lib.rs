@@ -91,6 +91,16 @@
 //! # }
 //! ```
 //!
+//! # D-Bus Interface
+//!
+//! When `with_daemon()` is enabled, the service registers on the session bus.
+//!
+//! - **Service:** `com.wayle.PowerProfiles1`
+//! - **Path:** `/com/wayle/PowerProfiles`
+//! - **Interface:** `com.wayle.PowerProfiles1`
+//!
+//! See [`dbus.md`](https://github.com/Jas-SinghFSU/wayle/blob/master/crates/wayle-power-profiles/dbus.md) for the full interface specification.
+//!
 //! # Control Methods
 //!
 //! - [`set_active_profile()`](PowerProfiles::set_active_profile) - Switch power profile

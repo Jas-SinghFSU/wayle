@@ -42,6 +42,34 @@
 //! # Ok(())
 //! # }
 //! ```
+//!
+//! # Configuration
+//!
+//! | Method | Effect |
+//! |--------|--------|
+//! | `with_daemon()` | Control notifications from scripts or other processes |
+//!
+//! ```no_run
+//! use wayle_notification::NotificationService;
+//!
+//! # async fn example() -> Result<(), wayle_notification::Error> {
+//! let service = NotificationService::builder()
+//!     .with_daemon()
+//!     .build()
+//!     .await?;
+//! # Ok(())
+//! # }
+//! ```
+//!
+//! # D-Bus Interface
+//!
+//! When `with_daemon()` is enabled, the service registers on the session bus.
+//!
+//! - **Service:** `com.wayle.Notifications1`
+//! - **Path:** `/com/wayle/Notifications`
+//! - **Interface:** `com.wayle.Notifications1`
+//!
+//! See [`dbus.md`](https://github.com/Jas-SinghFSU/wayle/blob/master/crates/wayle-notification/dbus.md) for the full interface specification.
 
 mod builder;
 /// Notification data structures and operations.

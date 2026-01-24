@@ -13,7 +13,7 @@ pub struct VolumeConfig {
     /// Icons for volume levels from low to maximum.
     ///
     /// The percentage is divided evenly among icons. With 3 icons:
-    /// 1-33% uses icons[0], 34-66% uses icons[1], 67-100% uses icons[2].
+    /// 1-33% uses icons\[0\], 34-66% uses icons\[1\], 67-100% uses icons\[2\].
     #[serde(rename = "level-icons")]
     #[default(vec![
         String::from("ld-volume-symbolic"),

@@ -109,6 +109,16 @@
 //! # }
 //! ```
 //!
+//! # D-Bus Interface
+//!
+//! When `with_daemon()` is enabled, the service registers on the session bus.
+//!
+//! - **Service:** `com.wayle.Audio1`
+//! - **Path:** `/com/wayle/Audio`
+//! - **Interface:** `com.wayle.Audio1`
+//!
+//! See [`dbus.md`](https://github.com/Jas-SinghFSU/wayle/blob/master/crates/wayle-audio/dbus.md) for the full interface specification.
+//!
 //! # Service Fields
 //!
 //! [`AudioService`] exposes these reactive properties:

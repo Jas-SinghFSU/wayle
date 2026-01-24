@@ -45,7 +45,7 @@ impl WatcherToken {
 
     /// Cancels any existing watcher and returns a fresh token.
     ///
-    /// The returned token should be passed to [`watch_cancellable!`] or used
+    /// The returned token should be passed to `watch_cancellable!` or used
     /// directly with `token.cancelled()` in a `tokio::select!`.
     pub fn reset(&mut self) -> CancellationToken {
         if let Some(token) = self.0.take() {

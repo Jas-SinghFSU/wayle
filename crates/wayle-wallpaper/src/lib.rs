@@ -91,6 +91,16 @@
 //! - `advance_cycle()` / `rewind_cycle()` - Manual navigation
 //! - `set_fit_mode()` - Change scaling mode
 //! - `set_transition()` - Configure animations
+//!
+//! # D-Bus Interface
+//!
+//! When `with_daemon()` is enabled, the service registers on the session bus.
+//!
+//! - **Service:** `com.wayle.Wallpaper1`
+//! - **Path:** `/com/wayle/Wallpaper`
+//! - **Interface:** `com.wayle.Wallpaper1`
+//!
+//! See [`dbus.md`](https://github.com/Jas-SinghFSU/wayle/blob/master/crates/wayle-wallpaper/dbus.md) for the full interface specification.
 
 mod backend;
 mod builder;

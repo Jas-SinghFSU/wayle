@@ -66,6 +66,16 @@
 //! # }
 //! ```
 //!
+//! # D-Bus Interface
+//!
+//! When `with_daemon()` is enabled, the service registers on the session bus.
+//!
+//! - **Service:** `com.wayle.SystemTray1`
+//! - **Path:** `/com/wayle/SystemTray`
+//! - **Interface:** `com.wayle.SystemTray1`
+//!
+//! See [`dbus.md`](https://github.com/Jas-SinghFSU/wayle/blob/master/crates/wayle-systray/dbus.md) for the full interface specification.
+//!
 //! # Service Fields
 //!
 //! | Field | Type | Description |

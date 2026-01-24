@@ -70,6 +70,16 @@
 //! # }
 //! ```
 //!
+//! # D-Bus Interface
+//!
+//! When `with_daemon()` is enabled, the service registers on the session bus.
+//!
+//! - **Service:** `com.wayle.Media1`
+//! - **Path:** `/com/wayle/Media`
+//! - **Interface:** `com.wayle.Media1`
+//!
+//! See [`dbus.md`](https://github.com/Jas-SinghFSU/wayle/blob/master/crates/wayle-media/dbus.md) for the full interface specification.
+//!
 //! # Reactive Properties
 //!
 //! All fields are [`Property<T>`](wayle_common::Property):

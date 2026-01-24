@@ -13,7 +13,7 @@ pub struct BatteryConfig {
     /// Icons for battery levels from empty to full.
     ///
     /// The percentage is divided evenly among icons. With 5 icons:
-    /// 0-20% uses icons[0], 21-40% uses icons[1], etc.
+    /// 0-20% uses icons\[0\], 21-40% uses icons\[1\], etc.
     #[serde(rename = "level-icons")]
     #[default(vec![
         String::from("md-battery_android_0-symbolic"),
