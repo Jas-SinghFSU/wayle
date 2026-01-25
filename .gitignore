@@ -1,7 +1,7 @@
 target/
 dist/
 assets/
-wayle-design/
+wayle-design
 
 wayle-shell.ftl
 # Temporary sandboxes
