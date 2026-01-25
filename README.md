@@ -159,9 +159,11 @@ cd wayle
 cargo install --path wayle
 ```
 
-Once Wayle is installed, you can start it via:
+Once Wayle is installed, you can set up the icons (temporary measure) and start
+it via:
 
 ```bash
+wayle icons setup
 wayle panel start
 ```
 
