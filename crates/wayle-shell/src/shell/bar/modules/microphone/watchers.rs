@@ -1,0 +1,42 @@
+use std::sync::Arc;
+
+use relm4::ComponentSender;
+use tokio_util::sync::CancellationToken;
+use wayle_audio::{AudioService, core::device::input::InputDevice};
+use wayle_common::{services, watch, watch_cancellable};
+use wayle_config::schemas::modules::MicrophoneConfig;
+
+use super::{MicrophoneModule, messages::MicrophoneCmd};
+
+pub(super) fn spawn_watchers(
+    sender: &ComponentSender<MicrophoneModule>,
+    config: &MicrophoneConfig,
+) {
+    let audio_service = services::get::<AudioService>();
+
+    let default_input = audio_service.default_input.clone();
+    watch!(sender, [default_input.watch()], |out| {
+        let audio_service = services::get::<AudioService>();
+        let _ = out.send(MicrophoneCmd::DeviceChanged(
+            audio_service.default_input.get(),
+        ));
+    });
+
+    let icon_active = config.icon_active.clone();
+    let icon_muted = config.icon_muted.clone();
+    watch!(sender, [icon_active.watch(), icon_muted.watch()], |out| {
+        let _ = out.send(MicrophoneCmd::IconConfigChanged);
+    });
+}
+
+pub(super) fn spawn_device_watchers(
+    sender: &ComponentSender<MicrophoneModule>,
+    device: &Arc<InputDevice>,
+    token: CancellationToken,
+) {
+    let volume = device.volume.clone();
+    let muted = device.muted.clone();
+    watch_cancellable!(sender, token, [volume.watch(), muted.watch()], |out| {
+        let _ = out.send(MicrophoneCmd::VolumeOrMuteChanged);
+    });
+}

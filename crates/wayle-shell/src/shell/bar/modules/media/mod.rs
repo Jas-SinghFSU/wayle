@@ -1,28 +1,20 @@
 mod helpers;
 mod messages;
-
-use std::sync::Arc;
+mod watchers;
 
 use gtk::prelude::WidgetExt;
 use relm4::prelude::*;
-use tokio_util::sync::CancellationToken;
 use tracing::error;
-use wayle_common::{
-    ConfigProperty, WatcherToken, process::spawn_shell_quiet, services, watch, watch_cancellable,
-};
+use wayle_common::{ConfigProperty, WatcherToken, process::spawn_shell_quiet, services};
 use wayle_config::{
     ConfigService,
-    schemas::{
-        modules::{MediaConfig, MediaIconType},
-        styling::CssToken,
-    },
+    schemas::{modules::MediaIconType, styling::CssToken},
 };
-use wayle_media::{MediaService, core::player::Player, types::PlaybackState};
+use wayle_media::{MediaService, types::PlaybackState};
 use wayle_widgets::prelude::{
     BarButton, BarButtonBehavior, BarButtonColors, BarButtonInit, BarButtonInput, BarButtonOutput,
 };
 
-use self::helpers::{FormatContext, IconContext, format_label, resolve_icon};
 pub(crate) use self::messages::{MediaCmd, MediaInit, MediaMsg};
 
 pub(crate) struct MediaModule {
@@ -86,7 +78,7 @@ impl Component for MediaModule {
                 BarButtonOutput::ScrollDown => MediaMsg::ScrollDown,
             });
 
-        Self::spawn_watchers(&sender, media_config);
+        watchers::spawn_watchers(&sender, media_config);
 
         let model = Self {
             bar_button,
@@ -131,30 +123,30 @@ impl Component for MediaModule {
                 Self::update_disc_mode(root, use_disc);
 
                 if let Some(player) = player {
-                    let label = Self::build_label(media_config, &player);
+                    let label = helpers::build_label(media_config, &player);
                     self.bar_button.emit(BarButtonInput::SetLabel(label));
 
-                    let icon = Self::build_icon(media_config, &player);
+                    let icon = helpers::build_icon(media_config, &player);
                     self.bar_button.emit(BarButtonInput::SetIcon(icon));
 
                     let state = player.playback_state.get();
                     Self::update_spinning_state(root, state);
 
                     let token = self.active_player_watcher_token.reset();
-                    Self::spawn_player_watchers(&sender, &player, token);
+                    watchers::spawn_player_watchers(&sender, &player, token);
                 }
             }
             MediaCmd::MetadataChanged => {
                 let media_service = services::get::<MediaService>();
                 if let Some(player) = media_service.active_player() {
-                    let label = Self::build_label(media_config, &player);
+                    let label = helpers::build_label(media_config, &player);
                     self.bar_button.emit(BarButtonInput::SetLabel(label));
                 }
             }
             MediaCmd::PlaybackStateChanged => {
                 let media_service = services::get::<MediaService>();
                 if let Some(player) = media_service.active_player() {
-                    let label = Self::build_label(media_config, &player);
+                    let label = helpers::build_label(media_config, &player);
                     self.bar_button.emit(BarButtonInput::SetLabel(label));
                     let state = player.playback_state.get();
                     Self::update_spinning_state(root, state);
@@ -170,7 +162,7 @@ impl Component for MediaModule {
                 Self::update_disc_mode(root, use_disc);
 
                 if let Some(player) = media_service.active_player() {
-                    let icon = Self::build_icon(media_config, &player);
+                    let icon = helpers::build_icon(media_config, &player);
                     self.bar_button.emit(BarButtonInput::SetIcon(icon));
 
                     let state = player.playback_state.get();
@@ -182,86 +174,6 @@ impl Component for MediaModule {
 }
 
 impl MediaModule {
-    fn spawn_watchers(sender: &ComponentSender<Self>, config: &MediaConfig) {
-        let media_service = services::get::<MediaService>();
-
-        let active_stream = media_service.active_player.watch();
-        watch!(sender, [active_stream], |out| {
-            let media_service = services::get::<MediaService>();
-            let _ = out.send(MediaCmd::PlayerChanged(media_service.active_player()));
-        });
-
-        let format = config.format.clone();
-        watch!(sender, [format.watch()], |out| {
-            let _ = out.send(MediaCmd::MetadataChanged);
-        });
-
-        let icon_name = config.icon_name.clone();
-        let icon_type = config.icon_type.clone();
-        watch!(sender, [icon_name.watch()], |out| {
-            if icon_type.get() == MediaIconType::Default {
-                let _ = out.send(MediaCmd::UpdateIcon(icon_name.get().clone()));
-            }
-        });
-
-        let spinning_disc_icon = config.spinning_disc_icon.clone();
-        let icon_type_for_disc = config.icon_type.clone();
-        watch!(sender, [spinning_disc_icon.watch()], |out| {
-            if icon_type_for_disc.get() == MediaIconType::SpinningDisc {
-                let _ = out.send(MediaCmd::UpdateIcon(spinning_disc_icon.get().clone()));
-            }
-        });
-
-        watch!(sender, [config.icon_type.watch()], |out| {
-            let _ = out.send(MediaCmd::IconTypeChanged);
-        });
-    }
-
-    fn spawn_player_watchers(
-        sender: &ComponentSender<Self>,
-        player: &Arc<Player>,
-        token: CancellationToken,
-    ) {
-        let metadata = player.metadata.clone();
-        let metadata_token = token.clone();
-        watch_cancellable!(sender, metadata_token, [metadata.watch()], |out| {
-            let _ = out.send(MediaCmd::MetadataChanged);
-        });
-
-        let playback_state = player.playback_state.clone();
-        watch_cancellable!(sender, token, [playback_state.watch()], |out| {
-            let _ = out.send(MediaCmd::PlaybackStateChanged);
-        });
-    }
-
-    fn build_label(config: &MediaConfig, player: &Player) -> String {
-        let format = config.format.get();
-        let title = player.metadata.title.get();
-        let artist = player.metadata.artist.get();
-        let album = player.metadata.album.get();
-        format_label(&FormatContext {
-            format: &format,
-            title: &title,
-            artist: &artist,
-            album: &album,
-            state: player.playback_state.get(),
-        })
-    }
-
-    fn build_icon(config: &MediaConfig, player: &Player) -> String {
-        let icon_name = config.icon_name.get();
-        let spinning_disc_icon = config.spinning_disc_icon.get();
-        let player_icons = config.player_icons.get();
-        resolve_icon(&IconContext {
-            icon_type: config.icon_type.get(),
-            icon_name: &icon_name,
-            spinning_disc_icon: &spinning_disc_icon,
-            player_icons: &player_icons,
-            bus_name: player.id.bus_name(),
-            desktop_entry: player.desktop_entry.get().as_deref(),
-        })
-    }
-
     fn update_disc_mode(root: &gtk::Box, enabled: bool) {
         if enabled {
             root.add_css_class("media-disc");

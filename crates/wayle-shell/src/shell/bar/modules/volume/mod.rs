@@ -1,15 +1,11 @@
 mod helpers;
 mod messages;
-
-use std::sync::Arc;
+mod watchers;
 
 use relm4::prelude::*;
-use tokio_util::sync::CancellationToken;
 use tracing::error;
 use wayle_audio::{AudioService, core::device::output::OutputDevice};
-use wayle_common::{
-    ConfigProperty, WatcherToken, process::spawn_shell_quiet, services, watch, watch_cancellable,
-};
+use wayle_common::{ConfigProperty, WatcherToken, process::spawn_shell_quiet, services};
 use wayle_config::{
     ConfigService,
     schemas::{modules::VolumeConfig, styling::CssToken},
@@ -86,7 +82,7 @@ impl Component for VolumeModule {
                 BarButtonOutput::ScrollDown => VolumeMsg::ScrollDown,
             });
 
-        Self::spawn_watchers(&sender, volume_config);
+        watchers::spawn_watchers(&sender, volume_config);
 
         let model = Self {
             bar_button,
@@ -127,7 +123,7 @@ impl Component for VolumeModule {
                     self.update_display(volume_config, &device);
 
                     let token = self.active_device_watcher_token.reset();
-                    Self::spawn_device_watchers(&sender, &device, token);
+                    watchers::spawn_device_watchers(&sender, &device, token);
                 }
             }
             VolumeCmd::VolumeOrMuteChanged | VolumeCmd::IconConfigChanged => {
@@ -157,33 +153,5 @@ impl VolumeModule {
             muted_icon: &muted_icon_val,
         });
         self.bar_button.emit(BarButtonInput::SetIcon(icon));
-    }
-
-    fn spawn_watchers(sender: &ComponentSender<Self>, config: &VolumeConfig) {
-        let audio_service = services::get::<AudioService>();
-
-        let default_output = audio_service.default_output.clone();
-        watch!(sender, [default_output.watch()], |out| {
-            let audio_service = services::get::<AudioService>();
-            let _ = out.send(VolumeCmd::DeviceChanged(audio_service.default_output.get()));
-        });
-
-        let level_icons = config.level_icons.clone();
-        let muted_icon = config.icon_muted.clone();
-        watch!(sender, [level_icons.watch(), muted_icon.watch()], |out| {
-            let _ = out.send(VolumeCmd::IconConfigChanged);
-        });
-    }
-
-    fn spawn_device_watchers(
-        sender: &ComponentSender<Self>,
-        device: &Arc<OutputDevice>,
-        token: CancellationToken,
-    ) {
-        let volume = device.volume.clone();
-        let muted = device.muted.clone();
-        watch_cancellable!(sender, token, [volume.watch(), muted.watch()], |out| {
-            let _ = out.send(VolumeCmd::VolumeOrMuteChanged);
-        });
     }
 }

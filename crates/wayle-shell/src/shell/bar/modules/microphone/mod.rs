@@ -1,15 +1,11 @@
 mod helpers;
 mod messages;
-
-use std::sync::Arc;
+mod watchers;
 
 use relm4::prelude::*;
-use tokio_util::sync::CancellationToken;
 use tracing::error;
 use wayle_audio::{AudioService, core::device::input::InputDevice};
-use wayle_common::{
-    ConfigProperty, WatcherToken, process::spawn_shell_quiet, services, watch, watch_cancellable,
-};
+use wayle_common::{ConfigProperty, WatcherToken, process::spawn_shell_quiet, services};
 use wayle_config::{
     ConfigService,
     schemas::{modules::MicrophoneConfig, styling::CssToken},
@@ -81,7 +77,7 @@ impl Component for MicrophoneModule {
                 BarButtonOutput::ScrollDown => MicrophoneMsg::ScrollDown,
             });
 
-        Self::spawn_watchers(&sender, mic_config);
+        watchers::spawn_watchers(&sender, mic_config);
 
         let model = Self {
             bar_button,
@@ -127,7 +123,7 @@ impl Component for MicrophoneModule {
                     self.update_display(mic_config, &device);
 
                     let token = self.active_device_watcher_token.reset();
-                    Self::spawn_device_watchers(&sender, &device, token);
+                    watchers::spawn_device_watchers(&sender, &device, token);
                 }
             }
             MicrophoneCmd::VolumeOrMuteChanged | MicrophoneCmd::IconConfigChanged => {
@@ -156,35 +152,5 @@ impl MicrophoneModule {
             icon_muted: &icon_muted,
         });
         self.bar_button.emit(BarButtonInput::SetIcon(icon));
-    }
-
-    fn spawn_watchers(sender: &ComponentSender<Self>, config: &MicrophoneConfig) {
-        let audio_service = services::get::<AudioService>();
-
-        let default_input = audio_service.default_input.clone();
-        watch!(sender, [default_input.watch()], |out| {
-            let audio_service = services::get::<AudioService>();
-            let _ = out.send(MicrophoneCmd::DeviceChanged(
-                audio_service.default_input.get(),
-            ));
-        });
-
-        let icon_active = config.icon_active.clone();
-        let icon_muted = config.icon_muted.clone();
-        watch!(sender, [icon_active.watch(), icon_muted.watch()], |out| {
-            let _ = out.send(MicrophoneCmd::IconConfigChanged);
-        });
-    }
-
-    fn spawn_device_watchers(
-        sender: &ComponentSender<Self>,
-        device: &Arc<InputDevice>,
-        token: CancellationToken,
-    ) {
-        let volume = device.volume.clone();
-        let muted = device.muted.clone();
-        watch_cancellable!(sender, token, [volume.watch(), muted.watch()], |out| {
-            let _ = out.send(MicrophoneCmd::VolumeOrMuteChanged);
-        });
     }
 }

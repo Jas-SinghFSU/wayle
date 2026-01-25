@@ -1,19 +1,15 @@
 mod helpers;
 mod messages;
+mod watchers;
 
 use relm4::prelude::*;
 use tracing::error;
-use wayle_battery::BatteryService;
-use wayle_common::{ConfigProperty, process::spawn_shell_quiet, services, watch};
-use wayle_config::{
-    ConfigService,
-    schemas::{modules::BatteryConfig, styling::CssToken},
-};
+use wayle_common::{ConfigProperty, process::spawn_shell_quiet, services};
+use wayle_config::{ConfigService, schemas::styling::CssToken};
 use wayle_widgets::prelude::{
     BarButton, BarButtonBehavior, BarButtonColors, BarButtonInit, BarButtonInput, BarButtonOutput,
 };
 
-use self::helpers::{IconContext, format_label, select_icon};
 pub(crate) use self::messages::{BatteryCmd, BatteryInit, BatteryMsg};
 
 pub(crate) struct BatteryModule {
@@ -80,7 +76,7 @@ impl Component for BatteryModule {
                 BarButtonOutput::ScrollDown => BatteryMsg::ScrollDown,
             });
 
-        Self::spawn_watchers(&sender, battery_config);
+        watchers::spawn_watchers(&sender, battery_config);
 
         let model = Self { bar_button };
         let bar_button = model.bar_button.widget();
@@ -117,56 +113,5 @@ impl Component for BatteryModule {
                 self.bar_button.emit(BarButtonInput::SetIcon(icon));
             }
         }
-    }
-}
-
-impl BatteryModule {
-    fn spawn_watchers(sender: &ComponentSender<Self>, config: &BatteryConfig) {
-        let level_icons = config.level_icons.clone();
-        let charging_icon = config.charging_icon.clone();
-        let alert_icon = config.alert_icon.clone();
-
-        let battery_service = services::get::<BatteryService>();
-        let device = battery_service.device.clone();
-
-        let percentage_stream = device.percentage.watch();
-        let state_stream = device.state.watch();
-        let is_present_stream = device.is_present.watch();
-        let level_icons_stream = level_icons.watch();
-        let charging_icon_stream = charging_icon.watch();
-        let alert_icon_stream = alert_icon.watch();
-
-        watch!(
-            sender,
-            [
-                percentage_stream,
-                state_stream,
-                is_present_stream,
-                level_icons_stream,
-                charging_icon_stream,
-                alert_icon_stream
-            ],
-            |out| {
-                let percentage = device.percentage.get();
-                let state = device.state.get();
-                let is_present = device.is_present.get();
-
-                let label = format_label(percentage, is_present);
-                let _ = out.send(BatteryCmd::UpdateLabel(label));
-
-                let level_icons_val = level_icons.get();
-                let charging_icon_val = charging_icon.get();
-                let alert_icon_val = alert_icon.get();
-                let icon = select_icon(&IconContext {
-                    percentage,
-                    state,
-                    is_present,
-                    level_icons: &level_icons_val,
-                    charging_icon: &charging_icon_val,
-                    alert_icon: &alert_icon_val,
-                });
-                let _ = out.send(BatteryCmd::UpdateIcon(icon));
-            }
-        );
     }
 }

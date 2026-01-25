@@ -1,8 +1,10 @@
 use std::collections::HashMap;
 
+use gtk::{gio::prelude::AppInfoExt, glib::prelude::Cast as _, prelude::IconExt};
+use relm4::gtk;
 use wayle_common::glob;
-use wayle_config::schemas::modules::{BUILTIN_MAPPINGS, MediaIconType};
-use wayle_media::types::PlaybackState;
+use wayle_config::schemas::modules::{BUILTIN_MAPPINGS, MediaConfig, MediaIconType};
+use wayle_media::{core::player::Player, types::PlaybackState};
 
 pub(crate) const PLAY_ICON: &str = "󰐊";
 pub(crate) const PAUSE_ICON: &str = "󰏤";
@@ -73,6 +75,98 @@ pub(crate) fn resolve_icon(ctx: &IconContext<'_>) -> String {
                 .unwrap_or_else(|| ctx.icon_name.to_string())
         }
     }
+}
+
+pub(super) fn build_label(config: &MediaConfig, player: &Player) -> String {
+    let format = config.format.get();
+    let title = player.metadata.title.get();
+    let artist = player.metadata.artist.get();
+    let album = player.metadata.album.get();
+    format_label(&FormatContext {
+        format: &format,
+        title: &title,
+        artist: &artist,
+        album: &album,
+        state: player.playback_state.get(),
+    })
+}
+
+pub(super) fn build_icon(config: &MediaConfig, player: &Player) -> String {
+    let icon_name = config.icon_name.get();
+    let icon_type = config.icon_type.get();
+    let desktop_entry = player.desktop_entry.get();
+
+    if icon_type == MediaIconType::Application {
+        if let Some(icon) = desktop_entry_icon(desktop_entry.as_deref()) {
+            return icon;
+        }
+        return icon_name;
+    }
+
+    let spinning_disc_icon = config.spinning_disc_icon.get();
+    let player_icons = config.player_icons.get();
+    let resolved = resolve_icon(&IconContext {
+        icon_type,
+        icon_name: &icon_name,
+        spinning_disc_icon: &spinning_disc_icon,
+        player_icons: &player_icons,
+        bus_name: player.id.bus_name(),
+        desktop_entry: desktop_entry.as_deref(),
+    });
+
+    if icon_exists(&resolved) {
+        return resolved;
+    }
+
+    if icon_type == MediaIconType::ApplicationMapped
+        && let Some(icon) = desktop_entry_icon(desktop_entry.as_deref()) {
+            return icon;
+        }
+
+    icon_name
+}
+
+pub(super) fn desktop_entry_icon(desktop_entry: Option<&str>) -> Option<String> {
+    let entry = desktop_entry?;
+    let app_info = lookup_desktop_entry(entry)?;
+    let icon = app_info.icon()?;
+    Some(icon.to_string()?.into())
+}
+
+fn lookup_desktop_entry(entry: &str) -> Option<gtk::gio::DesktopAppInfo> {
+    let candidates = [
+        format!("{entry}.desktop"),
+        format!("{entry}-launcher.desktop"),
+    ];
+    for desktop_id in &candidates {
+        if let Some(app) = gtk::gio::DesktopAppInfo::new(desktop_id) {
+            return Some(app);
+        }
+    }
+
+    find_by_startup_wm_class(entry)
+}
+
+fn find_by_startup_wm_class(wm_class: &str) -> Option<gtk::gio::DesktopAppInfo> {
+    let wm_class_lower = wm_class.to_lowercase();
+    for app_info in gtk::gio::AppInfo::all() {
+        let Ok(desktop_app) = app_info.downcast::<gtk::gio::DesktopAppInfo>() else {
+            continue;
+        };
+        if let Some(startup_class) = desktop_app.startup_wm_class()
+            && startup_class.to_lowercase() == wm_class_lower {
+                return Some(desktop_app);
+            }
+    }
+    None
+}
+
+fn icon_exists(icon_name: &str) -> bool {
+    let Some(display) = gtk::gdk::Display::default() else {
+        return false;
+    };
+    let theme = gtk::IconTheme::for_display(&display);
+    theme.has_icon(icon_name)
 }
 
 #[cfg(test)]

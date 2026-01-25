@@ -1,17 +1,11 @@
+mod helpers;
 mod messages;
+mod watchers;
 
-use std::time::Duration;
-
-use gtk::glib::DateTime;
 use relm4::prelude::*;
-use tokio::time::interval;
-use tokio_stream::wrappers::IntervalStream;
 use tracing::error;
-use wayle_common::{ConfigProperty, process::spawn_shell_quiet, services, watch};
-use wayle_config::{
-    ConfigService,
-    schemas::{modules::ClockConfig, styling::CssToken},
-};
+use wayle_common::{ConfigProperty, process::spawn_shell_quiet, services};
+use wayle_config::{ConfigService, schemas::styling::CssToken};
 use wayle_widgets::prelude::{
     BarButton, BarButtonBehavior, BarButtonColors, BarButtonInit, BarButtonInput, BarButtonOutput,
 };
@@ -44,7 +38,7 @@ impl Component for ClockModule {
         let config_service = services::get::<ConfigService>();
         let config = config_service.config();
         let clock = &config.modules.clock;
-        let formatted_time = Self::format_time(&clock.format.get());
+        let formatted_time = helpers::format_time(&clock.format.get());
 
         let bar_button = BarButton::builder()
             .launch(BarButtonInit {
@@ -76,7 +70,7 @@ impl Component for ClockModule {
                 BarButtonOutput::ScrollDown => ClockMsg::ScrollDown,
             });
 
-        Self::spawn_watchers(&sender, clock);
+        watchers::spawn_watchers(&sender, clock);
 
         let model = Self { bar_button };
         let bar_button = model.bar_button.widget();
@@ -116,36 +110,5 @@ impl Component for ClockModule {
                 self.bar_button.emit(BarButtonInput::SetTooltip(tooltip));
             }
         }
-    }
-}
-
-impl ClockModule {
-    fn spawn_watchers(sender: &ComponentSender<Self>, clock: &ClockConfig) {
-        let format = clock.format.clone();
-        let tick = interval(Duration::from_secs(1));
-        let interval_stream = IntervalStream::new(tick);
-
-        watch!(sender, [interval_stream], |out| {
-            let formatted_time = ClockModule::format_time(&format.get());
-            let _ = out.send(ClockCmd::UpdateTime(formatted_time));
-        });
-
-        let icon_name = clock.icon_name.clone();
-        watch!(sender, [icon_name.watch()], |out| {
-            let _ = out.send(ClockCmd::UpdateIcon(icon_name.get().clone()));
-        });
-
-        let tooltip = clock.tooltip.clone();
-        watch!(sender, [tooltip.watch()], |out| {
-            let _ = out.send(ClockCmd::UpdateTooltip(tooltip.get().clone()));
-        });
-    }
-
-    fn format_time(format: &str) -> String {
-        DateTime::now_local()
-            .and_then(|dt| dt.format(format))
-            .map(|s| s.to_string())
-            .inspect_err(|e| error!(error = %e, "cannot format time"))
-            .unwrap_or_else(|_| String::from("--"))
     }
 }
