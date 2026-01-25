@@ -1,5 +1,7 @@
 use wayle_battery::types::DeviceState;
 
+use crate::i18n::t;
+
 pub(crate) struct IconContext<'a> {
     pub(crate) percentage: f64,
     pub(crate) state: DeviceState,
@@ -39,7 +41,7 @@ pub(crate) fn format_label(percentage: f64, is_present: bool) -> String {
     if is_present {
         format!("{:.0}%", percentage)
     } else {
-        String::from("N/A")
+        t!("bar-battery-unavailable")
     }
 }
 

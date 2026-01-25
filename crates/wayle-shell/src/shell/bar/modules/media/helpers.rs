@@ -119,9 +119,10 @@ pub(super) fn build_icon(config: &MediaConfig, player: &Player) -> String {
     }
 
     if icon_type == MediaIconType::ApplicationMapped
-        && let Some(icon) = desktop_entry_icon(desktop_entry.as_deref()) {
-            return icon;
-        }
+        && let Some(icon) = desktop_entry_icon(desktop_entry.as_deref())
+    {
+        return icon;
+    }
 
     icon_name
 }
@@ -154,9 +155,10 @@ fn find_by_startup_wm_class(wm_class: &str) -> Option<gtk::gio::DesktopAppInfo> 
             continue;
         };
         if let Some(startup_class) = desktop_app.startup_wm_class()
-            && startup_class.to_lowercase() == wm_class_lower {
-                return Some(desktop_app);
-            }
+            && startup_class.to_lowercase() == wm_class_lower
+        {
+            return Some(desktop_app);
+        }
     }
     None
 }

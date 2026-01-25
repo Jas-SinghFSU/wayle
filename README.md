@@ -35,27 +35,27 @@ experience. A successor to HyprPanel without the pain or dependency on Hyprland.
 - [x] **Component Library** - Base Relm4 widgets and containers
 - [ ] **Bar Modules (WIP)**:
     - [x] Battery
-    - [ ] Dashboard
-    - [ ] Hyprland workspaces
-    - [ ] Window title
     - [x] Media
-    - [ ] Notification
     - [x] Volume
     - [x] Network
-    - [ ] Bluetooth
+    - [x] Bluetooth
     - [x] Clock
-    - [ ] System tray
-    - [ ] World clock
-    - [ ] Separator
     - [x] Microphone
+    - [ ] System tray
+    - [ ] Notification
+    - [ ] World clock
+    - [ ] Dashboard
+    - [ ] Netstat
+    - [ ] Window title
+    - [ ] Separator
     - [ ] RAM
     - [ ] CPU
-    - [ ] CPU
+    - [ ] CPU Temp
     - [ ] Storage
-    - [ ] Network
     - [ ] Keyboard input
     - [ ] Updates
     - [ ] Weather
+    - [ ] Hyprland workspaces
     - [ ] Hyprland submap
     - [ ] Hyprsunset
     - [ ] Hypridle

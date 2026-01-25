@@ -11,11 +11,6 @@ license.workspace = true
 name = "wayle"
 path = "src/main.rs"
 
-[[bin]]
-name = "wayle-shell"
-path = "../crates/wayle-shell/src/main.rs"
-doc = false
-
 [dependencies]
 chrono.workspace = true
 clap.workspace = true

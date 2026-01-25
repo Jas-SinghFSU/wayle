@@ -1,11 +1,4 @@
-//! Internationalization for Wayle using Mozilla Fluent.
-//!
-//! ```ignore
-//! use wayle_i18n::t;
-//!
-//! let text = t!("app-name");
-//! let greeting = t!("welcome-user", user = "Alice");
-//! ```
+//! Internationalization for wayle-shell runtime labels.
 
 use std::sync::OnceLock;
 
@@ -13,8 +6,6 @@ use i18n_embed::{
     DesktopLanguageRequester, LanguageLoader,
     fluent::{FluentLanguageLoader, fluent_language_loader},
 };
-#[doc(hidden)]
-pub use i18n_embed_fl::fl as __fl;
 use rust_embed::RustEmbed;
 
 #[derive(RustEmbed)]
@@ -23,11 +14,6 @@ struct Localizations;
 
 static LOADER: OnceLock<FluentLanguageLoader> = OnceLock::new();
 
-/// Returns the language loader, auto-detecting system locale on first access.
-///
-/// # Panics
-///
-/// Panics if embedded FTL resources fail to load.
 #[allow(clippy::expect_used)]
 pub fn loader() -> &'static FluentLanguageLoader {
     LOADER.get_or_init(|| {
@@ -43,24 +29,13 @@ pub fn loader() -> &'static FluentLanguageLoader {
     })
 }
 
-/// Looks up a translated message by key.
-#[macro_export]
 macro_rules! t {
     ($message_id:literal) => {{
-        $crate::__fl!($crate::loader(), $message_id)
+        i18n_embed_fl::fl!($crate::i18n::loader(), $message_id)
     }};
     ($message_id:literal, $($args:tt)*) => {{
-        $crate::__fl!($crate::loader(), $message_id, $($args)*)
+        i18n_embed_fl::fl!($crate::i18n::loader(), $message_id, $($args)*)
     }};
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn keys_from_both_files_work() {
-        let _ = t!("app-name");
-        let _ = t!("settings-bar-scale");
-    }
-}
+pub(crate) use t;

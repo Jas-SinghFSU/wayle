@@ -51,10 +51,10 @@ pub struct NetworkService {
     pub(crate) cancellation_token: CancellationToken,
     /// Connection profile management.
     pub settings: Arc<Settings>,
-    /// WiFi device, if present.
-    pub wifi: Option<Arc<Wifi>>,
-    /// Wired device, if present.
-    pub wired: Option<Arc<Wired>>,
+    /// WiFi device, if present (live-updated on hot-plug).
+    pub wifi: Property<Option<Arc<Wifi>>>,
+    /// Wired device, if present (live-updated on hot-plug).
+    pub wired: Property<Option<Arc<Wired>>>,
     /// Primary connection type (WiFi, Wired, or Unknown).
     pub primary: Property<ConnectionType>,
 }
@@ -133,8 +133,8 @@ impl NetworkService {
             zbus_connection: connection.clone(),
             cancellation_token,
             settings,
-            wifi,
-            wired,
+            wifi: Property::new(wifi),
+            wired: Property::new(wired),
             primary,
         };
 

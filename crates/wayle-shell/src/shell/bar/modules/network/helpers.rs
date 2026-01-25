@@ -1,6 +1,8 @@
 use wayle_config::schemas::modules::NetworkConfig;
 use wayle_network::types::states::NetworkStatus;
 
+use crate::i18n::t;
+
 pub(crate) struct WifiContext<'a> {
     pub(crate) enabled: bool,
     pub(crate) connectivity: NetworkStatus,
@@ -39,8 +41,8 @@ pub(crate) fn wifi_icon(config: &NetworkConfig, ctx: &WifiContext<'_>) -> String
 pub(crate) fn wifi_label(ctx: &WifiContext<'_>) -> String {
     match ctx.connectivity {
         NetworkStatus::Connected => ctx.ssid.unwrap_or("WiFi").to_string(),
-        NetworkStatus::Connecting => String::from("Connecting..."),
-        NetworkStatus::Disconnected => String::from("Disconnected"),
+        NetworkStatus::Connecting => t!("bar-network-connecting"),
+        NetworkStatus::Disconnected => t!("bar-network-disconnected"),
     }
 }
 
@@ -54,9 +56,9 @@ pub(crate) fn wired_icon(config: &NetworkConfig, ctx: &WiredContext) -> String {
 
 pub(crate) fn wired_label(ctx: &WiredContext) -> String {
     match ctx.connectivity {
-        NetworkStatus::Connected => String::from("Wired"),
-        NetworkStatus::Connecting => String::from("Connecting..."),
-        NetworkStatus::Disconnected => String::from("Disconnected"),
+        NetworkStatus::Connected => t!("bar-network-wired"),
+        NetworkStatus::Connecting => t!("bar-network-connecting"),
+        NetworkStatus::Disconnected => t!("bar-network-disconnected"),
     }
 }
 

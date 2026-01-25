@@ -1,4 +1,5 @@
 mod battery;
+mod bluetooth;
 mod clock;
 mod media;
 mod microphone;
@@ -6,6 +7,7 @@ mod network;
 mod volume;
 
 use battery::{BatteryInit, BatteryModule};
+use bluetooth::{BluetoothInit, BluetoothModule};
 use clock::{ClockInit, ClockModule};
 use media::{MediaInit, MediaModule};
 use microphone::{MicrophoneInit, MicrophoneModule};
@@ -22,6 +24,7 @@ pub(crate) struct ModuleInstance {
 
 pub(crate) enum ModuleController {
     Battery(Controller<BatteryModule>),
+    Bluetooth(Controller<BluetoothModule>),
     Clock(Controller<ClockModule>),
     Media(Controller<MediaModule>),
     Microphone(Controller<MicrophoneModule>),
@@ -33,6 +36,7 @@ impl ModuleController {
     pub(crate) fn widget(&self) -> &gtk::Box {
         match self {
             Self::Battery(c) => c.widget(),
+            Self::Bluetooth(c) => c.widget(),
             Self::Clock(c) => c.widget(),
             Self::Media(c) => c.widget(),
             Self::Microphone(c) => c.widget(),
@@ -82,6 +86,12 @@ pub(crate) fn create_module(module_ref: &ModuleRef, settings: &BarSettings) -> M
                 settings: settings.clone(),
             };
             ModuleController::Network(NetworkModule::builder().launch(init).detach())
+        }
+        BarModule::Bluetooth => {
+            let init = BluetoothInit {
+                settings: settings.clone(),
+            };
+            ModuleController::Bluetooth(BluetoothModule::builder().launch(init).detach())
         }
         _ => {
             let init = ClockInit {

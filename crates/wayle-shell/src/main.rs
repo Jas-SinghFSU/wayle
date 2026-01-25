@@ -19,6 +19,7 @@ use wayle_systray::{SystemTrayService, types::TrayMode};
 use wayle_wallpaper::WallpaperService;
 use zbus::{Connection, fdo::DBusProxy};
 
+mod i18n;
 mod shell;
 mod startup;
 mod tracing_init;

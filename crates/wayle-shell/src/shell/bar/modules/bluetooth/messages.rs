@@ -1,11 +1,11 @@
 use wayle_widgets::prelude::BarSettings;
 
-pub struct NetworkInit {
+pub struct BluetoothInit {
     pub settings: BarSettings,
 }
 
 #[derive(Debug)]
-pub enum NetworkMsg {
+pub enum BluetoothMsg {
     LeftClick,
     RightClick,
     MiddleClick,
@@ -14,9 +14,8 @@ pub enum NetworkMsg {
 }
 
 #[derive(Debug)]
-pub enum NetworkCmd {
+pub enum BluetoothCmd {
     StateChanged,
     IconConfigChanged,
-    WifiDeviceChanged,
-    WiredDeviceChanged,
+    AdapterChanged,
 }

@@ -1,4 +1,5 @@
 mod battery;
+mod bluetooth;
 mod clock;
 mod media;
 mod microphone;
@@ -6,6 +7,7 @@ mod network;
 mod volume;
 
 pub use battery::BatteryConfig;
+pub use bluetooth::BluetoothConfig;
 pub use clock::ClockConfig;
 pub use media::{BUILTIN_MAPPINGS, MediaConfig, MediaIconType};
 pub use microphone::MicrophoneConfig;
@@ -18,6 +20,8 @@ use wayle_derive::wayle_config;
 pub struct ModulesConfig {
     /// Battery status module.
     pub battery: BatteryConfig,
+    /// Bluetooth connection module.
+    pub bluetooth: BluetoothConfig,
     /// Clock display module.
     pub clock: ClockConfig,
     /// Media player module.

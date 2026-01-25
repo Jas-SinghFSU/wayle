@@ -1,0 +1,166 @@
+mod helpers;
+mod messages;
+mod watchers;
+
+use relm4::prelude::*;
+use tracing::error;
+use wayle_bluetooth::BluetoothService;
+use wayle_common::{ConfigProperty, WatcherToken, process::spawn_shell_quiet, services};
+use wayle_config::{
+    ConfigService,
+    schemas::{modules::BluetoothConfig, styling::CssToken},
+};
+use wayle_widgets::prelude::{
+    BarButton, BarButtonBehavior, BarButtonColors, BarButtonInit, BarButtonInput, BarButtonOutput,
+};
+
+use self::helpers::{BluetoothContext, format_label, select_icon};
+pub(crate) use self::messages::{BluetoothCmd, BluetoothInit, BluetoothMsg};
+
+pub(crate) struct BluetoothModule {
+    bar_button: Controller<BarButton>,
+    adapter_watcher: WatcherToken,
+}
+
+#[relm4::component(pub(crate))]
+impl Component for BluetoothModule {
+    type Init = BluetoothInit;
+    type Input = BluetoothMsg;
+    type Output = ();
+    type CommandOutput = BluetoothCmd;
+
+    view! {
+        gtk::Box {
+            #[local_ref]
+            bar_button -> gtk::MenuButton {},
+        }
+    }
+
+    fn init(
+        init: Self::Init,
+        _root: Self::Root,
+        sender: ComponentSender<Self>,
+    ) -> ComponentParts<Self> {
+        let config_service = services::get::<ConfigService>();
+        let config = config_service.config();
+        let bt_config = &config.modules.bluetooth;
+
+        let (initial_icon, initial_label) = Self::compute_display(bt_config);
+
+        let bar_button = BarButton::builder()
+            .launch(BarButtonInit {
+                icon: initial_icon,
+                label: initial_label,
+                tooltip: None,
+                colors: BarButtonColors {
+                    icon_color: bt_config.icon_color.clone(),
+                    label_color: bt_config.label_color.clone(),
+                    icon_background: bt_config.icon_bg_color.clone(),
+                    button_background: bt_config.button_bg_color.clone(),
+                    border_color: bt_config.border_color.clone(),
+                    auto_icon_color: CssToken::Accent,
+                },
+                behavior: BarButtonBehavior {
+                    label_max_chars: bt_config.label_max_length.clone(),
+                    show_icon: bt_config.icon_show.clone(),
+                    show_label: bt_config.label_show.clone(),
+                    show_border: bt_config.border_show.clone(),
+                    visible: ConfigProperty::new(true),
+                },
+                settings: init.settings,
+            })
+            .forward(sender.input_sender(), |output| match output {
+                BarButtonOutput::LeftClick => BluetoothMsg::LeftClick,
+                BarButtonOutput::RightClick => BluetoothMsg::RightClick,
+                BarButtonOutput::MiddleClick => BluetoothMsg::MiddleClick,
+                BarButtonOutput::ScrollUp => BluetoothMsg::ScrollUp,
+                BarButtonOutput::ScrollDown => BluetoothMsg::ScrollDown,
+            });
+
+        watchers::spawn_watchers(&sender, bt_config);
+
+        let mut adapter_watcher = WatcherToken::new();
+        watchers::spawn_adapter_watchers(&sender, adapter_watcher.reset());
+
+        let model = Self {
+            bar_button,
+            adapter_watcher,
+        };
+        let bar_button = model.bar_button.widget();
+        let widgets = view_output!();
+
+        ComponentParts { model, widgets }
+    }
+
+    fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, _root: &Self::Root) {
+        let config_service = services::get::<ConfigService>();
+        let bt_config = &config_service.config().modules.bluetooth;
+
+        let cmd = match msg {
+            BluetoothMsg::LeftClick => bt_config.left_click.get().clone(),
+            BluetoothMsg::RightClick => bt_config.right_click.get().clone(),
+            BluetoothMsg::MiddleClick => bt_config.middle_click.get().clone(),
+            BluetoothMsg::ScrollUp => bt_config.scroll_up.get().clone(),
+            BluetoothMsg::ScrollDown => bt_config.scroll_down.get().clone(),
+        };
+
+        if !cmd.is_empty()
+            && let Err(e) = spawn_shell_quiet(&cmd)
+        {
+            error!(error = %e, cmd = %cmd, "failed to spawn command");
+        }
+    }
+
+    fn update_cmd(&mut self, msg: BluetoothCmd, sender: ComponentSender<Self>, _root: &Self::Root) {
+        let config_service = services::get::<ConfigService>();
+        let bt_config = &config_service.config().modules.bluetooth;
+
+        match msg {
+            BluetoothCmd::StateChanged | BluetoothCmd::IconConfigChanged => {
+                let (icon, label) = Self::compute_display(bt_config);
+                self.bar_button.emit(BarButtonInput::SetIcon(icon));
+                self.bar_button.emit(BarButtonInput::SetLabel(label));
+            }
+            BluetoothCmd::AdapterChanged => {
+                let token = self.adapter_watcher.reset();
+                watchers::spawn_adapter_watchers(&sender, token);
+
+                let (icon, label) = Self::compute_display(bt_config);
+                self.bar_button.emit(BarButtonInput::SetIcon(icon));
+                self.bar_button.emit(BarButtonInput::SetLabel(label));
+            }
+        }
+    }
+}
+
+impl BluetoothModule {
+    fn compute_display(config: &BluetoothConfig) -> (String, String) {
+        let bt = services::get::<BluetoothService>();
+
+        let available = bt.available.get();
+        let enabled = bt.enabled.get();
+        let devices = bt.devices.get();
+        let connected_addresses = bt.connected.get();
+
+        let discovering = bt
+            .primary_adapter
+            .get()
+            .map(|a| a.discovering.get())
+            .unwrap_or(false);
+
+        let connected_devices: Vec<_> = devices
+            .iter()
+            .filter(|d| connected_addresses.contains(&d.address.get()))
+            .cloned()
+            .collect();
+
+        let ctx = BluetoothContext {
+            available,
+            enabled,
+            discovering,
+            connected_devices: &connected_devices,
+        };
+
+        (select_icon(config, &ctx), format_label(&ctx))
+    }
+}

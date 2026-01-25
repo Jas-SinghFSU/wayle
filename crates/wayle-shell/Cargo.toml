@@ -13,7 +13,10 @@ path = "src/main.rs"
 
 [dependencies]
 console.workspace = true
+i18n-embed.workspace = true
+i18n-embed-fl.workspace = true
 futures.workspace = true
+rust-embed.workspace = true
 gdk4.workspace = true
 gtk4.workspace = true
 gtk4-layer-shell.workspace = true

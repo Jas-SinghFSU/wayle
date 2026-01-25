@@ -2,6 +2,7 @@ target/
 dist/
 assets/
 
+wayle-shell.ftl
 # Temporary sandboxes
 Wayle
 sandbox/

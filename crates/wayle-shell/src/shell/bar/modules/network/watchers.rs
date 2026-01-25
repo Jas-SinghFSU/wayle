@@ -1,5 +1,6 @@
 use relm4::ComponentSender;
-use wayle_common::{services, watch};
+use tokio_util::sync::CancellationToken;
+use wayle_common::{services, watch, watch_cancellable};
 use wayle_config::schemas::modules::NetworkConfig;
 use wayle_network::NetworkService;
 
@@ -13,32 +14,67 @@ pub(super) fn spawn_watchers(sender: &ComponentSender<NetworkModule>, config: &N
         let _ = out.send(NetworkCmd::StateChanged);
     });
 
-    if let Some(wifi) = &network_service.wifi {
-        let enabled = wifi.enabled.clone();
-        let connectivity = wifi.connectivity.clone();
-        let ssid = wifi.ssid.clone();
-        let strength = wifi.strength.clone();
-        watch!(
-            sender,
-            [
-                enabled.watch(),
-                connectivity.watch(),
-                ssid.watch(),
-                strength.watch()
-            ],
-            |out| {
-                let _ = out.send(NetworkCmd::StateChanged);
-            }
-        );
-    }
+    let wifi = network_service.wifi.clone();
+    watch!(sender, [wifi.watch()], |out| {
+        let _ = out.send(NetworkCmd::WifiDeviceChanged);
+    });
 
-    if let Some(wired) = &network_service.wired {
-        let connectivity = wired.connectivity.clone();
-        watch!(sender, [connectivity.watch()], |out| {
+    let wired = network_service.wired.clone();
+    watch!(sender, [wired.watch()], |out| {
+        let _ = out.send(NetworkCmd::WiredDeviceChanged);
+    });
+
+    spawn_icon_config_watchers(sender, config);
+}
+
+pub(super) fn spawn_wifi_watchers(
+    sender: &ComponentSender<NetworkModule>,
+    token: CancellationToken,
+) {
+    let network_service = services::get::<NetworkService>();
+
+    let Some(wifi) = network_service.wifi.get() else {
+        return;
+    };
+
+    let enabled = wifi.enabled.clone();
+    let connectivity = wifi.connectivity.clone();
+    let ssid = wifi.ssid.clone();
+    let strength = wifi.strength.clone();
+
+    watch_cancellable!(
+        sender,
+        token,
+        [
+            enabled.watch(),
+            connectivity.watch(),
+            ssid.watch(),
+            strength.watch()
+        ],
+        |out| {
             let _ = out.send(NetworkCmd::StateChanged);
-        });
-    }
+        }
+    );
+}
 
+pub(super) fn spawn_wired_watchers(
+    sender: &ComponentSender<NetworkModule>,
+    token: CancellationToken,
+) {
+    let network_service = services::get::<NetworkService>();
+
+    let Some(wired) = network_service.wired.get() else {
+        return;
+    };
+
+    let connectivity = wired.connectivity.clone();
+
+    watch_cancellable!(sender, token, [connectivity.watch()], |out| {
+        let _ = out.send(NetworkCmd::StateChanged);
+    });
+}
+
+fn spawn_icon_config_watchers(sender: &ComponentSender<NetworkModule>, config: &NetworkConfig) {
     let wifi_disabled_icon = config.wifi_disabled_icon.clone();
     let wifi_acquiring_icon = config.wifi_acquiring_icon.clone();
     let wifi_offline_icon = config.wifi_offline_icon.clone();
@@ -47,6 +83,7 @@ pub(super) fn spawn_watchers(sender: &ComponentSender<NetworkModule>, config: &N
     let wired_connected_icon = config.wired_connected_icon.clone();
     let wired_acquiring_icon = config.wired_acquiring_icon.clone();
     let wired_disconnected_icon = config.wired_disconnected_icon.clone();
+
     watch!(
         sender,
         [

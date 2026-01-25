@@ -71,6 +71,7 @@ impl Default for BarLayout {
             center: vec![BarItem::Module(ModuleRef::Plain(BarModule::Clock))],
             right: vec![
                 BarItem::Module(ModuleRef::Plain(BarModule::Battery)),
+                BarItem::Module(ModuleRef::Plain(BarModule::Bluetooth)),
                 BarItem::Module(ModuleRef::Plain(BarModule::Network)),
                 BarItem::Module(ModuleRef::Plain(BarModule::Microphone)),
                 BarItem::Module(ModuleRef::Plain(BarModule::Volume)),

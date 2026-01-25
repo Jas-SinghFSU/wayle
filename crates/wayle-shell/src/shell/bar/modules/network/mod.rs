@@ -4,7 +4,7 @@ mod watchers;
 
 use relm4::prelude::*;
 use tracing::error;
-use wayle_common::{ConfigProperty, process::spawn_shell_quiet, services};
+use wayle_common::{ConfigProperty, WatcherToken, process::spawn_shell_quiet, services};
 use wayle_config::{
     ConfigService,
     schemas::{modules::NetworkConfig, styling::CssToken},
@@ -19,6 +19,8 @@ pub(crate) use self::messages::{NetworkCmd, NetworkInit, NetworkMsg};
 
 pub(crate) struct NetworkModule {
     bar_button: Controller<BarButton>,
+    wifi_watcher: WatcherToken,
+    wired_watcher: WatcherToken,
 }
 
 #[relm4::component(pub(crate))]
@@ -78,7 +80,17 @@ impl Component for NetworkModule {
 
         watchers::spawn_watchers(&sender, network_config);
 
-        let model = Self { bar_button };
+        let mut wifi_watcher = WatcherToken::new();
+        let mut wired_watcher = WatcherToken::new();
+
+        watchers::spawn_wifi_watchers(&sender, wifi_watcher.reset());
+        watchers::spawn_wired_watchers(&sender, wired_watcher.reset());
+
+        let model = Self {
+            bar_button,
+            wifi_watcher,
+            wired_watcher,
+        };
         let bar_button = model.bar_button.widget();
         let widgets = view_output!();
 
@@ -104,12 +116,28 @@ impl Component for NetworkModule {
         }
     }
 
-    fn update_cmd(&mut self, msg: NetworkCmd, _sender: ComponentSender<Self>, _root: &Self::Root) {
+    fn update_cmd(&mut self, msg: NetworkCmd, sender: ComponentSender<Self>, _root: &Self::Root) {
         let config_service = services::get::<ConfigService>();
         let network_config = &config_service.config().modules.network;
 
         match msg {
             NetworkCmd::StateChanged | NetworkCmd::IconConfigChanged => {
+                let (icon, label) = Self::compute_display(network_config);
+                self.bar_button.emit(BarButtonInput::SetIcon(icon));
+                self.bar_button.emit(BarButtonInput::SetLabel(label));
+            }
+            NetworkCmd::WifiDeviceChanged => {
+                let token = self.wifi_watcher.reset();
+                watchers::spawn_wifi_watchers(&sender, token);
+
+                let (icon, label) = Self::compute_display(network_config);
+                self.bar_button.emit(BarButtonInput::SetIcon(icon));
+                self.bar_button.emit(BarButtonInput::SetLabel(label));
+            }
+            NetworkCmd::WiredDeviceChanged => {
+                let token = self.wired_watcher.reset();
+                watchers::spawn_wired_watchers(&sender, token);
+
                 let (icon, label) = Self::compute_display(network_config);
                 self.bar_button.emit(BarButtonInput::SetIcon(icon));
                 self.bar_button.emit(BarButtonInput::SetLabel(label));
@@ -125,7 +153,7 @@ impl NetworkModule {
 
         match primary {
             ConnectionType::Wifi => {
-                if let Some(wifi) = &network_service.wifi {
+                if let Some(wifi) = network_service.wifi.get() {
                     let ssid = wifi.ssid.get();
                     let ctx = WifiContext {
                         enabled: wifi.enabled.get(),
@@ -142,7 +170,7 @@ impl NetworkModule {
                 }
             }
             ConnectionType::Wired => {
-                if let Some(wired) = &network_service.wired {
+                if let Some(wired) = network_service.wired.get() {
                     let ctx = WiredContext {
                         connectivity: wired.connectivity.get(),
                     };
@@ -155,7 +183,7 @@ impl NetworkModule {
                 }
             }
             ConnectionType::Unknown => {
-                if let Some(wifi) = &network_service.wifi {
+                if let Some(wifi) = network_service.wifi.get() {
                     let ssid = wifi.ssid.get();
                     let ctx = WifiContext {
                         enabled: wifi.enabled.get(),
@@ -164,7 +192,7 @@ impl NetworkModule {
                         ssid: ssid.as_deref(),
                     };
                     (wifi_icon(config, &ctx), wifi_label(&ctx))
-                } else if let Some(wired) = &network_service.wired {
+                } else if let Some(wired) = network_service.wired.get() {
                     let ctx = WiredContext {
                         connectivity: wired.connectivity.get(),
                     };

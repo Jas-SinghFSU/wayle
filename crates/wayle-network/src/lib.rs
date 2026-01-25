@@ -8,8 +8,8 @@
 //! # async fn example() -> Result<(), wayle_network::Error> {
 //! let net = NetworkService::new().await?;
 //!
-//! // Check WiFi state
-//! if let Some(wifi) = &net.wifi {
+//! // Check WiFi state (wifi is reactive for hot-plug support)
+//! if let Some(wifi) = net.wifi.get() {
 //!     println!("WiFi enabled: {}", wifi.enabled.get());
 //!     for ap in wifi.access_points.get().iter() {
 //!         println!("  {} ({}%)", ap.ssid.get(), ap.strength.get());
@@ -17,7 +17,7 @@
 //! }
 //!
 //! // Check wired state
-//! if let Some(wired) = &net.wired {
+//! if let Some(wired) = net.wired.get() {
 //!     println!("Ethernet status: {:?}", wired.connectivity.get());
 //! }
 //! # Ok(())
@@ -32,7 +32,7 @@
 //!
 //! # async fn example() -> Result<(), wayle_network::Error> {
 //! # let net = NetworkService::new().await?;
-//! if let Some(wifi) = &net.wifi {
+//! if let Some(wifi) = net.wifi.get() {
 //!     let mut stream = wifi.access_points.watch();
 //!     while let Some(aps) = stream.next().await {
 //!         println!("{} networks visible", aps.len());
@@ -48,7 +48,7 @@
 //! # use wayle_network::NetworkService;
 //! # async fn example() -> Result<(), wayle_network::Error> {
 //! # let net = NetworkService::new().await?;
-//! if let Some(wifi) = &net.wifi {
+//! if let Some(wifi) = net.wifi.get() {
 //!     // Enable WiFi
 //!     wifi.set_enabled(true).await?;
 //!
@@ -75,10 +75,10 @@
 //!
 //! | Field | Type | Description |
 //! |-------|------|-------------|
-//! | `wifi` | `Option<Arc<Wifi>>` | WiFi device (if present) |
-//! | `wired` | `Option<Arc<Wired>>` | Ethernet device (if present) |
+//! | `wifi` | `Property<Option<Arc<Wifi>>>` | WiFi device (reactive for hot-plug) |
+//! | `wired` | `Property<Option<Arc<Wired>>>` | Ethernet device (reactive for hot-plug) |
 //! | `settings` | `Settings` | Connection profile management |
-//! | `primary` | `Property<PrimaryConnection>` | Active connection type |
+//! | `primary` | `Property<ConnectionType>` | Active connection type |
 
 /// Core network domain models.
 pub mod core;

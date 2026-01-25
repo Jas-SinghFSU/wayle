@@ -76,12 +76,8 @@ async fn monitor_devices(
     devices: &Property<Vec<Arc<Device>>>,
     notifier_tx: &broadcast::Sender<ServiceNotification>,
 ) -> Result<(), Error> {
-    let mut device_interface_added = object_manager
-        .receive_interfaces_added_with_args(&[(1, DEVICE_INTERFACE)])
-        .await?;
-    let mut device_interface_removed = object_manager
-        .receive_interfaces_removed_with_args(&[(1, DEVICE_INTERFACE)])
-        .await?;
+    let mut interfaces_added = object_manager.receive_interfaces_added().await?;
+    let mut interfaces_removed = object_manager.receive_interfaces_removed().await?;
     let devices_prop = devices.clone();
     let connection = connection.clone();
     let notifier_tx = notifier_tx.clone();
@@ -93,25 +89,33 @@ async fn monitor_devices(
                     debug!("Bluetooth 'devices' monitoring cancelled");
                     return;
                 }
-                Some(added) = device_interface_added.next() => {
-                    if let Ok(args) = added.args() {
-                        let object_path: OwnedObjectPath = args.object_path.into();
+                Some(added) = interfaces_added.next() => {
+                    let Ok(args) = added.args() else {
+                        continue;
+                    };
+                    if !args.interfaces_and_properties.contains_key(DEVICE_INTERFACE) {
+                        continue;
+                    }
+                    let object_path: OwnedObjectPath = args.object_path.into();
 
-                        handle_device_added(
-                            &connection,
-                            cancellation_token.child_token(),
-                            &devices_prop,
-                            object_path,
-                            &notifier_tx,
-                        )
-                        .await;
-                    }
+                    handle_device_added(
+                        &connection,
+                        cancellation_token.child_token(),
+                        &devices_prop,
+                        object_path,
+                        &notifier_tx,
+                    )
+                    .await;
                 }
-                Some(removed) = device_interface_removed.next() => {
-                    if let Ok(args) = removed.args() {
-                        let object_path: OwnedObjectPath = args.object_path.into();
-                        remove_and_cancel!(devices_prop, object_path);
+                Some(removed) = interfaces_removed.next() => {
+                    let Ok(args) = removed.args() else {
+                        continue;
+                    };
+                    if !args.interfaces.iter().any(|i| i.as_str() == DEVICE_INTERFACE) {
+                        continue;
                     }
+                    let object_path: OwnedObjectPath = args.object_path.into();
+                    remove_and_cancel!(devices_prop, object_path);
                 }
             }
         }
@@ -126,12 +130,8 @@ async fn monitor_adapters(
     cancellation_token: CancellationToken,
     adapters: &Property<Vec<Arc<Adapter>>>,
 ) -> Result<(), Error> {
-    let mut adapter_interface_added = object_manager
-        .receive_interfaces_added_with_args(&[(1, ADAPTER_INTERFACE)])
-        .await?;
-    let mut adapter_interface_removed = object_manager
-        .receive_interfaces_removed_with_args(&[(1, ADAPTER_INTERFACE)])
-        .await?;
+    let mut interfaces_added = object_manager.receive_interfaces_added().await?;
+    let mut interfaces_removed = object_manager.receive_interfaces_removed().await?;
 
     let adapters_prop = adapters.clone();
     let connection = connection.clone();
@@ -143,24 +143,32 @@ async fn monitor_adapters(
                     debug!("Bluetooth 'adapter' monitoring cancelled");
                     return;
                 }
-                Some(added) = adapter_interface_added.next() => {
-                    if let Ok(args) = added.args() {
-                        let object_path: OwnedObjectPath = args.object_path.into();
+                Some(added) = interfaces_added.next() => {
+                    let Ok(args) = added.args() else {
+                        continue;
+                    };
+                    if !args.interfaces_and_properties.contains_key(ADAPTER_INTERFACE) {
+                        continue;
+                    }
+                    let object_path: OwnedObjectPath = args.object_path.into();
 
-                        handle_adapter_added(
-                            &connection,
-                            cancellation_token.child_token(),
-                            &adapters_prop,
-                            object_path,
-                        )
-                        .await;
-                    }
+                    handle_adapter_added(
+                        &connection,
+                        cancellation_token.child_token(),
+                        &adapters_prop,
+                        object_path,
+                    )
+                    .await;
                 }
-                Some(removed) = adapter_interface_removed.next() => {
-                    if let Ok(args) = removed.args() {
-                        let object_path: OwnedObjectPath = args.object_path.into();
-                        remove_and_cancel!(adapters_prop, object_path);
+                Some(removed) = interfaces_removed.next() => {
+                    let Ok(args) = removed.args() else {
+                        continue;
+                    };
+                    if !args.interfaces.iter().any(|i| i.as_str() == ADAPTER_INTERFACE) {
+                        continue;
                     }
+                    let object_path: OwnedObjectPath = args.object_path.into();
+                    remove_and_cancel!(adapters_prop, object_path);
                 }
             }
         }
