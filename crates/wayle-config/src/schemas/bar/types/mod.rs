@@ -67,9 +67,14 @@ impl Default for BarLayout {
         Self {
             monitor: String::from("*"),
             extends: None,
-            left: vec![BarItem::Module(ModuleRef::Plain(BarModule::Dashboard))],
+            left: vec![BarItem::Module(ModuleRef::Plain(BarModule::Media))],
             center: vec![BarItem::Module(ModuleRef::Plain(BarModule::Clock))],
-            right: vec![BarItem::Module(ModuleRef::Plain(BarModule::Systray))],
+            right: vec![
+                BarItem::Module(ModuleRef::Plain(BarModule::Battery)),
+                BarItem::Module(ModuleRef::Plain(BarModule::Network)),
+                BarItem::Module(ModuleRef::Plain(BarModule::Microphone)),
+                BarItem::Module(ModuleRef::Plain(BarModule::Volume)),
+            ],
         }
     }
 }
