@@ -38,9 +38,8 @@ pub(crate) fn init_css_provider(display: &Display) -> CssProvider {
     let config_service = services::get::<ConfigService>();
     let config = config_service.config();
     let palette = config.styling.palette();
-    let theme_provider = config.styling.theme_provider.get();
 
-    let css_result = compile(&palette, &config.general, &config.bar, theme_provider);
+    let css_result = compile(&palette, &config.general, &config.bar, &config.styling);
 
     match css_result {
         Ok(css) => {

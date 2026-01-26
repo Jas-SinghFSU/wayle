@@ -12,7 +12,11 @@ pub use errors::Error;
 use tracing::error;
 use wayle_config::{
     infrastructure::themes::Palette,
-    schemas::{bar::BarConfig, general::GeneralConfig, styling::ThemeProvider},
+    schemas::{
+        bar::BarConfig,
+        general::GeneralConfig,
+        styling::{StylingConfig, ThemeProvider},
+    },
 };
 
 /// Returns the SCSS source directory path.
@@ -31,14 +35,16 @@ pub fn compile(
     palette: &Palette,
     general: &GeneralConfig,
     bar: &BarConfig,
-    theme_provider: ThemeProvider,
+    styling: &StylingConfig,
 ) -> Result<String, Error> {
+    let theme_provider = styling.theme_provider.get();
     let resolved_palette = resolve_palette(palette, &theme_provider);
 
     let variables = format!(
-        "{}\n{}\n{}\n{}\n",
+        "{}\n{}\n{}\n{}\n{}\n",
         palette_to_scss(&resolved_palette),
         fonts_to_scss(general),
+        global_scale_to_scss(styling),
         scale_to_scss(bar),
         rounding_to_scss(bar)
     );
@@ -114,6 +120,10 @@ $font-mono: "{}";
     )
 }
 
+fn global_scale_to_scss(styling: &StylingConfig) -> String {
+    format!("$global-scale: {};\n", styling.scale.get())
+}
+
 fn scale_to_scss(bar: &BarConfig) -> String {
     format!(
         "$bar-scale: {};\n\
@@ -157,7 +167,10 @@ fn rounding_to_scss(bar: &BarConfig) -> String {
 
 #[cfg(test)]
 mod tests {
-    use wayle_config::{infrastructure::themes::palettes, schemas::bar::BarConfig};
+    use wayle_config::{
+        infrastructure::themes::palettes,
+        schemas::{bar::BarConfig, styling::StylingConfig},
+    };
 
     use super::*;
 
@@ -168,7 +181,8 @@ mod tests {
         let theme = palettes::builtins().into_iter().next().unwrap();
         let general = GeneralConfig::default();
         let bar = BarConfig::default();
-        let css = compile(&theme.palette, &general, &bar, ThemeProvider::default()).unwrap();
+        let styling = StylingConfig::default();
+        let css = compile(&theme.palette, &general, &bar, &styling).unwrap();
 
         let provider = gtk4::CssProvider::new();
         provider.load_from_string(&css);
@@ -179,7 +193,8 @@ mod tests {
         let theme = palettes::builtins().into_iter().next().unwrap();
         let general = GeneralConfig::default();
         let bar = BarConfig::default();
-        let css = compile(&theme.palette, &general, &bar, ThemeProvider::default()).unwrap();
+        let styling = StylingConfig::default();
+        let css = compile(&theme.palette, &general, &bar, &styling).unwrap();
 
         println!("\n=== COMPILED CSS ===\n{}\n=== END ===", css);
     }

@@ -1,4 +1,4 @@
-//! Shared type definitions for bar button components.
+//! Type definitions for bar button components.
 
 use std::fmt::{Debug, Formatter, Result as FmtResult};
 
@@ -58,7 +58,7 @@ impl Debug for BarButtonBehavior {
     }
 }
 
-/// Bar-wide settings shared by all modules.
+/// Settings for bar buttons.
 #[derive(Debug, Clone)]
 pub struct BarSettings {
     /// Button visual variant.
@@ -71,7 +71,7 @@ pub struct BarSettings {
     pub border_width: ConfigProperty<u8>,
     /// Vertical orientation.
     pub is_vertical: ConfigProperty<bool>,
-    /// Scroll sensitivity multiplier for all modules.
+    /// Scroll sensitivity multiplier.
     pub scroll_sensitivity: f64,
 }
 

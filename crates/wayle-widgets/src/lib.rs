@@ -25,7 +25,7 @@ pub mod utils;
 /// Convenient re-exports of all widget templates and class constants.
 pub mod prelude {
     pub use crate::{
-        components::bar_buttons::*,
+        components::{bar_buttons::*, bar_container::*},
         primitives::{
             alert::*, badge::*, buttons::*, card::*, checkbox::*, confirm_modal::*, dropdown::*,
             empty_state::*, popover::*, progress_bar::*, progress_ring::*, radio_group::*,

@@ -1,3 +1,5 @@
+//! Pywal palette provider.
+
 use std::fs;
 
 use serde::Deserialize;

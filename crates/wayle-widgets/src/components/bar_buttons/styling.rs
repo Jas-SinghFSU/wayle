@@ -1,8 +1,7 @@
 //! CSS variable generation for bar button styling.
 
 use relm4::{ComponentSender, gtk};
-use tokio::sync::mpsc;
-use wayle_common::SubscribeChanges;
+use wayle_common::watch;
 use wayle_config::schemas::styling::ThemeProvider;
 
 use super::component::{BarButton, BarButtonCmd};
@@ -17,36 +16,43 @@ impl InlineStyling for BarButton {
     }
 
     fn spawn_style_watcher(&self, sender: &Self::Sender) {
-        let (tx, mut rx) = mpsc::unbounded_channel();
+        let show_icon = self.behavior.show_icon.clone();
+        let show_label = self.behavior.show_label.clone();
+        let show_border = self.behavior.show_border.clone();
+        let visible = self.behavior.visible.clone();
+        let label_max_chars = self.behavior.label_max_chars.clone();
+        let icon_color = self.colors.icon_color.clone();
+        let label_color = self.colors.label_color.clone();
+        let icon_background = self.colors.icon_background.clone();
+        let button_background = self.colors.button_background.clone();
+        let border_color = self.colors.border_color.clone();
+        let border_location = self.settings.border_location.clone();
+        let border_width = self.settings.border_width.clone();
+        let theme_provider = self.settings.theme_provider.clone();
+        let is_vertical = self.settings.is_vertical.clone();
 
-        self.behavior.show_icon.subscribe_changes(tx.clone());
-        self.behavior.show_label.subscribe_changes(tx.clone());
-        self.behavior.show_border.subscribe_changes(tx.clone());
-        self.behavior.visible.subscribe_changes(tx.clone());
-        self.behavior.label_max_chars.subscribe_changes(tx.clone());
-        self.colors.icon_color.subscribe_changes(tx.clone());
-        self.colors.label_color.subscribe_changes(tx.clone());
-        self.colors.icon_background.subscribe_changes(tx.clone());
-        self.colors.button_background.subscribe_changes(tx.clone());
-        self.colors.border_color.subscribe_changes(tx.clone());
-        self.settings.border_location.subscribe_changes(tx.clone());
-        self.settings.border_width.subscribe_changes(tx.clone());
-        self.settings.theme_provider.subscribe_changes(tx.clone());
-        self.settings.is_vertical.subscribe_changes(tx);
-
-        sender.command(move |out, shutdown| async move {
-            let shutdown_fut = shutdown.wait();
-            tokio::pin!(shutdown_fut);
-
-            loop {
-                tokio::select! {
-                    () = &mut shutdown_fut => break,
-                    Some(()) = rx.recv() => {
-                        let _ = out.send(BarButtonCmd::ConfigChanged);
-                    }
-                }
+        watch!(
+            sender,
+            [
+                show_icon.watch(),
+                show_label.watch(),
+                show_border.watch(),
+                visible.watch(),
+                label_max_chars.watch(),
+                icon_color.watch(),
+                label_color.watch(),
+                icon_background.watch(),
+                button_background.watch(),
+                border_color.watch(),
+                border_location.watch(),
+                border_width.watch(),
+                theme_provider.watch(),
+                is_vertical.watch(),
+            ],
+            |out| {
+                let _ = out.send(BarButtonCmd::ConfigChanged);
             }
-        });
+        );
     }
 
     fn build_css(&self) -> String {

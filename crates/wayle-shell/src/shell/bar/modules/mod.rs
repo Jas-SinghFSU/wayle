@@ -4,6 +4,7 @@ mod clock;
 mod media;
 mod microphone;
 mod network;
+mod systray;
 mod volume;
 
 use battery::{BatteryInit, BatteryModule};
@@ -13,6 +14,7 @@ use media::{MediaInit, MediaModule};
 use microphone::{MicrophoneInit, MicrophoneModule};
 use network::{NetworkInit, NetworkModule};
 use relm4::prelude::*;
+use systray::{SystrayInit, SystrayModule};
 use volume::{VolumeInit, VolumeModule};
 use wayle_config::schemas::bar::{BarModule, ModuleRef};
 use wayle_widgets::prelude::BarSettings;
@@ -29,6 +31,7 @@ pub(crate) enum ModuleController {
     Media(Controller<MediaModule>),
     Microphone(Controller<MicrophoneModule>),
     Network(Controller<NetworkModule>),
+    Systray(Controller<SystrayModule>),
     Volume(Controller<VolumeModule>),
 }
 
@@ -41,6 +44,7 @@ impl ModuleController {
             Self::Media(c) => c.widget(),
             Self::Microphone(c) => c.widget(),
             Self::Network(c) => c.widget(),
+            Self::Systray(c) => c.widget(),
             Self::Volume(c) => c.widget(),
         }
     }
@@ -92,6 +96,12 @@ pub(crate) fn create_module(module_ref: &ModuleRef, settings: &BarSettings) -> M
                 settings: settings.clone(),
             };
             ModuleController::Bluetooth(BluetoothModule::builder().launch(init).detach())
+        }
+        BarModule::Systray => {
+            let init = SystrayInit {
+                is_vertical: settings.is_vertical.clone(),
+            };
+            ModuleController::Systray(SystrayModule::builder().launch(init).detach())
         }
         _ => {
             let init = ClockInit {

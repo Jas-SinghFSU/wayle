@@ -33,12 +33,10 @@ impl PaletteProvider for WallustProvider {
 struct WallustOutput {
     background: String,
     foreground: String,
-    #[allow(dead_code)]
-    color0: String,
-    color1: String,
-    color2: String,
     color3: String,
     color4: String,
+    color5: String,
+    color6: String,
     color7: String,
     color8: String,
 }
@@ -66,11 +64,11 @@ impl WallustOutput {
             elevated: self.color8,
             fg: self.foreground,
             fg_muted: self.color7,
-            primary: self.color4.clone(),
-            red: self.color1,
-            yellow: self.color3,
-            green: self.color2,
-            blue: self.color4,
+            primary: self.color6.clone(),
+            red: self.color3,
+            yellow: self.color5,
+            green: self.color4,
+            blue: self.color6,
         }
     }
 }

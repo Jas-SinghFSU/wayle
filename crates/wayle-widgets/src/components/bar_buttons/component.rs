@@ -2,12 +2,11 @@
 
 use std::borrow::Cow;
 
-use futures::StreamExt;
 #[allow(deprecated)]
 use gtk4::prelude::StyleContextExt;
 use gtk4::prelude::{OrientableExt, WidgetExt};
 use relm4::{ComponentParts, ComponentSender, gtk, prelude::*};
-use wayle_common::ConfigProperty;
+use wayle_common::{ConfigProperty, watch};
 use wayle_config::schemas::styling::CssToken;
 
 use super::{
@@ -291,19 +290,8 @@ impl BarButton {
 
     fn watch_variant(variant: &ConfigProperty<BarButtonVariant>, sender: &ComponentSender<Self>) {
         let variant = variant.clone();
-        sender.command(move |out, shutdown| {
-            shutdown
-                .register(async move {
-                    let mut stream = variant.watch();
-                    stream.next().await;
-
-                    while let Some(value) = stream.next().await {
-                        if out.send(BarButtonCmd::VariantChanged(value)).is_err() {
-                            break;
-                        }
-                    }
-                })
-                .drop_on_shutdown()
+        watch!(sender, [variant.watch()], |out| {
+            let _ = out.send(BarButtonCmd::VariantChanged(variant.get()));
         });
     }
 }

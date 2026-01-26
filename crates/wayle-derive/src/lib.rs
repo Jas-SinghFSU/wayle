@@ -502,7 +502,8 @@ pub fn derive_subscribe_changes(input: TokenStream) -> TokenStream {
 /// # Variants
 ///
 /// - `#[wayle_config]` - Standard config struct
-/// - `#[wayle_config(bar_button)]` - Bar module config with injected standard fields
+/// - `#[wayle_config(bar_button)]` - Bar module config with icon/label/click fields
+/// - `#[wayle_config(bar_container)]` - Bar container config (no icon/label, children handle clicks)
 ///
 /// # Generates
 ///
@@ -539,6 +540,16 @@ pub fn derive_subscribe_changes(input: TokenStream) -> TokenStream {
 /// | `scroll_up` | `String` | `""` | `scroll-up` |
 /// | `scroll_down` | `String` | `""` | `scroll-down` |
 ///
+/// # Bar Container Fields (required by `bar_container`)
+///
+/// When using `#[wayle_config(bar_container)]`, these fields must be defined:
+///
+/// | Field | Type | Default | TOML Name |
+/// |-------|------|---------|-----------|
+/// | `border_show` | `bool` | `false` | `border-show` |
+/// | `border_color` | `ColorValue` | `Token(BorderAccent)` | `border-color` |
+/// | `button_bg_color` | `ColorValue` | `Token(BgSurfaceElevated)` | `button-bg-color` |
+///
 /// # Example
 ///
 /// ```ignore
@@ -561,29 +572,43 @@ pub fn derive_subscribe_changes(input: TokenStream) -> TokenStream {
 ///     pub level_icons: ConfigProperty<Vec<String>>,
 /// }
 /// ```
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum ConfigType {
+    Standard,
+    BarButton,
+    BarContainer,
+}
+
+/// Transforms a config struct with Wayle conventions.
+///
+/// See module-level documentation for details.
 #[proc_macro_attribute]
 pub fn wayle_config(attr: TokenStream, item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as ItemStruct);
-    let is_bar_button = parse_bar_button_attr(attr);
+    let config_type = parse_config_type_attr(attr);
 
-    match generate_wayle_config(input, is_bar_button) {
+    match generate_wayle_config(input, config_type) {
         Ok(tokens) => tokens.into(),
         Err(err) => err.to_compile_error().into(),
     }
 }
 
-fn parse_bar_button_attr(attr: TokenStream) -> bool {
+fn parse_config_type_attr(attr: TokenStream) -> ConfigType {
     if attr.is_empty() {
-        return false;
+        return ConfigType::Standard;
     }
 
     let attr2: TokenStream2 = attr.into();
     let ident: Result<Ident, _> = syn::parse2(attr2);
 
-    matches!(ident, Ok(id) if id == "bar_button")
+    match ident {
+        Ok(id) if id == "bar_button" => ConfigType::BarButton,
+        Ok(id) if id == "bar_container" => ConfigType::BarContainer,
+        _ => ConfigType::Standard,
+    }
 }
 
-fn generate_wayle_config(input: ItemStruct, is_bar_button: bool) -> syn::Result<TokenStream2> {
+fn generate_wayle_config(input: ItemStruct, config_type: ConfigType) -> syn::Result<TokenStream2> {
     let name = &input.ident;
     let vis = &input.vis;
     let generics = &input.generics;
@@ -599,8 +624,10 @@ fn generate_wayle_config(input: ItemStruct, is_bar_button: bool) -> syn::Result<
         }
     };
 
-    if is_bar_button {
-        validate_bar_button_fields(fields)?;
+    match config_type {
+        ConfigType::BarButton => validate_bar_button_fields(fields)?,
+        ConfigType::BarContainer => validate_bar_container_fields(fields)?,
+        ConfigType::Standard => {}
     }
 
     let processed_fields = process_fields(fields)?;
@@ -656,16 +683,22 @@ const BAR_BUTTON_REQUIRED_FIELDS: &[&str] = &[
     "scroll_down",
 ];
 
-fn validate_bar_button_fields(fields: &FieldsNamed) -> syn::Result<()> {
+const BAR_CONTAINER_REQUIRED_FIELDS: &[&str] = &["border_show", "border_color", "button_bg_color"];
+
+fn validate_required_fields(
+    fields: &FieldsNamed,
+    required: &[&str],
+    config_name: &str,
+) -> syn::Result<()> {
     let field_names: Vec<String> = fields
         .named
         .iter()
         .filter_map(|f| f.ident.as_ref().map(|i| i.to_string()))
         .collect();
 
-    let missing: Vec<&str> = BAR_BUTTON_REQUIRED_FIELDS
+    let missing: Vec<&str> = required
         .iter()
-        .filter(|required| !field_names.contains(&(**required).to_string()))
+        .filter(|req| !field_names.contains(&(**req).to_string()))
         .copied()
         .collect();
 
@@ -675,11 +708,20 @@ fn validate_bar_button_fields(fields: &FieldsNamed) -> syn::Result<()> {
         Err(syn::Error::new_spanned(
             fields,
             format!(
-                "bar_button config missing required fields: {}",
+                "{} config missing required fields: {}",
+                config_name,
                 missing.join(", ")
             ),
         ))
     }
+}
+
+fn validate_bar_button_fields(fields: &FieldsNamed) -> syn::Result<()> {
+    validate_required_fields(fields, BAR_BUTTON_REQUIRED_FIELDS, "bar_button")
+}
+
+fn validate_bar_container_fields(fields: &FieldsNamed) -> syn::Result<()> {
+    validate_required_fields(fields, BAR_CONTAINER_REQUIRED_FIELDS, "bar_container")
 }
 
 struct ProcessedFields {

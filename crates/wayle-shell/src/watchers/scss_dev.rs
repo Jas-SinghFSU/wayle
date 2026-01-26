@@ -98,9 +98,8 @@ fn recompile_css(cmd_sender: &relm4::Sender<ShellCmd>) {
     let config_service = services::get::<ConfigService>();
     let config = config_service.config();
     let palette = config.styling.palette();
-    let theme_provider = config.styling.theme_provider.get();
 
-    match compile(&palette, &config.general, &config.bar, theme_provider) {
+    match compile(&palette, &config.general, &config.bar, &config.styling) {
         Ok(css) => {
             debug!("SCSS recompiled");
             let _ = cmd_sender.send(ShellCmd::CssRecompiled(css));

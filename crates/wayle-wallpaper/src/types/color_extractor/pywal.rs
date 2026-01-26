@@ -19,6 +19,10 @@ pub enum Arg<'a> {
     SkipTty,
     /// `-e` - Skip reloading gtk/xrdb/i3/sway/polybar.
     SkipReload,
+    /// `--saturate <value>` - Set color saturation (-1.0 to 1.0).
+    Saturate(f32),
+    /// `--contrast <value>` - Minimum contrast ratio (1.0 to 21.0).
+    Contrast(f32),
 }
 
 impl Arg<'_> {
@@ -39,6 +43,12 @@ impl Arg<'_> {
             Self::SkipReload => {
                 cmd.arg("-e");
             }
+            Self::Saturate(value) => {
+                cmd.args(["--saturate", &value.to_string()]);
+            }
+            Self::Contrast(value) => {
+                cmd.args(["--contrast", &value.to_string()]);
+            }
         }
     }
 }
@@ -56,12 +66,15 @@ fn run(args: &[Arg<'_>]) -> Result<(), Error> {
 
 /// Runs pywal color extraction on the given image.
 ///
-/// Pywal writes colors to its own cache location (`~/.cache/wal/colors.json`).
-///
 /// # Errors
 ///
 /// Returns error if pywal command fails.
 pub fn extract(image_path: &str) -> Result<(), Error> {
     let path = Path::new(image_path);
-    run(&[Arg::Image(path), Arg::NoWallpaper])
+    run(&[
+        Arg::Image(path),
+        Arg::NoWallpaper,
+        Arg::Saturate(0.05),
+        Arg::Contrast(3.0),
+    ])
 }

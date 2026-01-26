@@ -79,33 +79,43 @@ async fn monitor_name_owner_changes(watcher: &StatusNotifierWatcher) -> Result<(
 }
 
 pub(crate) async fn unregister_item(
-    item: &str,
+    bus_name: &str,
     registered_items: &Arc<RwLock<Vec<String>>>,
     event_tx: &broadcast::Sender<TrayEvent>,
     connection: &Connection,
 ) -> Result<(), Error> {
-    {
+    let removed_items = {
         let mut items = registered_items.write().await;
+        let prefix = format!("{bus_name}/");
 
-        if let Some(index) = items.iter().position(|s| s == item) {
-            items.remove(index);
-        }
-    }
-
-    let _ = event_tx.send(TrayEvent::ItemUnregistered(item.to_string()));
-
-    connection
-        .emit_signal(
-            None::<()>,
-            WATCHER_OBJECT_PATH,
-            WATCHER_INTERFACE,
-            "StatusNotifierItemUnregistered",
-            &item,
-        )
-        .await
-        .unwrap_or_else(|error| {
-            error!(error = %error, item = %item, "cannot emit unregistered signal for item");
+        let mut removed = Vec::new();
+        items.retain(|s| {
+            if s == bus_name || s.starts_with(&prefix) {
+                removed.push(s.clone());
+                false
+            } else {
+                true
+            }
         });
+        removed
+    };
+
+    for item in removed_items {
+        let _ = event_tx.send(TrayEvent::ItemUnregistered(item.clone()));
+
+        connection
+            .emit_signal(
+                None::<()>,
+                WATCHER_OBJECT_PATH,
+                WATCHER_INTERFACE,
+                "StatusNotifierItemUnregistered",
+                &item,
+            )
+            .await
+            .unwrap_or_else(|error| {
+                error!(error = %error, item = %item, "cannot emit unregistered signal for item");
+            });
+    }
 
     Ok(())
 }

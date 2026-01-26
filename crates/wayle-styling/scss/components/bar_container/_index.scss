@@ -1,0 +1,21 @@
+.bar-container {
+    all: unset;
+    background-color: var(--bar-container-bg);
+    border-radius: var(--bar-button-rounding-element);
+
+    &.border-top {
+        border-top: var(--bar-container-border-width) solid var(--bar-container-border-color);
+    }
+    &.border-bottom {
+        border-bottom: var(--bar-container-border-width) solid var(--bar-container-border-color);
+    }
+    &.border-left {
+        border-left: var(--bar-container-border-width) solid var(--bar-container-border-color);
+    }
+    &.border-right {
+        border-right: var(--bar-container-border-width) solid var(--bar-container-border-color);
+    }
+    &.border-all {
+        border: var(--bar-container-border-width) solid var(--bar-container-border-color);
+    }
+}

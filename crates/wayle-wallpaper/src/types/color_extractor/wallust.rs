@@ -126,8 +126,10 @@ fn ensure_wayle_config() -> Result<(PathBuf, PathBuf), Error> {
     })?;
 
     let config_content = format!(
-        r#"# Wayle-managed wallust config for colors.json generation
-# Do not edit - this file is auto-generated
+        r#"
+palette = "dark"
+check_contrast = true
+dynamic_threshold = true
 
 [templates]
 colors = {{ template = "colors.json", target = "{}" }}

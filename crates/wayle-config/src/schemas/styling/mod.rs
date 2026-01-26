@@ -15,6 +15,10 @@ use crate::infrastructure::themes::Palette;
 /// Styling configuration. Changes trigger stylesheet recompilation.
 #[wayle_config]
 pub struct StylingConfig {
+    /// Scale multiplier for dropdowns, popovers, and dialogs.
+    #[default(ScaleFactor::new(1.0))]
+    pub scale: ConfigProperty<ScaleFactor>,
+
     /// Theme provider (wayle, matugen, pywal, wallust).
     #[serde(rename = "theme-provider")]
     #[default(ThemeProvider::default())]

@@ -24,6 +24,7 @@ pub fn spawn(sender: &ComponentSender<Shell>) {
     let palette_stream = changes_stream(&config.styling.palette);
     let general_stream = changes_stream(&config.general);
     let bar_stream = changes_stream(&config.bar);
+    let global_scale_stream = config.styling.scale.watch();
 
     let theme_provider_stream = config
         .styling
@@ -39,6 +40,7 @@ pub fn spawn(sender: &ComponentSender<Shell>) {
             palette_stream,
             general_stream,
             bar_stream,
+            global_scale_stream,
             theme_provider_stream,
             extraction_stream,
         ],
@@ -48,7 +50,6 @@ pub fn spawn(sender: &ComponentSender<Shell>) {
 
 fn compile_css(config: &wayle_config::Config) -> Result<String, wayle_styling::Error> {
     let palette = config.styling.palette();
-    let theme_provider = config.styling.theme_provider.get();
 
-    compile(&palette, &config.general, &config.bar, theme_provider)
+    compile(&palette, &config.general, &config.bar, &config.styling)
 }
