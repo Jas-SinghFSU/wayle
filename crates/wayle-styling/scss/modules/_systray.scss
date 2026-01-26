@@ -43,6 +43,7 @@
 .systray-menu,
 .systray-menu popover.menu {
     @include popover-base;
+    font-family: var(--font-sans);
 
     > contents {
         @include popover-contents;
@@ -62,7 +63,7 @@
 
             label {
                 font-size: var(--text-md);
-                font-weight: var(--weight-medium);
+                font-weight: var(--weight-semibold);
                 color: var(--fg-default);
             }
 
