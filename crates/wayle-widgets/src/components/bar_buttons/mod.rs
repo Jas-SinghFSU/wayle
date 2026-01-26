@@ -1,9 +1,10 @@
 //! Bar button components for shell panels.
 
 mod component;
-mod shared;
+mod helpers;
 mod styling;
 mod types;
+mod watchers;
 
 pub use component::{BarButton, BarButtonInit, BarButtonInput};
 pub use types::{

@@ -4,10 +4,14 @@
 use gtk4::prelude::StyleContextExt;
 use gtk4::prelude::{OrientableExt, WidgetExt};
 use relm4::{ComponentParts, ComponentSender, gtk, prelude::*};
-use wayle_common::{ConfigProperty, watch};
+use wayle_common::ConfigProperty;
 use wayle_config::schemas::{bar::BorderLocation, styling::ThemeProvider};
 
-use super::types::{BarContainerBehavior, BarContainerClass, BarContainerColors, BarContainerInit};
+use super::{
+    helpers::{compute_css_classes, compute_orientation},
+    types::{BarContainerBehavior, BarContainerColors, BarContainerInit},
+    watchers::spawn_orientation_watcher,
+};
 use crate::{styling::InlineStyling, utils::force_window_resize};
 
 /// Input messages for BarContainer.
@@ -48,10 +52,14 @@ impl Component for BarContainer {
         #[root]
         gtk::Box {
             #[watch]
-            set_css_classes: &model.css_classes(),
+            set_css_classes: &compute_css_classes(
+                model.is_vertical,
+                model.behavior.show_border.get(),
+                model.border_location.get(),
+            ),
 
             #[watch]
-            set_orientation: model.orientation(),
+            set_orientation: compute_orientation(model.is_vertical),
 
             #[watch]
             set_hexpand: model.is_vertical,
@@ -85,7 +93,7 @@ impl Component for BarContainer {
 
         let widgets = view_output!();
 
-        Self::watch_orientation(&init.is_vertical, &sender);
+        spawn_orientation_watcher(&init.is_vertical, &sender);
         model.spawn_style_watcher(&sender);
 
         ComponentParts { model, widgets }
@@ -108,35 +116,5 @@ impl Component for BarContainer {
                 force_window_resize(root);
             }
         }
-    }
-}
-
-impl BarContainer {
-    fn css_classes(&self) -> Vec<&'static str> {
-        let mut classes = vec![BarContainerClass::BASE];
-        if self.is_vertical {
-            classes.push(BarContainerClass::VERTICAL);
-        }
-        if self.behavior.show_border.get()
-            && let Some(border_class) = self.border_location.get().css_class()
-        {
-            classes.push(border_class);
-        }
-        classes
-    }
-
-    fn orientation(&self) -> gtk::Orientation {
-        if self.is_vertical {
-            gtk::Orientation::Vertical
-        } else {
-            gtk::Orientation::Horizontal
-        }
-    }
-
-    fn watch_orientation(is_vertical: &ConfigProperty<bool>, sender: &ComponentSender<Self>) {
-        let is_vertical = is_vertical.clone();
-        watch!(sender, [is_vertical.watch()], |out| {
-            let _ = out.send(BarContainerCmd::OrientationChanged(is_vertical.get()));
-        });
     }
 }

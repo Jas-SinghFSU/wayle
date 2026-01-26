@@ -6,15 +6,15 @@ use std::borrow::Cow;
 use gtk4::prelude::StyleContextExt;
 use gtk4::prelude::{OrientableExt, WidgetExt};
 use relm4::{ComponentParts, ComponentSender, gtk, prelude::*};
-use wayle_common::{ConfigProperty, watch};
 use wayle_config::schemas::styling::CssToken;
 
 use super::{
-    shared::setup_event_controllers,
+    helpers::setup_event_controllers,
     types::{
         BarButtonBehavior, BarButtonClass, BarButtonColors, BarButtonOutput, BarButtonVariant,
         BarSettings,
     },
+    watchers::spawn_variant_watcher,
 };
 use crate::{styling::InlineStyling, utils::force_window_resize};
 
@@ -179,7 +179,7 @@ impl Component for BarButton {
         let widgets = view_output!();
 
         setup_event_controllers(&root, sender.output_sender().clone(), scroll_sensitivity);
-        Self::watch_variant(&model.settings.variant, &sender);
+        spawn_variant_watcher(&model.settings.variant, &sender);
         model.spawn_style_watcher(&sender);
 
         ComponentParts { model, widgets }
@@ -286,12 +286,5 @@ impl BarButton {
         } else {
             color.to_css()
         }
-    }
-
-    fn watch_variant(variant: &ConfigProperty<BarButtonVariant>, sender: &ComponentSender<Self>) {
-        let variant = variant.clone();
-        watch!(sender, [variant.watch()], |out| {
-            let _ = out.send(BarButtonCmd::VariantChanged(variant.get()));
-        });
     }
 }

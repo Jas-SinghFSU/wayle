@@ -5,8 +5,10 @@
 //! that need to host multiple interactive children (e.g., systray icons).
 
 mod component;
+mod helpers;
 mod styling;
 mod types;
+mod watchers;
 
 pub use component::{BarContainer, BarContainerCmd, BarContainerInput};
 pub use types::{BarContainerBehavior, BarContainerClass, BarContainerColors, BarContainerInit};
