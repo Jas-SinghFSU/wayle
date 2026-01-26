@@ -21,9 +21,9 @@ pub enum RoundingLevel {
     /// Sharp corners (no rounding).
     None,
     /// Subtle rounding.
+    #[default]
     Sm,
     /// Moderate rounding (default).
-    #[default]
     Md,
     /// Pronounced rounding.
     Lg,

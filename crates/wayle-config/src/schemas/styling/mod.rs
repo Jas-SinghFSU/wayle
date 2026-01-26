@@ -19,6 +19,10 @@ pub struct StylingConfig {
     #[default(ScaleFactor::new(1.0))]
     pub scale: ConfigProperty<ScaleFactor>,
 
+    /// Corner rounding for dropdowns, popovers, and dialogs.
+    #[default(RoundingLevel::default())]
+    pub rounding: ConfigProperty<RoundingLevel>,
+
     /// Theme provider (wayle, matugen, pywal, wallust).
     #[serde(rename = "theme-provider")]
     #[default(ThemeProvider::default())]

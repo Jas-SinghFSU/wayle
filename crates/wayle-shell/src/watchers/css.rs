@@ -25,6 +25,7 @@ pub fn spawn(sender: &ComponentSender<Shell>) {
     let general_stream = changes_stream(&config.general);
     let bar_stream = changes_stream(&config.bar);
     let global_scale_stream = config.styling.scale.watch();
+    let global_rounding_stream = config.styling.rounding.watch();
 
     let theme_provider_stream = config
         .styling
@@ -41,6 +42,7 @@ pub fn spawn(sender: &ComponentSender<Shell>) {
             general_stream,
             bar_stream,
             global_scale_stream,
+            global_rounding_stream,
             theme_provider_stream,
             extraction_stream,
         ],

@@ -137,7 +137,7 @@ pub struct BarConfig {
 
     /// Corner rounding level for the buttons in the bar.
     #[serde(rename = "button-rounding")]
-    #[default(RoundingLevel::None)]
+    #[default(RoundingLevel::default())]
     pub button_rounding: ConfigProperty<RoundingLevel>,
 
     /// Gap between button icon and label.
@@ -192,7 +192,7 @@ pub struct BarConfig {
 
     /// Corner rounding level for button groups.
     #[serde(rename = "button-group-rounding")]
-    #[default(RoundingLevel::None)]
+    #[default(RoundingLevel::default())]
     pub button_group_rounding: ConfigProperty<RoundingLevel>,
 
     //

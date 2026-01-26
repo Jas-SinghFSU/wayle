@@ -22,6 +22,8 @@ pub struct TrayMenuModel {
     pub menu: Menu,
     /// Action group containing all menu item actions.
     pub actions: SimpleActionGroup,
+    /// Accelerator mappings (action name -> accelerator string).
+    pub accelerators: Vec<(String, String)>,
 }
 
 /// GTK4 adapter for system tray menus.
@@ -37,14 +39,29 @@ impl Adapter {
     pub fn build_model(tray_item: &TrayItem) -> TrayMenuModel {
         let menu = Menu::new();
         let actions = SimpleActionGroup::new();
+        let mut accelerators = Vec::new();
 
         let Some(menu_item) = tray_item.menu.get() else {
-            return TrayMenuModel { menu, actions };
+            return TrayMenuModel {
+                menu,
+                actions,
+                accelerators,
+            };
         };
 
-        Self::append_items_with_sections(&menu_item.children, &menu, &actions, tray_item);
+        Self::append_items_with_sections(
+            &menu_item.children,
+            &menu,
+            &actions,
+            tray_item,
+            &mut accelerators,
+        );
 
-        TrayMenuModel { menu, actions }
+        TrayMenuModel {
+            menu,
+            actions,
+            accelerators,
+        }
     }
 
     /// Builds a GTK PopoverMenu widget from a tray item.
@@ -52,7 +69,7 @@ impl Adapter {
     /// Creates a complete popover menu ready to display, with all actions
     /// configured and registered to the "app" action group.
     pub fn build_popover(tray_item: &TrayItem) -> PopoverMenu {
-        let TrayMenuModel { menu, actions } = Self::build_model(tray_item);
+        let TrayMenuModel { menu, actions, .. } = Self::build_model(tray_item);
 
         let popover = PopoverMenu::from_model(Some(&menu));
         popover.insert_action_group("app", Some(&actions));
@@ -65,6 +82,7 @@ impl Adapter {
         menu: &Menu,
         action_group: &SimpleActionGroup,
         tray_item: &TrayItem,
+        accelerators: &mut Vec<(String, String)>,
     ) {
         let label = menu_item
             .label
@@ -79,6 +97,7 @@ impl Adapter {
                 &submenu,
                 action_group,
                 tray_item,
+                accelerators,
             );
             menu.append_submenu(Some(label), &submenu);
 
@@ -125,7 +144,8 @@ impl Adapter {
         if let Some(shortcut) = &menu_item.shortcut
             && let Some(accel) = Self::to_gtk_accelerator(shortcut)
         {
-            item.set_attribute_value("accel", Some(&Variant::from(accel)));
+            item.set_attribute_value("accel", Some(&Variant::from(&accel)));
+            accelerators.push((format!("app.{action_name}"), accel));
         }
 
         menu.append_item(&item);
@@ -136,6 +156,7 @@ impl Adapter {
         target_menu: &Menu,
         action_group: &SimpleActionGroup,
         tray_item: &TrayItem,
+        accelerators: &mut Vec<(String, String)>,
     ) {
         let mut section = Menu::new();
 
@@ -145,7 +166,7 @@ impl Adapter {
             }
 
             if item.item_type != MenuItemType::Separator {
-                Self::add_to_menu(item, &section, action_group, tray_item);
+                Self::add_to_menu(item, &section, action_group, tray_item, accelerators);
                 continue;
             }
 

@@ -5,6 +5,9 @@
 settings-styling-scale = Scale
     .description = Scale multiplier for dropdowns, popovers, and dialogs
 
+settings-styling-rounding = Rounding
+    .description = Corner rounding for dropdowns, popovers, and dialogs
+
 settings-styling-theme-provider = Theme Provider
     .description = Source for color palette (wayle, matugen, pywal)
 

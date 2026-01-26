@@ -46,7 +46,7 @@ pub fn compile(
         fonts_to_scss(general),
         global_scale_to_scss(styling),
         scale_to_scss(bar),
-        rounding_to_scss(bar)
+        rounding_to_scss(styling, bar)
     );
 
     let scss_path = scss_dir();
@@ -141,12 +141,13 @@ fn scale_to_scss(bar: &BarConfig) -> String {
     )
 }
 
-fn rounding_to_scss(bar: &BarConfig) -> String {
-    let rounding = bar.rounding.get();
+fn rounding_to_scss(styling: &StylingConfig, bar: &BarConfig) -> String {
+    let global_rounding = styling.rounding.get();
+    let bar_rounding = bar.rounding.get();
     let button_rounding = bar.button_rounding.get();
     let group_rounding = bar.button_group_rounding.get();
-    let global = rounding.to_css_values();
-    let bar_values = rounding.to_bar_css_values();
+    let global = global_rounding.to_css_values();
+    let bar_values = bar_rounding.to_bar_css_values();
     let bar_button_values = button_rounding.to_bar_element_css_values();
     let bar_group_values = group_rounding.to_bar_element_css_values();
     format!(

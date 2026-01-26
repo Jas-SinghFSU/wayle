@@ -26,6 +26,7 @@ pub(super) struct SystrayItem {
     button: Option<gtk::Button>,
     popover: Option<gtk::PopoverMenu>,
     action_group: Option<SimpleActionGroup>,
+    registered_accels: Vec<String>,
 }
 
 #[derive(Debug)]
@@ -68,6 +69,7 @@ impl FactoryComponent for SystrayItem {
             button: None,
             popover: None,
             action_group: None,
+            registered_accels: Vec::new(),
         }
     }
 
@@ -182,13 +184,17 @@ impl SystrayItem {
         debug!(
             item_id = %item_id,
             menu_n_items = model.menu.n_items(),
+            accelerators = model.accelerators.len(),
             "built menu model"
         );
 
-        if let Some(popover) = self.popover.as_ref() {
+        self.clear_accelerators();
+
+        if let Some(popover) = self.popover.clone() {
             popover.set_menu_model(Some(&model.menu));
             popover.insert_action_group("app", Some(&model.actions));
             self.action_group = Some(model.actions);
+            self.register_accelerators(&popover, &model.accelerators);
             popover.popup();
         } else {
             let popover =
@@ -201,9 +207,48 @@ impl SystrayItem {
                 popover.set_parent(parent);
             }
 
+            self.register_accelerators(&popover, &model.accelerators);
+
             self.action_group = Some(model.actions);
             self.popover = Some(popover.clone());
             popover.popup();
+        }
+    }
+
+    fn register_accelerators(
+        &mut self,
+        popover: &gtk::PopoverMenu,
+        accelerators: &[(String, String)],
+    ) {
+        let Some(app) = popover
+            .root()
+            .and_then(|r| r.downcast::<gtk::Window>().ok())
+            .and_then(|w| w.application())
+        else {
+            return;
+        };
+
+        for (action_name, accel) in accelerators {
+            app.set_accels_for_action(action_name, &[accel.as_str()]);
+            self.registered_accels.push(action_name.clone());
+        }
+    }
+
+    fn clear_accelerators(&mut self) {
+        let Some(popover) = self.popover.as_ref() else {
+            return;
+        };
+
+        let Some(app) = popover
+            .root()
+            .and_then(|r| r.downcast::<gtk::Window>().ok())
+            .and_then(|w| w.application())
+        else {
+            return;
+        };
+
+        for action_name in self.registered_accels.drain(..) {
+            app.set_accels_for_action(&action_name, &[]);
         }
     }
 
