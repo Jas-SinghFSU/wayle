@@ -41,7 +41,7 @@ experience. A successor to HyprPanel without the pain or dependency on Hyprland.
     - [x] Bluetooth
     - [x] Clock
     - [x] Microphone
-    - [ ] System tray
+    - [x] System tray
     - [ ] Notification
     - [ ] World clock
     - [ ] Dashboard
