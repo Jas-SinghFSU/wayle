@@ -4,6 +4,7 @@ mod clock;
 mod media;
 mod microphone;
 mod network;
+mod notification;
 mod systray;
 mod volume;
 
@@ -13,6 +14,7 @@ use clock::{ClockInit, ClockModule};
 use media::{MediaInit, MediaModule};
 use microphone::{MicrophoneInit, MicrophoneModule};
 use network::{NetworkInit, NetworkModule};
+use notification::{NotificationInit, NotificationModule};
 use relm4::prelude::*;
 use systray::{SystrayInit, SystrayModule};
 use volume::{VolumeInit, VolumeModule};
@@ -31,6 +33,7 @@ pub(crate) enum ModuleController {
     Media(Controller<MediaModule>),
     Microphone(Controller<MicrophoneModule>),
     Network(Controller<NetworkModule>),
+    Notification(Controller<NotificationModule>),
     Systray(Controller<SystrayModule>),
     Volume(Controller<VolumeModule>),
 }
@@ -44,6 +47,7 @@ impl ModuleController {
             Self::Media(c) => c.widget(),
             Self::Microphone(c) => c.widget(),
             Self::Network(c) => c.widget(),
+            Self::Notification(c) => c.widget(),
             Self::Systray(c) => c.widget(),
             Self::Volume(c) => c.widget(),
         }
@@ -96,6 +100,12 @@ pub(crate) fn create_module(module_ref: &ModuleRef, settings: &BarSettings) -> M
                 settings: settings.clone(),
             };
             ModuleController::Bluetooth(BluetoothModule::builder().launch(init).detach())
+        }
+        BarModule::Notifications => {
+            let init = NotificationInit {
+                settings: settings.clone(),
+            };
+            ModuleController::Notification(NotificationModule::builder().launch(init).detach())
         }
         BarModule::Systray => {
             let init = SystrayInit {

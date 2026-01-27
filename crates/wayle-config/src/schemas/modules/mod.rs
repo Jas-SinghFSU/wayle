@@ -4,6 +4,7 @@ mod clock;
 mod media;
 mod microphone;
 mod network;
+mod notification;
 mod systray;
 mod volume;
 
@@ -13,6 +14,7 @@ pub use clock::ClockConfig;
 pub use media::{BUILTIN_MAPPINGS, MediaConfig, MediaIconType};
 pub use microphone::MicrophoneConfig;
 pub use network::NetworkConfig;
+pub use notification::NotificationConfig;
 pub use systray::{SystrayConfig, TrayItemOverride};
 pub use volume::VolumeConfig;
 use wayle_derive::wayle_config;
@@ -32,6 +34,8 @@ pub struct ModulesConfig {
     pub microphone: MicrophoneConfig,
     /// Network connection module.
     pub network: NetworkConfig,
+    /// Notification center module.
+    pub notification: NotificationConfig,
     /// System tray module.
     pub systray: SystrayConfig,
     /// Volume control module.

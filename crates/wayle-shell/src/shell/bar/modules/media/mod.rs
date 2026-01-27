@@ -4,8 +4,7 @@ mod watchers;
 
 use gtk::prelude::WidgetExt;
 use relm4::prelude::*;
-use tracing::error;
-use wayle_common::{ConfigProperty, WatcherToken, process::spawn_shell_quiet, services};
+use wayle_common::{ConfigProperty, WatcherToken, process, services};
 use wayle_config::{
     ConfigService,
     schemas::{modules::MediaIconType, styling::CssToken},
@@ -93,21 +92,17 @@ impl Component for MediaModule {
 
     fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, _root: &Self::Root) {
         let config_service = services::get::<ConfigService>();
-        let media_config = &config_service.config().modules.media;
+        let config = &config_service.config().modules.media;
 
         let cmd = match msg {
-            MediaMsg::LeftClick => media_config.left_click.get().clone(),
-            MediaMsg::RightClick => media_config.right_click.get().clone(),
-            MediaMsg::MiddleClick => media_config.middle_click.get().clone(),
-            MediaMsg::ScrollUp => media_config.scroll_up.get().clone(),
-            MediaMsg::ScrollDown => media_config.scroll_down.get().clone(),
+            MediaMsg::LeftClick => config.left_click.get(),
+            MediaMsg::RightClick => config.right_click.get(),
+            MediaMsg::MiddleClick => config.middle_click.get(),
+            MediaMsg::ScrollUp => config.scroll_up.get(),
+            MediaMsg::ScrollDown => config.scroll_down.get(),
         };
 
-        if !cmd.is_empty()
-            && let Err(e) = spawn_shell_quiet(&cmd)
-        {
-            error!(error = %e, cmd = %cmd, "failed to spawn command");
-        }
+        process::run_if_set(&cmd);
     }
 
     fn update_cmd(&mut self, msg: MediaCmd, sender: ComponentSender<Self>, root: &Self::Root) {

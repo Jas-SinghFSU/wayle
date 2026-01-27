@@ -3,9 +3,8 @@ mod messages;
 mod watchers;
 
 use relm4::prelude::*;
-use tracing::error;
 use wayle_audio::{AudioService, core::device::output::OutputDevice};
-use wayle_common::{ConfigProperty, WatcherToken, process::spawn_shell_quiet, services};
+use wayle_common::{ConfigProperty, WatcherToken, process, services};
 use wayle_config::{
     ConfigService,
     schemas::{modules::VolumeConfig, styling::CssToken},
@@ -99,18 +98,14 @@ impl Component for VolumeModule {
         let volume_config = &config_service.config().modules.volume;
 
         let cmd = match msg {
-            VolumeMsg::LeftClick => volume_config.left_click.get().clone(),
-            VolumeMsg::RightClick => volume_config.right_click.get().clone(),
-            VolumeMsg::MiddleClick => volume_config.middle_click.get().clone(),
-            VolumeMsg::ScrollUp => volume_config.scroll_up.get().clone(),
-            VolumeMsg::ScrollDown => volume_config.scroll_down.get().clone(),
+            VolumeMsg::LeftClick => volume_config.left_click.get(),
+            VolumeMsg::RightClick => volume_config.right_click.get(),
+            VolumeMsg::MiddleClick => volume_config.middle_click.get(),
+            VolumeMsg::ScrollUp => volume_config.scroll_up.get(),
+            VolumeMsg::ScrollDown => volume_config.scroll_down.get(),
         };
 
-        if !cmd.is_empty()
-            && let Err(e) = spawn_shell_quiet(&cmd)
-        {
-            error!(error = %e, cmd = %cmd, "failed to spawn command");
-        }
+        process::run_if_set(&cmd);
     }
 
     fn update_cmd(&mut self, msg: VolumeCmd, sender: ComponentSender<Self>, _root: &Self::Root) {

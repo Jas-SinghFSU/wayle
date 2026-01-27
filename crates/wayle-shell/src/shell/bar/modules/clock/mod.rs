@@ -3,8 +3,7 @@ mod messages;
 mod watchers;
 
 use relm4::prelude::*;
-use tracing::error;
-use wayle_common::{ConfigProperty, process::spawn_shell_quiet, services};
+use wayle_common::{ConfigProperty, process, services};
 use wayle_config::{ConfigService, schemas::styling::CssToken};
 use wayle_widgets::prelude::{
     BarButton, BarButtonBehavior, BarButtonColors, BarButtonInit, BarButtonInput, BarButtonOutput,
@@ -84,18 +83,14 @@ impl Component for ClockModule {
         let clock = &config_service.config().modules.clock;
 
         let cmd = match msg {
-            ClockMsg::LeftClick => clock.left_click.get().clone(),
-            ClockMsg::RightClick => clock.right_click.get().clone(),
-            ClockMsg::MiddleClick => clock.middle_click.get().clone(),
-            ClockMsg::ScrollUp => clock.scroll_up.get().clone(),
-            ClockMsg::ScrollDown => clock.scroll_down.get().clone(),
+            ClockMsg::LeftClick => clock.left_click.get(),
+            ClockMsg::RightClick => clock.right_click.get(),
+            ClockMsg::MiddleClick => clock.middle_click.get(),
+            ClockMsg::ScrollUp => clock.scroll_up.get(),
+            ClockMsg::ScrollDown => clock.scroll_down.get(),
         };
 
-        if !cmd.is_empty()
-            && let Err(e) = spawn_shell_quiet(&cmd)
-        {
-            error!(error = %e, cmd = %cmd, "failed to spawn command");
-        }
+        process::run_if_set(&cmd);
     }
 
     fn update_cmd(&mut self, msg: ClockCmd, _sender: ComponentSender<Self>, _root: &Self::Root) {

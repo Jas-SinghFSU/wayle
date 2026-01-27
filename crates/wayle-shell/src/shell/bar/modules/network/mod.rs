@@ -3,8 +3,7 @@ mod messages;
 mod watchers;
 
 use relm4::prelude::*;
-use tracing::error;
-use wayle_common::{ConfigProperty, WatcherToken, process::spawn_shell_quiet, services};
+use wayle_common::{ConfigProperty, WatcherToken, process, services};
 use wayle_config::{
     ConfigService,
     schemas::{modules::NetworkConfig, styling::CssToken},
@@ -99,21 +98,17 @@ impl Component for NetworkModule {
 
     fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, _root: &Self::Root) {
         let config_service = services::get::<ConfigService>();
-        let network_config = &config_service.config().modules.network;
+        let config = &config_service.config().modules.network;
 
         let cmd = match msg {
-            NetworkMsg::LeftClick => network_config.left_click.get().clone(),
-            NetworkMsg::RightClick => network_config.right_click.get().clone(),
-            NetworkMsg::MiddleClick => network_config.middle_click.get().clone(),
-            NetworkMsg::ScrollUp => network_config.scroll_up.get().clone(),
-            NetworkMsg::ScrollDown => network_config.scroll_down.get().clone(),
+            NetworkMsg::LeftClick => config.left_click.get(),
+            NetworkMsg::RightClick => config.right_click.get(),
+            NetworkMsg::MiddleClick => config.middle_click.get(),
+            NetworkMsg::ScrollUp => config.scroll_up.get(),
+            NetworkMsg::ScrollDown => config.scroll_down.get(),
         };
 
-        if !cmd.is_empty()
-            && let Err(e) = spawn_shell_quiet(&cmd)
-        {
-            error!(error = %e, cmd = %cmd, "failed to spawn command");
-        }
+        process::run_if_set(&cmd);
     }
 
     fn update_cmd(&mut self, msg: NetworkCmd, sender: ComponentSender<Self>, _root: &Self::Root) {

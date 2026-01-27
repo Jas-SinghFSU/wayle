@@ -3,9 +3,8 @@ mod messages;
 mod watchers;
 
 use relm4::prelude::*;
-use tracing::error;
 use wayle_bluetooth::BluetoothService;
-use wayle_common::{ConfigProperty, WatcherToken, process::spawn_shell_quiet, services};
+use wayle_common::{ConfigProperty, WatcherToken, process, services};
 use wayle_config::{
     ConfigService,
     schemas::{modules::BluetoothConfig, styling::CssToken},
@@ -94,21 +93,17 @@ impl Component for BluetoothModule {
 
     fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, _root: &Self::Root) {
         let config_service = services::get::<ConfigService>();
-        let bt_config = &config_service.config().modules.bluetooth;
+        let config = &config_service.config().modules.bluetooth;
 
         let cmd = match msg {
-            BluetoothMsg::LeftClick => bt_config.left_click.get().clone(),
-            BluetoothMsg::RightClick => bt_config.right_click.get().clone(),
-            BluetoothMsg::MiddleClick => bt_config.middle_click.get().clone(),
-            BluetoothMsg::ScrollUp => bt_config.scroll_up.get().clone(),
-            BluetoothMsg::ScrollDown => bt_config.scroll_down.get().clone(),
+            BluetoothMsg::LeftClick => config.left_click.get(),
+            BluetoothMsg::RightClick => config.right_click.get(),
+            BluetoothMsg::MiddleClick => config.middle_click.get(),
+            BluetoothMsg::ScrollUp => config.scroll_up.get(),
+            BluetoothMsg::ScrollDown => config.scroll_down.get(),
         };
 
-        if !cmd.is_empty()
-            && let Err(e) = spawn_shell_quiet(&cmd)
-        {
-            error!(error = %e, cmd = %cmd, "failed to spawn command");
-        }
+        process::run_if_set(&cmd);
     }
 
     fn update_cmd(&mut self, msg: BluetoothCmd, sender: ComponentSender<Self>, _root: &Self::Root) {

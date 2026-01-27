@@ -3,8 +3,7 @@ mod messages;
 mod watchers;
 
 use relm4::prelude::*;
-use tracing::error;
-use wayle_common::{ConfigProperty, process::spawn_shell_quiet, services};
+use wayle_common::{ConfigProperty, process, services};
 use wayle_config::{ConfigService, schemas::styling::CssToken};
 use wayle_widgets::prelude::{
     BarButton, BarButtonBehavior, BarButtonColors, BarButtonInit, BarButtonInput, BarButtonOutput,
@@ -87,21 +86,17 @@ impl Component for BatteryModule {
 
     fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, _root: &Self::Root) {
         let config_service = services::get::<ConfigService>();
-        let battery_config = &config_service.config().modules.battery;
+        let config = &config_service.config().modules.battery;
 
         let cmd = match msg {
-            BatteryMsg::LeftClick => battery_config.left_click.get().clone(),
-            BatteryMsg::RightClick => battery_config.right_click.get().clone(),
-            BatteryMsg::MiddleClick => battery_config.middle_click.get().clone(),
-            BatteryMsg::ScrollUp => battery_config.scroll_up.get().clone(),
-            BatteryMsg::ScrollDown => battery_config.scroll_down.get().clone(),
+            BatteryMsg::LeftClick => config.left_click.get(),
+            BatteryMsg::RightClick => config.right_click.get(),
+            BatteryMsg::MiddleClick => config.middle_click.get(),
+            BatteryMsg::ScrollUp => config.scroll_up.get(),
+            BatteryMsg::ScrollDown => config.scroll_down.get(),
         };
 
-        if !cmd.is_empty()
-            && let Err(e) = spawn_shell_quiet(&cmd)
-        {
-            error!(error = %e, cmd = %cmd, "failed to spawn command");
-        }
+        process::run_if_set(&cmd);
     }
 
     fn update_cmd(&mut self, msg: BatteryCmd, _sender: ComponentSender<Self>, _root: &Self::Root) {

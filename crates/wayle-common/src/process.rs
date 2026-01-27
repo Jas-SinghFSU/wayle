@@ -82,3 +82,16 @@ pub fn spawn_shell_sync_quiet(cmd: &str) -> io::Result<StdChild> {
         .stderr(Stdio::null())
         .spawn()
 }
+
+/// Runs a config-defined shell command if non-empty.
+///
+/// Logs an error if spawning fails. Does nothing if `cmd` is empty.
+pub fn run_if_set(cmd: &str) {
+    if cmd.is_empty() {
+        return;
+    }
+
+    if let Err(e) = spawn_shell_quiet(cmd) {
+        tracing::error!(error = %e, cmd = %cmd, "failed to spawn command");
+    }
+}

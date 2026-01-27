@@ -15,6 +15,7 @@ use wayle_common::{
 use wayle_config::{ConfigService, infrastructure::schema};
 use wayle_media::MediaService;
 use wayle_network::NetworkService;
+use wayle_notification::NotificationService;
 use wayle_systray::{SystemTrayService, types::TrayMode};
 use wayle_wallpaper::WallpaperService;
 use zbus::{Connection, fdo::DBusProxy};
@@ -105,6 +106,14 @@ async fn init_services() -> Result<StartupTimer, Box<dyn Error>> {
             .await?,
     );
     registry.register(timer.time("Network", NetworkService::new()).await?);
+    registry.register_arc(
+        timer
+            .time(
+                "Notification",
+                NotificationService::builder().with_daemon().build(),
+            )
+            .await?,
+    );
     registry.register_arc(
         timer
             .time(

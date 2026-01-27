@@ -3,9 +3,8 @@ mod messages;
 mod watchers;
 
 use relm4::prelude::*;
-use tracing::error;
 use wayle_audio::{AudioService, core::device::input::InputDevice};
-use wayle_common::{ConfigProperty, WatcherToken, process::spawn_shell_quiet, services};
+use wayle_common::{ConfigProperty, WatcherToken, process, services};
 use wayle_config::{
     ConfigService,
     schemas::{modules::MicrophoneConfig, styling::CssToken},
@@ -91,21 +90,17 @@ impl Component for MicrophoneModule {
 
     fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, _root: &Self::Root) {
         let config_service = services::get::<ConfigService>();
-        let mic_config = &config_service.config().modules.microphone;
+        let config = &config_service.config().modules.microphone;
 
         let cmd = match msg {
-            MicrophoneMsg::LeftClick => mic_config.left_click.get().clone(),
-            MicrophoneMsg::RightClick => mic_config.right_click.get().clone(),
-            MicrophoneMsg::MiddleClick => mic_config.middle_click.get().clone(),
-            MicrophoneMsg::ScrollUp => mic_config.scroll_up.get().clone(),
-            MicrophoneMsg::ScrollDown => mic_config.scroll_down.get().clone(),
+            MicrophoneMsg::LeftClick => config.left_click.get(),
+            MicrophoneMsg::RightClick => config.right_click.get(),
+            MicrophoneMsg::MiddleClick => config.middle_click.get(),
+            MicrophoneMsg::ScrollUp => config.scroll_up.get(),
+            MicrophoneMsg::ScrollDown => config.scroll_down.get(),
         };
 
-        if !cmd.is_empty()
-            && let Err(e) = spawn_shell_quiet(&cmd)
-        {
-            error!(error = %e, cmd = %cmd, "failed to spawn command");
-        }
+        process::run_if_set(&cmd);
     }
 
     fn update_cmd(

@@ -2,7 +2,7 @@
 //!
 //! # Overview
 //!
-//! This crate provides reactive access to PulseAudio through [`AudioService`].
+//! Provides reactive access to PulseAudio through [`AudioService`].
 //! All state is exposed via [`Property`] fields that automatically update when
 //! PulseAudio state changes.
 //!
