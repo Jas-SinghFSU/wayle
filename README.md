@@ -42,7 +42,7 @@ experience. A successor to HyprPanel without the pain or dependency on Hyprland.
     - [x] Clock
     - [x] Microphone
     - [x] System tray
-    - [ ] Notification
+    - [x] Notification
     - [ ] World clock
     - [ ] Dashboard
     - [ ] Netstat
