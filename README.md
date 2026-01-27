@@ -43,8 +43,7 @@ experience. A successor to HyprPanel without the pain or dependency on Hyprland.
     - [x] Microphone
     - [x] System tray
     - [x] Notification
-    - [ ] World clock
-    - [ ] Dashboard
+    - [x] Dashboard
     - [ ] Netstat
     - [ ] Window title
     - [ ] Separator
@@ -60,6 +59,7 @@ experience. A successor to HyprPanel without the pain or dependency on Hyprland.
     - [ ] Hyprsunset
     - [ ] Hypridle
     - [ ] Power
+    - [ ] World clock
 
 ### Dropdown Interfaces
 

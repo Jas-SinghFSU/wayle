@@ -57,7 +57,7 @@ impl Component for BluetoothModule {
                     icon_background: bt_config.icon_bg_color.clone(),
                     button_background: bt_config.button_bg_color.clone(),
                     border_color: bt_config.border_color.clone(),
-                    auto_icon_color: CssToken::Accent,
+                    auto_icon_color: CssToken::Blue,
                 },
                 behavior: BarButtonBehavior {
                     label_max_chars: bt_config.label_max_length.clone(),

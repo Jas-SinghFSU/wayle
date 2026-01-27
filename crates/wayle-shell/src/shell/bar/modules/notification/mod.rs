@@ -70,7 +70,7 @@ impl Component for NotificationModule {
                     icon_background: notification_config.icon_bg_color.clone(),
                     button_background: notification_config.button_bg_color.clone(),
                     border_color: notification_config.border_color.clone(),
-                    auto_icon_color: CssToken::Yellow,
+                    auto_icon_color: CssToken::Green,
                 },
                 behavior: BarButtonBehavior {
                     label_max_chars: notification_config.label_max_length.clone(),

@@ -1,6 +1,7 @@
 mod battery;
 mod bluetooth;
 mod clock;
+mod dashboard;
 mod media;
 mod microphone;
 mod network;
@@ -11,6 +12,7 @@ mod volume;
 use battery::{BatteryInit, BatteryModule};
 use bluetooth::{BluetoothInit, BluetoothModule};
 use clock::{ClockInit, ClockModule};
+use dashboard::{DashboardInit, DashboardModule};
 use media::{MediaInit, MediaModule};
 use microphone::{MicrophoneInit, MicrophoneModule};
 use network::{NetworkInit, NetworkModule};
@@ -30,6 +32,7 @@ pub(crate) enum ModuleController {
     Battery(Controller<BatteryModule>),
     Bluetooth(Controller<BluetoothModule>),
     Clock(Controller<ClockModule>),
+    Dashboard(Controller<DashboardModule>),
     Media(Controller<MediaModule>),
     Microphone(Controller<MicrophoneModule>),
     Network(Controller<NetworkModule>),
@@ -44,6 +47,7 @@ impl ModuleController {
             Self::Battery(c) => c.widget(),
             Self::Bluetooth(c) => c.widget(),
             Self::Clock(c) => c.widget(),
+            Self::Dashboard(c) => c.widget(),
             Self::Media(c) => c.widget(),
             Self::Microphone(c) => c.widget(),
             Self::Network(c) => c.widget(),
@@ -112,6 +116,12 @@ pub(crate) fn create_module(module_ref: &ModuleRef, settings: &BarSettings) -> M
                 is_vertical: settings.is_vertical.clone(),
             };
             ModuleController::Systray(SystrayModule::builder().launch(init).detach())
+        }
+        BarModule::Dashboard => {
+            let init = DashboardInit {
+                settings: settings.clone(),
+            };
+            ModuleController::Dashboard(DashboardModule::builder().launch(init).detach())
         }
         _ => {
             let init = ClockInit {
