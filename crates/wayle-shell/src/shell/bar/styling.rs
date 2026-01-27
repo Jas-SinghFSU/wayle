@@ -52,6 +52,7 @@ impl InlineStyling for Bar {
         bar.bg.subscribe_changes(tx.clone());
         bar.background_opacity.subscribe_changes(tx.clone());
         bar.button_opacity.subscribe_changes(tx.clone());
+        bar.button_bg_opacity.subscribe_changes(tx.clone());
         bar.button_label_weight.subscribe_changes(tx.clone());
         bar.border_location.subscribe_changes(tx.clone());
         bar.border_width.subscribe_changes(tx.clone());
@@ -83,6 +84,7 @@ impl InlineStyling for Bar {
         let bg = resolve_color(&bar.bg, is_wayle);
         let bg_opacity = bar.background_opacity.get().value();
         let button_opacity = f64::from(bar.button_opacity.get().value()) / 100.0;
+        let button_bg_opacity = bar.button_bg_opacity.get().value();
         let label_weight = bar.button_label_weight.get().css_var();
         let border_color = resolve_color(&bar.border_color, is_wayle);
         let border_width = bar.border_width.get();
@@ -149,6 +151,7 @@ impl InlineStyling for Bar {
             --bar-padding-ends-px: {padding_ends_px}; \
             --bar-module-gap-px: {module_gap_px}; \
             --bar-button-opacity: {button_opacity}; \
+            --bar-button-bg-opacity: {button_bg_opacity}%; \
             --bar-btn-label-weight: var({label_weight}); \
             --bar-group-module-gap-px: {group_module_gap_px}; \
             --bar-group-padding-px: {group_padding_px}; \

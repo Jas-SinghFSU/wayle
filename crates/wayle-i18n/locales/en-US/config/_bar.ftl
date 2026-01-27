@@ -52,6 +52,9 @@ settings-bar-shadow-enabled = Shadow
 settings-bar-button-opacity = Button Opacity
     .description = Transparency for bar buttons (0-100%)
 
+settings-bar-button-bg-opacity = Button Background Opacity
+    .description = Background color transparency for bar buttons (0-100%)
+
 settings-bar-button-icon-size = Button Icon Size
     .description = Size multiplier for button icons
 

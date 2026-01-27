@@ -8,7 +8,7 @@ menubutton.bar-button {
     all: unset;
 
     > button.toggle {
-        background-color: var(--bar-btn-bg);
+        background-color: color-mix(in srgb, var(--bar-btn-bg) var(--bar-button-bg-opacity), transparent);
         border-radius: var(--bar-button-rounding-element);
         padding: 0;
         margin: 0;

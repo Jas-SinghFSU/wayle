@@ -1,6 +1,6 @@
 .bar-container {
     all: unset;
-    background-color: var(--bar-container-bg);
+    background-color: color-mix(in srgb, var(--bar-container-bg) var(--bar-button-bg-opacity), transparent);
     border-radius: var(--bar-button-rounding-element);
 
     &.border-top {

@@ -110,6 +110,11 @@ pub struct BarConfig {
     #[default(Percentage::new(100))]
     pub button_opacity: ConfigProperty<Percentage>,
 
+    /// Button background opacity (0-100).
+    #[serde(rename = "button-bg-opacity")]
+    #[default(Percentage::new(100))]
+    pub button_bg_opacity: ConfigProperty<Percentage>,
+
     /// Button icon size.
     #[serde(rename = "button-icon-size")]
     #[default(ScaleFactor::new(1.0))]
