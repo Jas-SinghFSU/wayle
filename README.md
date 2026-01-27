@@ -133,7 +133,7 @@ wayle config reset bar.scale
 Editor intellisense is available via JSON Schema. Install
 [Tombi](https://marketplace.visualstudio.com/items?itemName=tombi-toml.tombi)
 for VSCode or the `tombi` LSP for Neovim. The schema is generated automatically
-on startup; regenerate manually with:
+on startup.
 
 This will give you auto-complete, config validation and other nice QoL features
 for your config.toml (and other toml files).
