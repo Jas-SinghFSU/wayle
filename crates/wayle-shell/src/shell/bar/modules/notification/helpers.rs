@@ -20,7 +20,7 @@ pub(crate) fn select_icon(ctx: &IconContext<'_>) -> String {
 
 pub(crate) fn format_label(count: usize, hide_empty: bool) -> String {
     if hide_empty && count == 0 {
-        return String::new();
+        return String::from("00");
     }
 
     format!("{count:02}")
