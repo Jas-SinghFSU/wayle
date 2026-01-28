@@ -94,6 +94,14 @@ async fn monitor_properties(
         }
     };
 
+    let mut items_properties_updated = match menu_proxy.receive_items_properties_updated().await {
+        Ok(stream) => stream,
+        Err(error) => {
+            error!(error = %error, "cannot subscribe to menu items properties updates");
+            return;
+        }
+    };
+
     loop {
         let Some(tray_item) = weak_item.upgrade() else {
             return;
@@ -233,7 +241,8 @@ async fn monitor_properties(
             }
 
             Some(_) = layout_updated.next() => {
-                 match menu_proxy.get_layout(0, -1, vec![]).await {
+                debug!("layout_updated signal received");
+                match menu_proxy.get_layout(0, -1, vec![]).await {
                     Ok(layout) => {
                         let menu_item = MenuItem::from(layout);
                         tray_item.menu.set(Some(menu_item));
@@ -241,6 +250,20 @@ async fn monitor_properties(
                     Err(error) => {
                         tray_item.menu.set(None);
                         error!(error = %error, "cannot update menu layout");
+                    }
+                }
+            }
+
+            Some(_) = items_properties_updated.next() => {
+                debug!("items_properties_updated signal received");
+                match menu_proxy.get_layout(0, -1, vec![]).await {
+                    Ok(layout) => {
+                        let menu_item = MenuItem::from(layout);
+                        tray_item.menu.set(Some(menu_item));
+                    }
+                    Err(error) => {
+                        tray_item.menu.set(None);
+                        error!(error = %error, "cannot update menu layout after properties change");
                     }
                 }
             }
