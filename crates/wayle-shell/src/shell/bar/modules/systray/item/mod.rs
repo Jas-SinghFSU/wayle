@@ -95,17 +95,15 @@ impl FactoryComponent for SystrayItem {
 
         self.button = Some(root.clone());
 
-        let left_click = gtk::GestureClick::builder().button(1).build();
-        let right_click = gtk::GestureClick::builder().button(3).build();
-        let middle_click = gtk::GestureClick::builder().button(2).build();
-
-        left_click.connect_released({
+        root.connect_clicked({
             let sender = sender.clone();
-            move |gesture, _, _, _| {
-                gesture.set_state(gtk::EventSequenceState::Claimed);
+            move |_| {
                 sender.input(SystrayItemMsg::LeftClick);
             }
         });
+
+        let right_click = gtk::GestureClick::builder().button(3).build();
+        let middle_click = gtk::GestureClick::builder().button(2).build();
 
         right_click.connect_released({
             let sender = sender.clone();
@@ -123,7 +121,6 @@ impl FactoryComponent for SystrayItem {
             }
         });
 
-        root.add_controller(left_click);
         root.add_controller(right_click);
         root.add_controller(middle_click);
 
@@ -140,11 +137,20 @@ impl FactoryComponent for SystrayItem {
         match msg {
             SystrayItemMsg::LeftClick => {
                 let item = self.item.clone();
+                let item_is_menu = item.item_is_menu.get();
                 tokio::spawn(async move {
-                    if item.item_is_menu.get() {
-                        let _ = item.context_menu(Coordinates::new(0, 0)).await;
+                    let result = if item_is_menu {
+                        item.context_menu(Coordinates::new(0, 0)).await
                     } else {
-                        let _ = item.activate(Coordinates::new(0, 0)).await;
+                        item.activate(Coordinates::new(0, 0)).await
+                    };
+                    if let Err(error) = result {
+                        tracing::warn!(
+                            id = %item.id.get(),
+                            bus_name = %item.bus_name.get(),
+                            error = %error,
+                            "systray activate failed"
+                        );
                     }
                 });
             }
@@ -154,7 +160,14 @@ impl FactoryComponent for SystrayItem {
             SystrayItemMsg::MiddleClick => {
                 let item = self.item.clone();
                 tokio::spawn(async move {
-                    let _ = item.secondary_activate(Coordinates::new(0, 0)).await;
+                    if let Err(error) = item.secondary_activate(Coordinates::new(0, 0)).await {
+                        tracing::warn!(
+                            id = %item.id.get(),
+                            bus_name = %item.bus_name.get(),
+                            error = %error,
+                            "systray secondary_activate failed"
+                        );
+                    }
                 });
             }
             SystrayItemMsg::MenuUpdated => {
