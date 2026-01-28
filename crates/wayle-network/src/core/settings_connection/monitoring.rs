@@ -34,6 +34,7 @@ impl ModelMonitoring for ConnectionSettings {
     }
 }
 
+#[allow(clippy::cognitive_complexity)]
 async fn monitor(
     weak_settings: Weak<ConnectionSettings>,
     proxy: SettingsConnectionProxy<'static>,

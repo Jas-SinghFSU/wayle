@@ -6,7 +6,7 @@ pub use shadow::ShadowPreset;
 
 /// Layout configuration for a bar on a specific monitor.
 ///
-/// # Examples
+/// ## Examples
 ///
 /// ```toml
 /// # Single modules
@@ -101,7 +101,7 @@ pub struct BarGroup {
 
 /// Reference to a module, optionally with a custom CSS class.
 ///
-/// # Examples
+/// ## Examples
 ///
 /// ```toml
 /// # Plain module (just the name)
@@ -176,6 +176,8 @@ pub enum BarModule {
     Microphone,
     /// Network connection status.
     Network,
+    /// Network traffic statistics.
+    Netstat,
     /// Notification center button.
     Notifications,
     /// Power menu button.

@@ -281,6 +281,7 @@ impl PulseBackend {
         }
     }
 
+    #[allow(clippy::cognitive_complexity)]
     async fn run(
         mut self,
         command_rx: CommandReceiver,

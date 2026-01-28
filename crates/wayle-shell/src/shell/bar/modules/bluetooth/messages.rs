@@ -14,6 +14,7 @@ pub enum BluetoothMsg {
 }
 
 #[derive(Debug)]
+#[allow(clippy::enum_variant_names)]
 pub enum BluetoothCmd {
     StateChanged,
     IconConfigChanged,

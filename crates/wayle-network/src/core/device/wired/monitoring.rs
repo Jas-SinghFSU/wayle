@@ -34,6 +34,7 @@ impl ModelMonitoring for DeviceWired {
     }
 }
 
+#[allow(clippy::cognitive_complexity)]
 async fn monitor_wired(
     weak_device: Weak<DeviceWired>,
     proxy: DeviceWiredProxy<'static>,

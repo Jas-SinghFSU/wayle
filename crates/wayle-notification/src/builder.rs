@@ -6,13 +6,13 @@ use tokio_util::sync::CancellationToken;
 use tracing::{error, info};
 use wayle_common::Property;
 use wayle_traits::ServiceMonitoring;
-use zbus::Connection;
+use zbus::{Connection, object_server::Interface};
 
 use crate::{
     core::{notification::Notification, types::NotificationProps},
     daemon::NotificationDaemon,
     error::Error,
-    persistence::NotificationStore,
+    persistence::{NotificationStore, StoredNotification},
     service::NotificationService,
     types::dbus::{SERVICE_NAME, SERVICE_PATH, WAYLE_SERVICE_NAME, WAYLE_SERVICE_PATH},
     wayle_daemon::WayleDaemon,
@@ -78,8 +78,8 @@ impl NotificationServiceBuilder {
 
     /// Builds and initializes the NotificationService.
     ///
-    /// This will establish a D-Bus connection, register the notification daemon,
-    /// restore persisted notifications, and start monitoring for events.
+    /// Establishes a D-Bus connection, registers the notification daemon,
+    /// restores persisted notifications, and starts monitoring for events.
     ///
     /// # Errors
     /// Returns error if D-Bus connection fails, service registration fails,
@@ -91,70 +91,19 @@ impl NotificationServiceBuilder {
         let (notif_tx, _) = broadcast::channel(10000);
         let cancellation_token = CancellationToken::new();
 
-        let store = match NotificationStore::new() {
-            Ok(store) => {
-                info!("Notification persistence enabled");
-                Some(store)
-            }
-            Err(e) => {
-                error!(error = %e, "cannot initialize notification store");
-                error!("notifications will not persist across restarts");
-                None
-            }
-        };
-
-        let stored_notifications: Vec<Arc<Notification>> = store
-            .as_ref()
-            .and_then(|s| s.load_all(self.remove_expired.get()).ok())
-            .map(|stored| {
-                stored
-                    .into_iter()
-                    .map(|n| {
-                        Arc::new(Notification::new(
-                            NotificationProps {
-                                id: n.id,
-                                app_name: n.app_name.unwrap_or_default(),
-                                replaces_id: n.replaces_id.unwrap_or(0),
-                                app_icon: n.app_icon.unwrap_or_default(),
-                                summary: n.summary,
-                                body: n.body.unwrap_or_default(),
-                                actions: n.actions,
-                                hints: n.hints,
-                                expire_timeout: n.expire_timeout.unwrap_or(0) as i32,
-                                timestamp: DateTime::<Utc>::from_timestamp_millis(n.timestamp)
-                                    .unwrap_or_else(Utc::now),
-                            },
-                            connection.clone(),
-                        ))
-                    })
-                    .collect()
-            })
-            .unwrap_or_default();
-
+        let store = init_store();
+        let stored_notifications =
+            load_stored_notifications(&store, self.remove_expired.get(), &connection);
         let max_id = stored_notifications.iter().map(|n| n.id).max().unwrap_or(0);
-        let counter = AtomicU32::new(max_id + 1);
+
         let freedesktop_daemon = NotificationDaemon {
-            counter,
+            counter: AtomicU32::new(max_id + 1),
             zbus_connection: connection.clone(),
             notif_tx: notif_tx.clone(),
         };
 
-        connection
-            .object_server()
-            .at(SERVICE_PATH, freedesktop_daemon)
-            .await
-            .map_err(|err| {
-                Error::ServiceInitializationFailed(format!(
-                    "cannot register D-Bus object at '{SERVICE_PATH}': {err}"
-                ))
-            })?;
-
-        connection.request_name(SERVICE_NAME).await.map_err(|err| {
-            Error::ServiceInitializationFailed(format!(
-                "cannot acquire D-Bus name '{SERVICE_NAME}': {err}"
-            ))
-        })?;
-
+        register_dbus_object(&connection, SERVICE_PATH, freedesktop_daemon).await?;
+        register_dbus_name(&connection, SERVICE_NAME).await?;
         info!("Notification daemon registered at {SERVICE_NAME}");
 
         let service = Arc::new(NotificationService {
@@ -175,29 +124,84 @@ impl NotificationServiceBuilder {
             let wayle_daemon = WayleDaemon {
                 service: Arc::clone(&service),
             };
-
-            connection
-                .object_server()
-                .at(WAYLE_SERVICE_PATH, wayle_daemon)
-                .await
-                .map_err(|err| {
-                    Error::ServiceInitializationFailed(format!(
-                        "cannot register D-Bus object at '{WAYLE_SERVICE_PATH}': {err}"
-                    ))
-                })?;
-
-            connection
-                .request_name(WAYLE_SERVICE_NAME)
-                .await
-                .map_err(|err| {
-                    Error::ServiceInitializationFailed(format!(
-                        "cannot acquire D-Bus name '{WAYLE_SERVICE_NAME}': {err}"
-                    ))
-                })?;
-
+            register_dbus_object(&connection, WAYLE_SERVICE_PATH, wayle_daemon).await?;
+            register_dbus_name(&connection, WAYLE_SERVICE_NAME).await?;
             info!("Wayle notification extensions registered at {WAYLE_SERVICE_NAME}");
         }
 
         Ok(service)
     }
+}
+
+fn init_store() -> Option<NotificationStore> {
+    match NotificationStore::new() {
+        Ok(store) => {
+            info!("Notification persistence enabled");
+            Some(store)
+        }
+        Err(e) => {
+            error!(error = %e, "cannot initialize notification store");
+            error!("notifications will not persist across restarts");
+            None
+        }
+    }
+}
+
+fn load_stored_notifications(
+    store: &Option<NotificationStore>,
+    remove_expired: bool,
+    connection: &Connection,
+) -> Vec<Arc<Notification>> {
+    store
+        .as_ref()
+        .and_then(|s| s.load_all(remove_expired).ok())
+        .map(|stored| {
+            stored
+                .into_iter()
+                .map(|n| stored_to_notification(n, connection.clone()))
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
+fn stored_to_notification(stored: StoredNotification, connection: Connection) -> Arc<Notification> {
+    Arc::new(Notification::new(
+        NotificationProps {
+            id: stored.id,
+            app_name: stored.app_name.unwrap_or_default(),
+            replaces_id: stored.replaces_id.unwrap_or(0),
+            app_icon: stored.app_icon.unwrap_or_default(),
+            summary: stored.summary,
+            body: stored.body.unwrap_or_default(),
+            actions: stored.actions,
+            hints: stored.hints,
+            expire_timeout: stored.expire_timeout.unwrap_or(0) as i32,
+            timestamp: DateTime::<Utc>::from_timestamp_millis(stored.timestamp)
+                .unwrap_or_else(Utc::now),
+        },
+        connection,
+    ))
+}
+
+async fn register_dbus_object<T: Interface>(
+    connection: &Connection,
+    path: &str,
+    object: T,
+) -> Result<(), Error> {
+    connection
+        .object_server()
+        .at(path, object)
+        .await
+        .map_err(|err| {
+            Error::ServiceInitializationFailed(format!(
+                "cannot register D-Bus object at '{path}': {err}"
+            ))
+        })?;
+    Ok(())
+}
+
+async fn register_dbus_name(connection: &Connection, name: &str) -> Result<(), Error> {
+    connection.request_name(name).await.map_err(|err| {
+        Error::ServiceInitializationFailed(format!("cannot acquire D-Bus name '{name}': {err}"))
+    })
 }

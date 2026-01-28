@@ -12,7 +12,10 @@ use crate::cli::CliAction;
 /// Returns error if schema serialization or file write fails.
 pub fn execute(stdout: bool) -> CliAction {
     if stdout {
-        println!("{}", generate_schema());
+        let Some(schema) = generate_schema() else {
+            return Err("schema generation failed".into());
+        };
+        println!("{schema}");
         return Ok(());
     }
 

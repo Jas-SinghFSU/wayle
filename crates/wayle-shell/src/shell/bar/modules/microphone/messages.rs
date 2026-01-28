@@ -17,6 +17,7 @@ pub enum MicrophoneMsg {
 }
 
 #[derive(Debug)]
+#[allow(clippy::enum_variant_names)]
 pub enum MicrophoneCmd {
     DeviceChanged(Option<Arc<InputDevice>>),
     VolumeOrMuteChanged,

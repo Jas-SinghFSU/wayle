@@ -1,0 +1,109 @@
+mod helpers;
+mod messages;
+mod watchers;
+
+use relm4::prelude::*;
+use wayle_common::{ConfigProperty, process, services};
+use wayle_config::{ConfigService, schemas::styling::CssToken};
+use wayle_sysinfo::SysinfoService;
+use wayle_widgets::prelude::{
+    BarButton, BarButtonBehavior, BarButtonColors, BarButtonInit, BarButtonInput, BarButtonOutput,
+};
+
+pub(crate) use self::messages::{CpuCmd, CpuInit, CpuMsg};
+
+pub(crate) struct CpuModule {
+    bar_button: Controller<BarButton>,
+}
+
+#[relm4::component(pub(crate))]
+impl Component for CpuModule {
+    type Init = CpuInit;
+    type Input = CpuMsg;
+    type Output = ();
+    type CommandOutput = CpuCmd;
+
+    view! {
+        gtk::Box {
+            #[local_ref]
+            bar_button -> gtk::MenuButton {},
+        }
+    }
+
+    fn init(
+        init: Self::Init,
+        _root: Self::Root,
+        sender: ComponentSender<Self>,
+    ) -> ComponentParts<Self> {
+        let config_service = services::get::<ConfigService>();
+        let config = config_service.config();
+        let cpu_config = &config.modules.cpu;
+
+        let sysinfo = services::get::<SysinfoService>();
+        let initial_label = helpers::format_label(&cpu_config.format.get(), &sysinfo.cpu.get());
+
+        let bar_button = BarButton::builder()
+            .launch(BarButtonInit {
+                icon: cpu_config.icon_name.get().clone(),
+                label: initial_label,
+                tooltip: None,
+                colors: BarButtonColors {
+                    icon_color: cpu_config.icon_color.clone(),
+                    label_color: cpu_config.label_color.clone(),
+                    icon_background: cpu_config.icon_bg_color.clone(),
+                    button_background: cpu_config.button_bg_color.clone(),
+                    border_color: cpu_config.border_color.clone(),
+                    auto_icon_color: CssToken::Blue,
+                },
+                behavior: BarButtonBehavior {
+                    label_max_chars: cpu_config.label_max_length.clone(),
+                    show_icon: cpu_config.icon_show.clone(),
+                    show_label: cpu_config.label_show.clone(),
+                    show_border: cpu_config.border_show.clone(),
+                    visible: ConfigProperty::new(true),
+                },
+                settings: init.settings,
+            })
+            .forward(sender.input_sender(), |output| match output {
+                BarButtonOutput::LeftClick => CpuMsg::LeftClick,
+                BarButtonOutput::RightClick => CpuMsg::RightClick,
+                BarButtonOutput::MiddleClick => CpuMsg::MiddleClick,
+                BarButtonOutput::ScrollUp => CpuMsg::ScrollUp,
+                BarButtonOutput::ScrollDown => CpuMsg::ScrollDown,
+            });
+
+        watchers::spawn_watchers(&sender, cpu_config);
+
+        let model = Self { bar_button };
+        let bar_button = model.bar_button.widget();
+        let widgets = view_output!();
+
+        ComponentParts { model, widgets }
+    }
+
+    fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, _root: &Self::Root) {
+        let config_service = services::get::<ConfigService>();
+        let cpu_config = &config_service.config().modules.cpu;
+
+        let cmd = match msg {
+            CpuMsg::LeftClick => cpu_config.left_click.get(),
+            CpuMsg::RightClick => cpu_config.right_click.get(),
+            CpuMsg::MiddleClick => cpu_config.middle_click.get(),
+            CpuMsg::ScrollUp => cpu_config.scroll_up.get(),
+            CpuMsg::ScrollDown => cpu_config.scroll_down.get(),
+        };
+
+        process::run_if_set(&cmd);
+    }
+
+    fn update_cmd(&mut self, msg: CpuCmd, _sender: ComponentSender<Self>, _root: &Self::Root) {
+        match msg {
+            CpuCmd::UpdateLabel(label) => {
+                self.bar_button.emit(BarButtonInput::SetLabel(label));
+            }
+            CpuCmd::UpdateIcon(icon) => {
+                self.bar_button.emit(BarButtonInput::SetIcon(icon));
+            }
+        }
+    }
+}

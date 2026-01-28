@@ -1,3 +1,6 @@
+//! Build script that concatenates Fluent i18n partial files (`_*.ftl`) into
+//! a single `wayle-shell.ftl` per locale directory.
+
 #![allow(clippy::expect_used)]
 
 use std::{

@@ -1,6 +1,6 @@
 //! Wayle desktop shell - a GTK4/Relm4 status bar for Wayland compositors.
 
-use std::error::Error;
+use std::{error::Error, time::Duration};
 
 use relm4::RelmApp;
 use tokio::runtime::Runtime;
@@ -16,6 +16,7 @@ use wayle_config::{ConfigService, infrastructure::schema};
 use wayle_media::MediaService;
 use wayle_network::NetworkService;
 use wayle_notification::NotificationService;
+use wayle_sysinfo::SysinfoService;
 use wayle_systray::{SystemTrayService, types::TrayMode};
 use wayle_wallpaper::WallpaperService;
 use zbus::{Connection, fdo::DBusProxy};
@@ -86,9 +87,14 @@ async fn init_services() -> Result<StartupTimer, Box<dyn Error>> {
             .await?,
     );
     let config_service = timer.time("Config", ConfigService::load()).await?;
-    let media_config = &config_service.config().modules.media;
+    let modules = &config_service.config().modules;
+    let media_config = &modules.media;
     let ignored_players = media_config.players_ignored.get().clone();
     let priority_players = media_config.player_priority.get().clone();
+    let cpu_interval = Duration::from_millis(modules.cpu.poll_interval_ms.get());
+    let memory_interval = Duration::from_millis(modules.ram.poll_interval_ms.get());
+    let disk_interval = Duration::from_millis(modules.storage.poll_interval_ms.get());
+    let network_interval = Duration::from_millis(modules.netstat.poll_interval_ms.get());
     registry.register_arc(config_service);
 
     registry.register(timer.time("Battery", BatteryService::new()).await?);
@@ -126,6 +132,15 @@ async fn init_services() -> Result<StartupTimer, Box<dyn Error>> {
             .await?,
     );
     registry.register_arc(timer.time("Wallpaper", WallpaperService::new()).await?);
+
+    registry.register(timer.time_sync("Sysinfo", || {
+        SysinfoService::builder()
+            .cpu_interval(cpu_interval)
+            .memory_interval(memory_interval)
+            .disk_interval(disk_interval)
+            .network_interval(network_interval)
+            .build()
+    }));
 
     services::init(registry);
     timer.mark_services_done();

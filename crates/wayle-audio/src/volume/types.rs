@@ -86,6 +86,7 @@ impl Volume {
     ///
     /// # Errors
     /// Returns error if channel index is out of bounds.
+    #[allow(clippy::cognitive_complexity)]
     pub fn set_channel(&mut self, channel: usize, volume: f64) -> Result<(), Error> {
         if let Some(vol) = self.volumes.get_mut(channel) {
             let clamped = volume.clamp(0.0, 4.0);

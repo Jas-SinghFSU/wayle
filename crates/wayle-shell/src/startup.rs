@@ -75,6 +75,32 @@ impl StartupTimer {
         result
     }
 
+    pub(crate) fn time_sync<T, F: FnOnce() -> T>(&self, name: &'static str, f: F) -> T {
+        let pb = ProgressBar::new_spinner();
+        pb.set_style(self.spinner_style.clone());
+        pb.set_message(format!("Loading {name}..."));
+        pb.enable_steady_tick(Duration::from_millis(80));
+
+        let start = Instant::now();
+        let value = f();
+        let duration = start.elapsed();
+
+        pb.finish_and_clear();
+
+        let duration_str = format!("({}ms)", duration.as_millis());
+
+        let (check, timing) = if duration >= SLOW_THRESHOLD {
+            (style("✓").red().bold(), style(duration_str).red())
+        } else if duration >= MODERATE_THRESHOLD {
+            (style("✓").yellow().bold(), style(duration_str).yellow())
+        } else {
+            (style("✓").green().bold(), style(duration_str).dim())
+        };
+        eprintln!("{check} {name} {timing}");
+
+        value
+    }
+
     pub(crate) fn finish(self) {
         let total_ms = self.start.elapsed().as_millis();
         let time_str = if total_ms >= 1000 {

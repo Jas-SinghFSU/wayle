@@ -1,0 +1,114 @@
+mod helpers;
+mod messages;
+mod watchers;
+
+use relm4::prelude::*;
+use wayle_common::{ConfigProperty, process, services};
+use wayle_config::{ConfigService, schemas::styling::CssToken};
+use wayle_sysinfo::SysinfoService;
+use wayle_widgets::prelude::{
+    BarButton, BarButtonBehavior, BarButtonColors, BarButtonInit, BarButtonInput, BarButtonOutput,
+};
+
+pub(crate) use self::messages::{NetstatCmd, NetstatInit, NetstatMsg};
+
+pub(crate) struct NetstatModule {
+    bar_button: Controller<BarButton>,
+}
+
+#[relm4::component(pub(crate))]
+impl Component for NetstatModule {
+    type Init = NetstatInit;
+    type Input = NetstatMsg;
+    type Output = ();
+    type CommandOutput = NetstatCmd;
+
+    view! {
+        gtk::Box {
+            #[local_ref]
+            bar_button -> gtk::MenuButton {},
+        }
+    }
+
+    fn init(
+        init: Self::Init,
+        _root: Self::Root,
+        sender: ComponentSender<Self>,
+    ) -> ComponentParts<Self> {
+        let config_service = services::get::<ConfigService>();
+        let config = config_service.config();
+        let netstat_config = &config.modules.netstat;
+
+        let sysinfo = services::get::<SysinfoService>();
+        let networks = sysinfo.network.get();
+        let interface_config = netstat_config.interface.get();
+
+        let initial_label = helpers::select_interface(&networks, &interface_config)
+            .map(|n| helpers::format_label(&netstat_config.format.get(), n))
+            .unwrap_or_else(|| String::from("--"));
+
+        let bar_button = BarButton::builder()
+            .launch(BarButtonInit {
+                icon: netstat_config.icon_name.get().clone(),
+                label: initial_label,
+                tooltip: None,
+                colors: BarButtonColors {
+                    icon_color: netstat_config.icon_color.clone(),
+                    label_color: netstat_config.label_color.clone(),
+                    icon_background: netstat_config.icon_bg_color.clone(),
+                    button_background: netstat_config.button_bg_color.clone(),
+                    border_color: netstat_config.border_color.clone(),
+                    auto_icon_color: CssToken::Red,
+                },
+                behavior: BarButtonBehavior {
+                    label_max_chars: netstat_config.label_max_length.clone(),
+                    show_icon: netstat_config.icon_show.clone(),
+                    show_label: netstat_config.label_show.clone(),
+                    show_border: netstat_config.border_show.clone(),
+                    visible: ConfigProperty::new(true),
+                },
+                settings: init.settings,
+            })
+            .forward(sender.input_sender(), |output| match output {
+                BarButtonOutput::LeftClick => NetstatMsg::LeftClick,
+                BarButtonOutput::RightClick => NetstatMsg::RightClick,
+                BarButtonOutput::MiddleClick => NetstatMsg::MiddleClick,
+                BarButtonOutput::ScrollUp => NetstatMsg::ScrollUp,
+                BarButtonOutput::ScrollDown => NetstatMsg::ScrollDown,
+            });
+
+        watchers::spawn_watchers(&sender, netstat_config);
+
+        let model = Self { bar_button };
+        let bar_button = model.bar_button.widget();
+        let widgets = view_output!();
+
+        ComponentParts { model, widgets }
+    }
+
+    fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, _root: &Self::Root) {
+        let config_service = services::get::<ConfigService>();
+        let netstat_config = &config_service.config().modules.netstat;
+
+        let cmd = match msg {
+            NetstatMsg::LeftClick => netstat_config.left_click.get(),
+            NetstatMsg::RightClick => netstat_config.right_click.get(),
+            NetstatMsg::MiddleClick => netstat_config.middle_click.get(),
+            NetstatMsg::ScrollUp => netstat_config.scroll_up.get(),
+            NetstatMsg::ScrollDown => netstat_config.scroll_down.get(),
+        };
+
+        process::run_if_set(&cmd);
+    }
+
+    fn update_cmd(&mut self, msg: NetstatCmd, _sender: ComponentSender<Self>, _root: &Self::Root) {
+        match msg {
+            NetstatCmd::UpdateLabel(label) => {
+                self.bar_button.emit(BarButtonInput::SetLabel(label));
+            }
+            NetstatCmd::UpdateIcon(icon) => {
+                self.bar_button.emit(BarButtonInput::SetIcon(icon));
+            }
+        }
+    }
+}

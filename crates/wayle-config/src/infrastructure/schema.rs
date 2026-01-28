@@ -14,14 +14,22 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 ///
 /// The schema includes the package version in the `$id` field for version tracking.
 /// Uses `inline_subschemas` to ensure field descriptions are visible in TOML editors.
-pub fn generate_schema() -> String {
+///
+/// Returns `None` if schema serialization fails (should never occur).
+pub fn generate_schema() -> Option<String> {
     let settings = SchemaSettings::default().with(|s| {
         s.inline_subschemas = true;
     });
     let generator = SchemaGenerator::new(settings);
     let schema = generator.into_root_schema_for::<Config>();
-    let mut json: serde_json::Value =
-        serde_json::to_value(&schema).expect("schema serialization cannot fail");
+
+    let mut json: serde_json::Value = match serde_json::to_value(&schema) {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!(error = %e, "failed to serialize schema to JSON value");
+            return None;
+        }
+    };
 
     if let Some(obj) = json.as_object_mut() {
         obj.insert(
@@ -30,7 +38,13 @@ pub fn generate_schema() -> String {
         );
     }
 
-    serde_json::to_string_pretty(&json).expect("JSON serialization cannot fail")
+    match serde_json::to_string_pretty(&json) {
+        Ok(s) => Some(s),
+        Err(e) => {
+            tracing::error!(error = %e, "failed to serialize JSON to string");
+            None
+        }
+    }
 }
 
 const TOMBI_CONFIG: &str = r#"[schema]
@@ -49,7 +63,7 @@ include = ["*.toml"]
 ///
 /// # Errors
 ///
-/// Returns error if the files cannot be written.
+/// Returns error if the files cannot be written or schema generation fails.
 pub fn ensure_schema_current() -> io::Result<()> {
     let schema_path = ConfigPaths::schema_json();
     let tombi_path = ConfigPaths::tombi_config();
@@ -66,7 +80,9 @@ pub fn ensure_schema_current() -> io::Result<()> {
     };
 
     if needs_update {
-        let schema = generate_schema();
+        let Some(schema) = generate_schema() else {
+            return Err(io::Error::other("schema generation failed"));
+        };
         fs::write(&schema_path, schema)?;
         info!(path = %schema_path.display(), version = VERSION, "Schema generated");
     } else {
@@ -85,7 +101,7 @@ pub fn ensure_schema_current() -> io::Result<()> {
 ///
 /// # Errors
 ///
-/// Returns error if the schema file cannot be written.
+/// Returns error if the schema file cannot be written or schema generation fails.
 pub fn write_schema_to(path: &Path) -> io::Result<()> {
     if let Some(parent) = path.parent()
         && !parent.exists()
@@ -93,6 +109,8 @@ pub fn write_schema_to(path: &Path) -> io::Result<()> {
         fs::create_dir_all(parent)?;
     }
 
-    let schema = generate_schema();
+    let Some(schema) = generate_schema() else {
+        return Err(io::Error::other("schema generation failed"));
+    };
     fs::write(path, schema)
 }

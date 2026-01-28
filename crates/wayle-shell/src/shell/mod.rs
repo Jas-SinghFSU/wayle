@@ -166,6 +166,7 @@ impl Shell {
         });
     }
 
+    #[allow(clippy::cognitive_complexity)]
     fn update_bars(&mut self, monitors: Vec<(String, gdk::Monitor)>) {
         let current: HashSet<&str> = monitors.iter().map(|(c, _)| c.as_str()).collect();
         debug!(?current, "Updating bars");

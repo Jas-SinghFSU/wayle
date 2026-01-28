@@ -14,6 +14,7 @@ pub enum NetworkMsg {
 }
 
 #[derive(Debug)]
+#[allow(clippy::enum_variant_names)]
 pub enum NetworkCmd {
     StateChanged,
     IconConfigChanged,

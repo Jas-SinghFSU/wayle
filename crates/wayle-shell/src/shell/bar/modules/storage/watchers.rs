@@ -1,0 +1,46 @@
+use std::path::Path;
+
+use relm4::ComponentSender;
+use wayle_common::{services, watch};
+use wayle_config::schemas::modules::StorageConfig;
+use wayle_sysinfo::SysinfoService;
+
+use super::{StorageModule, helpers::format_label, messages::StorageCmd};
+
+pub(super) fn spawn_watchers(sender: &ComponentSender<StorageModule>, config: &StorageConfig) {
+    let sysinfo = services::get::<SysinfoService>();
+    let format = config.format.clone();
+    let mount_point = config.mount_point.clone();
+
+    let sysinfo_disks = sysinfo.clone();
+    let sysinfo_format = sysinfo.clone();
+
+    watch!(sender, [sysinfo.disks.watch()], |out| {
+        let disks = sysinfo_disks.disks.get();
+        let target = mount_point.get();
+        let target_path = Path::new(&target);
+
+        if let Some(disk) = disks.iter().find(|d| d.mount_point == target_path) {
+            let label = format_label(&format.get(), disk);
+            let _ = out.send(StorageCmd::UpdateLabel(label));
+        }
+    });
+
+    let format_watch = config.format.clone();
+    let mount_point_format = config.mount_point.clone();
+    watch!(sender, [format_watch.watch()], |out| {
+        let disks = sysinfo_format.disks.get();
+        let target = mount_point_format.get();
+        let target_path = Path::new(&target);
+
+        if let Some(disk) = disks.iter().find(|d| d.mount_point == target_path) {
+            let label = format_label(&format_watch.get(), disk);
+            let _ = out.send(StorageCmd::UpdateLabel(label));
+        }
+    });
+
+    let icon_name = config.icon_name.clone();
+    watch!(sender, [icon_name.watch()], |out| {
+        let _ = out.send(StorageCmd::UpdateIcon(icon_name.get().clone()));
+    });
+}

@@ -14,6 +14,7 @@ pub enum NotificationMsg {
 }
 
 #[derive(Debug)]
+#[allow(clippy::enum_variant_names)]
 pub enum NotificationCmd {
     NotificationsChanged(usize),
     DndChanged(bool),

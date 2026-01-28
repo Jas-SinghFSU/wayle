@@ -12,6 +12,7 @@ name = "wayle-shell"
 path = "src/main.rs"
 
 [dependencies]
+bytesize.workspace = true
 console.workspace = true
 glob.workspace = true
 i18n-embed.workspace = true
@@ -45,6 +46,7 @@ wayle-network.workspace = true
 wayle-notification.workspace = true
 wayle-power-profiles.workspace = true
 wayle-styling = { workspace = true }
+wayle-sysinfo.workspace = true
 wayle-systray = { workspace = true, features = ["adapter-gtk"] }
 wayle-wallpaper.workspace = true
 wayle-widgets = { workspace = true }

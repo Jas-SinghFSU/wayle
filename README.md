@@ -44,16 +44,16 @@ experience. A successor to HyprPanel without the pain or dependency on Hyprland.
     - [x] System tray
     - [x] Notification
     - [x] Dashboard
-    - [ ] Netstat
-    - [ ] Window title
+    - [x] Netstat
+    - [x] RAM
+    - [x] CPU
+    - [x] CPU Temp
+    - [x] Storage
     - [ ] Separator
-    - [ ] RAM
-    - [ ] CPU
-    - [ ] CPU Temp
-    - [ ] Storage
     - [ ] Keyboard input
     - [ ] Updates
     - [ ] Weather
+    - [ ] Window title
     - [ ] Hyprland workspaces
     - [ ] Hyprland submap
     - [ ] Hyprsunset

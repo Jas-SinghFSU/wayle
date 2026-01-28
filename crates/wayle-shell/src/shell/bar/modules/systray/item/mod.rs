@@ -177,6 +177,7 @@ impl SystrayItem {
         self.show_menu();
     }
 
+    #[allow(clippy::cognitive_complexity)]
     fn show_menu(&mut self) {
         let item_id = self.item.id.get();
         debug!(item_id = %item_id, title = %self.item.title.get(), "show_menu called");

@@ -1,0 +1,119 @@
+mod helpers;
+mod messages;
+mod watchers;
+
+use std::path::Path;
+
+use relm4::prelude::*;
+use wayle_common::{ConfigProperty, process, services};
+use wayle_config::{ConfigService, schemas::styling::CssToken};
+use wayle_sysinfo::SysinfoService;
+use wayle_widgets::prelude::{
+    BarButton, BarButtonBehavior, BarButtonColors, BarButtonInit, BarButtonInput, BarButtonOutput,
+};
+
+pub(crate) use self::messages::{StorageCmd, StorageInit, StorageMsg};
+
+pub(crate) struct StorageModule {
+    bar_button: Controller<BarButton>,
+}
+
+#[relm4::component(pub(crate))]
+impl Component for StorageModule {
+    type Init = StorageInit;
+    type Input = StorageMsg;
+    type Output = ();
+    type CommandOutput = StorageCmd;
+
+    view! {
+        gtk::Box {
+            #[local_ref]
+            bar_button -> gtk::MenuButton {},
+        }
+    }
+
+    fn init(
+        init: Self::Init,
+        _root: Self::Root,
+        sender: ComponentSender<Self>,
+    ) -> ComponentParts<Self> {
+        let config_service = services::get::<ConfigService>();
+        let config = config_service.config();
+        let storage_config = &config.modules.storage;
+
+        let sysinfo = services::get::<SysinfoService>();
+        let disks = sysinfo.disks.get();
+        let target = storage_config.mount_point.get();
+        let target_path = Path::new(&target);
+
+        let initial_label = disks
+            .iter()
+            .find(|d| d.mount_point == target_path)
+            .map(|d| helpers::format_label(&storage_config.format.get(), d))
+            .unwrap_or_else(|| String::from("--"));
+
+        let bar_button = BarButton::builder()
+            .launch(BarButtonInit {
+                icon: storage_config.icon_name.get().clone(),
+                label: initial_label,
+                tooltip: None,
+                colors: BarButtonColors {
+                    icon_color: storage_config.icon_color.clone(),
+                    label_color: storage_config.label_color.clone(),
+                    icon_background: storage_config.icon_bg_color.clone(),
+                    button_background: storage_config.button_bg_color.clone(),
+                    border_color: storage_config.border_color.clone(),
+                    auto_icon_color: CssToken::Yellow,
+                },
+                behavior: BarButtonBehavior {
+                    label_max_chars: storage_config.label_max_length.clone(),
+                    show_icon: storage_config.icon_show.clone(),
+                    show_label: storage_config.label_show.clone(),
+                    show_border: storage_config.border_show.clone(),
+                    visible: ConfigProperty::new(true),
+                },
+                settings: init.settings,
+            })
+            .forward(sender.input_sender(), |output| match output {
+                BarButtonOutput::LeftClick => StorageMsg::LeftClick,
+                BarButtonOutput::RightClick => StorageMsg::RightClick,
+                BarButtonOutput::MiddleClick => StorageMsg::MiddleClick,
+                BarButtonOutput::ScrollUp => StorageMsg::ScrollUp,
+                BarButtonOutput::ScrollDown => StorageMsg::ScrollDown,
+            });
+
+        watchers::spawn_watchers(&sender, storage_config);
+
+        let model = Self { bar_button };
+        let bar_button = model.bar_button.widget();
+        let widgets = view_output!();
+
+        ComponentParts { model, widgets }
+    }
+
+    fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, _root: &Self::Root) {
+        let config_service = services::get::<ConfigService>();
+        let storage_config = &config_service.config().modules.storage;
+
+        let cmd = match msg {
+            StorageMsg::LeftClick => storage_config.left_click.get(),
+            StorageMsg::RightClick => storage_config.right_click.get(),
+            StorageMsg::MiddleClick => storage_config.middle_click.get(),
+            StorageMsg::ScrollUp => storage_config.scroll_up.get(),
+            StorageMsg::ScrollDown => storage_config.scroll_down.get(),
+        };
+
+        process::run_if_set(&cmd);
+    }
+
+    fn update_cmd(&mut self, msg: StorageCmd, _sender: ComponentSender<Self>, _root: &Self::Root) {
+        match msg {
+            StorageCmd::UpdateLabel(label) => {
+                self.bar_button.emit(BarButtonInput::SetLabel(label));
+            }
+            StorageCmd::UpdateIcon(icon) => {
+                self.bar_button.emit(BarButtonInput::SetIcon(icon));
+            }
+        }
+    }
+}
