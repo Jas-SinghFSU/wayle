@@ -9,6 +9,7 @@ mod netstat;
 mod network;
 mod notification;
 mod ram;
+mod separator;
 mod storage;
 mod systray;
 mod volume;
@@ -25,6 +26,7 @@ use network::{NetworkInit, NetworkModule};
 use notification::{NotificationInit, NotificationModule};
 use ram::{RamInit, RamModule};
 use relm4::prelude::*;
+use separator::{SeparatorInit, SeparatorModule};
 use storage::{StorageInit, StorageModule};
 use systray::{SystrayInit, SystrayModule};
 use volume::{VolumeInit, VolumeModule};
@@ -48,6 +50,7 @@ pub(crate) enum ModuleController {
     Network(Controller<NetworkModule>),
     Notification(Controller<NotificationModule>),
     Ram(Controller<RamModule>),
+    Separator(Controller<SeparatorModule>),
     Storage(Controller<StorageModule>),
     Systray(Controller<SystrayModule>),
     Volume(Controller<VolumeModule>),
@@ -67,6 +70,7 @@ impl ModuleController {
             Self::Network(c) => c.widget(),
             Self::Notification(c) => c.widget(),
             Self::Ram(c) => c.widget(),
+            Self::Separator(c) => c.widget(),
             Self::Storage(c) => c.widget(),
             Self::Systray(c) => c.widget(),
             Self::Volume(c) => c.widget(),
@@ -74,6 +78,7 @@ impl ModuleController {
     }
 }
 
+#[allow(clippy::too_many_lines)]
 pub(crate) fn create_module(module_ref: &ModuleRef, settings: &BarSettings) -> ModuleInstance {
     let module = module_ref.module();
     let class = module_ref.class().map(String::from);
@@ -162,6 +167,12 @@ pub(crate) fn create_module(module_ref: &ModuleRef, settings: &BarSettings) -> M
                 settings: settings.clone(),
             };
             ModuleController::Netstat(NetstatModule::builder().launch(init).detach())
+        }
+        BarModule::Separator => {
+            let init = SeparatorInit {
+                is_vertical: settings.is_vertical.clone(),
+            };
+            ModuleController::Separator(SeparatorModule::builder().launch(init).detach())
         }
         _ => {
             let init = ClockInit {

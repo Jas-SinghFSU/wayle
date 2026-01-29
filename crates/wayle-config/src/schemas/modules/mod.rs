@@ -9,6 +9,7 @@ mod netstat;
 mod network;
 mod notification;
 mod ram;
+mod separator;
 mod storage;
 mod systray;
 mod volume;
@@ -24,6 +25,7 @@ pub use netstat::NetstatConfig;
 pub use network::NetworkConfig;
 pub use notification::NotificationConfig;
 pub use ram::RamConfig;
+pub use separator::SeparatorConfig;
 pub use storage::StorageConfig;
 pub use systray::{SystrayConfig, TrayItemOverride};
 pub use volume::VolumeConfig;
@@ -56,6 +58,8 @@ pub struct ModulesConfig {
     pub ram: RamConfig,
     /// Storage usage module.
     pub storage: StorageConfig,
+    /// Separator module.
+    pub separator: SeparatorConfig,
     /// System tray module.
     pub systray: SystrayConfig,
     /// Volume control module.

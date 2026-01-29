@@ -49,7 +49,7 @@ experience. A successor to HyprPanel without the pain or dependency on Hyprland.
     - [x] CPU
     - [x] CPU Temp
     - [x] Storage
-    - [ ] Separator
+    - [x] Separator
     - [ ] Keyboard input
     - [ ] Updates
     - [ ] Weather
