@@ -1,11 +1,11 @@
 use wayle_widgets::prelude::BarSettings;
 
-pub struct BluetoothInit {
+pub(crate) struct BluetoothInit {
     pub settings: BarSettings,
 }
 
 #[derive(Debug)]
-pub enum BluetoothMsg {
+pub(crate) enum BluetoothMsg {
     LeftClick,
     RightClick,
     MiddleClick,
@@ -15,7 +15,7 @@ pub enum BluetoothMsg {
 
 #[derive(Debug)]
 #[allow(clippy::enum_variant_names)]
-pub enum BluetoothCmd {
+pub(crate) enum BluetoothCmd {
     StateChanged,
     IconConfigChanged,
     AdapterChanged,

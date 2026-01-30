@@ -1,11 +1,11 @@
 use wayle_widgets::prelude::BarSettings;
 
-pub struct CpuInit {
+pub(crate) struct CpuInit {
     pub settings: BarSettings,
 }
 
 #[derive(Debug)]
-pub enum CpuMsg {
+pub(crate) enum CpuMsg {
     LeftClick,
     RightClick,
     MiddleClick,
@@ -14,7 +14,7 @@ pub enum CpuMsg {
 }
 
 #[derive(Debug)]
-pub enum CpuCmd {
+pub(crate) enum CpuCmd {
     UpdateLabel(String),
     UpdateIcon(String),
 }

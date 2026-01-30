@@ -3,12 +3,12 @@ use std::sync::Arc;
 use wayle_audio::core::device::output::OutputDevice;
 use wayle_widgets::prelude::BarSettings;
 
-pub struct VolumeInit {
+pub(crate) struct VolumeInit {
     pub settings: BarSettings,
 }
 
 #[derive(Debug)]
-pub enum VolumeMsg {
+pub(crate) enum VolumeMsg {
     LeftClick,
     RightClick,
     MiddleClick,
@@ -18,7 +18,7 @@ pub enum VolumeMsg {
 
 #[derive(Debug)]
 #[allow(clippy::enum_variant_names)]
-pub enum VolumeCmd {
+pub(crate) enum VolumeCmd {
     DeviceChanged(Option<Arc<OutputDevice>>),
     VolumeOrMuteChanged,
     IconConfigChanged,

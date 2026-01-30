@@ -14,6 +14,7 @@ mod separator;
 mod storage;
 mod systray;
 mod volume;
+mod world_clock;
 
 use battery::{BatteryInit, BatteryModule};
 use bluetooth::{BluetoothInit, BluetoothModule};
@@ -34,6 +35,7 @@ use systray::{SystrayInit, SystrayModule};
 use volume::{VolumeInit, VolumeModule};
 use wayle_config::schemas::bar::{BarModule, ModuleRef};
 use wayle_widgets::prelude::BarSettings;
+use world_clock::{WorldClockInit, WorldClockModule};
 
 pub(crate) struct ModuleInstance {
     pub(crate) controller: ModuleController,
@@ -57,6 +59,7 @@ pub(crate) enum ModuleController {
     Storage(Controller<StorageModule>),
     Systray(Controller<SystrayModule>),
     Volume(Controller<VolumeModule>),
+    WorldClock(Controller<WorldClockModule>),
 }
 
 impl ModuleController {
@@ -78,6 +81,7 @@ impl ModuleController {
             Self::Storage(c) => c.widget(),
             Self::Systray(c) => c.widget(),
             Self::Volume(c) => c.widget(),
+            Self::WorldClock(c) => c.widget(),
         }
     }
 }
@@ -183,6 +187,12 @@ pub(crate) fn create_module(module_ref: &ModuleRef, settings: &BarSettings) -> M
                 is_vertical: settings.is_vertical.clone(),
             };
             ModuleController::Separator(SeparatorModule::builder().launch(init).detach())
+        }
+        BarModule::WorldClock => {
+            let init = WorldClockInit {
+                settings: settings.clone(),
+            };
+            ModuleController::WorldClock(WorldClockModule::builder().launch(init).detach())
         }
         _ => {
             let init = ClockInit {

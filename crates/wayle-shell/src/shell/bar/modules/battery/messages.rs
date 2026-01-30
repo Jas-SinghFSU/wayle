@@ -1,11 +1,11 @@
 use wayle_widgets::prelude::BarSettings;
 
-pub struct BatteryInit {
+pub(crate) struct BatteryInit {
     pub settings: BarSettings,
 }
 
 #[derive(Debug)]
-pub enum BatteryMsg {
+pub(crate) enum BatteryMsg {
     LeftClick,
     RightClick,
     MiddleClick,
@@ -14,7 +14,7 @@ pub enum BatteryMsg {
 }
 
 #[derive(Debug)]
-pub enum BatteryCmd {
+pub(crate) enum BatteryCmd {
     UpdateLabel(String),
     UpdateIcon(String),
 }

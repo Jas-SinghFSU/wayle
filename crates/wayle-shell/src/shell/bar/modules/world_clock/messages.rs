@@ -1,11 +1,11 @@
 use wayle_widgets::prelude::BarSettings;
 
-pub(crate) struct NotificationInit {
+pub(crate) struct WorldClockInit {
     pub settings: BarSettings,
 }
 
 #[derive(Debug)]
-pub(crate) enum NotificationMsg {
+pub(crate) enum WorldClockMsg {
     LeftClick,
     RightClick,
     MiddleClick,
@@ -15,8 +15,8 @@ pub(crate) enum NotificationMsg {
 
 #[derive(Debug)]
 #[allow(clippy::enum_variant_names)]
-pub(crate) enum NotificationCmd {
-    NotificationsChanged(usize),
-    DndChanged(bool),
-    IconConfigChanged,
+pub(crate) enum WorldClockCmd {
+    UpdateLabel(String),
+    UpdateIcon(String),
+    UpdateTooltip(Option<String>),
 }

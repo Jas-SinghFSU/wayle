@@ -3,12 +3,12 @@
 //! Supports two modes:
 //! - System libcava via pkg-config (default)
 //! - Vendored build from submodule (`vendored` feature)
+#![allow(clippy::panic, clippy::expect_used, clippy::unwrap_used)]
 
 use std::{env, path::PathBuf};
 
 const REQUIRED_VERSION: &str = "0.10.6";
 
-#[allow(clippy::panic, clippy::expect_used, clippy::unwrap_used)]
 fn main() {
     println!("cargo:rerun-if-changed=build.rs");
     println!("cargo:rerun-if-changed=wrapper.h");

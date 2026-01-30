@@ -1,11 +1,11 @@
 use wayle_widgets::prelude::BarSettings;
 
-pub struct RamInit {
+pub(crate) struct RamInit {
     pub settings: BarSettings,
 }
 
 #[derive(Debug)]
-pub enum RamMsg {
+pub(crate) enum RamMsg {
     LeftClick,
     RightClick,
     MiddleClick,
@@ -14,7 +14,7 @@ pub enum RamMsg {
 }
 
 #[derive(Debug)]
-pub enum RamCmd {
+pub(crate) enum RamCmd {
     UpdateLabel(String),
     UpdateIcon(String),
 }

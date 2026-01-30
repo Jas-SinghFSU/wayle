@@ -3,12 +3,12 @@ use std::sync::Arc;
 use wayle_audio::core::device::input::InputDevice;
 use wayle_widgets::prelude::BarSettings;
 
-pub struct MicrophoneInit {
+pub(crate) struct MicrophoneInit {
     pub settings: BarSettings,
 }
 
 #[derive(Debug)]
-pub enum MicrophoneMsg {
+pub(crate) enum MicrophoneMsg {
     LeftClick,
     RightClick,
     MiddleClick,
@@ -18,7 +18,7 @@ pub enum MicrophoneMsg {
 
 #[derive(Debug)]
 #[allow(clippy::enum_variant_names)]
-pub enum MicrophoneCmd {
+pub(crate) enum MicrophoneCmd {
     DeviceChanged(Option<Arc<InputDevice>>),
     VolumeOrMuteChanged,
     IconConfigChanged,

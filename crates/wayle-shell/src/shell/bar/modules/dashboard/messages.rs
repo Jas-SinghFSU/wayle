@@ -1,11 +1,11 @@
 use wayle_widgets::prelude::BarSettings;
 
-pub struct DashboardInit {
+pub(crate) struct DashboardInit {
     pub settings: BarSettings,
 }
 
 #[derive(Debug)]
-pub enum DashboardMsg {
+pub(crate) enum DashboardMsg {
     LeftClick,
     RightClick,
     MiddleClick,
@@ -14,6 +14,6 @@ pub enum DashboardMsg {
 }
 
 #[derive(Debug)]
-pub enum DashboardCmd {
+pub(crate) enum DashboardCmd {
     IconConfigChanged,
 }

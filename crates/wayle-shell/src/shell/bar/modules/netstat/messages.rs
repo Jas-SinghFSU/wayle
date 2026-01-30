@@ -1,11 +1,11 @@
 use wayle_widgets::prelude::BarSettings;
 
-pub struct NetstatInit {
+pub(crate) struct NetstatInit {
     pub settings: BarSettings,
 }
 
 #[derive(Debug)]
-pub enum NetstatMsg {
+pub(crate) enum NetstatMsg {
     LeftClick,
     RightClick,
     MiddleClick,
@@ -14,7 +14,7 @@ pub enum NetstatMsg {
 }
 
 #[derive(Debug)]
-pub enum NetstatCmd {
+pub(crate) enum NetstatCmd {
     UpdateLabel(String),
     UpdateIcon(String),
 }

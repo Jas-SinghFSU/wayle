@@ -3,12 +3,12 @@ use std::sync::Arc;
 use wayle_media::core::player::Player;
 use wayle_widgets::prelude::BarSettings;
 
-pub struct MediaInit {
+pub(crate) struct MediaInit {
     pub settings: BarSettings,
 }
 
 #[derive(Debug)]
-pub enum MediaMsg {
+pub(crate) enum MediaMsg {
     LeftClick,
     RightClick,
     MiddleClick,
@@ -17,7 +17,7 @@ pub enum MediaMsg {
 }
 
 #[derive(Debug)]
-pub enum MediaCmd {
+pub(crate) enum MediaCmd {
     PlayerChanged(Option<Arc<Player>>),
     MetadataChanged,
     PlaybackStateChanged,

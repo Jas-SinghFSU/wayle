@@ -1,0 +1,119 @@
+mod helpers;
+mod messages;
+mod watchers;
+
+use relm4::prelude::*;
+use wayle_common::{ConfigProperty, process, services};
+use wayle_config::{ConfigService, schemas::styling::CssToken};
+use wayle_widgets::{
+    prelude::{
+        BarButton, BarButtonBehavior, BarButtonColors, BarButtonInit, BarButtonInput,
+        BarButtonOutput,
+    },
+    utils::force_window_resize,
+};
+
+pub(crate) use self::messages::{WorldClockCmd, WorldClockInit, WorldClockMsg};
+
+pub(crate) struct WorldClockModule {
+    bar_button: Controller<BarButton>,
+}
+
+#[relm4::component(pub(crate))]
+impl Component for WorldClockModule {
+    type Init = WorldClockInit;
+    type Input = WorldClockMsg;
+    type Output = ();
+    type CommandOutput = WorldClockCmd;
+
+    view! {
+        gtk::Box {
+            #[local_ref]
+            bar_button -> gtk::MenuButton {},
+        }
+    }
+
+    fn init(
+        init: Self::Init,
+        _root: Self::Root,
+        sender: ComponentSender<Self>,
+    ) -> ComponentParts<Self> {
+        let config_service = services::get::<ConfigService>();
+        let config = config_service.config();
+        let world_clock = &config.modules.world_clock;
+        let label = helpers::format_world_clock(&world_clock.format.get());
+
+        let bar_button = BarButton::builder()
+            .launch(BarButtonInit {
+                icon: world_clock.icon_name.get().clone(),
+                label,
+                tooltip: world_clock.tooltip.get().clone(),
+                colors: BarButtonColors {
+                    icon_color: world_clock.icon_color.clone(),
+                    label_color: world_clock.label_color.clone(),
+                    icon_background: world_clock.icon_bg_color.clone(),
+                    button_background: world_clock.button_bg_color.clone(),
+                    border_color: world_clock.border_color.clone(),
+                    auto_icon_color: CssToken::Yellow,
+                },
+                behavior: BarButtonBehavior {
+                    label_max_chars: world_clock.label_max_length.clone(),
+                    show_icon: world_clock.icon_show.clone(),
+                    show_label: world_clock.label_show.clone(),
+                    show_border: world_clock.border_show.clone(),
+                    visible: ConfigProperty::new(true),
+                },
+                settings: init.settings,
+            })
+            .forward(sender.input_sender(), |output| match output {
+                BarButtonOutput::LeftClick => WorldClockMsg::LeftClick,
+                BarButtonOutput::RightClick => WorldClockMsg::RightClick,
+                BarButtonOutput::MiddleClick => WorldClockMsg::MiddleClick,
+                BarButtonOutput::ScrollUp => WorldClockMsg::ScrollUp,
+                BarButtonOutput::ScrollDown => WorldClockMsg::ScrollDown,
+            });
+
+        watchers::spawn_watchers(&sender, world_clock);
+
+        let model = Self { bar_button };
+        let bar_button = model.bar_button.widget();
+        let widgets = view_output!();
+
+        ComponentParts { model, widgets }
+    }
+
+    fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, _root: &Self::Root) {
+        let config_service = services::get::<ConfigService>();
+        let world_clock = &config_service.config().modules.world_clock;
+
+        let cmd = match msg {
+            WorldClockMsg::LeftClick => world_clock.left_click.get(),
+            WorldClockMsg::RightClick => world_clock.right_click.get(),
+            WorldClockMsg::MiddleClick => world_clock.middle_click.get(),
+            WorldClockMsg::ScrollUp => world_clock.scroll_up.get(),
+            WorldClockMsg::ScrollDown => world_clock.scroll_down.get(),
+        };
+
+        process::run_if_set(&cmd);
+    }
+
+    fn update_cmd(
+        &mut self,
+        msg: WorldClockCmd,
+        _sender: ComponentSender<Self>,
+        root: &Self::Root,
+    ) {
+        match msg {
+            WorldClockCmd::UpdateLabel(label) => {
+                self.bar_button.emit(BarButtonInput::SetLabel(label));
+                force_window_resize(root);
+            }
+            WorldClockCmd::UpdateIcon(icon) => {
+                self.bar_button.emit(BarButtonInput::SetIcon(icon));
+            }
+            WorldClockCmd::UpdateTooltip(tooltip) => {
+                self.bar_button.emit(BarButtonInput::SetTooltip(tooltip));
+            }
+        }
+    }
+}

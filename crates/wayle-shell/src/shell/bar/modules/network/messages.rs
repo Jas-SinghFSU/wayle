@@ -1,11 +1,11 @@
 use wayle_widgets::prelude::BarSettings;
 
-pub struct NetworkInit {
+pub(crate) struct NetworkInit {
     pub settings: BarSettings,
 }
 
 #[derive(Debug)]
-pub enum NetworkMsg {
+pub(crate) enum NetworkMsg {
     LeftClick,
     RightClick,
     MiddleClick,
@@ -15,7 +15,7 @@ pub enum NetworkMsg {
 
 #[derive(Debug)]
 #[allow(clippy::enum_variant_names)]
-pub enum NetworkCmd {
+pub(crate) enum NetworkCmd {
     StateChanged,
     IconConfigChanged,
     WifiDeviceChanged,

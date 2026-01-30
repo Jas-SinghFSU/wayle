@@ -51,7 +51,7 @@ experience. A successor to HyprPanel without the pain or dependency on Hyprland.
     - [x] Storage
     - [x] Separator
     - [x] Power
-    - [ ] World clock
+    - [x] World clock
     - [ ] Updates
     - [ ] Weather
     - [ ] Keyboard input

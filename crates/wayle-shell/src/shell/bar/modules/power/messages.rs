@@ -1,11 +1,11 @@
 use wayle_widgets::prelude::BarSettings;
 
-pub struct PowerInit {
+pub(crate) struct PowerInit {
     pub settings: BarSettings,
 }
 
 #[derive(Debug)]
-pub enum PowerMsg {
+pub(crate) enum PowerMsg {
     LeftClick,
     RightClick,
     MiddleClick,
@@ -14,6 +14,6 @@ pub enum PowerMsg {
 }
 
 #[derive(Debug)]
-pub enum PowerCmd {
+pub(crate) enum PowerCmd {
     IconConfigChanged,
 }

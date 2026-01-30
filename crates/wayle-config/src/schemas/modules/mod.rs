@@ -14,6 +14,7 @@ mod separator;
 mod storage;
 mod systray;
 mod volume;
+mod world_clock;
 
 pub use battery::BatteryConfig;
 pub use bluetooth::BluetoothConfig;
@@ -32,6 +33,7 @@ pub use storage::StorageConfig;
 pub use systray::{SystrayConfig, TrayItemOverride};
 pub use volume::VolumeConfig;
 use wayle_derive::wayle_config;
+pub use world_clock::WorldClockConfig;
 
 /// Configuration for all available Wayle modules.
 #[wayle_config]
@@ -68,4 +70,7 @@ pub struct ModulesConfig {
     pub systray: SystrayConfig,
     /// Volume control module.
     pub volume: VolumeConfig,
+    /// World clock module.
+    #[serde(rename = "world-clock")]
+    pub world_clock: WorldClockConfig,
 }

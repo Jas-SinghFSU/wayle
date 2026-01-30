@@ -1,11 +1,11 @@
 use wayle_widgets::prelude::BarSettings;
 
-pub struct StorageInit {
+pub(crate) struct StorageInit {
     pub settings: BarSettings,
 }
 
 #[derive(Debug)]
-pub enum StorageMsg {
+pub(crate) enum StorageMsg {
     LeftClick,
     RightClick,
     MiddleClick,
@@ -14,7 +14,7 @@ pub enum StorageMsg {
 }
 
 #[derive(Debug)]
-pub enum StorageCmd {
+pub(crate) enum StorageCmd {
     UpdateLabel(String),
     UpdateIcon(String),
 }

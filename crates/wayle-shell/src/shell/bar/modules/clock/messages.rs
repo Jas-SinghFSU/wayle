@@ -1,11 +1,11 @@
 use wayle_widgets::prelude::BarSettings;
 
-pub struct ClockInit {
+pub(crate) struct ClockInit {
     pub settings: BarSettings,
 }
 
 #[derive(Debug)]
-pub enum ClockMsg {
+pub(crate) enum ClockMsg {
     LeftClick,
     RightClick,
     MiddleClick,
@@ -15,7 +15,7 @@ pub enum ClockMsg {
 
 #[derive(Debug)]
 #[allow(clippy::enum_variant_names)]
-pub enum ClockCmd {
+pub(crate) enum ClockCmd {
     UpdateTime(String),
     UpdateIcon(String),
     UpdateTooltip(Option<String>),
