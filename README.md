@@ -50,16 +50,16 @@ experience. A successor to HyprPanel without the pain or dependency on Hyprland.
     - [x] CPU Temp
     - [x] Storage
     - [x] Separator
-    - [ ] Keyboard input
+    - [x] Power
+    - [ ] World clock
     - [ ] Updates
     - [ ] Weather
-    - [ ] Window title
+    - [ ] Keyboard input
+    - [ ] Hyprland Window title
     - [ ] Hyprland workspaces
     - [ ] Hyprland submap
     - [ ] Hyprsunset
     - [ ] Hypridle
-    - [ ] Power
-    - [ ] World clock
 
 ### Dropdown Interfaces
 

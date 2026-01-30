@@ -8,6 +8,7 @@ mod microphone;
 mod netstat;
 mod network;
 mod notification;
+mod power;
 mod ram;
 mod separator;
 mod storage;
@@ -24,6 +25,7 @@ use microphone::{MicrophoneInit, MicrophoneModule};
 use netstat::{NetstatInit, NetstatModule};
 use network::{NetworkInit, NetworkModule};
 use notification::{NotificationInit, NotificationModule};
+use power::{PowerInit, PowerModule};
 use ram::{RamInit, RamModule};
 use relm4::prelude::*;
 use separator::{SeparatorInit, SeparatorModule};
@@ -49,6 +51,7 @@ pub(crate) enum ModuleController {
     Netstat(Controller<NetstatModule>),
     Network(Controller<NetworkModule>),
     Notification(Controller<NotificationModule>),
+    Power(Controller<PowerModule>),
     Ram(Controller<RamModule>),
     Separator(Controller<SeparatorModule>),
     Storage(Controller<StorageModule>),
@@ -69,6 +72,7 @@ impl ModuleController {
             Self::Netstat(c) => c.widget(),
             Self::Network(c) => c.widget(),
             Self::Notification(c) => c.widget(),
+            Self::Power(c) => c.widget(),
             Self::Ram(c) => c.widget(),
             Self::Separator(c) => c.widget(),
             Self::Storage(c) => c.widget(),
@@ -143,6 +147,12 @@ pub(crate) fn create_module(module_ref: &ModuleRef, settings: &BarSettings) -> M
                 settings: settings.clone(),
             };
             ModuleController::Dashboard(DashboardModule::builder().launch(init).detach())
+        }
+        BarModule::Power => {
+            let init = PowerInit {
+                settings: settings.clone(),
+            };
+            ModuleController::Power(PowerModule::builder().launch(init).detach())
         }
         BarModule::Cpu => {
             let init = CpuInit {

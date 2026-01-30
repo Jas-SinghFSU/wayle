@@ -8,6 +8,7 @@ mod microphone;
 mod netstat;
 mod network;
 mod notification;
+mod power;
 mod ram;
 mod separator;
 mod storage;
@@ -24,6 +25,7 @@ pub use microphone::MicrophoneConfig;
 pub use netstat::NetstatConfig;
 pub use network::NetworkConfig;
 pub use notification::NotificationConfig;
+pub use power::PowerConfig;
 pub use ram::RamConfig;
 pub use separator::SeparatorConfig;
 pub use storage::StorageConfig;
@@ -54,6 +56,8 @@ pub struct ModulesConfig {
     pub netstat: NetstatConfig,
     /// Notification center module.
     pub notification: NotificationConfig,
+    /// Power menu module.
+    pub power: PowerConfig,
     /// RAM usage module.
     pub ram: RamConfig,
     /// Storage usage module.
