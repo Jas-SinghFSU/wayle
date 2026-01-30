@@ -97,17 +97,18 @@
 //!
 //! # Building
 //!
-//! This crate requires libcava 0.10.6. Two options:
+//! Two options:
 //!
-//! **Vendored (recommended for most users):**
+//! **Vendored (recommended):**
 //!
 //! ```toml
 //! [dependencies]
 //! wayle-cava = { version = "...", features = ["vendored"] }
 //! ```
 //!
-//! Compiles libcava from source. Requires fftw3 and libpipewire-0.3 development
-//! headers. PulseAudio support is included automatically if libpulse is available.
+//! Compiles a pinned, tested version of libcava from source. Requires fftw3 and
+//! libpipewire-0.3 development headers. PulseAudio support included if libpulse
+//! is available.
 //!
 //! **System library:**
 //!

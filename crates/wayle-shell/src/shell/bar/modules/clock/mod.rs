@@ -5,8 +5,12 @@ mod watchers;
 use relm4::prelude::*;
 use wayle_common::{ConfigProperty, process, services};
 use wayle_config::{ConfigService, schemas::styling::CssToken};
-use wayle_widgets::prelude::{
-    BarButton, BarButtonBehavior, BarButtonColors, BarButtonInit, BarButtonInput, BarButtonOutput,
+use wayle_widgets::{
+    prelude::{
+        BarButton, BarButtonBehavior, BarButtonColors, BarButtonInit, BarButtonInput,
+        BarButtonOutput,
+    },
+    utils::force_window_resize,
 };
 
 pub(crate) use self::messages::{ClockCmd, ClockInit, ClockMsg};
@@ -93,10 +97,11 @@ impl Component for ClockModule {
         process::run_if_set(&cmd);
     }
 
-    fn update_cmd(&mut self, msg: ClockCmd, _sender: ComponentSender<Self>, _root: &Self::Root) {
+    fn update_cmd(&mut self, msg: ClockCmd, _sender: ComponentSender<Self>, root: &Self::Root) {
         match msg {
             ClockCmd::UpdateTime(time) => {
                 self.bar_button.emit(BarButtonInput::SetLabel(time));
+                force_window_resize(root);
             }
             ClockCmd::UpdateIcon(icon) => {
                 self.bar_button.emit(BarButtonInput::SetIcon(icon));
