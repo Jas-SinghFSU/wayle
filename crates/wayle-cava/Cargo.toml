@@ -6,6 +6,10 @@ rust-version.workspace = true
 repository.workspace = true
 license.workspace = true
 
+[features]
+default = []
+vendored = ["dep:cc"]
+
 [dependencies]
 derive_more.workspace = true
 libc = "0.2"
@@ -21,6 +25,7 @@ futures.workspace = true
 
 [build-dependencies]
 bindgen = "0.72"
+cc = { version = "1.2", features = ["parallel"], optional = true }
 pkg-config = "0.3"
 
 [lints]

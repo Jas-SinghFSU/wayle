@@ -86,7 +86,7 @@ unic-langid = "0.9"
 wayle-audio = { path = "crates/wayle-audio" }
 wayle-battery = { path = "crates/wayle-battery" }
 wayle-bluetooth = { path = "crates/wayle-bluetooth" }
-wayle-cava = { path = "crates/wayle-cava" }
+wayle-cava = { path = "crates/wayle-cava", features = ["vendored"] }
 wayle-common = { path = "crates/wayle-common" }
 wayle-config = { path = "crates/wayle-config" }
 wayle-derive = { path = "crates/wayle-derive" }

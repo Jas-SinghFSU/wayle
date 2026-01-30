@@ -94,6 +94,37 @@
 //! [`samplerate`]: CavaService::samplerate
 //! [`Property`]: wayle_common::Property
 //! [`Property<T>`]: wayle_common::Property
+//!
+//! # Building
+//!
+//! This crate requires libcava 0.10.6. Two options:
+//!
+//! **Vendored (recommended for most users):**
+//!
+//! ```toml
+//! [dependencies]
+//! wayle-cava = { version = "...", features = ["vendored"] }
+//! ```
+//!
+//! Compiles libcava from source. Requires fftw3 and libpipewire-0.3 development
+//! headers. PulseAudio support is included automatically if libpulse is available.
+//!
+//! **System library:**
+//!
+//! ```toml
+//! [dependencies]
+//! wayle-cava = "..."
+//! ```
+//!
+//! Links against system libcava. Arch Linux users can install from AUR:
+//!
+//! ```sh
+//! yay -S libcava
+//! ```
+//!
+//! Other distributions may need to build libcava from the
+//! [LukashonakV/cava](https://github.com/LukashonakV/cava) fork, which provides
+//! the shared library interface this crate requires.
 
 mod builder;
 mod error;

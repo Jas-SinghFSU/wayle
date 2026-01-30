@@ -4217,6 +4217,7 @@ name = "wayle-cava"
 version = "0.1.0"
 dependencies = [
  "bindgen",
+ "cc",
  "derive_more",
  "futures",
  "libc",
