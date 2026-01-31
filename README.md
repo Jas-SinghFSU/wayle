@@ -52,7 +52,6 @@ experience. A successor to HyprPanel without the pain or dependency on Hyprland.
     - [x] Separator
     - [x] Power
     - [x] World clock
-    - [ ] Updates
     - [ ] Weather
     - [ ] Keyboard input
     - [ ] Hyprland Window title
@@ -60,6 +59,12 @@ experience. A successor to HyprPanel without the pain or dependency on Hyprland.
     - [ ] Hyprland submap
     - [ ] Hyprsunset
     - [ ] Hypridle
+
+#### Scoped out
+
+- **Updates**
+    - Too much surface area and distro coupling
+    - Will be achievable easily via custom modules
 
 ### Dropdown Interfaces
 
