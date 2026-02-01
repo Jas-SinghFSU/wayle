@@ -14,6 +14,7 @@ mod separator;
 mod storage;
 mod systray;
 mod volume;
+mod weather;
 mod world_clock;
 
 use battery::{BatteryInit, BatteryModule};
@@ -35,6 +36,7 @@ use systray::{SystrayInit, SystrayModule};
 use volume::{VolumeInit, VolumeModule};
 use wayle_config::schemas::bar::{BarModule, ModuleRef};
 use wayle_widgets::prelude::BarSettings;
+use weather::{WeatherInit, WeatherModule};
 use world_clock::{WorldClockInit, WorldClockModule};
 
 pub(crate) struct ModuleInstance {
@@ -59,6 +61,7 @@ pub(crate) enum ModuleController {
     Storage(Controller<StorageModule>),
     Systray(Controller<SystrayModule>),
     Volume(Controller<VolumeModule>),
+    Weather(Controller<WeatherModule>),
     WorldClock(Controller<WorldClockModule>),
 }
 
@@ -81,6 +84,7 @@ impl ModuleController {
             Self::Storage(c) => c.widget(),
             Self::Systray(c) => c.widget(),
             Self::Volume(c) => c.widget(),
+            Self::Weather(c) => c.widget(),
             Self::WorldClock(c) => c.widget(),
         }
     }
@@ -187,6 +191,12 @@ pub(crate) fn create_module(module_ref: &ModuleRef, settings: &BarSettings) -> M
                 is_vertical: settings.is_vertical.clone(),
             };
             ModuleController::Separator(SeparatorModule::builder().launch(init).detach())
+        }
+        BarModule::Weather => {
+            let init = WeatherInit {
+                settings: settings.clone(),
+            };
+            ModuleController::Weather(WeatherModule::builder().launch(init).detach())
         }
         BarModule::WorldClock => {
             let init = WorldClockInit {

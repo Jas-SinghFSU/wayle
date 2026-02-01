@@ -8,6 +8,8 @@ repository.workspace = true
 license.workspace = true
 
 [dependencies]
+dotenvy.workspace = true
+glob.workspace = true
 notify.workspace = true
 schemars.workspace = true
 serde.workspace = true

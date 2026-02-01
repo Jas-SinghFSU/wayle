@@ -3,13 +3,13 @@ use std::{path::PathBuf, sync::Arc, time::Duration};
 use notify::{
     Event, RecommendedWatcher, RecursiveMode, Watcher as NotifyWatcher, event::EventKind,
 };
-use tokio::sync::mpsc;
+use tokio::sync::{mpsc, watch};
 use tracing::{debug, error, info, instrument};
 use wayle_common::{
     ApplyConfigLayer, ApplyRuntimeLayer, CommitConfigReload, ResetConfigLayer, ResetRuntimeLayer,
 };
 
-use super::{error::Error, paths::ConfigPaths, service::ConfigService};
+use super::{error::Error, paths::ConfigPaths, secrets, service::ConfigService};
 use crate::{Config, infrastructure::themes::utils::load_themes};
 
 /// Hot-reloads configuration files on disk changes.
@@ -19,7 +19,17 @@ use crate::{Config, infrastructure::themes::utils::load_themes};
 #[derive(Clone)]
 pub struct FileWatcher {
     config_service: Arc<ConfigService>,
+    secrets_tx: watch::Sender<()>,
     _watcher: Arc<RecommendedWatcher>,
+}
+
+impl FileWatcher {
+    /// Subscribes to secrets reload events.
+    ///
+    /// The receiver fires whenever `.env` files are reloaded.
+    pub fn subscribe_secrets_reload(&self) -> watch::Receiver<()> {
+        self.secrets_tx.subscribe()
+    }
 }
 
 impl FileWatcher {
@@ -31,6 +41,7 @@ impl FileWatcher {
     #[instrument(skip(config_service))]
     pub fn start(config_service: Arc<ConfigService>) -> Result<Self, Error> {
         let (tx, rx) = mpsc::unbounded_channel();
+        let (secrets_tx, _) = watch::channel(());
 
         let mut watcher = notify::recommended_watcher(move |result: Result<Event, _>| {
             if let Ok(event) = result {
@@ -52,6 +63,7 @@ impl FileWatcher {
 
         let file_watcher = Self {
             config_service,
+            secrets_tx,
             _watcher: Arc::new(watcher),
         };
 
@@ -69,27 +81,45 @@ impl FileWatcher {
 
     #[instrument(skip(self))]
     async fn reload_and_sync(&self, paths: &[PathBuf]) -> Result<(), Error> {
-        let themes_dir = ConfigPaths::themes_dir();
-        if paths.iter().any(|path| path.starts_with(&themes_dir)) {
+        let has_env_changes = paths.iter().any(|path| secrets::is_env_file(path));
+        let has_theme_changes = {
+            let themes_dir = ConfigPaths::themes_dir();
+            paths.iter().any(|path| path.starts_with(&themes_dir))
+        };
+        let has_config_changes = paths.iter().any(|path| {
+            !secrets::is_env_file(path) && {
+                let themes_dir = ConfigPaths::themes_dir();
+                !path.starts_with(&themes_dir)
+            }
+        });
+
+        if has_env_changes && let Ok(config_dir) = ConfigPaths::config_dir() {
+            secrets::reload_env_files(&config_dir);
+            let _ = self.secrets_tx.send(());
+        }
+
+        if has_theme_changes {
+            let themes_dir = ConfigPaths::themes_dir();
             load_themes(self.config_service.config(), &themes_dir);
-            return Ok(());
         }
 
-        let config = self.config_service.config();
+        if has_config_changes {
+            let config = self.config_service.config();
 
-        let config_path = ConfigPaths::main_config();
-        let toml_value = Config::load_toml_with_imports(&config_path)?;
+            let config_path = ConfigPaths::main_config();
+            let toml_value = Config::load_toml_with_imports(&config_path)?;
 
-        config.reset_config_layer();
-        config.apply_config_layer(&toml_value, "");
+            config.reset_config_layer();
+            config.apply_config_layer(&toml_value, "");
 
-        config.reset_runtime_layer();
-        let runtime_path = ConfigPaths::runtime_config();
-        if let Ok(runtime_toml) = ConfigService::load_toml_file(&runtime_path) {
-            let _ = config.apply_runtime_layer(&runtime_toml, "");
+            config.reset_runtime_layer();
+            let runtime_path = ConfigPaths::runtime_config();
+            if let Ok(runtime_toml) = ConfigService::load_toml_file(&runtime_path) {
+                let _ = config.apply_runtime_layer(&runtime_toml, "");
+            }
+
+            config.commit_config_reload();
         }
-
-        config.commit_config_reload();
 
         Ok(())
     }

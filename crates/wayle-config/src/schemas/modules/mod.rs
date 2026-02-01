@@ -14,6 +14,7 @@ mod separator;
 mod storage;
 mod systray;
 mod volume;
+mod weather;
 mod world_clock;
 
 pub use battery::BatteryConfig;
@@ -33,6 +34,7 @@ pub use storage::StorageConfig;
 pub use systray::{SystrayConfig, TrayItemOverride};
 pub use volume::VolumeConfig;
 use wayle_derive::wayle_config;
+pub use weather::{TemperatureUnit, WeatherConfig, WeatherProvider};
 pub use world_clock::WorldClockConfig;
 
 /// Configuration for all available Wayle modules.
@@ -70,6 +72,8 @@ pub struct ModulesConfig {
     pub systray: SystrayConfig,
     /// Volume control module.
     pub volume: VolumeConfig,
+    /// Weather display module.
+    pub weather: WeatherConfig,
     /// World clock module.
     #[serde(rename = "world-clock")]
     pub world_clock: WorldClockConfig,

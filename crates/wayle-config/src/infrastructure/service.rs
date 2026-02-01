@@ -9,7 +9,7 @@ use wayle_common::{ApplyConfigLayer, ApplyRuntimeLayer, ClearRuntimeByPath, Extr
 use super::{
     error::{Error, InvalidFieldReason, IoOperation},
     paths::ConfigPaths,
-    toml_path,
+    secrets, toml_path,
     watcher::FileWatcher,
 };
 use crate::{Config, infrastructure::themes::utils::load_themes};
@@ -21,7 +21,7 @@ use crate::{Config, infrastructure::themes::utils::load_themes};
 #[derive(Clone)]
 pub struct ConfigService {
     config: Arc<Config>,
-    _watcher: Arc<RwLock<Option<FileWatcher>>>,
+    watcher: Arc<RwLock<Option<FileWatcher>>>,
 }
 
 impl ConfigService {
@@ -36,6 +36,10 @@ impl ConfigService {
     #[instrument]
     pub async fn load() -> Result<Arc<Self>, Error> {
         info!("Loading configuration");
+
+        if let Ok(config_dir) = ConfigPaths::config_dir() {
+            secrets::load_env_files(&config_dir);
+        }
 
         let config = Config::default();
         let config_path = ConfigPaths::main_config();
@@ -57,17 +61,17 @@ impl ConfigService {
 
         let service = Arc::new(Self {
             config: Arc::new(config),
-            _watcher: Arc::new(RwLock::new(None)),
+            watcher: Arc::new(RwLock::new(None)),
         });
 
         let themes_dir = ConfigPaths::themes_dir();
         load_themes(&service.config, &themes_dir);
 
-        let watcher = FileWatcher::start(Arc::clone(&service))?;
+        let file_watcher = FileWatcher::start(Arc::clone(&service))?;
         *service
-            ._watcher
+            .watcher
             .write()
-            .map_err(|_| Error::WatcherPoisoned)? = Some(watcher);
+            .map_err(|_| Error::WatcherPoisoned)? = Some(file_watcher);
 
         info!("Configuration loaded successfully");
 
@@ -77,6 +81,18 @@ impl ConfigService {
     /// Reference to the config root.
     pub fn config(&self) -> &Config {
         &self.config
+    }
+
+    /// Subscribes to secrets reload events.
+    ///
+    /// Returns a receiver that fires whenever `.env` files are reloaded.
+    /// Returns `None` if the watcher is not initialized.
+    pub fn subscribe_secrets_reload(&self) -> Option<tokio::sync::watch::Receiver<()>> {
+        self.watcher.read().ok().and_then(|guard| {
+            guard
+                .as_ref()
+                .map(|watcher| watcher.subscribe_secrets_reload())
+        })
     }
 
     /// Persists runtime layer values to `runtime.toml`.

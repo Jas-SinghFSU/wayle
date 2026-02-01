@@ -49,8 +49,8 @@ pub fn spawn(sender: &ComponentSender<Shell>) {
 }
 
 fn should_reload(event: &Event) -> bool {
-    let dominated_by_scss = event.paths.iter().any(|p| {
-        p.extension()
+    let dominated_by_scss = event.paths.iter().any(|path| {
+        path.extension()
             .is_some_and(|ext| ext == "scss" || ext == "css")
     });
 

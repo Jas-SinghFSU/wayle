@@ -179,7 +179,7 @@ macro_rules! watch {
                 () = shutdown.wait() => {}
                 () = async {
                     while merged.next().await.is_some() {
-                        $body
+                        (|| { $body })();
                     }
                 } => {}
             }
@@ -238,7 +238,7 @@ macro_rules! watch_cancellable {
                 () = token.cancelled() => {}
                 () = async {
                     while merged.next().await.is_some() {
-                        $body
+                        (|| { $body })();
                     }
                 } => {}
             }

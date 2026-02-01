@@ -1,6 +1,6 @@
 //! Wayle desktop shell - a GTK4/Relm4 status bar for Wayland compositors.
 
-use std::{error::Error, time::Duration};
+use std::{error::Error, sync::Arc, time::Duration};
 
 use relm4::RelmApp;
 use tokio::runtime::Runtime;
@@ -12,13 +12,14 @@ use wayle_common::{
     services::{self, ServiceRegistry},
     shell::APP_ID,
 };
-use wayle_config::{ConfigService, infrastructure::schema};
+use wayle_config::{ConfigService, infrastructure::schema, secrets};
 use wayle_media::MediaService;
 use wayle_network::NetworkService;
 use wayle_notification::NotificationService;
 use wayle_sysinfo::SysinfoService;
 use wayle_systray::{SystemTrayService, types::TrayMode};
 use wayle_wallpaper::WallpaperService;
+use wayle_weather::WeatherService;
 use zbus::{Connection, fdo::DBusProxy};
 
 mod i18n;
@@ -87,14 +88,15 @@ async fn init_services() -> Result<StartupTimer, Box<dyn Error>> {
             .await?,
     );
     let config_service = timer.time("Config", ConfigService::load()).await?;
-    let modules = &config_service.config().modules;
-    let media_config = &modules.media;
+    let modules_config = &config_service.config().modules;
+    let media_config = &modules_config.media;
     let ignored_players = media_config.players_ignored.get().clone();
     let priority_players = media_config.player_priority.get().clone();
-    let cpu_interval = Duration::from_millis(modules.cpu.poll_interval_ms.get());
-    let memory_interval = Duration::from_millis(modules.ram.poll_interval_ms.get());
-    let disk_interval = Duration::from_millis(modules.storage.poll_interval_ms.get());
-    let network_interval = Duration::from_millis(modules.netstat.poll_interval_ms.get());
+    let cpu_interval = Duration::from_millis(modules_config.cpu.poll_interval_ms.get());
+    let memory_interval = Duration::from_millis(modules_config.ram.poll_interval_ms.get());
+    let disk_interval = Duration::from_millis(modules_config.storage.poll_interval_ms.get());
+    let network_interval = Duration::from_millis(modules_config.netstat.poll_interval_ms.get());
+    let weather_service = timer.time_sync("Weather", || build_weather_service(modules_config));
     registry.register_arc(config_service);
 
     registry.register(timer.time("Battery", BatteryService::new()).await?);
@@ -132,6 +134,7 @@ async fn init_services() -> Result<StartupTimer, Box<dyn Error>> {
             .await?,
     );
     registry.register_arc(timer.time("Wallpaper", WallpaperService::new()).await?);
+    registry.register_arc(weather_service);
 
     registry.register(timer.time_sync("Sysinfo", || {
         SysinfoService::builder()
@@ -146,4 +149,50 @@ async fn init_services() -> Result<StartupTimer, Box<dyn Error>> {
     timer.mark_services_done();
 
     Ok(timer)
+}
+
+fn build_weather_service(
+    modules: &wayle_config::schemas::modules::ModulesConfig,
+) -> Arc<WeatherService> {
+    use wayle_config::schemas::modules::{TemperatureUnit, WeatherProvider};
+
+    let cfg = &modules.weather;
+
+    let location = parse_location(cfg.location.get().as_str());
+    let provider = match cfg.provider.get() {
+        WeatherProvider::OpenMeteo => wayle_weather::WeatherProviderKind::OpenMeteo,
+        WeatherProvider::VisualCrossing => wayle_weather::WeatherProviderKind::VisualCrossing,
+        WeatherProvider::WeatherApi => wayle_weather::WeatherProviderKind::WeatherApi,
+    };
+    let units = match cfg.units.get() {
+        TemperatureUnit::Metric => wayle_weather::TemperatureUnit::Metric,
+        TemperatureUnit::Imperial => wayle_weather::TemperatureUnit::Imperial,
+    };
+    let poll_interval = Duration::from_secs(u64::from(cfg.refresh_interval_seconds.get()));
+
+    let mut builder = WeatherService::builder()
+        .poll_interval(poll_interval)
+        .provider(provider)
+        .location(location)
+        .units(units);
+
+    if let Some(key) = secrets::resolve(cfg.visual_crossing_key.get()) {
+        builder = builder.visual_crossing_key(key);
+    }
+    if let Some(key) = secrets::resolve(cfg.weatherapi_key.get()) {
+        builder = builder.weatherapi_key(key);
+    }
+
+    Arc::new(builder.build())
+}
+
+fn parse_location(location: &str) -> wayle_weather::LocationQuery {
+    location
+        .split_once(',')
+        .and_then(|(lat, lon)| {
+            let lat = lat.trim().parse().ok()?;
+            let lon = lon.trim().parse().ok()?;
+            Some(wayle_weather::LocationQuery::coords(lat, lon))
+        })
+        .unwrap_or_else(|| wayle_weather::LocationQuery::city(location))
 }

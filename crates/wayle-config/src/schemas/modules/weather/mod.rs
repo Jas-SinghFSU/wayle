@@ -1,0 +1,168 @@
+use schemars::{JsonSchema, schema_for};
+use serde::{Deserialize, Serialize};
+use wayle_common::ConfigProperty;
+use wayle_derive::wayle_config;
+
+use crate::{
+    docs::{ModuleInfo, ModuleInfoProvider},
+    schemas::styling::{ColorValue, CssToken},
+};
+
+/// Weather module configuration.
+#[wayle_config(bar_button)]
+pub struct WeatherConfig {
+    /// Weather data provider.
+    #[default(WeatherProvider::default())]
+    pub provider: ConfigProperty<WeatherProvider>,
+
+    /// Location for weather data (city name or "lat,lon" coordinates).
+    #[default(String::from("San Francisco"))]
+    pub location: ConfigProperty<String>,
+
+    /// Temperature unit.
+    #[default(TemperatureUnit::default())]
+    pub units: ConfigProperty<TemperatureUnit>,
+
+    /// Label format string.
+    ///
+    /// Supported placeholders:
+    /// - `{temp}` - Current temperature (e.g., "72")
+    /// - `{temp_unit}` - Temperature unit symbol ("°F" or "°C")
+    /// - `{feels_like}` - Feels-like temperature
+    /// - `{condition}` - Weather condition text (e.g., "Cloudy")
+    /// - `{humidity}` - Humidity percentage (e.g., "65%")
+    /// - `{wind_speed}` - Wind speed with unit (e.g., "12 km/h")
+    /// - `{wind_dir}` - Wind direction (e.g., "NW")
+    /// - `{high}` - Today's high temperature
+    /// - `{low}` - Today's low temperature
+    #[default(String::from("{temp}{temp_unit}"))]
+    pub format: ConfigProperty<String>,
+
+    /// Polling interval in seconds.
+    #[serde(rename = "refresh-interval-seconds")]
+    #[default(1800)]
+    pub refresh_interval_seconds: ConfigProperty<u32>,
+
+    /// Visual Crossing API key. Supports `$VAR_NAME` syntax to reference
+    /// environment variables from `.*.env` files in the config directory.
+    #[serde(rename = "visual-crossing-key")]
+    #[default(None)]
+    pub visual_crossing_key: ConfigProperty<Option<String>>,
+
+    /// WeatherAPI.com API key. Supports `$VAR_NAME` syntax to reference
+    /// environment variables from `.*.env` files in the config directory.
+    #[serde(rename = "weatherapi-key")]
+    #[default(None)]
+    pub weatherapi_key: ConfigProperty<Option<String>>,
+
+    /// Fallback icon for weather.
+    #[serde(rename = "icon-name")]
+    #[default(String::from("ld-sun-symbolic"))]
+    pub icon_name: ConfigProperty<String>,
+
+    /// Display border around button.
+    #[serde(rename = "border-show")]
+    #[default(false)]
+    pub border_show: ConfigProperty<bool>,
+
+    /// Border color token.
+    #[serde(rename = "border-color")]
+    #[default(ColorValue::Token(CssToken::BorderAccent))]
+    pub border_color: ConfigProperty<ColorValue>,
+
+    /// Display module icon.
+    #[serde(rename = "icon-show")]
+    #[default(true)]
+    pub icon_show: ConfigProperty<bool>,
+
+    /// Icon foreground color. Auto selects based on variant for contrast.
+    #[serde(rename = "icon-color")]
+    #[default(ColorValue::Auto)]
+    pub icon_color: ConfigProperty<ColorValue>,
+
+    /// Icon container background color token.
+    #[serde(rename = "icon-bg-color")]
+    #[default(ColorValue::Token(CssToken::Accent))]
+    pub icon_bg_color: ConfigProperty<ColorValue>,
+
+    /// Display temperature label.
+    #[serde(rename = "label-show")]
+    #[default(true)]
+    pub label_show: ConfigProperty<bool>,
+
+    /// Label text color token.
+    #[serde(rename = "label-color")]
+    #[default(ColorValue::Token(CssToken::Accent))]
+    pub label_color: ConfigProperty<ColorValue>,
+
+    /// Max label characters before truncation with ellipsis. Set to 0 to disable.
+    #[serde(rename = "label-max-length")]
+    #[default(0)]
+    pub label_max_length: ConfigProperty<u32>,
+
+    /// Button background color token.
+    #[serde(rename = "button-bg-color")]
+    #[default(ColorValue::Token(CssToken::BgSurfaceElevated))]
+    pub button_bg_color: ConfigProperty<ColorValue>,
+
+    /// Reserved for dropdown. Not user-configurable.
+    #[serde(rename = "left-click", skip)]
+    #[default(String::default())]
+    pub left_click: ConfigProperty<String>,
+
+    /// Shell command on right click.
+    #[serde(rename = "right-click")]
+    #[default(String::default())]
+    pub right_click: ConfigProperty<String>,
+
+    /// Shell command on middle click.
+    #[serde(rename = "middle-click")]
+    #[default(String::default())]
+    pub middle_click: ConfigProperty<String>,
+
+    /// Shell command on scroll up.
+    #[serde(rename = "scroll-up")]
+    #[default(String::default())]
+    pub scroll_up: ConfigProperty<String>,
+
+    /// Shell command on scroll down.
+    #[serde(rename = "scroll-down")]
+    #[default(String::default())]
+    pub scroll_down: ConfigProperty<String>,
+}
+
+/// Weather data provider selection.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
+pub enum WeatherProvider {
+    /// Open-Meteo (no API key required).
+    #[default]
+    OpenMeteo,
+    /// Visual Crossing (requires API key).
+    VisualCrossing,
+    /// WeatherAPI.com (requires API key).
+    WeatherApi,
+}
+
+/// Temperature unit for display.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum TemperatureUnit {
+    /// Celsius (metric).
+    #[default]
+    Metric,
+    /// Fahrenheit (imperial).
+    Imperial,
+}
+
+impl ModuleInfoProvider for WeatherConfig {
+    fn module_info() -> ModuleInfo {
+        ModuleInfo {
+            name: String::from("weather"),
+            icon: String::from("󰖐"),
+            description: String::from("Weather display with forecasts"),
+            behavior_configs: vec![(String::from("weather"), || schema_for!(WeatherConfig))],
+            styling_configs: vec![],
+        }
+    }
+}

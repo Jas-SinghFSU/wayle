@@ -105,7 +105,7 @@ impl<T: Clone + Send + Sync + 'static> Property<T> {
     where
         T: PartialEq,
     {
-        let _ = self.tx.send_if_modified(|current| {
+        self.tx.send_if_modified(|current| {
             if *current != new_value {
                 *current = new_value;
                 return true;

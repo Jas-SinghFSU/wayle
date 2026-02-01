@@ -30,6 +30,8 @@ pub mod infrastructure {
     pub mod persistence;
     /// JSON Schema generation for editor support
     pub mod schema;
+    /// Secret resolution from environment variables
+    pub mod secrets;
     /// Configuration service
     pub mod service;
     /// Wayle theme management and discovery
@@ -45,6 +47,7 @@ pub use infrastructure::{
     paths::ConfigPaths,
     persistence::PersistenceWatcher,
     schema::generate_schema,
+    secrets,
     service::{ConfigService, ConfigServiceCli},
     watcher::FileWatcher,
 };

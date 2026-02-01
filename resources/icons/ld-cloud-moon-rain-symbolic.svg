@@ -1,0 +1,32 @@
+<svg width='16' height='16'
+     xmlns:gpa='https://www.gtk.org/grappa'
+     gpa:version='1'>
+  <path d='M7.33 13.33L7.33 14.67'
+stroke-width='1.33'
+stroke-linecap='round'
+stroke-linejoin='round'
+stroke='rgb(0,0,0)'
+fill='none'
+gpa:stroke='foreground'/>
+  <path d='M12.25 9.67C13.41 9.17 14.27 8.15 14.56 6.92C14.66 6.51 14.12 6.28 13.73 6.45C12.72 6.88 11.55 6.66 10.78 5.89C10.01 5.11 9.79 3.94 10.22 2.94C10.39 2.55 10.16 2.01 9.74 2.11C8.05 2.51 6.82 3.95 6.68 5.68'
+stroke-width='1.33'
+stroke-linecap='round'
+stroke-linejoin='round'
+stroke='rgb(0,0,0)'
+fill='none'
+gpa:stroke='foreground'/>
+  <path d='M2.00 13.33C1.18 12.24 1.11 10.75 1.83 9.59C2.54 8.42 3.90 7.81 5.25 8.05C6.59 8.29 7.66 9.33 7.93 10.67L8.67 10.67C9.50 10.67 10.24 11.18 10.54 11.95C10.83 12.73 10.62 13.61 10.00 14.16'
+stroke-width='1.33'
+stroke-linecap='round'
+stroke-linejoin='round'
+stroke='rgb(0,0,0)'
+fill='none'
+gpa:stroke='foreground'/>
+  <path d='M4.67 12.67L4.67 14.00'
+stroke-width='1.33'
+stroke-linecap='round'
+stroke-linejoin='round'
+stroke='rgb(0,0,0)'
+fill='none'
+gpa:stroke='foreground'/>
+</svg>
