@@ -8,19 +8,18 @@ pub(crate) fn handle_active_window(
     data: &str,
     hyprland_tx: Sender<HyprlandEvent>,
 ) -> Result<()> {
-    let window_data: Vec<&str> = data.split(",").collect();
-    let [class, title] = window_data.as_slice() else {
+    let Some((class, title)) = data.split_once(',') else {
         return Err(Error::EventParseError {
             event_data: format!("{event}>>{data}"),
             field: "window_data",
-            expected: "2 comma-separated values (windowclass,windowtitle)",
+            expected: "comma-separated class,title",
             value: data.to_string(),
         });
     };
 
     hyprland_tx.send(HyprlandEvent::ActiveWindow {
-        class: (*class).to_string(),
-        title: (*title).to_string(),
+        class: class.to_string(),
+        title: title.to_string(),
     })?;
 
     Ok(())
@@ -49,23 +48,39 @@ pub(crate) fn handle_open_window(
     internal_tx: Sender<ServiceNotification>,
     hyprland_tx: Sender<HyprlandEvent>,
 ) -> Result<()> {
-    let parts: Vec<&str> = data.split(',').collect();
-    let [address, workspace, class, title] = parts.as_slice() else {
+    let event_data = format!("{event}>>{data}");
+    let Some((address, rest)) = data.split_once(',') else {
         return Err(Error::EventParseError {
-            event_data: format!("{event}>>{data}"),
+            event_data,
             field: "window_data",
-            expected: "4 comma-separated values (address,workspace,class,title)",
+            expected: "address,workspace,class,title",
+            value: data.to_string(),
+        });
+    };
+    let Some((workspace, rest)) = rest.split_once(',') else {
+        return Err(Error::EventParseError {
+            event_data,
+            field: "window_data",
+            expected: "address,workspace,class,title",
+            value: data.to_string(),
+        });
+    };
+    let Some((class, title)) = rest.split_once(',') else {
+        return Err(Error::EventParseError {
+            event_data,
+            field: "window_data",
+            expected: "address,workspace,class,title",
             value: data.to_string(),
         });
     };
 
-    let address = Address::new((*address).to_string());
+    let address = Address::new(address.to_string());
 
     hyprland_tx.send(HyprlandEvent::OpenWindow {
         address: address.clone(),
-        workspace: (*workspace).to_string(),
-        class: (*class).to_string(),
-        title: (*title).to_string(),
+        workspace: workspace.to_string(),
+        class: class.to_string(),
+        title: title.to_string(),
     })?;
 
     internal_tx

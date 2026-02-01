@@ -3,6 +3,7 @@ mod bluetooth;
 mod clock;
 mod cpu;
 mod dashboard;
+mod keyboard_input;
 mod media;
 mod microphone;
 mod netstat;
@@ -22,6 +23,7 @@ pub use bluetooth::BluetoothConfig;
 pub use clock::ClockConfig;
 pub use cpu::CpuConfig;
 pub use dashboard::DashboardConfig;
+pub use keyboard_input::KeyboardInputConfig;
 pub use media::{BUILTIN_MAPPINGS, MediaConfig, MediaIconType};
 pub use microphone::MicrophoneConfig;
 pub use netstat::NetstatConfig;
@@ -50,6 +52,9 @@ pub struct ModulesConfig {
     pub cpu: CpuConfig,
     /// Dashboard module.
     pub dashboard: DashboardConfig,
+    /// Keyboard input module.
+    #[serde(rename = "keyboard-input")]
+    pub keyboard_input: KeyboardInputConfig,
     /// Media player module.
     pub media: MediaConfig,
     /// Microphone input module.

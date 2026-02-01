@@ -41,7 +41,7 @@ impl HyprlandService {
     /// # Errors
     /// Returns error if IPC socket connection fails or initial state query fails.
     #[instrument(err)]
-    pub async fn new() -> Result<Self> {
+    pub async fn new() -> Result<Arc<Self>> {
         let (internal_tx, _) = broadcast::channel(100);
         let (hyprland_tx, _) = broadcast::channel(100);
 
@@ -57,7 +57,7 @@ impl HyprlandService {
             layers,
         } = HyprlandDiscovery::new(hypr_messenger.clone(), &internal_tx, &cancellation_token).await;
 
-        let service = Self {
+        let service = Arc::new(Self {
             internal_tx,
             hyprland_tx,
             cancellation_token,
@@ -66,7 +66,7 @@ impl HyprlandService {
             clients: Property::new(clients),
             monitors: Property::new(monitors),
             layers: Property::new(layers),
-        };
+        });
 
         service.start_monitoring().await?;
 

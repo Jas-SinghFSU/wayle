@@ -35,8 +35,10 @@ pub struct KeyboardDevice {
     /// XKB options string (e.g., "ctrl:nocaps,compose:ralt").
     pub options: String,
     /// Index of the currently active layout when multiple layouts configured.
+    #[serde(alias = "active_layout_index")]
     pub active_layout_index: u32,
     /// Name of the currently active keymap.
+    #[serde(alias = "active_keymap")]
     pub active_keymap: String,
     /// Whether Caps Lock modifier is currently engaged.
     pub caps_lock: bool,

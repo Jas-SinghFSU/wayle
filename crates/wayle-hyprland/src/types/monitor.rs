@@ -278,6 +278,61 @@ where
     }
 }
 
+/// Color management preset for a monitor.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum ColorManagementPreset {
+    /// Automatic selection based on bit depth.
+    Auto,
+    /// sRGB primaries (default).
+    #[default]
+    Srgb,
+    /// Wide color gamut with BT2020 primaries.
+    Wide,
+    /// Primaries from EDID (may be inaccurate).
+    Edid,
+    /// Wide color gamut with HDR PQ transfer function.
+    Hdr,
+    /// HDR with EDID primaries.
+    HdrEdid,
+    /// DCI-P3 (cinema, greenish white point).
+    DciP3,
+    /// Display P3 (Apple P3, bluish white point).
+    DisplayP3,
+    /// Adobe RGB colorspace.
+    Adobe,
+    /// Unknown preset not yet supported.
+    Unknown,
+}
+
+impl FromStr for ColorManagementPreset {
+    type Err = Infallible;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(match s {
+            "auto" => Self::Auto,
+            "srgb" => Self::Srgb,
+            "wide" => Self::Wide,
+            "edid" => Self::Edid,
+            "hdr" => Self::Hdr,
+            "hdredid" => Self::HdrEdid,
+            "dcip3" => Self::DciP3,
+            "dp3" => Self::DisplayP3,
+            "adobe" => Self::Adobe,
+            _ => Self::Unknown,
+        })
+    }
+}
+
+pub(crate) fn deserialize_color_management_preset<'de, D>(
+    deserializer: D,
+) -> Result<ColorManagementPreset, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let s: String = Deserialize::deserialize(deserializer)?;
+    Ok(s.parse().unwrap_or(ColorManagementPreset::Unknown))
+}
+
 #[derive(Debug, Deserialize, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct MonitorData {
@@ -320,4 +375,10 @@ pub(crate) struct MonitorData {
     #[serde(deserialize_with = "deserialize_mirror_of")]
     pub mirror_of: Option<String>,
     pub available_modes: Vec<String>,
+    #[serde(deserialize_with = "deserialize_color_management_preset")]
+    pub color_management_preset: ColorManagementPreset,
+    pub sdr_brightness: f32,
+    pub sdr_saturation: f32,
+    pub sdr_min_luminance: f32,
+    pub sdr_max_luminance: f32,
 }

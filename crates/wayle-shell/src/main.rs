@@ -13,6 +13,7 @@ use wayle_common::{
     shell::APP_ID,
 };
 use wayle_config::{ConfigService, infrastructure::schema, secrets};
+use wayle_hyprland::HyprlandService;
 use wayle_media::MediaService;
 use wayle_network::NetworkService;
 use wayle_notification::NotificationService;
@@ -36,7 +37,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let runtime = Runtime::new()?;
 
-    let _ = runtime.enter();
+    let _guard = runtime.enter();
 
     if runtime.block_on(is_already_running()) {
         eprintln!("Wayle shell is already running");
@@ -101,6 +102,10 @@ async fn init_services() -> Result<StartupTimer, Box<dyn Error>> {
 
     registry.register(timer.time("Battery", BatteryService::new()).await?);
     registry.register(timer.time("Bluetooth", BluetoothService::new()).await?);
+
+    if let Ok(hyprland) = timer.time("Hyprland", HyprlandService::new()).await {
+        registry.register_arc(hyprland);
+    }
     registry.register_arc(
         timer
             .time(

@@ -99,6 +99,7 @@ pub(crate) struct ClientData {
     pub xdg_tag: Option<String>,
     #[serde(deserialize_with = "deserialize_optional_string")]
     pub xdg_description: Option<String>,
+    pub content_type: String,
 }
 
 #[cfg(test)]

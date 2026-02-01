@@ -1,8 +1,10 @@
 mod battery;
 mod bluetooth;
 mod clock;
+mod compositor;
 mod cpu;
 mod dashboard;
+mod keyboard_input;
 mod media;
 mod microphone;
 mod netstat;
@@ -20,8 +22,10 @@ mod world_clock;
 use battery::{BatteryInit, BatteryModule};
 use bluetooth::{BluetoothInit, BluetoothModule};
 use clock::{ClockInit, ClockModule};
+use compositor::Compositor;
 use cpu::{CpuInit, CpuModule};
 use dashboard::{DashboardInit, DashboardModule};
+use keyboard_input::{HyprlandKeyboardInput, KeyboardInputInit};
 use media::{MediaInit, MediaModule};
 use microphone::{MicrophoneInit, MicrophoneModule};
 use netstat::{NetstatInit, NetstatModule};
@@ -33,6 +37,7 @@ use relm4::prelude::*;
 use separator::{SeparatorInit, SeparatorModule};
 use storage::{StorageInit, StorageModule};
 use systray::{SystrayInit, SystrayModule};
+use tracing::warn;
 use volume::{VolumeInit, VolumeModule};
 use wayle_config::schemas::bar::{BarModule, ModuleRef};
 use wayle_widgets::prelude::BarSettings;
@@ -50,6 +55,7 @@ pub(crate) enum ModuleController {
     Clock(Controller<ClockModule>),
     Cpu(Controller<CpuModule>),
     Dashboard(Controller<DashboardModule>),
+    KeyboardInput(Controller<HyprlandKeyboardInput>),
     Media(Controller<MediaModule>),
     Microphone(Controller<MicrophoneModule>),
     Netstat(Controller<NetstatModule>),
@@ -73,6 +79,7 @@ impl ModuleController {
             Self::Clock(c) => c.widget(),
             Self::Cpu(c) => c.widget(),
             Self::Dashboard(c) => c.widget(),
+            Self::KeyboardInput(c) => c.widget(),
             Self::Media(c) => c.widget(),
             Self::Microphone(c) => c.widget(),
             Self::Netstat(c) => c.widget(),
@@ -91,7 +98,10 @@ impl ModuleController {
 }
 
 #[allow(clippy::too_many_lines)]
-pub(crate) fn create_module(module_ref: &ModuleRef, settings: &BarSettings) -> ModuleInstance {
+pub(crate) fn create_module(
+    module_ref: &ModuleRef,
+    settings: &BarSettings,
+) -> Option<ModuleInstance> {
     let module = module_ref.module();
     let class = module_ref.class().map(String::from);
 
@@ -107,6 +117,9 @@ pub(crate) fn create_module(module_ref: &ModuleRef, settings: &BarSettings) -> M
                 settings: settings.clone(),
             };
             ModuleController::Clock(ClockModule::builder().launch(init).detach())
+        }
+        BarModule::KeyboardInput => {
+            return create_keyboard_input_module(settings, class);
         }
         BarModule::Media => {
             let init = MediaInit {
@@ -212,5 +225,26 @@ pub(crate) fn create_module(module_ref: &ModuleRef, settings: &BarSettings) -> M
         }
     };
 
-    ModuleInstance { controller, class }
+    Some(ModuleInstance { controller, class })
+}
+
+fn create_keyboard_input_module(
+    settings: &BarSettings,
+    class: Option<String>,
+) -> Option<ModuleInstance> {
+    match Compositor::detect() {
+        Compositor::Hyprland => {
+            let init = KeyboardInputInit {
+                settings: settings.clone(),
+            };
+            let controller = ModuleController::KeyboardInput(
+                HyprlandKeyboardInput::builder().launch(init).detach(),
+            );
+            Some(ModuleInstance { controller, class })
+        }
+        Compositor::Unknown(name) => {
+            warn!(compositor = %name, "unsupported compositor for keyboard-input");
+            None
+        }
+    }
 }

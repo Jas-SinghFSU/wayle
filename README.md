@@ -53,7 +53,7 @@ experience. A successor to HyprPanel without the pain or dependency on Hyprland.
     - [x] Power
     - [x] World clock
     - [x] Weather
-    - [ ] Keyboard input
+    - [x] Keyboard input
     - [ ] Hyprland Window title
     - [ ] Hyprland workspaces
     - [ ] Hyprland submap

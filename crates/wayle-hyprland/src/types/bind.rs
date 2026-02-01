@@ -15,18 +15,24 @@ pub struct BindData {
     /// Triggers after a long press.
     pub long_press: bool,
     /// Non-consuming bind allows other binds to trigger.
+    #[serde(alias = "non_consuming")]
     pub non_consuming: bool,
     /// Bind has a description.
+    #[serde(alias = "has_description")]
     pub has_description: bool,
     /// Bitmask of modifier keys.
     pub modmask: u32,
     /// Submap this bind belongs to.
     pub submap: String,
+    /// Bind is active in all submaps.
+    #[serde(alias = "submap_universal")]
+    pub submap_universal: String,
     /// Key name.
     pub key: String,
     /// Numerical keycode.
     pub keycode: i32,
     /// Catches all unmatched keys.
+    #[serde(alias = "catch_all")]
     pub catch_all: bool,
     /// Human-readable description.
     pub description: String,

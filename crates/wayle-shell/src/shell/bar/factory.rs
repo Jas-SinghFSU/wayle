@@ -35,13 +35,11 @@ impl FactoryComponent for BarItemFactory {
 
     fn init_model(init: Self::Init, _index: &DynamicIndex, _sender: FactorySender<Self>) -> Self {
         let modules = match &init.item {
-            BarItem::Module(module) => {
-                vec![create_module(module, &init.settings)]
-            }
+            BarItem::Module(module) => create_module(module, &init.settings).into_iter().collect(),
             BarItem::Group(group) => group
                 .modules
                 .iter()
-                .map(|m| create_module(m, &init.settings))
+                .filter_map(|m| create_module(m, &init.settings))
                 .collect(),
         };
 
