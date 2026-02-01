@@ -1,5 +1,3 @@
-use std::fmt::{self, Display, Formatter};
-
 use chrono::{DateTime, NaiveDate, NaiveTime, Utc};
 use serde::{Deserialize, Serialize};
 
@@ -214,37 +212,6 @@ impl WeatherCondition {
             96 | 99 => Self::Thunderstorm,
             _ => Self::Unknown,
         }
-    }
-
-    /// Human-readable name for this condition.
-    #[must_use]
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            Self::Clear => "Clear",
-            Self::PartlyCloudy => "Partly Cloudy",
-            Self::Cloudy => "Cloudy",
-            Self::Overcast => "Overcast",
-            Self::Mist => "Mist",
-            Self::Fog => "Fog",
-            Self::LightRain => "Light Rain",
-            Self::Rain => "Rain",
-            Self::HeavyRain => "Heavy Rain",
-            Self::Drizzle => "Drizzle",
-            Self::LightSnow => "Light Snow",
-            Self::Snow => "Snow",
-            Self::HeavySnow => "Heavy Snow",
-            Self::Sleet => "Sleet",
-            Self::Thunderstorm => "Thunderstorm",
-            Self::Windy => "Windy",
-            Self::Hail => "Hail",
-            Self::Unknown => "Unknown",
-        }
-    }
-}
-
-impl Display for WeatherCondition {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.write_str(self.as_str())
     }
 }
 

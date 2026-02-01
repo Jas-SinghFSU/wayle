@@ -1,6 +1,8 @@
 use wayle_config::schemas::modules::TemperatureUnit as ConfigTempUnit;
 use wayle_weather::{Temperature, TemperatureUnit, Weather, WeatherCondition};
 
+use crate::i18n::t;
+
 pub(super) struct FormatContext<'a> {
     pub(super) format: &'a str,
     pub(super) weather: &'a Weather,
@@ -14,7 +16,7 @@ pub(super) fn format_label(ctx: &FormatContext<'_>) -> String {
     let temp = format_temp_value(current.temperature, ctx.units);
     let temp_unit = temp_unit_symbol(ctx.units);
     let feels_like = format_temp_value(current.feels_like, ctx.units);
-    let condition = current.condition.as_str();
+    let condition = condition_label(current.condition);
     let humidity = format!("{}%", current.humidity.get());
     let wind_speed = format_speed(current.wind_speed, ctx.units);
     let wind_dir = current.wind_direction.cardinal();
@@ -29,12 +31,35 @@ pub(super) fn format_label(ctx: &FormatContext<'_>) -> String {
         .replace("{temp}", &temp)
         .replace("{temp_unit}", temp_unit)
         .replace("{feels_like}", &feels_like)
-        .replace("{condition}", condition)
+        .replace("{condition}", &condition)
         .replace("{humidity}", &humidity)
         .replace("{wind_speed}", &wind_speed)
         .replace("{wind_dir}", wind_dir)
         .replace("{high}", &high)
         .replace("{low}", &low)
+}
+
+pub(crate) fn condition_label(condition: WeatherCondition) -> String {
+    match condition {
+        WeatherCondition::Clear => t!("weather-clear"),
+        WeatherCondition::PartlyCloudy => t!("weather-partly-cloudy"),
+        WeatherCondition::Cloudy => t!("weather-cloudy"),
+        WeatherCondition::Overcast => t!("weather-overcast"),
+        WeatherCondition::Mist => t!("weather-mist"),
+        WeatherCondition::Fog => t!("weather-fog"),
+        WeatherCondition::LightRain => t!("weather-light-rain"),
+        WeatherCondition::Rain => t!("weather-rain"),
+        WeatherCondition::HeavyRain => t!("weather-heavy-rain"),
+        WeatherCondition::Drizzle => t!("weather-drizzle"),
+        WeatherCondition::LightSnow => t!("weather-light-snow"),
+        WeatherCondition::Snow => t!("weather-snow"),
+        WeatherCondition::HeavySnow => t!("weather-heavy-snow"),
+        WeatherCondition::Sleet => t!("weather-sleet"),
+        WeatherCondition::Thunderstorm => t!("weather-thunderstorm"),
+        WeatherCondition::Windy => t!("weather-windy"),
+        WeatherCondition::Hail => t!("weather-hail"),
+        WeatherCondition::Unknown => t!("weather-unknown"),
+    }
 }
 
 fn format_temp_value(temp: Temperature, units: TemperatureUnit) -> String {
@@ -183,7 +208,8 @@ mod tests {
             units: TemperatureUnit::Metric,
         });
 
-        assert_eq!(result, "22° Partly Cloudy");
+        assert!(result.starts_with("22° "));
+        assert!(!result.contains("{condition}"));
     }
 
     #[test]
@@ -195,10 +221,9 @@ mod tests {
             units: TemperatureUnit::Metric,
         });
 
-        assert_eq!(
-            result,
-            "22°C (feels 24°C) Partly Cloudy H:28 L:18 65% W 15 km/h"
-        );
+        assert!(result.starts_with("22°C (feels 24°C) "));
+        assert!(result.contains("H:28 L:18 65% W 15 km/h"));
+        assert!(!result.contains("{condition}"));
     }
 
     #[test]
