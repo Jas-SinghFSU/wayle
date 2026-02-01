@@ -346,5 +346,9 @@ impl SystrayItem {
 impl Drop for SystrayItem {
     fn drop(&mut self) {
         self.cancel_token.cancel();
+        self.clear_accelerators();
+        if let Some(popover) = self.popover.take() {
+            popover.unparent();
+        }
     }
 }
