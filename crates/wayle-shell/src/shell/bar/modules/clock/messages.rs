@@ -18,5 +18,4 @@ pub(crate) enum ClockMsg {
 pub(crate) enum ClockCmd {
     UpdateTime(String),
     UpdateIcon(String),
-    UpdateTooltip(Option<String>),
 }

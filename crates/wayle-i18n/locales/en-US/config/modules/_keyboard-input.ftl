@@ -5,9 +5,6 @@
 settings-modules-keyboard-input-format = Label Format
     .description = Format string with placeholders: {"{layout}"}
 
-settings-modules-keyboard-input-tooltip = Tooltip
-    .description = Tooltip text shown on hover
-
 settings-modules-keyboard-input-icon-name = Icon Name
     .description = Symbolic icon name
 

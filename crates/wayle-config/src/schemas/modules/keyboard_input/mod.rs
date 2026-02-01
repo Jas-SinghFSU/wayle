@@ -14,10 +14,6 @@ pub struct KeyboardInputConfig {
     #[default(String::from("{layout}"))]
     pub format: ConfigProperty<String>,
 
-    /// Tooltip text shown on hover.
-    #[default(None)]
-    pub tooltip: ConfigProperty<Option<String>>,
-
     /// Symbolic icon name.
     #[serde(rename = "icon-name")]
     #[default(String::from("ld-keyboard-symbolic"))]

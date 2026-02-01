@@ -18,5 +18,4 @@ pub(crate) enum KeyboardInputCmd {
     LayoutChanged { layout: String, format: String },
     FormatChanged,
     UpdateIcon(String),
-    UpdateTooltip(Option<String>),
 }

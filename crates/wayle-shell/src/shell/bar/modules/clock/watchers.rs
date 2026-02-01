@@ -22,9 +22,4 @@ pub(super) fn spawn_watchers(sender: &ComponentSender<ClockModule>, clock: &Cloc
     watch!(sender, [icon_name.watch()], |out| {
         let _ = out.send(ClockCmd::UpdateIcon(icon_name.get().clone()));
     });
-
-    let tooltip = clock.tooltip.clone();
-    watch!(sender, [tooltip.watch()], |out| {
-        let _ = out.send(ClockCmd::UpdateTooltip(tooltip.get().clone()));
-    });
 }

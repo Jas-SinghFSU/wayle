@@ -76,9 +76,4 @@ fn spawn_config_watchers(
     watch!(sender, [icon_name.watch()], |out| {
         let _ = out.send(KeyboardInputCmd::UpdateIcon(icon_name.get().clone()));
     });
-
-    let tooltip = config.tooltip.clone();
-    watch!(sender, [tooltip.watch()], |out| {
-        let _ = out.send(KeyboardInputCmd::UpdateTooltip(tooltip.get().clone()));
-    });
 }

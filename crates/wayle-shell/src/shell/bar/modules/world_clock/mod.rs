@@ -47,7 +47,7 @@ impl Component for WorldClockModule {
             .launch(BarButtonInit {
                 icon: world_clock.icon_name.get().clone(),
                 label,
-                tooltip: world_clock.tooltip.get().clone(),
+                tooltip: None,
                 colors: BarButtonColors {
                     icon_color: world_clock.icon_color.clone(),
                     label_color: world_clock.label_color.clone(),
@@ -110,9 +110,6 @@ impl Component for WorldClockModule {
             }
             WorldClockCmd::UpdateIcon(icon) => {
                 self.bar_button.emit(BarButtonInput::SetIcon(icon));
-            }
-            WorldClockCmd::UpdateTooltip(tooltip) => {
-                self.bar_button.emit(BarButtonInput::SetTooltip(tooltip));
             }
         }
     }

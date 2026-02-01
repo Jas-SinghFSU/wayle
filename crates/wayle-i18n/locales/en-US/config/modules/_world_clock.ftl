@@ -5,9 +5,6 @@
 settings-modules-world-clock-format = Format
     .description = Format string with embedded timezone blocks using {"{"}timezone strftime{"}"} syntax
 
-settings-modules-world-clock-tooltip = Tooltip
-    .description = Tooltip text shown on hover
-
 settings-modules-world-clock-icon-name = Icon Name
     .description = Symbolic icon name
 

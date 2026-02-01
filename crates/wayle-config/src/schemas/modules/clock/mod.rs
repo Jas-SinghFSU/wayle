@@ -14,10 +14,6 @@ pub struct ClockConfig {
     #[default(String::from("%a %b %d %I:%M:%S %p"))]
     pub format: ConfigProperty<String>,
 
-    /// Tooltip text shown on hover.
-    #[default(None)]
-    pub tooltip: ConfigProperty<Option<String>>,
-
     /// Symbolic icon name.
     #[serde(rename = "icon-name")]
     #[default(String::from("tb-calendar-time-symbolic"))]

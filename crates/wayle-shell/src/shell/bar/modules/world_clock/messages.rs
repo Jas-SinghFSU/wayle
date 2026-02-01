@@ -18,5 +18,4 @@ pub(crate) enum WorldClockMsg {
 pub(crate) enum WorldClockCmd {
     UpdateLabel(String),
     UpdateIcon(String),
-    UpdateTooltip(Option<String>),
 }

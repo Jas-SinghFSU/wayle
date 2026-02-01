@@ -53,7 +53,7 @@ impl Component for HyprlandKeyboardInput {
             .launch(BarButtonInit {
                 icon: keyboard_input.icon_name.get().clone(),
                 label: formatted_label,
-                tooltip: keyboard_input.tooltip.get().clone(),
+                tooltip: None,
                 colors: BarButtonColors {
                     icon_color: keyboard_input.icon_color.clone(),
                     label_color: keyboard_input.label_color.clone(),
@@ -124,9 +124,6 @@ impl Component for HyprlandKeyboardInput {
             }
             KeyboardInputCmd::UpdateIcon(icon) => {
                 self.bar_button.emit(BarButtonInput::SetIcon(icon));
-            }
-            KeyboardInputCmd::UpdateTooltip(tooltip) => {
-                self.bar_button.emit(BarButtonInput::SetTooltip(tooltip));
             }
         }
     }

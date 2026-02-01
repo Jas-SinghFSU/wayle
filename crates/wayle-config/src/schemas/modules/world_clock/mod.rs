@@ -22,10 +22,6 @@ pub struct WorldClockConfig {
     #[default(String::from("{UTC %H:%M %Z}"))]
     pub format: ConfigProperty<String>,
 
-    /// Tooltip text shown on hover.
-    #[default(None)]
-    pub tooltip: ConfigProperty<Option<String>>,
-
     /// Symbolic icon name.
     #[serde(rename = "icon-name")]
     #[default(String::from("ld-globe-symbolic"))]

@@ -47,7 +47,7 @@ impl Component for ClockModule {
             .launch(BarButtonInit {
                 icon: clock.icon_name.get().clone(),
                 label: formatted_time,
-                tooltip: clock.tooltip.get().clone(),
+                tooltip: None,
                 colors: BarButtonColors {
                     icon_color: clock.icon_color.clone(),
                     label_color: clock.label_color.clone(),
@@ -105,9 +105,6 @@ impl Component for ClockModule {
             }
             ClockCmd::UpdateIcon(icon) => {
                 self.bar_button.emit(BarButtonInput::SetIcon(icon));
-            }
-            ClockCmd::UpdateTooltip(tooltip) => {
-                self.bar_button.emit(BarButtonInput::SetTooltip(tooltip));
             }
         }
     }

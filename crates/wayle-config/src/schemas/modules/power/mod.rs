@@ -69,13 +69,6 @@ pub struct PowerConfig {
     #[default(true)]
     pub icon_show: ConfigProperty<bool>,
 
-    /// Hidden: tooltip (unused).
-    #[serde(skip)]
-    #[schemars(skip)]
-    #[wayle(skip)]
-    #[default(None)]
-    pub tooltip: ConfigProperty<Option<String>>,
-
     /// Hidden: label visibility (always false).
     #[serde(skip)]
     #[schemars(skip)]

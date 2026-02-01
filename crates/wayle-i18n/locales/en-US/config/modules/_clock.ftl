@@ -5,9 +5,6 @@
 settings-modules-clock-format = Time Format
     .description = Time display format using strftime syntax
 
-settings-modules-clock-tooltip = Tooltip
-    .description = Tooltip text shown on hover
-
 settings-modules-clock-icon-name = Icon Name
     .description = Symbolic icon name
 
