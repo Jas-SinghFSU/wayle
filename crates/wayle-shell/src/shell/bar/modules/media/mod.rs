@@ -18,7 +18,6 @@ pub(crate) use self::messages::{MediaCmd, MediaInit, MediaMsg};
 
 pub(crate) struct MediaModule {
     bar_button: Controller<BarButton>,
-    visible: ConfigProperty<bool>,
     active_player_watcher_token: WatcherToken,
 }
 
@@ -45,12 +44,10 @@ impl Component for MediaModule {
         let config = config_service.config();
         let media_config = &config.modules.media;
 
-        let visible = ConfigProperty::new(false);
-
         let bar_button = BarButton::builder()
             .launch(BarButtonInit {
                 icon: media_config.icon_name.get().clone(),
-                label: String::from("No media"),
+                label: String::from("--"),
                 tooltip: None,
                 colors: BarButtonColors {
                     icon_color: media_config.icon_color.clone(),
@@ -65,7 +62,7 @@ impl Component for MediaModule {
                     show_icon: media_config.icon_show.clone(),
                     show_label: media_config.label_show.clone(),
                     show_border: media_config.border_show.clone(),
-                    visible: visible.clone(),
+                    visible: ConfigProperty::new(true),
                 },
                 settings: init.settings,
             })
@@ -81,7 +78,6 @@ impl Component for MediaModule {
 
         let model = Self {
             bar_button,
-            visible,
             active_player_watcher_token: WatcherToken::new(),
         };
         let bar_button = model.bar_button.widget();
@@ -111,8 +107,6 @@ impl Component for MediaModule {
 
         match msg {
             MediaCmd::PlayerChanged(player) => {
-                self.visible.set(player.is_some());
-
                 let use_disc =
                     player.is_some() && media_config.icon_type.get() == MediaIconType::SpinningDisc;
                 Self::update_disc_mode(root, use_disc);
@@ -129,6 +123,12 @@ impl Component for MediaModule {
 
                     let token = self.active_player_watcher_token.reset();
                     watchers::spawn_player_watchers(&sender, &player, token);
+                } else {
+                    self.bar_button
+                        .emit(BarButtonInput::SetLabel(String::from("--")));
+                    self.bar_button
+                        .emit(BarButtonInput::SetIcon(media_config.icon_name.get()));
+                    Self::update_spinning_state(root, PlaybackState::Stopped);
                 }
             }
             MediaCmd::MetadataChanged => {
