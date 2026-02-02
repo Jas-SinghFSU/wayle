@@ -54,7 +54,7 @@ experience. A successor to HyprPanel without the pain or dependency on Hyprland.
     - [x] World clock
     - [x] Weather
     - [x] Keyboard input
-    - [ ] Hyprland Window title
+    - [x] Hyprland Window title
     - [ ] Hyprland workspaces
     - [ ] Hyprland submap
     - [ ] Hyprsunset
