@@ -108,9 +108,14 @@ impl HyprMessenger {
     }
 
     #[instrument(skip(self), err)]
-    pub(crate) async fn active_window(&self) -> Result<ClientData> {
+    pub(crate) async fn active_window(&self) -> Result<Option<ClientData>> {
         let response = self.send("j/activewindow").await?;
-        serde_json::from_str(&response).map_err(Error::JsonParseError)
+        if response.trim() == "{}" {
+            return Ok(None);
+        }
+        serde_json::from_str(&response)
+            .map(Some)
+            .map_err(Error::JsonParseError)
     }
 
     #[instrument(skip(self), err)]

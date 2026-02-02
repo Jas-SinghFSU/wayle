@@ -16,6 +16,7 @@ mod storage;
 mod systray;
 mod volume;
 mod weather;
+mod window_title;
 mod world_clock;
 
 pub use battery::BatteryConfig;
@@ -37,6 +38,7 @@ pub use systray::{SystrayConfig, TrayItemOverride};
 pub use volume::VolumeConfig;
 use wayle_derive::wayle_config;
 pub use weather::{TemperatureUnit, WeatherConfig, WeatherProvider};
+pub use window_title::{BUILTIN_MAPPINGS as WINDOW_TITLE_BUILTIN_MAPPINGS, WindowTitleConfig};
 pub use world_clock::WorldClockConfig;
 
 /// Configuration for all available Wayle modules.
@@ -79,6 +81,9 @@ pub struct ModulesConfig {
     pub volume: VolumeConfig,
     /// Weather display module.
     pub weather: WeatherConfig,
+    /// Window title module.
+    #[serde(rename = "window-title")]
+    pub window_title: WindowTitleConfig,
     /// World clock module.
     #[serde(rename = "world-clock")]
     pub world_clock: WorldClockConfig,

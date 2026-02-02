@@ -253,7 +253,8 @@ impl HyprlandService {
     #[instrument(skip(self))]
     pub async fn active_window(&self) -> Option<Arc<Client>> {
         let window = match self.hypr_messenger.active_window().await {
-            Ok(w) => w,
+            Ok(Some(w)) => w,
+            Ok(None) => return None,
             Err(e) => {
                 error!(error = %e, "cannot get active window");
                 return None;

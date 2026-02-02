@@ -15,10 +15,21 @@ pub fn build_current(data: &ApiResponse) -> Result<CurrentWeather> {
     let hourly = &data.hourly;
     let idx = find_current_hour_index(&hourly.time);
 
+    let is_day_value = is_day(&hourly.is_day, idx)?;
+    let wmo_code = raw_u8(&hourly.weather_code, idx)?;
+    tracing::debug!(
+        idx,
+        is_day_value,
+        wmo_code,
+        is_day_raw = ?hourly.is_day.get(idx),
+        time_at_idx = ?hourly.time.get(idx),
+        "Building current weather"
+    );
+
     Ok(CurrentWeather {
         temperature: temperature(&hourly.temperature_2m, idx)?,
         feels_like: temperature(&hourly.apparent_temperature, idx)?,
-        condition: WeatherCondition::from_wmo_code(raw_u8(&hourly.weather_code, idx)?),
+        condition: WeatherCondition::from_wmo_code(wmo_code),
         humidity: percentage(&hourly.relative_humidity_2m, idx)?,
         wind_speed: speed(&hourly.wind_speed_10m, idx)?,
         wind_direction: wind_dir(&hourly.wind_direction_10m, idx)?,
@@ -29,7 +40,7 @@ pub fn build_current(data: &ApiResponse) -> Result<CurrentWeather> {
         visibility: visibility_from_meters(&hourly.visibility, idx)?,
         dewpoint: temperature(&hourly.dew_point_2m, idx)?,
         precipitation: precip(&hourly.precipitation, idx)?,
-        is_day: is_day(&hourly.is_day, idx)?,
+        is_day: is_day_value,
     })
 }
 
@@ -96,13 +107,23 @@ pub fn build_daily(data: &ApiResponse, count: usize) -> Result<Vec<DailyForecast
 
 pub fn find_current_hour_index(times: &[String]) -> usize {
     let now = Utc::now();
+    tracing::debug!(%now, times_len = times.len(), "Finding current hour index");
     for (hour_idx, time_str) in times.iter().enumerate() {
         if let Ok(datetime) = parse_iso_datetime(time_str)
             && datetime > now
         {
-            return hour_idx.saturating_sub(1);
+            let idx = hour_idx.saturating_sub(1);
+            tracing::debug!(
+                hour_idx,
+                %datetime,
+                selected_idx = idx,
+                time_str = %times.get(idx).map(String::as_str).unwrap_or("N/A"),
+                "Found future hour"
+            );
+            return idx;
         }
     }
+    tracing::warn!(first_time = ?times.first(), last_time = ?times.last(), "No future hour found, using fallback");
     0
 }
 

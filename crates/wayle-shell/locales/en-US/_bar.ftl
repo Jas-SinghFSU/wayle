@@ -15,3 +15,6 @@ bar-bluetooth-connected-count = { $count ->
     [one] { $count } Connected
    *[other] { $count } Connected
 }
+
+## Window Title
+bar-window-title-empty = Desktop

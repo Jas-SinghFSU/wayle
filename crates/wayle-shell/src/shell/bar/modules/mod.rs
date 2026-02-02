@@ -17,6 +17,7 @@ mod storage;
 mod systray;
 mod volume;
 mod weather;
+mod window_title;
 mod world_clock;
 
 use battery::{BatteryInit, BatteryModule};
@@ -42,6 +43,7 @@ use volume::{VolumeInit, VolumeModule};
 use wayle_config::schemas::bar::{BarModule, ModuleRef};
 use wayle_widgets::prelude::BarSettings;
 use weather::{WeatherInit, WeatherModule};
+use window_title::{HyprlandWindowTitle, WindowTitleInit};
 use world_clock::{WorldClockInit, WorldClockModule};
 
 pub(crate) struct ModuleInstance {
@@ -68,6 +70,7 @@ pub(crate) enum ModuleController {
     Systray(Controller<SystrayModule>),
     Volume(Controller<VolumeModule>),
     Weather(Controller<WeatherModule>),
+    WindowTitle(Controller<HyprlandWindowTitle>),
     WorldClock(Controller<WorldClockModule>),
 }
 
@@ -92,6 +95,7 @@ impl ModuleController {
             Self::Systray(c) => c.widget(),
             Self::Volume(c) => c.widget(),
             Self::Weather(c) => c.widget(),
+            Self::WindowTitle(c) => c.widget(),
             Self::WorldClock(c) => c.widget(),
         }
     }
@@ -211,6 +215,9 @@ pub(crate) fn create_module(
             };
             ModuleController::Weather(WeatherModule::builder().launch(init).detach())
         }
+        BarModule::WindowTitle => {
+            return create_window_title_module(settings, class);
+        }
         BarModule::WorldClock => {
             let init = WorldClockInit {
                 settings: settings.clone(),
@@ -244,6 +251,26 @@ fn create_keyboard_input_module(
         }
         Compositor::Unknown(name) => {
             warn!(compositor = %name, "unsupported compositor for keyboard-input");
+            None
+        }
+    }
+}
+
+fn create_window_title_module(
+    settings: &BarSettings,
+    class: Option<String>,
+) -> Option<ModuleInstance> {
+    match Compositor::detect() {
+        Compositor::Hyprland => {
+            let init = WindowTitleInit {
+                settings: settings.clone(),
+            };
+            let controller =
+                ModuleController::WindowTitle(HyprlandWindowTitle::builder().launch(init).detach());
+            Some(ModuleInstance { controller, class })
+        }
+        Compositor::Unknown(name) => {
+            warn!(compositor = %name, "unsupported compositor for window-title");
             None
         }
     }

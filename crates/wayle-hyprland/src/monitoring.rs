@@ -137,7 +137,7 @@ async fn handle_internal_events(
                 }
                 Ok(event) = hyprland_rx.recv() => {
                     let HyprlandEvent::Fullscreen { .. } = event else { continue };
-                    let Ok(window) = hypr_messenger.active_window().await else { continue };
+                    let Ok(Some(window)) = hypr_messenger.active_window().await else { continue };
                     let _ = internal_tx.send(ServiceNotification::ClientUpdated(window.address));
                 }
                 else => {
