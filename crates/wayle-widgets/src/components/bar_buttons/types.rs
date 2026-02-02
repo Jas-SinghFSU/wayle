@@ -5,7 +5,7 @@ use std::fmt::{Debug, Formatter, Result as FmtResult};
 use wayle_common::ConfigProperty;
 pub use wayle_config::schemas::bar::BarButtonVariant;
 use wayle_config::schemas::{
-    bar::BorderLocation,
+    bar::{BorderLocation, IconPosition},
     styling::{ColorValue, CssToken, ThemeProvider},
 };
 
@@ -69,6 +69,8 @@ pub struct BarSettings {
     pub border_location: ConfigProperty<BorderLocation>,
     /// Border width in pixels.
     pub border_width: ConfigProperty<u8>,
+    /// Icon position relative to label.
+    pub icon_position: ConfigProperty<IconPosition>,
     /// Vertical orientation.
     pub is_vertical: ConfigProperty<bool>,
     /// Scroll sensitivity multiplier.
@@ -90,6 +92,9 @@ impl BarButtonClass {
 
     /// Applied for vertical bar orientation.
     pub const VERTICAL: &'static str = "vertical";
+
+    /// Applied when icon is positioned after the label.
+    pub const ICON_END: &'static str = "icon-end";
 }
 
 /// Output events emitted by bar buttons.

@@ -2,7 +2,7 @@ mod types;
 
 pub use types::{
     BarButtonVariant, BarGroup, BarItem, BarLayout, BarModule, BorderLocation, ClassedModule,
-    Location, ModuleRef, ShadowPreset,
+    IconPosition, Location, ModuleRef, ShadowPreset,
 };
 use wayle_common::ConfigProperty;
 use wayle_derive::wayle_config;
@@ -149,6 +149,11 @@ pub struct BarConfig {
     #[serde(rename = "button-gap")]
     #[default(ScaleFactor::new(1.0))]
     pub button_gap: ConfigProperty<ScaleFactor>,
+
+    /// Icon position relative to label in bar buttons.
+    #[serde(rename = "button-icon-position")]
+    #[default(IconPosition::Start)]
+    pub button_icon_position: ConfigProperty<IconPosition>,
 
     /// Border placement for bar buttons.
     #[serde(rename = "button-border-location")]

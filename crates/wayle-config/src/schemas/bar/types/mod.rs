@@ -289,3 +289,24 @@ impl BarButtonVariant {
         }
     }
 }
+
+/// Icon position within bar buttons.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
+pub enum IconPosition {
+    /// Icon before label (left for horizontal, top for vertical bars).
+    #[default]
+    Start,
+    /// Icon after label (right for horizontal, bottom for vertical bars).
+    End,
+}
+
+impl IconPosition {
+    /// CSS class for this position, if any.
+    pub fn css_class(self) -> Option<&'static str> {
+        match self {
+            Self::Start => None,
+            Self::End => Some("icon-end"),
+        }
+    }
+}

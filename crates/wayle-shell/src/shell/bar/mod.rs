@@ -95,6 +95,7 @@ impl Component for Bar {
             theme_provider: config.styling.theme_provider.clone(),
             border_location: config.bar.button_border_location.clone(),
             border_width: config.bar.button_border_width.clone(),
+            icon_position: config.bar.button_icon_position.clone(),
             is_vertical: ConfigProperty::new(location.is_vertical()),
             scroll_sensitivity: 1.0,
         };

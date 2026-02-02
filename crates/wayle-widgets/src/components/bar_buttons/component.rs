@@ -2,10 +2,12 @@
 
 use std::borrow::Cow;
 
+use glib::prelude::CastNone;
 #[allow(deprecated)]
 use gtk4::prelude::StyleContextExt;
-use gtk4::prelude::{OrientableExt, WidgetExt};
+use gtk4::prelude::{BoxExt, ListModelExt, OrientableExt, WidgetExt};
 use relm4::{ComponentParts, ComponentSender, gtk, prelude::*};
+use wayle_config::schemas::bar::IconPosition;
 use wayle_config::schemas::styling::CssToken;
 
 use super::{
@@ -14,7 +16,7 @@ use super::{
         BarButtonBehavior, BarButtonClass, BarButtonColors, BarButtonOutput, BarButtonVariant,
         BarSettings,
     },
-    watchers::spawn_variant_watcher,
+    watchers::{spawn_icon_position_watcher, spawn_variant_watcher},
 };
 use crate::{styling::InlineStyling, utils::force_window_resize};
 
@@ -52,6 +54,7 @@ pub enum BarButtonInput {
 #[derive(Debug)]
 pub enum BarButtonCmd {
     VariantChanged(BarButtonVariant),
+    IconPositionChanged(IconPosition),
     ConfigChanged,
 }
 
@@ -93,6 +96,7 @@ impl Component for BarButton {
             set_hexpand: model.settings.is_vertical.get(),
 
             #[wrap(Some)]
+            #[name = "content"]
             set_child = &gtk::Box {
                 add_css_class: "bar-button-content",
 
@@ -102,6 +106,7 @@ impl Component for BarButton {
                 #[watch]
                 set_orientation: model.orientation(),
 
+                #[name = "icon_container"]
                 gtk::Box {
                     add_css_class: "icon-container",
 
@@ -122,6 +127,7 @@ impl Component for BarButton {
                     },
                 },
 
+                #[name = "label_container"]
                 gtk::Box {
                     add_css_class: "label-container",
 
@@ -178,8 +184,15 @@ impl Component for BarButton {
 
         let widgets = view_output!();
 
+        if model.settings.icon_position.get() == IconPosition::End {
+            widgets
+                .content
+                .reorder_child_after(&widgets.icon_container, Some(&widgets.label_container));
+        }
+
         setup_event_controllers(&root, sender.output_sender().clone(), scroll_sensitivity);
         spawn_variant_watcher(&model.settings.variant, &sender);
+        spawn_icon_position_watcher(&model.settings.icon_position, &sender);
         model.spawn_style_watcher(&sender);
 
         ComponentParts { model, widgets }
@@ -204,6 +217,9 @@ impl Component for BarButton {
             BarButtonCmd::VariantChanged(variant) => {
                 self.variant = variant;
                 self.reload_css();
+            }
+            BarButtonCmd::IconPositionChanged(position) => {
+                Self::reorder_children(root, position);
             }
             BarButtonCmd::ConfigChanged => {
                 self.reload_css();
@@ -236,6 +252,9 @@ impl BarButton {
         {
             classes.push(border_class);
         }
+        if let Some(icon_position_class) = self.settings.icon_position.get().css_class() {
+            classes.push(icon_position_class);
+        }
         classes
     }
 
@@ -266,6 +285,41 @@ impl BarButton {
 
     fn icon_should_center(&self) -> bool {
         self.is_icon_only() || self.settings.is_vertical.get()
+    }
+
+    fn reorder_children(root: &gtk::MenuButton, position: IconPosition) {
+        let Some(content) = root.child().and_downcast::<gtk::Box>() else {
+            return;
+        };
+
+        let list_model = content.observe_children();
+        let mut icon_container: Option<gtk::Widget> = None;
+        let mut label_container: Option<gtk::Widget> = None;
+
+        for i in 0..list_model.n_items() {
+            let Some(widget) = list_model.item(i).and_downcast::<gtk::Widget>() else {
+                continue;
+            };
+            if widget.has_css_class("icon-container") {
+                icon_container = Some(widget);
+            } else if widget.has_css_class("label-container") {
+                label_container = Some(widget);
+            }
+        }
+
+        let (Some(icon_container), Some(label_container)) = (icon_container, label_container)
+        else {
+            return;
+        };
+
+        match position {
+            IconPosition::Start => {
+                content.reorder_child_after(&icon_container, gtk::Widget::NONE);
+            }
+            IconPosition::End => {
+                content.reorder_child_after(&icon_container, Some(&label_container));
+            }
+        }
     }
 
     pub(super) fn resolve_icon_color(&self, is_wayle_themed: bool) -> Cow<'static, str> {

@@ -34,6 +34,25 @@ menubutton.bar-button.icon-square {
         margin-top: 0;
     }
 
+    &.icon-end .bar-button-label {
+        margin-left: 0;
+        margin-right: var(--bar-btn-gap);
+    }
+
+    &.icon-end.label-only .bar-button-label {
+        margin-right: 0;
+    }
+
+    &.icon-end.vertical .bar-button-label {
+        margin-right: 0;
+        margin-top: 0;
+        margin-bottom: var(--bar-btn-gap);
+    }
+
+    &.icon-end.vertical.label-only .bar-button-label {
+        margin-bottom: 0;
+    }
+
     > button.toggle:hover .icon-container {
         filter: brightness(1.2);
     }

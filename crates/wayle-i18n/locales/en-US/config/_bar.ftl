@@ -73,6 +73,9 @@ settings-bar-button-label-padding = Button Label Padding
 settings-bar-button-gap = Button Gap
     .description = Gap between icon and label in buttons
 
+settings-bar-button-icon-position = Button Icon Position
+    .description = Icon placement relative to label (start or end)
+
 settings-bar-button-border-location = Button Border Location
     .description = Border placement for bar buttons
 

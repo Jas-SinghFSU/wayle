@@ -68,7 +68,58 @@ menubutton.bar-button.block-prefix {
         );
     }
 
-    &.icon-only .icon-container {
+    &.icon-end .icon-container {
+        border-radius: 0;
+        border-top-right-radius: var(--bar-button-rounding-element);
+        border-bottom-right-radius: var(--bar-button-rounding-element);
+    }
+
+    &.icon-end.border-top .icon-container,
+    &.icon-end.border-right .icon-container,
+    &.icon-end.border-all .icon-container {
+        border-top-right-radius: max(
+            0px,
+            calc(var(--bar-button-rounding-element) - var(--bar-btn-border-width, 0px) - 1px)
+        );
+    }
+
+    &.icon-end.border-bottom .icon-container,
+    &.icon-end.border-right .icon-container,
+    &.icon-end.border-all .icon-container {
+        border-bottom-right-radius: max(
+            0px,
+            calc(var(--bar-button-rounding-element) - var(--bar-btn-border-width, 0px) - 1px)
+        );
+    }
+
+    &.icon-end.vertical .icon-container {
+        border-radius: 0;
+        border-bottom-left-radius: var(--bar-button-rounding-element);
+        border-bottom-right-radius: var(--bar-button-rounding-element);
+    }
+
+    &.icon-end.vertical.border-bottom .icon-container,
+    &.icon-end.vertical.border-left .icon-container,
+    &.icon-end.vertical.border-all .icon-container {
+        border-bottom-left-radius: max(
+            0px,
+            calc(var(--bar-button-rounding-element) - var(--bar-btn-border-width, 0px) - 1px)
+        );
+    }
+
+    &.icon-end.vertical.border-bottom .icon-container,
+    &.icon-end.vertical.border-right .icon-container,
+    &.icon-end.vertical.border-all .icon-container {
+        border-bottom-right-radius: max(
+            0px,
+            calc(var(--bar-button-rounding-element) - var(--bar-btn-border-width, 0px) - 1px)
+        );
+    }
+
+    &.icon-only .icon-container,
+    &.icon-only.icon-end .icon-container,
+    &.icon-only.vertical .icon-container,
+    &.icon-only.icon-end.vertical .icon-container {
         border-radius: var(--bar-button-rounding-element);
     }
 
