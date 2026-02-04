@@ -164,8 +164,8 @@ pub enum BarModule {
     HyprlandSubmap,
     /// Hyprland workspace switcher.
     HyprlandWorkspaces,
-    /// Hypridle status indicator.
-    Hypridle,
+    /// Idle inhibitor to prevent screen timeout.
+    IdleInhibit,
     /// Hyprsunset (night light) toggle.
     Hyprsunset,
     /// Keyboard layout indicator.

@@ -1,0 +1,30 @@
+[package]
+name = "wayle-idle-inhibit"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+description = "Wayland idle inhibitor using zwp_idle_inhibit_manager_v1 protocol"
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+gdk4.workspace = true
+glib.workspace = true
+libc.workspace = true
+tracing.workspace = true
+
+[lints.clippy]
+cognitive_complexity = "warn"
+expect_used = "deny"
+inefficient_to_string = "warn"
+missing_errors_doc = "warn"
+missing_panics_doc = "warn"
+needless_pass_by_value = "warn"
+semicolon_if_nothing_returned = "warn"
+unnecessary_wraps = "warn"
+unused_async = "warn"
+unused_self = "warn"
+
+[lints.rust]
+missing_docs = "warn"
+unsafe_code = "allow"

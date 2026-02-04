@@ -33,6 +33,7 @@ async fn main() {
         Commands::Power { command } => wayle::cli::power::execute(command).await,
         Commands::Systray { command } => wayle::cli::systray::execute(command).await,
         Commands::Wallpaper { command } => wayle::cli::wallpaper::execute(command).await,
+        Commands::Idle { command } => wayle::cli::idle::execute(command).await,
     };
 
     if let Err(e) = result {

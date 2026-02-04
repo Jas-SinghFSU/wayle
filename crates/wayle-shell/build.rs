@@ -1,5 +1,6 @@
 //! Build script that concatenates Fluent i18n partial files (`_*.ftl`) into
-//! a single `wayle-shell.ftl` per locale directory.
+//! a single `wayle-shell.ftl` per locale directory, and enforces link order
+//! for gtk4-layer-shell.
 
 #![allow(clippy::expect_used)]
 
@@ -9,6 +10,15 @@ use std::{
 };
 
 fn main() {
+    println!("cargo:rerun-if-changed=build.rs");
+
+    // wayle-idle-inhibit can pull in libwayland-client early due to linker behavior.
+    // Which then prevents the gtk4 layer shell from interposing since it's gotta be
+    // first in the link/load order used for symbol resolution.
+    // Easier to just enforce the linking order in our shell, so here we are...
+    println!("cargo:rustc-link-lib=gtk4-layer-shell");
+    println!("cargo:rustc-link-lib=wayland-client");
+
     let locales_dir = Path::new("locales");
 
     for entry in fs::read_dir(locales_dir).expect("locales/ directory must exist") {

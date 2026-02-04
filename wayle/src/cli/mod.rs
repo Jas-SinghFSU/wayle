@@ -7,6 +7,8 @@ pub mod config;
 mod dbus;
 /// Icon management commands
 pub mod icons;
+/// Idle inhibit control commands
+pub mod idle;
 /// Media control commands
 pub mod media;
 /// Notification control commands

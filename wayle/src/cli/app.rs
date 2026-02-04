@@ -5,7 +5,7 @@ use clap::{
 
 use crate::cli::{
     audio::commands::AudioCommands, config::commands::ConfigCommands,
-    icons::commands::IconsCommands, media::commands::MediaCommands,
+    icons::commands::IconsCommands, idle::commands::IdleCommands, media::commands::MediaCommands,
     notify::commands::NotifyCommands, panel::commands::PanelCommands,
     power::commands::PowerCommands, systray::commands::SystrayCommands,
     wallpaper::commands::WallpaperCommands,
@@ -88,5 +88,11 @@ pub enum Commands {
         /// Wallpaper subcommand to execute.
         #[command(subcommand)]
         command: WallpaperCommands,
+    },
+    /// Idle inhibit control commands
+    Idle {
+        /// Idle subcommand to execute.
+        #[command(subcommand)]
+        command: IdleCommands,
     },
 }

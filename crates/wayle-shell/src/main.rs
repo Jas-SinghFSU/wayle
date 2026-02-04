@@ -8,10 +8,7 @@ use tracing::{info, warn};
 use wayle_audio::AudioService;
 use wayle_battery::BatteryService;
 use wayle_bluetooth::BluetoothService;
-use wayle_common::{
-    services::{self, ServiceRegistry},
-    shell::APP_ID,
-};
+use wayle_common::{services::ServiceRegistry, shell::APP_ID};
 use wayle_config::{ConfigService, infrastructure::schema, secrets};
 use wayle_hyprland::HyprlandService;
 use wayle_media::MediaService;
@@ -24,6 +21,7 @@ use wayle_weather::WeatherService;
 use zbus::{Connection, fdo::DBusProxy};
 
 mod i18n;
+mod services;
 mod shell;
 mod startup;
 mod tracing_init;
@@ -97,6 +95,7 @@ async fn init_services() -> Result<StartupTimer, Box<dyn Error>> {
     let memory_interval = Duration::from_millis(modules_config.ram.poll_interval_ms.get());
     let disk_interval = Duration::from_millis(modules_config.storage.poll_interval_ms.get());
     let network_interval = Duration::from_millis(modules_config.netstat.poll_interval_ms.get());
+    let idle_startup_duration = modules_config.idle_inhibit.startup_duration.get();
     let weather_service = timer.time_sync("Weather", || build_weather_service(modules_config));
     registry.register_arc(config_service);
 
@@ -150,7 +149,16 @@ async fn init_services() -> Result<StartupTimer, Box<dyn Error>> {
             .build()
     }));
 
-    services::init(registry);
+    registry.register(
+        timer
+            .time(
+                "IdleInhibit",
+                services::IdleInhibitService::new(idle_startup_duration),
+            )
+            .await?,
+    );
+
+    wayle_common::services::init(registry);
     timer.mark_services_done();
 
     Ok(timer)

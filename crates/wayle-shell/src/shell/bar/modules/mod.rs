@@ -4,6 +4,7 @@ mod clock;
 mod compositor;
 mod cpu;
 mod dashboard;
+mod idle_inhibit;
 mod keyboard_input;
 mod media;
 mod microphone;
@@ -26,6 +27,7 @@ use clock::{ClockInit, ClockModule};
 use compositor::Compositor;
 use cpu::{CpuInit, CpuModule};
 use dashboard::{DashboardInit, DashboardModule};
+use idle_inhibit::{IdleInhibitInit, IdleInhibitModule};
 use keyboard_input::{HyprlandKeyboardInput, KeyboardInputInit};
 use media::{MediaInit, MediaModule};
 use microphone::{MicrophoneInit, MicrophoneModule};
@@ -57,6 +59,7 @@ pub(crate) enum ModuleController {
     Clock(Controller<ClockModule>),
     Cpu(Controller<CpuModule>),
     Dashboard(Controller<DashboardModule>),
+    IdleInhibit(Controller<IdleInhibitModule>),
     KeyboardInput(Controller<HyprlandKeyboardInput>),
     Media(Controller<MediaModule>),
     Microphone(Controller<MicrophoneModule>),
@@ -82,6 +85,7 @@ impl ModuleController {
             Self::Clock(c) => c.widget(),
             Self::Cpu(c) => c.widget(),
             Self::Dashboard(c) => c.widget(),
+            Self::IdleInhibit(c) => c.widget(),
             Self::KeyboardInput(c) => c.widget(),
             Self::Media(c) => c.widget(),
             Self::Microphone(c) => c.widget(),
@@ -172,6 +176,12 @@ pub(crate) fn create_module(
                 settings: settings.clone(),
             };
             ModuleController::Dashboard(DashboardModule::builder().launch(init).detach())
+        }
+        BarModule::IdleInhibit => {
+            let init = IdleInhibitInit {
+                settings: settings.clone(),
+            };
+            ModuleController::IdleInhibit(IdleInhibitModule::builder().launch(init).detach())
         }
         BarModule::Power => {
             let init = PowerInit {

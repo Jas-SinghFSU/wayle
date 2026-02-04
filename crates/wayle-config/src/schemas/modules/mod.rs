@@ -3,6 +3,7 @@ mod bluetooth;
 mod clock;
 mod cpu;
 mod dashboard;
+mod idle_inhibit;
 mod keyboard_input;
 mod media;
 mod microphone;
@@ -24,6 +25,7 @@ pub use bluetooth::BluetoothConfig;
 pub use clock::ClockConfig;
 pub use cpu::CpuConfig;
 pub use dashboard::DashboardConfig;
+pub use idle_inhibit::IdleInhibitConfig;
 pub use keyboard_input::KeyboardInputConfig;
 pub use media::{BUILTIN_MAPPINGS, MediaConfig, MediaIconType};
 pub use microphone::MicrophoneConfig;
@@ -54,6 +56,9 @@ pub struct ModulesConfig {
     pub cpu: CpuConfig,
     /// Dashboard module.
     pub dashboard: DashboardConfig,
+    /// Idle inhibitor module.
+    #[serde(rename = "idle-inhibit")]
+    pub idle_inhibit: IdleInhibitConfig,
     /// Keyboard input module.
     #[serde(rename = "keyboard-input")]
     pub keyboard_input: KeyboardInputConfig,

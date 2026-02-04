@@ -7,8 +7,7 @@ use glib::prelude::CastNone;
 use gtk4::prelude::StyleContextExt;
 use gtk4::prelude::{BoxExt, ListModelExt, OrientableExt, WidgetExt};
 use relm4::{ComponentParts, ComponentSender, gtk, prelude::*};
-use wayle_config::schemas::bar::IconPosition;
-use wayle_config::schemas::styling::CssToken;
+use wayle_config::schemas::{bar::IconPosition, styling::CssToken};
 
 use super::{
     helpers::setup_event_controllers,
@@ -52,6 +51,7 @@ pub enum BarButtonInput {
 
 /// Command outputs from async watchers.
 #[derive(Debug)]
+#[allow(clippy::enum_variant_names)]
 pub enum BarButtonCmd {
     VariantChanged(BarButtonVariant),
     IconPositionChanged(IconPosition),

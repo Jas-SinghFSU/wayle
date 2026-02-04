@@ -4369,6 +4369,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "wayle-idle-inhibit"
+version = "0.1.0"
+dependencies = [
+ "gdk4",
+ "glib",
+ "libc",
+ "tracing",
+]
+
+[[package]]
 name = "wayle-media"
 version = "0.1.0"
 dependencies = [
@@ -4463,6 +4473,7 @@ dependencies = [
  "notify",
  "relm4",
  "rust-embed",
+ "thiserror 2.0.18",
  "tokio",
  "tokio-stream",
  "tokio-util",
@@ -4477,6 +4488,7 @@ dependencies = [
  "wayle-config",
  "wayle-hyprland",
  "wayle-icons",
+ "wayle-idle-inhibit",
  "wayle-media",
  "wayle-network",
  "wayle-notification",

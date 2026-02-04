@@ -11,6 +11,7 @@ members = [
     "crates/wayle-hyprland",
     "crates/wayle-i18n",
     "crates/wayle-icons",
+    "crates/wayle-idle-inhibit",
     "crates/wayle-media",
     "crates/wayle-network",
     "crates/wayle-notification",
@@ -96,6 +97,7 @@ wayle-derive = { path = "crates/wayle-derive" }
 wayle-hyprland = { path = "crates/wayle-hyprland" }
 wayle-i18n = { path = "crates/wayle-i18n" }
 wayle-icons = { path = "crates/wayle-icons" }
+wayle-idle-inhibit = { path = "crates/wayle-idle-inhibit" }
 wayle-media = { path = "crates/wayle-media" }
 wayle-network = { path = "crates/wayle-network" }
 wayle-notification = { path = "crates/wayle-notification" }

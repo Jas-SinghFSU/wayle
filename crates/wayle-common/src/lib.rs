@@ -6,6 +6,8 @@
 mod diagnostic;
 /// Glob pattern matching utilities.
 pub mod glob;
+/// D-Bus client proxy for idle inhibit service.
+pub mod idle_inhibit;
 #[macro_use]
 /// Common macros for services
 pub mod macros;
