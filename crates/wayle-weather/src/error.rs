@@ -1,4 +1,17 @@
+use std::error::Error as StdError;
+
 use thiserror::Error;
+
+pub(crate) fn error_chain(e: &dyn StdError) -> String {
+    let mut msg = e.to_string();
+    let mut source = e.source();
+    while let Some(s) = source {
+        msg.push_str(": ");
+        msg.push_str(&s.to_string());
+        source = s.source();
+    }
+    msg
+}
 
 /// Errors that can occur during weather operations.
 #[derive(Error, Debug)]
@@ -77,6 +90,21 @@ impl Error {
         Self::Parse {
             provider,
             reason: reason.into(),
+        }
+    }
+
+    pub(crate) fn is_retryable(&self) -> bool {
+        match self {
+            Self::Http { source, .. } => {
+                source.is_timeout() || source.is_connect() || source.is_request()
+            }
+            Self::ProviderStatus { status, .. } => status.is_server_error(),
+            Self::RateLimited { .. } => true,
+            Self::Parse { .. }
+            | Self::LocationNotFound { .. }
+            | Self::InvalidLocation { .. }
+            | Self::ApiKeyMissing { .. }
+            | Self::NotAvailable => false,
         }
     }
 }
