@@ -1,8 +1,9 @@
 # Wayle
 
-> **⚠️ Work in Progress**: Wayle is under active development. Core
-> infrastructure is functional, but UI components and many services are not yet
-> implemented. Not ready for daily use.
+> **⚠️ Work in Progress**: Wayle is under active development. The bar and
+> modules that are completed under the [UI Components](#ui-components) section
+> are ready to use. This, however, is not a stable environment, things are
+> subject to change.
 
 A fast, configurable desktop environment shell for Wayland compositors. Built in
 Rust with Relm4 and focused on performance, modularity, and a great user
