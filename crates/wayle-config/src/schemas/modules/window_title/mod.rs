@@ -15,7 +15,11 @@ use crate::{
 /// Window title module configuration.
 #[wayle_config(bar_button)]
 pub struct WindowTitleConfig {
-    /// Format string for the label. Placeholders: `{title}`, `{class}`.
+    /// Format string for the label. Placeholders: `{title}`, `{app}`.
+    ///
+    /// | Compositor | `{title}` | `{app}` |
+    /// |------------|-----------|---------|
+    /// | Hyprland   | `title`   | `class` |
     #[default(String::from("{title}"))]
     pub format: ConfigProperty<String>,
 

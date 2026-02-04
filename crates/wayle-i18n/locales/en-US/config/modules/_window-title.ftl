@@ -3,7 +3,7 @@
 ## Window Title Module Configuration
 
 settings-modules-window-title-format = Label Format
-    .description = Format string with placeholders: {"{title}"}, {"{class}"}
+    .description = Format string with placeholders: {"{title}"}, {"{app}"}
 
 settings-modules-window-title-icon-name = Fallback Icon
     .description = Icon when no mapping matches
