@@ -53,7 +53,7 @@ experience. A successor to HyprPanel without the pain or dependency on Hyprland.
     - [x] Power
     - [x] World clock
     - [x] Weather
-    - [ ] Idle Inhibit
+    - [x] Idle Inhibit
     - [x] Keyboard input
     - [x] Hyprland Window title
     - [ ] Hyprland workspaces
