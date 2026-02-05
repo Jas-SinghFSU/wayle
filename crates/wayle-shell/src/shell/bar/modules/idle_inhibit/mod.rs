@@ -162,7 +162,7 @@ impl IdleInhibitModule {
         self.bar_button.emit(BarButtonInput::SetIcon(icon));
 
         let label = helpers::build_label(
-            &config.label_format.get(),
+            &config.format.get(),
             &LabelContext {
                 active,
                 duration_mins: self.state.duration_mins.get(),

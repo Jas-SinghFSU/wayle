@@ -58,7 +58,7 @@ experience. A successor to HyprPanel without the pain or dependency on Hyprland.
     - [x] Keyboard input
     - [x] Hyprland Window title
     - [x] Hyprland submap
-    - [ ] Hyprsunset
+    - [x] Hyprsunset
     - [ ] Hyprland workspaces
     - [ ] Custom Modules
 

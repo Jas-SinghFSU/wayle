@@ -25,3 +25,7 @@ bar-idle-inhibit-off = Off
 
 ## Keybind Mode
 bar-keybind-mode-default = default
+
+## Hyprsunset
+bar-hyprsunset-on = On
+bar-hyprsunset-off = Off

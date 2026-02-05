@@ -23,9 +23,10 @@ pub struct WeatherConfig {
     #[default(TemperatureUnit::default())]
     pub units: ConfigProperty<TemperatureUnit>,
 
-    /// Label format string.
+    /// Format string for the label.
     ///
-    /// Supported placeholders:
+    /// ## Placeholders
+    ///
     /// - `{temp}` - Current temperature (e.g., "72")
     /// - `{temp_unit}` - Temperature unit symbol ("°F" or "°C")
     /// - `{feels_like}` - Feels-like temperature
@@ -35,6 +36,12 @@ pub struct WeatherConfig {
     /// - `{wind_dir}` - Wind direction (e.g., "NW")
     /// - `{high}` - Today's high temperature
     /// - `{low}` - Today's low temperature
+    ///
+    /// ## Examples
+    ///
+    /// - `"{temp}{temp_unit}"` - "22°C"
+    /// - `"{temp}{temp_unit} {condition}"` - "22°C Partly Cloudy"
+    /// - `"{temp}{temp_unit} H:{high} L:{low}"` - "22°C H:25 L:18"
     #[default(String::from("{temp}{temp_unit}"))]
     pub format: ConfigProperty<String>,
 

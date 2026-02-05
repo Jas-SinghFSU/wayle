@@ -7,43 +7,47 @@ use crate::{
     schemas::styling::{ColorValue, CssToken},
 };
 
-/// Idle inhibitor module configuration.
-///
-/// Prevents screen dimming, lock, and suspend when active.
-/// Can control via CLI: `wayle idle on/off/duration/remaining/status`
+/// Hyprsunset (blue light filter) module configuration.
 #[wayle_config(bar_button)]
-pub struct IdleInhibitConfig {
-    /// Duration in minutes when service starts. 0 means indefinite.
-    #[serde(rename = "startup-duration")]
-    #[default(60)]
-    pub startup_duration: ConfigProperty<u32>,
-
-    /// Icon when idle inhibitor is inactive.
-    #[serde(rename = "icon-inactive")]
-    #[default(String::from("tb-coffee-off-symbolic"))]
-    pub icon_inactive: ConfigProperty<String>,
-
-    /// Icon when idle inhibitor is active.
-    #[serde(rename = "icon-active")]
-    #[default(String::from("tb-coffee-symbolic"))]
-    pub icon_active: ConfigProperty<String>,
-
+pub struct HyprsunsetConfig {
     /// Format string for the label.
     ///
     /// ## Placeholders
     ///
-    /// - `{state}` - Inhibitor state text (On, Off)
-    /// - `{remaining}` - Time remaining (e.g., "45m", shows "--" when indefinite)
-    /// - `{duration}` - Total duration (e.g., "60m", shows "--" when indefinite)
+    /// - `{status}` - Filter status text (On, Off)
+    /// - `{temp}` - Current temperature in Kelvin (shows "--" when disabled)
+    /// - `{gamma}` - Current gamma percentage (shows "--" when disabled)
+    /// - `{config_temp}` - Configured temperature (always available)
+    /// - `{config_gamma}` - Configured gamma (always available)
     ///
     /// ## Examples
     ///
-    /// - `"{state}"` - "On"
-    /// - `"{remaining}/{duration}"` - "45m/60m"
-    /// - `"{state} ({remaining})"` - "On (45m)"
+    /// - `"{status}"` - "On"
+    /// - `"{temp}K {gamma}%"` - "4500K 80%"
+    /// - `"{status} ({temp}K)"` - "On (4500K)"
     #[serde(rename = "format")]
-    #[default(String::from("{state}"))]
+    #[default(String::from("{status}"))]
     pub format: ConfigProperty<String>,
+
+    /// Color temperature in Kelvin when filter is enabled. Range: 1000-20000.
+    #[serde(rename = "temperature")]
+    #[default(5000)]
+    pub temperature: ConfigProperty<u32>,
+
+    /// Display gamma percentage when filter is enabled. Range: 0-200.
+    #[serde(rename = "gamma")]
+    #[default(100)]
+    pub gamma: ConfigProperty<u32>,
+
+    /// Icon when filter is disabled (showing normal daylight colors).
+    #[serde(rename = "icon-off")]
+    #[default(String::from("ld-sun-symbolic"))]
+    pub icon_off: ConfigProperty<String>,
+
+    /// Icon when filter is enabled (showing warm night colors).
+    #[serde(rename = "icon-on")]
+    #[default(String::from("ld-moon-symbolic"))]
+    pub icon_on: ConfigProperty<String>,
 
     /// Display border around button.
     #[serde(rename = "border-show")]
@@ -52,7 +56,7 @@ pub struct IdleInhibitConfig {
 
     /// Border color token.
     #[serde(rename = "border-color")]
-    #[default(ColorValue::Token(CssToken::Green))]
+    #[default(ColorValue::Token(CssToken::Yellow))]
     pub border_color: ConfigProperty<ColorValue>,
 
     /// Display module icon.
@@ -67,7 +71,7 @@ pub struct IdleInhibitConfig {
 
     /// Icon container background color token.
     #[serde(rename = "icon-bg-color")]
-    #[default(ColorValue::Token(CssToken::Green))]
+    #[default(ColorValue::Token(CssToken::Yellow))]
     pub icon_bg_color: ConfigProperty<ColorValue>,
 
     /// Display label.
@@ -77,7 +81,7 @@ pub struct IdleInhibitConfig {
 
     /// Label text color token.
     #[serde(rename = "label-color")]
-    #[default(ColorValue::Token(CssToken::Green))]
+    #[default(ColorValue::Token(CssToken::Yellow))]
     pub label_color: ConfigProperty<ColorValue>,
 
     /// Max label characters before truncation with ellipsis. Set to 0 to disable.
@@ -90,14 +94,15 @@ pub struct IdleInhibitConfig {
     #[default(ColorValue::Token(CssToken::BgSurfaceElevated))]
     pub button_bg_color: ConfigProperty<ColorValue>,
 
-    /// Shell command on left click.
+    /// Action on left click. `:toggle` for built-in on/off, empty for no
+    /// action, or a shell command.
     #[serde(rename = "left-click")]
-    #[default(String::from("wayle idle toggle --indefinite"))]
+    #[default(String::from(":toggle"))]
     pub left_click: ConfigProperty<String>,
 
     /// Shell command on right click.
     #[serde(rename = "right-click")]
-    #[default(String::from("wayle idle toggle"))]
+    #[default(String::default())]
     pub right_click: ConfigProperty<String>,
 
     /// Shell command on middle click.
@@ -116,15 +121,13 @@ pub struct IdleInhibitConfig {
     pub scroll_down: ConfigProperty<String>,
 }
 
-impl ModuleInfoProvider for IdleInhibitConfig {
+impl ModuleInfoProvider for HyprsunsetConfig {
     fn module_info() -> ModuleInfo {
         ModuleInfo {
-            name: String::from("idle-inhibit"),
+            name: String::from("hyprsunset"),
             icon: String::from(""),
-            description: String::from("Prevent screen dimming, lock, and suspend"),
-            behavior_configs: vec![(String::from("idle-inhibit"), || {
-                schema_for!(IdleInhibitConfig)
-            })],
+            description: String::from("Control Hyprland's blue light filter (night light)"),
+            behavior_configs: vec![(String::from("hyprsunset"), || schema_for!(HyprsunsetConfig))],
             styling_configs: vec![],
         }
     }

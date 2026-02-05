@@ -245,3 +245,52 @@ macro_rules! watch_cancellable {
         });
     }};
 }
+
+/// Watches streams with an async handler.
+///
+/// Like [`watch!`], but the handler is async, allowing `.await` inside the
+/// callback. Use this when stream events trigger async work (e.g., IPC calls,
+/// network requests).
+///
+/// # Example
+///
+/// ```ignore
+/// use std::time::Duration;
+/// use tokio_stream::wrappers::IntervalStream;
+///
+/// let interval = IntervalStream::new(tokio::time::interval(Duration::from_secs(2)));
+///
+/// watch_async!(sender, [interval], |out| async {
+///     match service::query().await {
+///         Ok(state) => { let _ = out.send(Cmd::StateUpdated(state)); }
+///         Err(_) => { let _ = out.send(Cmd::QueryFailed); }
+///     }
+/// });
+/// ```
+#[macro_export]
+macro_rules! watch_async {
+    ($sender:expr, [$($stream:expr),* $(,)?], |$out:ident| async $body:expr) => {{
+        use ::futures::stream::StreamExt;
+        use ::futures::stream::select_all;
+
+        let streams: Vec<$crate::watchers::BoxedStream> = vec![
+            $(
+                Box::pin(StreamExt::map($stream, |_| ()))
+                    as $crate::watchers::BoxedStream,
+            )*
+        ];
+
+        $sender.command(move |$out, shutdown| async move {
+            let mut merged = select_all(streams);
+
+            ::tokio::select! {
+                () = shutdown.wait() => {}
+                () = async {
+                    while merged.next().await.is_some() {
+                        $body
+                    }
+                } => {}
+            }
+        });
+    }};
+}

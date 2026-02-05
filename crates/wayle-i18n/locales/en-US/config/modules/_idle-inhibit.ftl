@@ -11,7 +11,7 @@ settings-modules-idle-inhibit-icon-inactive = Inactive Icon
 settings-modules-idle-inhibit-icon-active = Active Icon
     .description = Icon when idle inhibitor is on
 
-settings-modules-idle-inhibit-label-format = Label Format
+settings-modules-idle-inhibit-format = Format
     .description = Format string using placeholders: {state}, {remaining}, {duration}
 
 settings-modules-idle-inhibit-border-show = Show Border

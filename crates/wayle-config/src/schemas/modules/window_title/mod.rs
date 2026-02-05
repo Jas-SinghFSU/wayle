@@ -15,11 +15,17 @@ use crate::{
 /// Window title module configuration.
 #[wayle_config(bar_button)]
 pub struct WindowTitleConfig {
-    /// Format string for the label. Placeholders: `{title}`, `{app}`.
+    /// Format string for the label.
     ///
-    /// | Compositor | `{title}` | `{app}` |
-    /// |------------|-----------|---------|
-    /// | Hyprland   | `title`   | `class` |
+    /// ## Placeholders
+    ///
+    /// - `{title}` - Window title
+    /// - `{app}` - Application name (WM_CLASS on Hyprland)
+    ///
+    /// ## Examples
+    ///
+    /// - `"{title}"` - "README.md - VSCode"
+    /// - `"{app}: {title}"` - "firefox: GitHub"
     #[default(String::from("{title}"))]
     pub format: ConfigProperty<String>,
 

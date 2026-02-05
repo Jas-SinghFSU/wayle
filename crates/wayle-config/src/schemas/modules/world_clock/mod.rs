@@ -12,13 +12,16 @@ use crate::{
 pub struct WorldClockConfig {
     /// Format string with embedded timezone blocks.
     ///
-    /// Use `{timezone strftime}` syntax to insert formatted times:
-    /// - `{UTC %H:%M}` - UTC time in 24-hour format
-    /// - `{America/New_York %I:%M %p}` - New York time in 12-hour format
+    /// ## Syntax
     ///
-    /// Text outside braces is preserved, allowing custom labels and separators:
-    /// - `"NYC {America/New_York %H:%M}  TYO {Asia/Tokyo %H:%M}"`
-    /// - `"{America/New_York %H:%M %Z} | {Europe/London %H:%M %Z}"`
+    /// Use `{timezone strftime}` syntax to insert formatted times.
+    /// Text outside braces is preserved as literal text.
+    ///
+    /// ## Examples
+    ///
+    /// - `"{UTC %H:%M %Z}"` - "14:30 UTC"
+    /// - `"NYC {America/New_York %H:%M}  TYO {Asia/Tokyo %H:%M}"` - "NYC 09:30  TYO 23:30"
+    /// - `"{America/New_York %H:%M %Z} | {Europe/London %H:%M %Z}"` - "09:30 EST | 14:30 GMT"
     #[default(String::from("{UTC %H:%M %Z}"))]
     pub format: ConfigProperty<String>,
 

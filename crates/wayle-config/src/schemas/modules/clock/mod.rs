@@ -10,7 +10,27 @@ use crate::{
 /// Clock module configuration.
 #[wayle_config(bar_button)]
 pub struct ClockConfig {
-    /// Time format string using strftime syntax.
+    /// Format string using strftime syntax.
+    ///
+    /// ## Common Specifiers
+    ///
+    /// - `%H` - Hour (00-23)
+    /// - `%I` - Hour (01-12)
+    /// - `%M` - Minute (00-59)
+    /// - `%S` - Second (00-59)
+    /// - `%p` - AM/PM
+    /// - `%a` - Abbreviated weekday (Mon, Tue)
+    /// - `%A` - Full weekday (Monday)
+    /// - `%b` - Abbreviated month (Jan, Feb)
+    /// - `%B` - Full month (January)
+    /// - `%d` - Day of month (01-31)
+    /// - `%Y` - Year (2024)
+    ///
+    /// ## Examples
+    ///
+    /// - `"%H:%M"` - "14:30"
+    /// - `"%I:%M %p"` - "02:30 PM"
+    /// - `"%a %b %d %I:%M %p"` - "Mon Jan 15 02:30 PM"
     #[default(String::from("%a %b %d %I:%M:%S %p"))]
     pub format: ConfigProperty<String>,
 

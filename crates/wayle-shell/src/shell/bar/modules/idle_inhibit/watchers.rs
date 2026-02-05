@@ -11,15 +11,11 @@ pub(super) fn spawn_config_watchers(
 ) {
     let icon_inactive = config.icon_inactive.clone();
     let icon_active = config.icon_active.clone();
-    let label_format = config.label_format.clone();
+    let format = config.format.clone();
 
     watch!(
         sender,
-        [
-            icon_inactive.watch(),
-            icon_active.watch(),
-            label_format.watch()
-        ],
+        [icon_inactive.watch(), icon_active.watch(), format.watch()],
         |out| {
             let _ = out.send(IdleInhibitCmd::ConfigChanged);
         }

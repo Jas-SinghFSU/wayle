@@ -4,6 +4,7 @@ mod clock;
 mod compositor;
 mod cpu;
 mod dashboard;
+mod hyprsunset;
 mod idle_inhibit;
 mod keybind_mode;
 mod keyboard_input;
@@ -28,6 +29,7 @@ use clock::{ClockInit, ClockModule};
 use compositor::Compositor;
 use cpu::{CpuInit, CpuModule};
 use dashboard::{DashboardInit, DashboardModule};
+use hyprsunset::{HyprsunsetInit, HyprsunsetModule};
 use idle_inhibit::{IdleInhibitInit, IdleInhibitModule};
 use keybind_mode::{HyprlandKeybindMode, KeybindModeInit};
 use keyboard_input::{HyprlandKeyboardInput, KeyboardInputInit};
@@ -61,8 +63,9 @@ pub(crate) enum ModuleController {
     Clock(Controller<ClockModule>),
     Cpu(Controller<CpuModule>),
     Dashboard(Controller<DashboardModule>),
-    KeybindMode(Controller<HyprlandKeybindMode>),
+    Hyprsunset(Controller<HyprsunsetModule>),
     IdleInhibit(Controller<IdleInhibitModule>),
+    KeybindMode(Controller<HyprlandKeybindMode>),
     KeyboardInput(Controller<HyprlandKeyboardInput>),
     Media(Controller<MediaModule>),
     Microphone(Controller<MicrophoneModule>),
@@ -88,8 +91,9 @@ impl ModuleController {
             Self::Clock(c) => c.widget(),
             Self::Cpu(c) => c.widget(),
             Self::Dashboard(c) => c.widget(),
-            Self::KeybindMode(c) => c.widget(),
+            Self::Hyprsunset(c) => c.widget(),
             Self::IdleInhibit(c) => c.widget(),
+            Self::KeybindMode(c) => c.widget(),
             Self::KeyboardInput(c) => c.widget(),
             Self::Media(c) => c.widget(),
             Self::Microphone(c) => c.widget(),
@@ -189,6 +193,9 @@ pub(crate) fn create_module(
                 settings: settings.clone(),
             };
             ModuleController::IdleInhibit(IdleInhibitModule::builder().launch(init).detach())
+        }
+        BarModule::Hyprsunset => {
+            return create_hyprsunset_module(settings, class);
         }
         BarModule::Power => {
             let init = PowerInit {
@@ -308,6 +315,26 @@ fn create_window_title_module(
         }
         Compositor::Unknown(name) => {
             warn!(compositor = %name, "unsupported compositor for window-title");
+            None
+        }
+    }
+}
+
+fn create_hyprsunset_module(
+    settings: &BarSettings,
+    class: Option<String>,
+) -> Option<ModuleInstance> {
+    match Compositor::detect() {
+        Compositor::Hyprland => {
+            let init = HyprsunsetInit {
+                settings: settings.clone(),
+            };
+            let controller =
+                ModuleController::Hyprsunset(HyprsunsetModule::builder().launch(init).detach());
+            Some(ModuleInstance { controller, class })
+        }
+        Compositor::Unknown(name) => {
+            warn!(compositor = %name, "unsupported compositor for hyprsunset");
             None
         }
     }

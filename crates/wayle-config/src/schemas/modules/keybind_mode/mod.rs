@@ -10,7 +10,17 @@ use crate::{
 /// Keybind mode indicator configuration.
 #[wayle_config(bar_button)]
 pub struct KeybindModeConfig {
-    /// Format string for the label. Placeholder: `{mode}` (shows "default" when inactive).
+    /// Format string for the label.
+    ///
+    /// ## Placeholders
+    ///
+    /// - `{mode}` - Current keybind mode name (shows "default" when inactive)
+    ///
+    /// ## Examples
+    ///
+    /// - `"{mode}"` - "resize"
+    /// - `"Mode: {mode}"` - "Mode: resize"
+    /// - `"[{mode}]"` - "[resize]"
     #[default(String::from("{mode}"))]
     pub format: ConfigProperty<String>,
 

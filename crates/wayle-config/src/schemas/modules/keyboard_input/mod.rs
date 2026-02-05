@@ -10,7 +10,15 @@ use crate::{
 /// Keyboard input module configuration.
 #[wayle_config(bar_button)]
 pub struct KeyboardInputConfig {
-    /// Format string for the label. Placeholders: `{layout}`, `{variant}`.
+    /// Format string for the label.
+    ///
+    /// ## Placeholders
+    ///
+    /// - `{layout}` - Keyboard layout code (e.g., "us", "de", "fr")
+    ///
+    /// ## Examples
+    ///
+    /// - `"{layout}"` - "us"
     #[default(String::from("{layout}"))]
     pub format: ConfigProperty<String>,
 
