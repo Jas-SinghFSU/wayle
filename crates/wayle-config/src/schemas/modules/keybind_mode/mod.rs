@@ -7,23 +7,22 @@ use crate::{
     schemas::styling::{ColorValue, CssToken},
 };
 
-/// Notification module configuration.
+/// Keybind mode indicator configuration.
 #[wayle_config(bar_button)]
-pub struct NotificationConfig {
-    /// Icon shown when no notifications and DND is off.
+pub struct KeybindModeConfig {
+    /// Format string for the label. Placeholder: `{mode}` (shows "default" when inactive).
+    #[default(String::from("{mode}"))]
+    pub format: ConfigProperty<String>,
+
+    /// Symbolic icon name.
     #[serde(rename = "icon-name")]
-    #[default(String::from("ld-bell-symbolic"))]
+    #[default(String::from("ld-layers-symbolic"))]
     pub icon_name: ConfigProperty<String>,
 
-    /// Icon shown when notifications exist.
-    #[serde(rename = "icon-unread")]
-    #[default(String::from("ld-bell-dot-symbolic"))]
-    pub icon_unread: ConfigProperty<String>,
-
-    /// Icon shown when Do Not Disturb is active.
-    #[serde(rename = "icon-dnd")]
-    #[default(String::from("ld-bell-off-symbolic"))]
-    pub icon_dnd: ConfigProperty<String>,
+    /// Automatically hide module when no mode is active.
+    #[serde(rename = "auto-hide")]
+    #[default(false)]
+    pub auto_hide: ConfigProperty<bool>,
 
     /// Display border around button.
     #[serde(rename = "border-show")]
@@ -32,7 +31,7 @@ pub struct NotificationConfig {
 
     /// Border color token.
     #[serde(rename = "border-color")]
-    #[default(ColorValue::Token(CssToken::Green))]
+    #[default(ColorValue::Token(CssToken::Blue))]
     pub border_color: ConfigProperty<ColorValue>,
 
     /// Display module icon.
@@ -40,24 +39,24 @@ pub struct NotificationConfig {
     #[default(true)]
     pub icon_show: ConfigProperty<bool>,
 
-    /// Icon foreground color. Auto selects based on variant for contrast.
+    /// Icon foreground color.
     #[serde(rename = "icon-color")]
     #[default(ColorValue::Auto)]
     pub icon_color: ConfigProperty<ColorValue>,
 
     /// Icon container background color token.
     #[serde(rename = "icon-bg-color")]
-    #[default(ColorValue::Token(CssToken::Green))]
+    #[default(ColorValue::Token(CssToken::Blue))]
     pub icon_bg_color: ConfigProperty<ColorValue>,
 
-    /// Display notification count label.
+    /// Display text label.
     #[serde(rename = "label-show")]
     #[default(true)]
     pub label_show: ConfigProperty<bool>,
 
     /// Label text color token.
     #[serde(rename = "label-color")]
-    #[default(ColorValue::Token(CssToken::Green))]
+    #[default(ColorValue::Token(CssToken::Blue))]
     pub label_color: ConfigProperty<ColorValue>,
 
     /// Max label characters before truncation with ellipsis. Set to 0 to disable.
@@ -70,14 +69,14 @@ pub struct NotificationConfig {
     #[default(ColorValue::Token(CssToken::BgSurfaceElevated))]
     pub button_bg_color: ConfigProperty<ColorValue>,
 
-    /// Reserved for dropdown. Not user-configurable.
-    #[serde(rename = "left-click", skip)]
+    /// Shell command on left click.
+    #[serde(rename = "left-click")]
     #[default(String::default())]
     pub left_click: ConfigProperty<String>,
 
-    /// Shell command on right click. Default toggles Do Not Disturb.
+    /// Shell command on right click.
     #[serde(rename = "right-click")]
-    #[default(String::from("wayle notify dnd"))]
+    #[default(String::default())]
     pub right_click: ConfigProperty<String>,
 
     /// Shell command on middle click.
@@ -96,14 +95,14 @@ pub struct NotificationConfig {
     pub scroll_down: ConfigProperty<String>,
 }
 
-impl ModuleInfoProvider for NotificationConfig {
+impl ModuleInfoProvider for KeybindModeConfig {
     fn module_info() -> ModuleInfo {
         ModuleInfo {
-            name: String::from("notification"),
-            icon: String::from("󰂚"),
-            description: String::from("Notification management"),
-            behavior_configs: vec![(String::from("notification"), || {
-                schema_for!(NotificationConfig)
+            name: String::from("keybind-mode"),
+            icon: String::from("󰌨"),
+            description: String::from("Keybind mode indicator"),
+            behavior_configs: vec![(String::from("keybind-mode"), || {
+                schema_for!(KeybindModeConfig)
             })],
             styling_configs: vec![],
         }

@@ -57,7 +57,7 @@ impl Component for NotificationModule {
             icon_dnd: &notification_config.icon_dnd.get(),
         });
 
-        let initial_label = format_label(initial_count, notification_config.hide_empty.get());
+        let initial_label = format_label(initial_count);
 
         let bar_button = BarButton::builder()
             .launch(BarButtonInit {
@@ -155,7 +155,7 @@ impl NotificationModule {
         });
         self.bar_button.emit(BarButtonInput::SetIcon(icon));
 
-        let label = format_label(self.count, config.hide_empty.get());
+        let label = format_label(self.count);
         self.bar_button.emit(BarButtonInput::SetLabel(label));
     }
 }

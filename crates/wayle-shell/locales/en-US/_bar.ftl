@@ -22,3 +22,6 @@ bar-window-title-empty = Desktop
 ## Idle Inhibit
 bar-idle-inhibit-on = On
 bar-idle-inhibit-off = Off
+
+## Keybind Mode
+bar-keybind-mode-default = default

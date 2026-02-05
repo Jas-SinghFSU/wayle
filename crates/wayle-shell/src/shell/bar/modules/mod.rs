@@ -5,6 +5,7 @@ mod compositor;
 mod cpu;
 mod dashboard;
 mod idle_inhibit;
+mod keybind_mode;
 mod keyboard_input;
 mod media;
 mod microphone;
@@ -28,6 +29,7 @@ use compositor::Compositor;
 use cpu::{CpuInit, CpuModule};
 use dashboard::{DashboardInit, DashboardModule};
 use idle_inhibit::{IdleInhibitInit, IdleInhibitModule};
+use keybind_mode::{HyprlandKeybindMode, KeybindModeInit};
 use keyboard_input::{HyprlandKeyboardInput, KeyboardInputInit};
 use media::{MediaInit, MediaModule};
 use microphone::{MicrophoneInit, MicrophoneModule};
@@ -59,6 +61,7 @@ pub(crate) enum ModuleController {
     Clock(Controller<ClockModule>),
     Cpu(Controller<CpuModule>),
     Dashboard(Controller<DashboardModule>),
+    KeybindMode(Controller<HyprlandKeybindMode>),
     IdleInhibit(Controller<IdleInhibitModule>),
     KeyboardInput(Controller<HyprlandKeyboardInput>),
     Media(Controller<MediaModule>),
@@ -85,6 +88,7 @@ impl ModuleController {
             Self::Clock(c) => c.widget(),
             Self::Cpu(c) => c.widget(),
             Self::Dashboard(c) => c.widget(),
+            Self::KeybindMode(c) => c.widget(),
             Self::IdleInhibit(c) => c.widget(),
             Self::KeyboardInput(c) => c.widget(),
             Self::Media(c) => c.widget(),
@@ -125,6 +129,9 @@ pub(crate) fn create_module(
                 settings: settings.clone(),
             };
             ModuleController::Clock(ClockModule::builder().launch(init).detach())
+        }
+        BarModule::KeybindMode => {
+            return create_keybind_mode_module(settings, class);
         }
         BarModule::KeyboardInput => {
             return create_keyboard_input_module(settings, class);
@@ -243,6 +250,26 @@ pub(crate) fn create_module(
     };
 
     Some(ModuleInstance { controller, class })
+}
+
+fn create_keybind_mode_module(
+    settings: &BarSettings,
+    class: Option<String>,
+) -> Option<ModuleInstance> {
+    match Compositor::detect() {
+        Compositor::Hyprland => {
+            let init = KeybindModeInit {
+                settings: settings.clone(),
+            };
+            let controller =
+                ModuleController::KeybindMode(HyprlandKeybindMode::builder().launch(init).detach());
+            Some(ModuleInstance { controller, class })
+        }
+        Compositor::Unknown(name) => {
+            warn!(compositor = %name, "unsupported compositor for keybind-mode");
+            None
+        }
+    }
 }
 
 fn create_keyboard_input_module(

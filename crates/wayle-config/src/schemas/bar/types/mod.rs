@@ -160,8 +160,8 @@ pub enum BarModule {
     Cpu,
     /// Quick access dashboard button.
     Dashboard,
-    /// Hyprland submap indicator.
-    HyprlandSubmap,
+    /// Compositor keybind mode indicator (submaps in Hyprland, modes in Sway/River).
+    KeybindMode,
     /// Hyprland workspace switcher.
     HyprlandWorkspaces,
     /// Idle inhibitor to prevent screen timeout.

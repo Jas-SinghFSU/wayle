@@ -4,6 +4,7 @@ mod clock;
 mod cpu;
 mod dashboard;
 mod idle_inhibit;
+mod keybind_mode;
 mod keyboard_input;
 mod media;
 mod microphone;
@@ -26,6 +27,7 @@ pub use clock::ClockConfig;
 pub use cpu::CpuConfig;
 pub use dashboard::DashboardConfig;
 pub use idle_inhibit::IdleInhibitConfig;
+pub use keybind_mode::KeybindModeConfig;
 pub use keyboard_input::KeyboardInputConfig;
 pub use media::{BUILTIN_MAPPINGS, MediaConfig, MediaIconType};
 pub use microphone::MicrophoneConfig;
@@ -56,6 +58,9 @@ pub struct ModulesConfig {
     pub cpu: CpuConfig,
     /// Dashboard module.
     pub dashboard: DashboardConfig,
+    /// Keybind mode indicator module.
+    #[serde(rename = "keybind-mode")]
+    pub keybind_mode: KeybindModeConfig,
     /// Idle inhibitor module.
     #[serde(rename = "idle-inhibit")]
     pub idle_inhibit: IdleInhibitConfig,

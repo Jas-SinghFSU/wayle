@@ -11,9 +11,6 @@ settings-modules-notification-icon-unread = Unread Icon
 settings-modules-notification-icon-dnd = DND Icon
     .description = Icon shown when Do Not Disturb is active
 
-settings-modules-notification-hide-empty = Hide Empty
-    .description = Hide label when notification count is zero
-
 settings-modules-notification-border-show = Show Border
     .description = Display border around button
 

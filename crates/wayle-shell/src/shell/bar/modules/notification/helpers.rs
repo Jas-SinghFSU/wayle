@@ -18,11 +18,7 @@ pub(crate) fn select_icon(ctx: &IconContext<'_>) -> String {
     ctx.icon_name.to_string()
 }
 
-pub(crate) fn format_label(count: usize, hide_empty: bool) -> String {
-    if hide_empty && count == 0 {
-        return String::from("00");
-    }
-
+pub(crate) fn format_label(count: usize) -> String {
     format!("{count:02}")
 }
 
@@ -66,16 +62,10 @@ mod tests {
 
     #[test]
     fn label_shows_count_zero_padded() {
-        assert_eq!(format_label(5, false), "05");
-        assert_eq!(format_label(0, false), "00");
-        assert_eq!(format_label(12, false), "12");
-        assert_eq!(format_label(99, false), "99");
-        assert_eq!(format_label(100, false), "100");
-    }
-
-    #[test]
-    fn label_hides_when_empty() {
-        assert_eq!(format_label(0, true), "");
-        assert_eq!(format_label(5, true), "05");
+        assert_eq!(format_label(5), "05");
+        assert_eq!(format_label(0), "00");
+        assert_eq!(format_label(12), "12");
+        assert_eq!(format_label(99), "99");
+        assert_eq!(format_label(100), "100");
     }
 }

@@ -57,9 +57,9 @@ experience. A successor to HyprPanel without the pain or dependency on Hyprland.
     - [x] Idle Inhibit
     - [x] Keyboard input
     - [x] Hyprland Window title
-    - [ ] Hyprland workspaces
-    - [ ] Hyprland submap
+    - [x] Hyprland submap
     - [ ] Hyprsunset
+    - [ ] Hyprland workspaces
     - [ ] Custom Modules
 
 #### Scoped out
