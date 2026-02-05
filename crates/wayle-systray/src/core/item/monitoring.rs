@@ -86,6 +86,30 @@ async fn monitor_properties(
     let mut menu_changed = item_proxy.receive_menu_changed().await;
     let mut icon_theme_path_changed = item_proxy.receive_icon_theme_path_changed().await;
 
+    let mut new_icon = match item_proxy.receive_new_icon().await {
+        Ok(stream) => stream,
+        Err(error) => {
+            error!(error = %error, "cannot subscribe to NewIcon signal");
+            return;
+        }
+    };
+
+    let mut new_attention_icon = match item_proxy.receive_new_attention_icon().await {
+        Ok(stream) => stream,
+        Err(error) => {
+            error!(error = %error, "cannot subscribe to NewAttentionIcon signal");
+            return;
+        }
+    };
+
+    let mut new_overlay_icon = match item_proxy.receive_new_overlay_icon().await {
+        Ok(stream) => stream,
+        Err(error) => {
+            error!(error = %error, "cannot subscribe to NewOverlayIcon signal");
+            return;
+        }
+    };
+
     let mut layout_updated = match menu_proxy.receive_layout_updated().await {
         Ok(layout) => layout,
         Err(error) => {
@@ -265,6 +289,42 @@ async fn monitor_properties(
                         tray_item.menu.set(None);
                         error!(error = %error, "cannot update menu layout after properties change");
                     }
+                }
+            }
+
+            Some(_) = new_icon.next() => {
+                debug!("NewIcon signal received");
+                if let Ok(name) = item_proxy.icon_name().await {
+                    let icon_name = if name.is_empty() { None } else { Some(name) };
+                    tray_item.icon_name.set(icon_name);
+                }
+                if let Ok(pixmaps) = item_proxy.icon_pixmap().await {
+                    let pixmaps: Vec<IconPixmap> = pixmaps.into_iter().map(Into::into).collect();
+                    tray_item.icon_pixmap.set(pixmaps);
+                }
+            }
+
+            Some(_) = new_attention_icon.next() => {
+                debug!("NewAttentionIcon signal received");
+                if let Ok(name) = item_proxy.attention_icon_name().await {
+                    let icon_name = if name.is_empty() { None } else { Some(name) };
+                    tray_item.attention_icon_name.set(icon_name);
+                }
+                if let Ok(pixmaps) = item_proxy.attention_icon_pixmap().await {
+                    let pixmaps: Vec<IconPixmap> = pixmaps.into_iter().map(Into::into).collect();
+                    tray_item.attention_icon_pixmap.set(pixmaps);
+                }
+            }
+
+            Some(_) = new_overlay_icon.next() => {
+                debug!("NewOverlayIcon signal received");
+                if let Ok(name) = item_proxy.overlay_icon_name().await {
+                    let icon_name = if name.is_empty() { None } else { Some(name) };
+                    tray_item.overlay_icon_name.set(icon_name);
+                }
+                if let Ok(pixmaps) = item_proxy.overlay_icon_pixmap().await {
+                    let pixmaps: Vec<IconPixmap> = pixmaps.into_iter().map(Into::into).collect();
+                    tray_item.overlay_icon_pixmap.set(pixmaps);
                 }
             }
 

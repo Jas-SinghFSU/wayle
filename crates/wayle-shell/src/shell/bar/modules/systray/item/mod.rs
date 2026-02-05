@@ -30,6 +30,7 @@ pub(super) struct SystrayItemInit {
 pub(super) struct SystrayItem {
     item: Arc<TrayItem>,
     button: Option<gtk::Button>,
+    icon: Option<gtk::Image>,
     popover: Option<gtk::PopoverMenu>,
     action_group: Option<SimpleActionGroup>,
     registered_accels: Vec<String>,
@@ -43,6 +44,7 @@ pub(super) enum SystrayItemMsg {
     RightClick,
     MiddleClick,
     MenuUpdated,
+    IconUpdated,
 }
 
 #[derive(Debug)]
@@ -75,6 +77,7 @@ impl FactoryComponent for SystrayItem {
         Self {
             item: init.item,
             button: None,
+            icon: None,
             popover: None,
             action_group: None,
             registered_accels: Vec::new(),
@@ -125,9 +128,11 @@ impl FactoryComponent for SystrayItem {
         root.add_controller(middle_click);
 
         watchers::spawn_menu_watcher(&sender, &self.item, self.cancel_token.clone());
+        watchers::spawn_icon_watcher(&sender, &self.item, self.cancel_token.clone());
 
         let widgets = view_output!();
 
+        self.icon = Some(widgets.icon.clone());
         self.update_icon(&widgets.icon);
 
         widgets
@@ -172,6 +177,11 @@ impl FactoryComponent for SystrayItem {
             }
             SystrayItemMsg::MenuUpdated => {
                 self.rebuild_menu_if_visible();
+            }
+            SystrayItemMsg::IconUpdated => {
+                if let Some(icon) = self.icon.as_ref() {
+                    self.update_icon(icon);
+                }
             }
         }
     }
