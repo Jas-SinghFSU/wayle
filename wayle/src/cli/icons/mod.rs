@@ -1,5 +1,7 @@
 /// Icon command definitions
 pub mod commands;
+/// Export installed icons
+pub mod export;
 /// Import local SVG files
 pub mod import;
 /// Install icons from CDN
@@ -36,5 +38,6 @@ pub async fn execute(command: IconsCommands) -> CliAction {
             interactive,
         } => list::execute(source, interactive),
         IconsCommands::Open => open::execute(),
+        IconsCommands::Export { destination } => export::execute(destination),
     }
 }

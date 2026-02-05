@@ -14,6 +14,9 @@ pub use tabler::{Tabler, TablerFilled};
 
 use crate::error::{Error, Result};
 
+/// Custom icon prefix for user-imported icons.
+pub const CUSTOM_PREFIX: &str = "cm";
+
 /// Trait defining an icon source with CDN URL pattern and prefix.
 pub trait IconSource: Send + Sync {
     /// Human-readable name of the source (e.g., "Tabler Icons").
@@ -79,4 +82,11 @@ pub fn all() -> Vec<Box<dyn IconSource>> {
         Box::new(Material),
         Box::new(Lucide),
     ]
+}
+
+/// Returns all known icon prefixes including custom.
+pub fn all_prefixes() -> Vec<&'static str> {
+    let mut prefixes: Vec<_> = all().iter().map(|s| s.prefix()).collect();
+    prefixes.push(CUSTOM_PREFIX);
+    prefixes
 }

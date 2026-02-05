@@ -11,11 +11,9 @@ use usvg::{Options, Tree};
 use crate::{
     error::{Error, Result, SvgValidationError},
     registry::IconRegistry,
-    sources::IconSource,
+    sources::{self, CUSTOM_PREFIX, IconSource},
     transform,
 };
-
-const CUSTOM_PREFIX: &str = "cm";
 
 /// Result of a batch icon installation operation.
 #[derive(Debug, Clone, Default)]
@@ -267,6 +265,103 @@ impl IconManager {
         })?;
 
         info!(icon = %icon_name, path = %path.display(), "Imported custom icon");
+        Ok(icon_name)
+    }
+
+    /// Imports all SVG files from a directory.
+    ///
+    /// Files are transformed for GTK symbolic icon compatibility. Names are
+    /// preserved, with `cm-` prefix added if no known source prefix exists.
+    ///
+    /// # Errors
+    ///
+    /// Returns error if directory cannot be read or icons directory cannot be created.
+    pub fn import_dir(&self, dir: &Path) -> Result<InstallResult> {
+        if !dir.is_dir() {
+            return Err(Error::NotFound {
+                name: dir.display().to_string(),
+            });
+        }
+
+        let icons_dir = self.registry.icons_dir();
+        fs::create_dir_all(&icons_dir).map_err(|source| Error::DirectoryError {
+            path: icons_dir.clone(),
+            source,
+        })?;
+
+        let entries = fs::read_dir(dir).map_err(|source| Error::ReadError {
+            path: dir.to_path_buf(),
+            source,
+        })?;
+
+        let mut result = InstallResult::default();
+        let prefixes = sources::all_prefixes();
+
+        for entry in entries.filter_map(|e| e.ok()) {
+            let path = entry.path();
+            if path.extension().is_some_and(|ext| ext == "svg") {
+                match self.import_single_file(&path, &icons_dir, &prefixes) {
+                    Ok(name) => {
+                        info!(icon = %name, "Imported icon");
+                        result.installed.push(name);
+                    }
+                    Err(err) => {
+                        let filename = path.file_name().unwrap_or_default().to_string_lossy();
+                        warn!(file = %filename, error = %err, "cannot import icon");
+                        result.failed.push(InstallFailure {
+                            slug: filename.to_string(),
+                            error: err.to_string(),
+                        });
+                    }
+                }
+            }
+        }
+
+        Ok(result)
+    }
+
+    fn import_single_file(
+        &self,
+        path: &Path,
+        icons_dir: &Path,
+        prefixes: &[&str],
+    ) -> Result<String> {
+        let stem = path
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .ok_or_else(|| Error::NotFound {
+                name: path.display().to_string(),
+            })?;
+
+        let base_name = stem.strip_suffix("-symbolic").unwrap_or(stem);
+        let has_prefix = prefixes
+            .iter()
+            .any(|p| base_name.starts_with(&format!("{p}-")));
+
+        let icon_name = if has_prefix {
+            format!("{base_name}-symbolic")
+        } else {
+            format!("{CUSTOM_PREFIX}-{base_name}-symbolic")
+        };
+
+        let content = fs::read_to_string(path).map_err(|source| Error::ReadError {
+            path: path.to_path_buf(),
+            source,
+        })?;
+
+        Tree::from_str(&content, &Options::default()).map_err(|err| Error::InvalidSvg {
+            slug: base_name.to_string(),
+            reason: SvgValidationError::ParseError(err.to_string()),
+        })?;
+
+        let transformed = transform::to_symbolic(&content);
+        let dest_path = icons_dir.join(format!("{icon_name}.svg"));
+
+        fs::write(&dest_path, &transformed).map_err(|source| Error::WriteError {
+            path: dest_path,
+            source,
+        })?;
+
         Ok(icon_name)
     }
 

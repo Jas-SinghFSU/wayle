@@ -18,13 +18,13 @@ pub enum IconsCommands {
         #[arg(required = true)]
         slugs: Vec<String>,
     },
-    /// Import a local SVG file as a custom icon
+    /// Import local SVG file(s) as icons
     #[command(after_long_help = IMPORT_HELP)]
     Import {
-        /// Path to the SVG file
+        /// Path to SVG file or directory
         path: PathBuf,
-        /// Icon name (without prefix or -symbolic suffix)
-        name: String,
+        /// Icon name (required for single file, ignored for directory)
+        name: Option<String>,
     },
     /// Remove installed icons
     Remove {
@@ -45,6 +45,11 @@ pub enum IconsCommands {
     },
     /// Open the icons directory in file manager
     Open,
+    /// Export all installed icons to a directory
+    Export {
+        /// Destination directory for exported icons
+        destination: PathBuf,
+    },
 }
 
 const INSTALL_HELP: &str = concat!(
@@ -66,5 +71,8 @@ const IMPORT_HELP: &str = concat!(
     "    wayle icons import ~/Downloads/my-icon.svg my-icon\n",
     "        -> cm-my-icon-symbolic\n",
     "\n",
-    "Custom icons use the 'cm-' prefix to distinguish them from other sources.",
+    "    wayle icons import ~/exported-icons/\n",
+    "        -> Imports all SVGs, preserves names with known prefixes\n",
+    "\n",
+    "Icons without a known prefix (tb-, tbf-, si-, md-, ld-) get 'cm-' added.",
 );
