@@ -1,9 +1,11 @@
 mod watchers;
 
+use std::sync::Arc;
+
 use relm4::prelude::*;
 use tokio::runtime::Handle;
 use tracing::warn;
-use wayle_common::{ConfigProperty, process, services};
+use wayle_common::{ConfigProperty, process};
 use wayle_config::{ConfigService, schemas::styling::CssToken};
 use wayle_hyprland::HyprlandService;
 use wayle_widgets::{
@@ -18,9 +20,11 @@ use super::{
     helpers::{self, IconContext},
     messages::{WindowTitleCmd, WindowTitleInit, WindowTitleMsg},
 };
+use crate::i18n::t;
 
 pub(crate) struct HyprlandWindowTitle {
     bar_button: Controller<BarButton>,
+    config: Arc<ConfigService>,
     current_title: String,
     current_class: String,
 }
@@ -44,11 +48,10 @@ impl Component for HyprlandWindowTitle {
         _root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let config_service = services::get::<ConfigService>();
-        let config = config_service.config();
+        let config = init.config.config();
         let window_title = &config.modules.window_title;
 
-        let (initial_title, initial_class) = initial_window();
+        let (initial_title, initial_class) = initial_window(&init.hyprland);
         let formatted_label =
             helpers::format_label(&window_title.format.get(), &initial_title, &initial_class);
         let initial_icon = helpers::resolve_icon(&IconContext {
@@ -88,10 +91,11 @@ impl Component for HyprlandWindowTitle {
                 BarButtonOutput::ScrollDown => WindowTitleMsg::ScrollDown,
             });
 
-        watchers::spawn_watchers(&sender, window_title);
+        watchers::spawn_watchers(&sender, window_title, &init.hyprland);
 
         let model = Self {
             bar_button,
+            config: init.config,
             current_title: initial_title,
             current_class: initial_class,
         };
@@ -102,8 +106,7 @@ impl Component for HyprlandWindowTitle {
     }
 
     fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, _root: &Self::Root) {
-        let config_service = services::get::<ConfigService>();
-        let window_title = &config_service.config().modules.window_title;
+        let window_title = &self.config.config().modules.window_title;
 
         let cmd = match msg {
             WindowTitleMsg::LeftClick => window_title.left_click.get(),
@@ -133,13 +136,11 @@ impl Component for HyprlandWindowTitle {
                 self.update_display(&format, root);
             }
             WindowTitleCmd::FormatChanged => {
-                let config_service = services::get::<ConfigService>();
-                let format = config_service.config().modules.window_title.format.get();
+                let format = self.config.config().modules.window_title.format.get();
                 self.update_label(&format, root);
             }
             WindowTitleCmd::IconConfigChanged => {
-                let config_service = services::get::<ConfigService>();
-                let window_title = &config_service.config().modules.window_title;
+                let window_title = &self.config.config().modules.window_title;
                 let icon = helpers::resolve_icon(&IconContext {
                     title: &self.current_title,
                     class: &self.current_class,
@@ -154,8 +155,7 @@ impl Component for HyprlandWindowTitle {
 
 impl HyprlandWindowTitle {
     fn update_display(&self, format: &str, root: &gtk::Box) {
-        let config_service = services::get::<ConfigService>();
-        let window_title = &config_service.config().modules.window_title;
+        let window_title = &self.config.config().modules.window_title;
 
         let label = helpers::format_label(format, &self.current_title, &self.current_class);
         let icon = helpers::resolve_icon(&IconContext {
@@ -177,18 +177,20 @@ impl HyprlandWindowTitle {
     }
 }
 
-fn initial_window() -> (String, String) {
-    let Some(hyprland) = services::try_get::<HyprlandService>() else {
+fn initial_window(hyprland: &Option<Arc<HyprlandService>>) -> (String, String) {
+    let fallback = || (t!("bar-window-title-empty"), t!("bar-window-title-empty"));
+
+    let Some(hyprland) = hyprland else {
         warn!(
             service = "HyprlandService",
             "unavailable, using fallback window"
         );
-        return (String::new(), String::new());
+        return fallback();
     };
 
     let runtime = Handle::current();
     match runtime.block_on(hyprland.active_window()) {
         Some(client) => (client.title.get(), client.class.get()),
-        None => (String::new(), String::new()),
+        None => fallback(),
     }
 }

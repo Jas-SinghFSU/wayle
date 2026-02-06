@@ -3,18 +3,19 @@ use std::sync::Arc;
 use relm4::ComponentSender;
 use tokio_util::sync::CancellationToken;
 use wayle_audio::{AudioService, core::device::output::OutputDevice};
-use wayle_common::{services, watch, watch_cancellable};
+use wayle_common::{watch, watch_cancellable};
 use wayle_config::schemas::modules::VolumeConfig;
 
 use super::{VolumeModule, messages::VolumeCmd};
 
-pub(super) fn spawn_watchers(sender: &ComponentSender<VolumeModule>, config: &VolumeConfig) {
-    let audio_service = services::get::<AudioService>();
-
-    let default_output = audio_service.default_output.clone();
+pub(super) fn spawn_watchers(
+    sender: &ComponentSender<VolumeModule>,
+    config: &VolumeConfig,
+    audio: &Arc<AudioService>,
+) {
+    let default_output = audio.default_output.clone();
     watch!(sender, [default_output.watch()], |out| {
-        let audio_service = services::get::<AudioService>();
-        let _ = out.send(VolumeCmd::DeviceChanged(audio_service.default_output.get()));
+        let _ = out.send(VolumeCmd::DeviceChanged(default_output.get()));
     });
 
     let level_icons = config.level_icons.clone();

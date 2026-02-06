@@ -2,13 +2,14 @@ mod helpers;
 mod messages;
 mod watchers;
 
+use std::sync::Arc;
+
 use relm4::prelude::*;
-use wayle_common::{ConfigProperty, process, services};
+use wayle_common::{ConfigProperty, process};
 use wayle_config::{
     ConfigService,
     schemas::{modules::NotificationConfig, styling::CssToken},
 };
-use wayle_notification::NotificationService;
 use wayle_widgets::prelude::{
     BarButton, BarButtonBehavior, BarButtonColors, BarButtonInit, BarButtonInput, BarButtonOutput,
 };
@@ -18,6 +19,7 @@ pub(crate) use self::messages::{NotificationCmd, NotificationInit, NotificationM
 
 pub(crate) struct NotificationModule {
     bar_button: Controller<BarButton>,
+    config: Arc<ConfigService>,
     count: usize,
     dnd: bool,
 }
@@ -41,13 +43,11 @@ impl Component for NotificationModule {
         _root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let config_service = services::get::<ConfigService>();
-        let config = config_service.config();
+        let config = init.config.config();
         let notification_config = &config.modules.notification;
 
-        let notification_service = services::get::<NotificationService>();
-        let initial_count = notification_service.notifications.get().len();
-        let initial_dnd = notification_service.dnd.get();
+        let initial_count = init.notification.notifications.get().len();
+        let initial_dnd = init.notification.dnd.get();
 
         let initial_icon = select_icon(&IconContext {
             count: initial_count,
@@ -89,10 +89,11 @@ impl Component for NotificationModule {
                 BarButtonOutput::ScrollDown => NotificationMsg::ScrollDown,
             });
 
-        watchers::spawn_watchers(&sender, notification_config);
+        watchers::spawn_watchers(&sender, notification_config, &init.notification);
 
         let model = Self {
             bar_button,
+            config: init.config,
             count: initial_count,
             dnd: initial_dnd,
         };
@@ -103,8 +104,7 @@ impl Component for NotificationModule {
     }
 
     fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, _root: &Self::Root) {
-        let config_service = services::get::<ConfigService>();
-        let config = &config_service.config().modules.notification;
+        let config = &self.config.config().modules.notification;
 
         match msg {
             NotificationMsg::LeftClick => {}
@@ -121,8 +121,7 @@ impl Component for NotificationModule {
         _sender: ComponentSender<Self>,
         _root: &Self::Root,
     ) {
-        let config_service = services::get::<ConfigService>();
-        let notification_config = &config_service.config().modules.notification;
+        let notification_config = &self.config.config().modules.notification;
 
         match msg {
             NotificationCmd::NotificationsChanged(count) => {

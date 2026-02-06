@@ -1,7 +1,11 @@
+use std::sync::Arc;
+
+use wayle_config::ConfigService;
 use wayle_widgets::prelude::BarSettings;
 
 pub(crate) struct DashboardInit {
     pub settings: BarSettings,
+    pub config: Arc<ConfigService>,
 }
 
 #[derive(Debug)]

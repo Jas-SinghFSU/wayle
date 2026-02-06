@@ -2,8 +2,10 @@ mod helpers;
 mod messages;
 mod watchers;
 
+use std::sync::Arc;
+
 use relm4::prelude::*;
-use wayle_common::{ConfigProperty, process, services};
+use wayle_common::{ConfigProperty, process};
 use wayle_config::{ConfigService, schemas::styling::CssToken};
 use wayle_widgets::prelude::{
     BarButton, BarButtonBehavior, BarButtonColors, BarButtonInit, BarButtonInput, BarButtonOutput,
@@ -15,6 +17,7 @@ pub(crate) use self::messages::{DashboardCmd, DashboardInit, DashboardMsg};
 
 pub(crate) struct DashboardModule {
     bar_button: Controller<BarButton>,
+    config: Arc<ConfigService>,
 }
 
 #[relm4::component(pub(crate))]
@@ -36,8 +39,7 @@ impl Component for DashboardModule {
         _root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let config_service = services::get::<ConfigService>();
-        let config = config_service.config();
+        let config = init.config.config();
         let dashboard = &config.modules.dashboard;
 
         let icon = build_icon(&dashboard.icon_override.get());
@@ -76,7 +78,10 @@ impl Component for DashboardModule {
 
         watchers::spawn_watchers(&sender, dashboard);
 
-        let model = Self { bar_button };
+        let model = Self {
+            bar_button,
+            config: init.config,
+        };
         let bar_button = model.bar_button.widget();
         let widgets = view_output!();
 
@@ -84,8 +89,7 @@ impl Component for DashboardModule {
     }
 
     fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, _root: &Self::Root) {
-        let config_service = services::get::<ConfigService>();
-        let dashboard = &config_service.config().modules.dashboard;
+        let dashboard = &self.config.config().modules.dashboard;
 
         let cmd = match msg {
             DashboardMsg::LeftClick => String::from(""),
@@ -106,8 +110,7 @@ impl Component for DashboardModule {
     ) {
         match msg {
             DashboardCmd::IconConfigChanged => {
-                let config_service = services::get::<ConfigService>();
-                let dashboard = &config_service.config().modules.dashboard;
+                let dashboard = &self.config.config().modules.dashboard;
                 let icon = build_icon(&dashboard.icon_override.get());
                 self.bar_button.emit(BarButtonInput::SetIcon(icon));
             }

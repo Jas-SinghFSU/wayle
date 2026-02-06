@@ -1,6 +1,6 @@
 //! Shell startup: CSS, icons, actions, and bar initialization.
 
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc};
 
 use gdk4::Display;
 use gtk4::{
@@ -14,13 +14,15 @@ use relm4::{
     prelude::*,
 };
 use tracing::{info, warn};
-use wayle_common::services;
 use wayle_config::ConfigService;
 use wayle_icons::IconRegistry;
 use wayle_styling::compile;
 
 use super::get_current_monitors;
-use crate::shell::bar::{Bar, BarInit};
+use crate::shell::{
+    bar::{Bar, BarInit},
+    services::ShellServices,
+};
 
 relm4::new_action_group!(AppActionGroup, "app");
 relm4::new_stateless_action!(QuitAction, AppActionGroup, "quit");
@@ -32,10 +34,12 @@ pub(crate) fn init_icons() {
     }
 }
 
-pub(crate) fn init_css_provider(display: &Display) -> CssProvider {
+pub(crate) fn init_css_provider(
+    display: &Display,
+    config_service: &Arc<ConfigService>,
+) -> CssProvider {
     let provider = CssProvider::new();
 
-    let config_service = services::get::<ConfigService>();
     let config = config_service.config();
     let palette = config.styling.palette();
 
@@ -73,11 +77,16 @@ pub(crate) fn register_app_actions() {
     actions.register_for_main_application();
 }
 
-pub(crate) fn create_bars() -> HashMap<String, Controller<Bar>> {
+pub(crate) fn create_bars(services: &ShellServices) -> HashMap<String, Controller<Bar>> {
     let mut bars = HashMap::new();
 
     for (connector, monitor) in get_current_monitors() {
-        let bar = Bar::builder().launch(BarInit { monitor }).detach();
+        let bar = Bar::builder()
+            .launch(BarInit {
+                monitor,
+                services: services.clone(),
+            })
+            .detach();
         bars.insert(connector, bar);
     }
 

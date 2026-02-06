@@ -2,12 +2,11 @@ mod helpers;
 mod messages;
 mod watchers;
 
-use std::path::Path;
+use std::{path::Path, sync::Arc};
 
 use relm4::prelude::*;
-use wayle_common::{ConfigProperty, process, services};
+use wayle_common::{ConfigProperty, process};
 use wayle_config::{ConfigService, schemas::styling::CssToken};
-use wayle_sysinfo::SysinfoService;
 use wayle_widgets::prelude::{
     BarButton, BarButtonBehavior, BarButtonColors, BarButtonInit, BarButtonInput, BarButtonOutput,
 };
@@ -16,6 +15,7 @@ pub(crate) use self::messages::{StorageCmd, StorageInit, StorageMsg};
 
 pub(crate) struct StorageModule {
     bar_button: Controller<BarButton>,
+    config: Arc<ConfigService>,
 }
 
 #[relm4::component(pub(crate))]
@@ -37,12 +37,10 @@ impl Component for StorageModule {
         _root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let config_service = services::get::<ConfigService>();
-        let config = config_service.config();
+        let config = init.config.config();
         let storage_config = &config.modules.storage;
 
-        let sysinfo = services::get::<SysinfoService>();
-        let disks = sysinfo.disks.get();
+        let disks = init.sysinfo.disks.get();
         let target = storage_config.mount_point.get();
         let target_path = Path::new(&target);
 
@@ -82,9 +80,12 @@ impl Component for StorageModule {
                 BarButtonOutput::ScrollDown => StorageMsg::ScrollDown,
             });
 
-        watchers::spawn_watchers(&sender, storage_config);
+        watchers::spawn_watchers(&sender, storage_config, &init.sysinfo);
 
-        let model = Self { bar_button };
+        let model = Self {
+            bar_button,
+            config: init.config,
+        };
         let bar_button = model.bar_button.widget();
         let widgets = view_output!();
 
@@ -92,8 +93,7 @@ impl Component for StorageModule {
     }
 
     fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, _root: &Self::Root) {
-        let config_service = services::get::<ConfigService>();
-        let storage_config = &config_service.config().modules.storage;
+        let storage_config = &self.config.config().modules.storage;
 
         let cmd = match msg {
             StorageMsg::LeftClick => storage_config.left_click.get(),

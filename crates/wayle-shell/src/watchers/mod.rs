@@ -9,16 +9,16 @@ use std::env;
 
 use relm4::ComponentSender;
 
-use crate::shell::Shell;
+use crate::shell::{Shell, ShellServices};
 
-pub(crate) fn init(sender: &ComponentSender<Shell>) {
-    css::spawn(sender);
+pub(crate) fn init(sender: &ComponentSender<Shell>, services: &ShellServices) {
+    css::spawn(sender, services);
     monitors::spawn(sender);
-    color_extractor::spawn();
-    sysinfo::spawn();
-    weather::spawn();
+    color_extractor::spawn(services);
+    sysinfo::spawn(services);
+    weather::spawn(services);
 
     if env::var("WAYLE_DEV").is_ok_and(|value| value == "1") {
-        scss_dev::spawn(sender);
+        scss_dev::spawn(sender, services);
     }
 }

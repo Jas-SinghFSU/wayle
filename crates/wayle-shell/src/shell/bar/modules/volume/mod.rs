@@ -2,9 +2,11 @@ mod helpers;
 mod messages;
 mod watchers;
 
+use std::sync::Arc;
+
 use relm4::prelude::*;
 use wayle_audio::{AudioService, core::device::output::OutputDevice};
-use wayle_common::{ConfigProperty, WatcherToken, process, services};
+use wayle_common::{ConfigProperty, WatcherToken, process};
 use wayle_config::{
     ConfigService,
     schemas::{modules::VolumeConfig, styling::CssToken},
@@ -18,7 +20,9 @@ pub(crate) use self::messages::{VolumeCmd, VolumeInit, VolumeMsg};
 
 pub(crate) struct VolumeModule {
     bar_button: Controller<BarButton>,
+    config: Arc<ConfigService>,
     active_device_watcher_token: WatcherToken,
+    audio: Arc<AudioService>,
 }
 
 #[relm4::component(pub(crate))]
@@ -40,8 +44,7 @@ impl Component for VolumeModule {
         _root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let config_service = services::get::<ConfigService>();
-        let config = config_service.config();
+        let config = init.config.config();
         let volume_config = &config.modules.volume;
 
         let initial_icon = volume_config
@@ -81,11 +84,13 @@ impl Component for VolumeModule {
                 BarButtonOutput::ScrollDown => VolumeMsg::ScrollDown,
             });
 
-        watchers::spawn_watchers(&sender, volume_config);
+        watchers::spawn_watchers(&sender, volume_config, &init.audio);
 
         let model = Self {
             bar_button,
+            config: init.config,
             active_device_watcher_token: WatcherToken::new(),
+            audio: init.audio,
         };
         let bar_button = model.bar_button.widget();
         let widgets = view_output!();
@@ -94,8 +99,7 @@ impl Component for VolumeModule {
     }
 
     fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, _root: &Self::Root) {
-        let config_service = services::get::<ConfigService>();
-        let volume_config = &config_service.config().modules.volume;
+        let volume_config = &self.config.config().modules.volume;
 
         let cmd = match msg {
             VolumeMsg::LeftClick => volume_config.left_click.get(),
@@ -109,8 +113,7 @@ impl Component for VolumeModule {
     }
 
     fn update_cmd(&mut self, msg: VolumeCmd, sender: ComponentSender<Self>, _root: &Self::Root) {
-        let config_service = services::get::<ConfigService>();
-        let volume_config = &config_service.config().modules.volume;
+        let volume_config = &self.config.config().modules.volume;
 
         match msg {
             VolumeCmd::DeviceChanged(device) => {
@@ -122,8 +125,7 @@ impl Component for VolumeModule {
                 }
             }
             VolumeCmd::VolumeOrMuteChanged | VolumeCmd::IconConfigChanged => {
-                let audio_service = services::get::<AudioService>();
-                if let Some(device) = audio_service.default_output.get() {
+                if let Some(device) = self.audio.default_output.get() {
                     self.update_display(volume_config, &device);
                 }
             }

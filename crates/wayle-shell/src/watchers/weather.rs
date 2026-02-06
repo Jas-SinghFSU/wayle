@@ -3,7 +3,6 @@
 use std::{sync::Arc, time::Duration};
 
 use futures::StreamExt;
-use wayle_common::services;
 use wayle_config::{
     ConfigService,
     schemas::modules::{TemperatureUnit, WeatherConfig, WeatherProvider},
@@ -11,45 +10,44 @@ use wayle_config::{
 };
 use wayle_weather::WeatherService;
 
-pub fn spawn() {
-    let Some(_) = services::try_get::<WeatherService>() else {
-        return;
-    };
+use crate::shell::ShellServices;
 
-    let config_service = services::get::<ConfigService>();
+pub fn spawn(services: &ShellServices) {
+    let config_service = services.config.clone();
+    let weather = services.weather.clone();
     let config = config_service.config().clone();
-    let weather = &config.modules.weather;
+    let weather_config = &config.modules.weather;
 
-    spawn_location_watcher(weather);
-    spawn_provider_watcher(weather);
-    spawn_units_watcher(weather);
-    spawn_interval_watcher(weather);
-    spawn_visual_crossing_key_watcher(weather);
-    spawn_weatherapi_key_watcher(weather);
-    spawn_secrets_reload_watcher(&config_service, weather);
+    spawn_location_watcher(weather_config, &weather);
+    spawn_provider_watcher(weather_config, &weather);
+    spawn_units_watcher(weather_config, &weather);
+    spawn_interval_watcher(weather_config, &weather);
+    spawn_visual_crossing_key_watcher(weather_config, &weather);
+    spawn_weatherapi_key_watcher(weather_config, &weather);
+    spawn_secrets_reload_watcher(&config_service, weather_config, &weather);
 }
 
-fn spawn_location_watcher(config: &WeatherConfig) {
+fn spawn_location_watcher(config: &WeatherConfig, weather: &Arc<WeatherService>) {
     let mut stream = config.location.watch();
+    let weather = weather.clone();
 
     tokio::spawn(async move {
         stream.next().await;
 
         while let Some(location) = stream.next().await {
-            let weather = services::get::<WeatherService>();
             weather.set_location(parse_location(&location));
         }
     });
 }
 
-fn spawn_provider_watcher(config: &WeatherConfig) {
+fn spawn_provider_watcher(config: &WeatherConfig, weather: &Arc<WeatherService>) {
     let mut stream = config.provider.watch();
+    let weather = weather.clone();
 
     tokio::spawn(async move {
         stream.next().await;
 
         while let Some(provider) = stream.next().await {
-            let weather = services::get::<WeatherService>();
             let kind = match provider {
                 WeatherProvider::OpenMeteo => wayle_weather::WeatherProviderKind::OpenMeteo,
                 WeatherProvider::VisualCrossing => {
@@ -62,14 +60,14 @@ fn spawn_provider_watcher(config: &WeatherConfig) {
     });
 }
 
-fn spawn_units_watcher(config: &WeatherConfig) {
+fn spawn_units_watcher(config: &WeatherConfig, weather: &Arc<WeatherService>) {
     let mut stream = config.units.watch();
+    let weather = weather.clone();
 
     tokio::spawn(async move {
         stream.next().await;
 
         while let Some(units) = stream.next().await {
-            let weather = services::get::<WeatherService>();
             let units = match units {
                 TemperatureUnit::Metric => wayle_weather::TemperatureUnit::Metric,
                 TemperatureUnit::Imperial => wayle_weather::TemperatureUnit::Imperial,
@@ -79,40 +77,40 @@ fn spawn_units_watcher(config: &WeatherConfig) {
     });
 }
 
-fn spawn_interval_watcher(config: &WeatherConfig) {
+fn spawn_interval_watcher(config: &WeatherConfig, weather: &Arc<WeatherService>) {
     let mut stream = config.refresh_interval_seconds.watch();
+    let weather = weather.clone();
 
     tokio::spawn(async move {
         stream.next().await;
 
         while let Some(interval_secs) = stream.next().await {
-            let weather = services::get::<WeatherService>();
             weather.set_poll_interval(Duration::from_secs(u64::from(interval_secs)));
         }
     });
 }
 
-fn spawn_visual_crossing_key_watcher(config: &WeatherConfig) {
+fn spawn_visual_crossing_key_watcher(config: &WeatherConfig, weather: &Arc<WeatherService>) {
     let mut stream = config.visual_crossing_key.watch();
+    let weather = weather.clone();
 
     tokio::spawn(async move {
         stream.next().await;
 
         while let Some(key) = stream.next().await {
-            let weather = services::get::<WeatherService>();
             weather.set_visual_crossing_key(secrets::resolve(key));
         }
     });
 }
 
-fn spawn_weatherapi_key_watcher(config: &WeatherConfig) {
+fn spawn_weatherapi_key_watcher(config: &WeatherConfig, weather: &Arc<WeatherService>) {
     let mut stream = config.weatherapi_key.watch();
+    let weather = weather.clone();
 
     tokio::spawn(async move {
         stream.next().await;
 
         while let Some(key) = stream.next().await {
-            let weather = services::get::<WeatherService>();
             weather.set_weatherapi_key(secrets::resolve(key));
         }
     });
@@ -121,6 +119,7 @@ fn spawn_weatherapi_key_watcher(config: &WeatherConfig) {
 fn spawn_secrets_reload_watcher(
     config_service: &Arc<ConfigService>,
     weather_config: &WeatherConfig,
+    weather: &Arc<WeatherService>,
 ) {
     let Some(mut rx) = config_service.subscribe_secrets_reload() else {
         return;
@@ -128,10 +127,10 @@ fn spawn_secrets_reload_watcher(
 
     let vc_key = weather_config.visual_crossing_key.clone();
     let wa_key = weather_config.weatherapi_key.clone();
+    let weather = weather.clone();
 
     tokio::spawn(async move {
         while rx.changed().await.is_ok() {
-            let weather = services::get::<WeatherService>();
             weather.set_visual_crossing_key(secrets::resolve(vc_key.get()));
             weather.set_weatherapi_key(secrets::resolve(wa_key.get()));
         }

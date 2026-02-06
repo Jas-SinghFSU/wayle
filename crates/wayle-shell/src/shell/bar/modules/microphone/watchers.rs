@@ -3,7 +3,7 @@ use std::sync::Arc;
 use relm4::ComponentSender;
 use tokio_util::sync::CancellationToken;
 use wayle_audio::{AudioService, core::device::input::InputDevice};
-use wayle_common::{services, watch, watch_cancellable};
+use wayle_common::{watch, watch_cancellable};
 use wayle_config::schemas::modules::MicrophoneConfig;
 
 use super::{MicrophoneModule, messages::MicrophoneCmd};
@@ -11,15 +11,11 @@ use super::{MicrophoneModule, messages::MicrophoneCmd};
 pub(super) fn spawn_watchers(
     sender: &ComponentSender<MicrophoneModule>,
     config: &MicrophoneConfig,
+    audio: &Arc<AudioService>,
 ) {
-    let audio_service = services::get::<AudioService>();
-
-    let default_input = audio_service.default_input.clone();
+    let default_input = audio.default_input.clone();
     watch!(sender, [default_input.watch()], |out| {
-        let audio_service = services::get::<AudioService>();
-        let _ = out.send(MicrophoneCmd::DeviceChanged(
-            audio_service.default_input.get(),
-        ));
+        let _ = out.send(MicrophoneCmd::DeviceChanged(default_input.get()));
     });
 
     let icon_active = config.icon_active.clone();

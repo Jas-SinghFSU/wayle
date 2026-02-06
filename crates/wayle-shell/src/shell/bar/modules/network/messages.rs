@@ -1,7 +1,13 @@
+use std::sync::Arc;
+
+use wayle_config::ConfigService;
+use wayle_network::NetworkService;
 use wayle_widgets::prelude::BarSettings;
 
 pub(crate) struct NetworkInit {
     pub settings: BarSettings,
+    pub network: Arc<NetworkService>,
+    pub config: Arc<ConfigService>,
 }
 
 #[derive(Debug)]

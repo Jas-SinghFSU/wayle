@@ -1,25 +1,29 @@
+use std::sync::Arc;
+
 use relm4::ComponentSender;
 use tokio_util::sync::CancellationToken;
-use wayle_common::{services, watch, watch_cancellable};
+use wayle_common::{watch, watch_cancellable};
 use wayle_config::schemas::modules::NetworkConfig;
 use wayle_network::NetworkService;
 
 use super::{NetworkModule, messages::NetworkCmd};
 
-pub(super) fn spawn_watchers(sender: &ComponentSender<NetworkModule>, config: &NetworkConfig) {
-    let network_service = services::get::<NetworkService>();
-
-    let primary = network_service.primary.clone();
+pub(super) fn spawn_watchers(
+    sender: &ComponentSender<NetworkModule>,
+    config: &NetworkConfig,
+    network: &Arc<NetworkService>,
+) {
+    let primary = network.primary.clone();
     watch!(sender, [primary.watch()], |out| {
         let _ = out.send(NetworkCmd::StateChanged);
     });
 
-    let wifi = network_service.wifi.clone();
+    let wifi = network.wifi.clone();
     watch!(sender, [wifi.watch()], |out| {
         let _ = out.send(NetworkCmd::WifiDeviceChanged);
     });
 
-    let wired = network_service.wired.clone();
+    let wired = network.wired.clone();
     watch!(sender, [wired.watch()], |out| {
         let _ = out.send(NetworkCmd::WiredDeviceChanged);
     });
@@ -29,11 +33,10 @@ pub(super) fn spawn_watchers(sender: &ComponentSender<NetworkModule>, config: &N
 
 pub(super) fn spawn_wifi_watchers(
     sender: &ComponentSender<NetworkModule>,
+    network: &Arc<NetworkService>,
     token: CancellationToken,
 ) {
-    let network_service = services::get::<NetworkService>();
-
-    let Some(wifi) = network_service.wifi.get() else {
+    let Some(wifi) = network.wifi.get() else {
         return;
     };
 
@@ -59,11 +62,10 @@ pub(super) fn spawn_wifi_watchers(
 
 pub(super) fn spawn_wired_watchers(
     sender: &ComponentSender<NetworkModule>,
+    network: &Arc<NetworkService>,
     token: CancellationToken,
 ) {
-    let network_service = services::get::<NetworkService>();
-
-    let Some(wired) = network_service.wired.get() else {
+    let Some(wired) = network.wired.get() else {
         return;
     };
 

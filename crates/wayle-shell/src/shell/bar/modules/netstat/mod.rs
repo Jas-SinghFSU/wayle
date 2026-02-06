@@ -2,10 +2,11 @@ mod helpers;
 mod messages;
 mod watchers;
 
+use std::sync::Arc;
+
 use relm4::prelude::*;
-use wayle_common::{ConfigProperty, process, services};
+use wayle_common::{ConfigProperty, process};
 use wayle_config::{ConfigService, schemas::styling::CssToken};
-use wayle_sysinfo::SysinfoService;
 use wayle_widgets::prelude::{
     BarButton, BarButtonBehavior, BarButtonColors, BarButtonInit, BarButtonInput, BarButtonOutput,
 };
@@ -14,6 +15,7 @@ pub(crate) use self::messages::{NetstatCmd, NetstatInit, NetstatMsg};
 
 pub(crate) struct NetstatModule {
     bar_button: Controller<BarButton>,
+    config: Arc<ConfigService>,
 }
 
 #[relm4::component(pub(crate))]
@@ -35,12 +37,10 @@ impl Component for NetstatModule {
         _root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let config_service = services::get::<ConfigService>();
-        let config = config_service.config();
+        let config = init.config.config();
         let netstat_config = &config.modules.netstat;
 
-        let sysinfo = services::get::<SysinfoService>();
-        let networks = sysinfo.network.get();
+        let networks = init.sysinfo.network.get();
         let interface_config = netstat_config.interface.get();
 
         let initial_label = helpers::select_interface(&networks, &interface_config)
@@ -77,9 +77,12 @@ impl Component for NetstatModule {
                 BarButtonOutput::ScrollDown => NetstatMsg::ScrollDown,
             });
 
-        watchers::spawn_watchers(&sender, netstat_config);
+        watchers::spawn_watchers(&sender, netstat_config, &init.sysinfo);
 
-        let model = Self { bar_button };
+        let model = Self {
+            bar_button,
+            config: init.config,
+        };
         let bar_button = model.bar_button.widget();
         let widgets = view_output!();
 
@@ -87,8 +90,7 @@ impl Component for NetstatModule {
     }
 
     fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, _root: &Self::Root) {
-        let config_service = services::get::<ConfigService>();
-        let netstat_config = &config_service.config().modules.netstat;
+        let netstat_config = &self.config.config().modules.netstat;
 
         let cmd = match msg {
             NetstatMsg::LeftClick => netstat_config.left_click.get(),

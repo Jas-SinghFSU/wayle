@@ -2,8 +2,10 @@ mod helpers;
 mod messages;
 mod watchers;
 
+use std::sync::Arc;
+
 use relm4::prelude::*;
-use wayle_common::{ConfigProperty, process, services};
+use wayle_common::{ConfigProperty, process};
 use wayle_config::{ConfigService, schemas::styling::CssToken};
 use wayle_widgets::{
     prelude::{
@@ -17,6 +19,7 @@ pub(crate) use self::messages::{ClockCmd, ClockInit, ClockMsg};
 
 pub(crate) struct ClockModule {
     bar_button: Controller<BarButton>,
+    config: Arc<ConfigService>,
 }
 
 #[relm4::component(pub(crate))]
@@ -38,8 +41,7 @@ impl Component for ClockModule {
         _root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let config_service = services::get::<ConfigService>();
-        let config = config_service.config();
+        let config = init.config.config();
         let clock = &config.modules.clock;
         let formatted_time = helpers::format_time(&clock.format.get());
 
@@ -75,7 +77,10 @@ impl Component for ClockModule {
 
         watchers::spawn_watchers(&sender, clock);
 
-        let model = Self { bar_button };
+        let model = Self {
+            bar_button,
+            config: init.config,
+        };
         let bar_button = model.bar_button.widget();
         let widgets = view_output!();
 
@@ -83,8 +88,7 @@ impl Component for ClockModule {
     }
 
     fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, _root: &Self::Root) {
-        let config_service = services::get::<ConfigService>();
-        let clock = &config_service.config().modules.clock;
+        let clock = &self.config.config().modules.clock;
 
         let cmd = match msg {
             ClockMsg::LeftClick => clock.left_click.get(),

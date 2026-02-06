@@ -1,16 +1,22 @@
+use std::sync::Arc;
+
 use relm4::{
     ComponentSender,
     gtk::{gdk, prelude::*},
 };
 use tokio::sync::mpsc;
 use tracing::{debug, warn};
-use wayle_common::{SubscribeChanges, services};
+use wayle_common::SubscribeChanges;
 use wayle_config::{ConfigService, schemas::bar::BarLayout};
 
 use crate::shell::bar::{Bar, BarCmd};
 
-pub(crate) fn spawn(sender: &ComponentSender<Bar>, monitor: &gdk::Monitor) {
-    let config = services::get::<ConfigService>().config().clone();
+pub(crate) fn spawn(
+    sender: &ComponentSender<Bar>,
+    monitor: &gdk::Monitor,
+    config_service: &Arc<ConfigService>,
+) {
+    let config = config_service.config().clone();
     let connector = monitor
         .connector()
         .map(|s| s.to_string())

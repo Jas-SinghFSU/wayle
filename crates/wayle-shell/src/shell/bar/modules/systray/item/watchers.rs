@@ -1,7 +1,6 @@
 use std::sync::Arc;
 
-use futures::stream::select;
-use futures::StreamExt;
+use futures::{StreamExt, stream::select};
 use relm4::prelude::FactorySender;
 use tokio_util::sync::CancellationToken;
 use wayle_systray::core::item::TrayItem;

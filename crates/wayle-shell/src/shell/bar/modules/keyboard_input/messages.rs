@@ -1,7 +1,13 @@
+use std::sync::Arc;
+
+use wayle_config::ConfigService;
+use wayle_hyprland::HyprlandService;
 use wayle_widgets::prelude::BarSettings;
 
 pub(crate) struct KeyboardInputInit {
     pub settings: BarSettings,
+    pub hyprland: Option<Arc<HyprlandService>>,
+    pub config: Arc<ConfigService>,
 }
 
 #[derive(Debug)]

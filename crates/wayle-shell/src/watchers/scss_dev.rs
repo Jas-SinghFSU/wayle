@@ -9,16 +9,15 @@ use notify::{Event, RecommendedWatcher, RecursiveMode, Watcher, event::EventKind
 use relm4::ComponentSender;
 use tokio::sync::mpsc;
 use tracing::{debug, error, info};
-use wayle_common::services;
 use wayle_config::ConfigService;
 use wayle_styling::{compile, scss_dir};
 
-use crate::shell::{Shell, ShellCmd};
+use crate::shell::{Shell, ShellCmd, ShellServices};
 
 const DEBOUNCE_DURATION: Duration = Duration::from_millis(100);
 
 /// Spawns the SCSS directory watcher for development hot-reload.
-pub fn spawn(sender: &ComponentSender<Shell>) {
+pub fn spawn(sender: &ComponentSender<Shell>, services: &ShellServices) {
     let scss_path = scss_dir();
 
     let (tx, rx) = mpsc::unbounded_channel();
@@ -44,8 +43,14 @@ pub fn spawn(sender: &ComponentSender<Shell>) {
 
     let watcher = Arc::new(watcher);
     let cmd_sender = sender.command_sender().clone();
+    let config_service = services.config.clone();
 
-    tokio::spawn(run_debounced_event_loop(watcher, rx, cmd_sender));
+    tokio::spawn(run_debounced_event_loop(
+        watcher,
+        rx,
+        cmd_sender,
+        config_service,
+    ));
 }
 
 fn should_reload(event: &Event) -> bool {
@@ -65,6 +70,7 @@ async fn run_debounced_event_loop(
     _watcher: Arc<RecommendedWatcher>,
     mut rx: mpsc::UnboundedReceiver<Event>,
     cmd_sender: relm4::Sender<ShellCmd>,
+    config_service: Arc<ConfigService>,
 ) {
     use tokio::time::{Instant, sleep_until};
 
@@ -86,7 +92,7 @@ async fn run_debounced_event_loop(
             }
             Some(_) => {}
             None if deadline.is_some() => {
-                recompile_css(&cmd_sender);
+                recompile_css(&cmd_sender, &config_service);
                 deadline = None;
             }
             None => break,
@@ -94,8 +100,7 @@ async fn run_debounced_event_loop(
     }
 }
 
-fn recompile_css(cmd_sender: &relm4::Sender<ShellCmd>) {
-    let config_service = services::get::<ConfigService>();
+fn recompile_css(cmd_sender: &relm4::Sender<ShellCmd>, config_service: &ConfigService) {
     let config = config_service.config();
     let palette = config.styling.palette();
 

@@ -2,9 +2,11 @@ mod helpers;
 mod messages;
 mod watchers;
 
+use std::sync::Arc;
+
 use relm4::prelude::*;
 use wayle_bluetooth::BluetoothService;
-use wayle_common::{ConfigProperty, WatcherToken, process, services};
+use wayle_common::{ConfigProperty, WatcherToken, process};
 use wayle_config::{
     ConfigService,
     schemas::{modules::BluetoothConfig, styling::CssToken},
@@ -19,6 +21,8 @@ pub(crate) use self::messages::{BluetoothCmd, BluetoothInit, BluetoothMsg};
 pub(crate) struct BluetoothModule {
     bar_button: Controller<BarButton>,
     adapter_watcher: WatcherToken,
+    bluetooth: Arc<BluetoothService>,
+    config: Arc<ConfigService>,
 }
 
 #[relm4::component(pub(crate))]
@@ -40,11 +44,10 @@ impl Component for BluetoothModule {
         _root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let config_service = services::get::<ConfigService>();
-        let config = config_service.config();
+        let config = init.config.config();
         let bt_config = &config.modules.bluetooth;
 
-        let (initial_icon, initial_label) = Self::compute_display(bt_config);
+        let (initial_icon, initial_label) = Self::compute_display(bt_config, &init.bluetooth);
 
         let bar_button = BarButton::builder()
             .launch(BarButtonInit {
@@ -76,14 +79,16 @@ impl Component for BluetoothModule {
                 BarButtonOutput::ScrollDown => BluetoothMsg::ScrollDown,
             });
 
-        watchers::spawn_watchers(&sender, bt_config);
+        watchers::spawn_watchers(&sender, bt_config, &init.bluetooth);
 
         let mut adapter_watcher = WatcherToken::new();
-        watchers::spawn_adapter_watchers(&sender, adapter_watcher.reset());
+        watchers::spawn_adapter_watchers(&sender, adapter_watcher.reset(), &init.bluetooth);
 
         let model = Self {
             bar_button,
             adapter_watcher,
+            bluetooth: init.bluetooth,
+            config: init.config,
         };
         let bar_button = model.bar_button.widget();
         let widgets = view_output!();
@@ -92,8 +97,7 @@ impl Component for BluetoothModule {
     }
 
     fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, _root: &Self::Root) {
-        let config_service = services::get::<ConfigService>();
-        let config = &config_service.config().modules.bluetooth;
+        let config = &self.config.config().modules.bluetooth;
 
         let cmd = match msg {
             BluetoothMsg::LeftClick => config.left_click.get(),
@@ -107,20 +111,19 @@ impl Component for BluetoothModule {
     }
 
     fn update_cmd(&mut self, msg: BluetoothCmd, sender: ComponentSender<Self>, _root: &Self::Root) {
-        let config_service = services::get::<ConfigService>();
-        let bt_config = &config_service.config().modules.bluetooth;
+        let bt_config = &self.config.config().modules.bluetooth;
 
         match msg {
             BluetoothCmd::StateChanged | BluetoothCmd::IconConfigChanged => {
-                let (icon, label) = Self::compute_display(bt_config);
+                let (icon, label) = Self::compute_display(bt_config, &self.bluetooth);
                 self.bar_button.emit(BarButtonInput::SetIcon(icon));
                 self.bar_button.emit(BarButtonInput::SetLabel(label));
             }
             BluetoothCmd::AdapterChanged => {
                 let token = self.adapter_watcher.reset();
-                watchers::spawn_adapter_watchers(&sender, token);
+                watchers::spawn_adapter_watchers(&sender, token, &self.bluetooth);
 
-                let (icon, label) = Self::compute_display(bt_config);
+                let (icon, label) = Self::compute_display(bt_config, &self.bluetooth);
                 self.bar_button.emit(BarButtonInput::SetIcon(icon));
                 self.bar_button.emit(BarButtonInput::SetLabel(label));
             }
@@ -129,9 +132,7 @@ impl Component for BluetoothModule {
 }
 
 impl BluetoothModule {
-    fn compute_display(config: &BluetoothConfig) -> (String, String) {
-        let bt = services::get::<BluetoothService>();
-
+    fn compute_display(config: &BluetoothConfig, bt: &BluetoothService) -> (String, String) {
         let available = bt.available.get();
         let enabled = bt.enabled.get();
         let devices = bt.devices.get();

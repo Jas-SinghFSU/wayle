@@ -3,7 +3,7 @@ use std::sync::Arc;
 use futures::StreamExt;
 use relm4::ComponentSender;
 use tracing::warn;
-use wayle_common::{ConfigProperty, services, watch};
+use wayle_common::{ConfigProperty, watch};
 use wayle_config::schemas::modules::KeyboardInputConfig;
 use wayle_hyprland::{HyprlandEvent, HyprlandService};
 
@@ -13,16 +13,18 @@ use crate::shell::bar::modules::keyboard_input::KeyboardInputCmd;
 pub(super) fn spawn_watchers(
     sender: &ComponentSender<HyprlandKeyboardInput>,
     config: &KeyboardInputConfig,
+    hyprland: &Option<Arc<HyprlandService>>,
 ) {
-    spawn_layout_watcher(sender, config);
+    spawn_layout_watcher(sender, config, hyprland);
     spawn_config_watchers(sender, config);
 }
 
 fn spawn_layout_watcher(
     sender: &ComponentSender<HyprlandKeyboardInput>,
     config: &KeyboardInputConfig,
+    hyprland: &Option<Arc<HyprlandService>>,
 ) {
-    let Some(hyprland) = services::try_get::<HyprlandService>() else {
+    let Some(hyprland) = hyprland.clone() else {
         warn!(
             service = "HyprlandService",
             module = "keyboard-input",

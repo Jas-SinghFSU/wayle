@@ -8,16 +8,16 @@ use factory::*;
 use gtk::prelude::*;
 use gtk4_layer_shell::{Layer, LayerShell};
 use relm4::{factory::FactoryVecDeque, gtk, gtk::gdk, prelude::*};
-use wayle_common::{ConfigProperty, services};
-use wayle_config::{
-    ConfigService,
-    schemas::bar::{BarItem, BarLayout, Location},
-};
+use wayle_common::ConfigProperty;
+use wayle_config::schemas::bar::{BarItem, BarLayout, Location};
 use wayle_widgets::{prelude::BarSettings, styling::InlineStyling};
+
+use crate::shell::services::ShellServices;
 
 pub(crate) struct Bar {
     location: Location,
     settings: BarSettings,
+    services: ShellServices,
     layout: BarLayout,
     css_provider: gtk::CssProvider,
 
@@ -26,9 +26,9 @@ pub(crate) struct Bar {
     right: FactoryVecDeque<BarItemFactory>,
 }
 
-#[derive(Debug)]
 pub(crate) struct BarInit {
     pub(crate) monitor: gdk::Monitor,
+    pub(crate) services: ShellServices,
 }
 
 #[derive(Debug)]
@@ -83,8 +83,7 @@ impl Component for Bar {
         root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let config_service = services::get::<ConfigService>();
-        let config = config_service.config();
+        let config = init.services.config.config();
         let location = config.bar.location.get();
         let inset_edge = config.bar.inset_edge.get().value();
         let inset_ends = config.bar.inset_ends.get().value();
@@ -130,12 +129,13 @@ impl Component for Bar {
         root.style_context()
             .add_provider(&css_provider, gtk::STYLE_PROVIDER_PRIORITY_USER);
 
-        watchers::layout::spawn(&sender, &init.monitor);
-        watchers::location::spawn(&sender);
+        watchers::layout::spawn(&sender, &init.monitor, &init.services.config);
+        watchers::location::spawn(&sender, &init.services.config);
 
         let model = Self {
             location,
             settings,
+            services: init.services,
             layout: BarLayout {
                 monitor: String::new(),
                 extends: None,
@@ -197,15 +197,16 @@ impl Bar {
         }
 
         let settings = &self.settings;
+        let services = &self.services;
 
         if self.layout.left != new_layout.left {
-            Self::rebuild_section(&mut self.left, &new_layout.left, settings);
+            Self::rebuild_section(&mut self.left, &new_layout.left, settings, services);
         }
         if self.layout.center != new_layout.center {
-            Self::rebuild_section(&mut self.center, &new_layout.center, settings);
+            Self::rebuild_section(&mut self.center, &new_layout.center, settings, services);
         }
         if self.layout.right != new_layout.right {
-            Self::rebuild_section(&mut self.right, &new_layout.right, settings);
+            Self::rebuild_section(&mut self.right, &new_layout.right, settings, services);
         }
 
         self.layout = new_layout;
@@ -215,6 +216,7 @@ impl Bar {
         factory: &mut FactoryVecDeque<BarItemFactory>,
         items: &[BarItem],
         settings: &BarSettings,
+        services: &ShellServices,
     ) {
         let mut guard = factory.guard();
         guard.clear();
@@ -223,6 +225,7 @@ impl Bar {
             guard.push_back(BarItemFactoryInit {
                 item: item.clone(),
                 settings: settings.clone(),
+                services: services.clone(),
             });
         }
     }

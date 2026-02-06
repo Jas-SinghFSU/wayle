@@ -24,7 +24,7 @@ pub(crate) fn select_icon(ctx: &IconContext<'_>) -> String {
     }
 
     if ctx.level_icons.is_empty() {
-        return String::new();
+        return ctx.alert_icon.to_string();
     }
 
     let index = ((ctx.percentage / 100.0) * ctx.level_icons.len() as f64)
@@ -116,7 +116,7 @@ mod tests {
     }
 
     #[test]
-    fn select_icon_empty_level_icons() {
+    fn select_icon_empty_level_icons_uses_alert() {
         let result = select_icon(&IconContext {
             percentage: 50.0,
             state: DeviceState::Discharging,
@@ -125,7 +125,7 @@ mod tests {
             charging_icon: "charging",
             alert_icon: "alert",
         });
-        assert_eq!(result, "");
+        assert_eq!(result, "alert");
     }
 
     #[test]

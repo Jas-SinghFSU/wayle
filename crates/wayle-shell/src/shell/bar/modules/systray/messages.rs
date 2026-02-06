@@ -1,10 +1,13 @@
 use std::sync::Arc;
 
 use wayle_common::ConfigProperty;
-use wayle_systray::core::item::TrayItem;
+use wayle_config::ConfigService;
+use wayle_systray::{SystemTrayService, core::item::TrayItem};
 
 pub(crate) struct SystrayInit {
     pub is_vertical: ConfigProperty<bool>,
+    pub systray: Arc<SystemTrayService>,
+    pub config: Arc<ConfigService>,
 }
 
 #[derive(Debug)]

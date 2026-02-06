@@ -1,7 +1,13 @@
+use std::sync::Arc;
+
+use wayle_config::ConfigService;
+use wayle_sysinfo::SysinfoService;
 use wayle_widgets::prelude::BarSettings;
 
 pub(crate) struct CpuInit {
     pub settings: BarSettings,
+    pub sysinfo: Arc<SysinfoService>,
+    pub config: Arc<ConfigService>,
 }
 
 #[derive(Debug)]

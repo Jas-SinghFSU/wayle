@@ -3,7 +3,7 @@ use std::sync::Arc;
 use futures::StreamExt;
 use relm4::ComponentSender;
 use tracing::warn;
-use wayle_common::{services, watch};
+use wayle_common::watch;
 use wayle_config::schemas::modules::KeybindModeConfig;
 use wayle_hyprland::{HyprlandEvent, HyprlandService};
 
@@ -13,13 +13,18 @@ use crate::shell::bar::modules::keybind_mode::messages::KeybindModeCmd;
 pub(super) fn spawn_watchers(
     sender: &ComponentSender<HyprlandKeybindMode>,
     config: &KeybindModeConfig,
+    hyprland: &Option<Arc<HyprlandService>>,
 ) {
-    spawn_mode_watcher(sender, config);
+    spawn_mode_watcher(sender, config, hyprland);
     spawn_config_watchers(sender, config);
 }
 
-fn spawn_mode_watcher(sender: &ComponentSender<HyprlandKeybindMode>, config: &KeybindModeConfig) {
-    let Some(hyprland) = services::try_get::<HyprlandService>() else {
+fn spawn_mode_watcher(
+    sender: &ComponentSender<HyprlandKeybindMode>,
+    config: &KeybindModeConfig,
+    hyprland: &Option<Arc<HyprlandService>>,
+) {
+    let Some(hyprland) = hyprland.clone() else {
         warn!(
             service = "HyprlandService",
             module = "keybind-mode",

@@ -1,9 +1,13 @@
+use std::sync::Arc;
+
+use wayle_config::ConfigService;
 use wayle_widgets::prelude::BarSettings;
 
 use super::helpers::HyprsunsetState;
 
 pub(crate) struct HyprsunsetInit {
     pub settings: BarSettings,
+    pub config: Arc<ConfigService>,
 }
 
 #[derive(Debug)]

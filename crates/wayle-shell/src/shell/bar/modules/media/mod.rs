@@ -2,9 +2,11 @@ mod helpers;
 mod messages;
 mod watchers;
 
+use std::sync::Arc;
+
 use gtk::prelude::WidgetExt;
 use relm4::prelude::*;
-use wayle_common::{ConfigProperty, WatcherToken, process, services};
+use wayle_common::{ConfigProperty, WatcherToken, process};
 use wayle_config::{
     ConfigService,
     schemas::{modules::MediaIconType, styling::CssToken},
@@ -18,7 +20,9 @@ pub(crate) use self::messages::{MediaCmd, MediaInit, MediaMsg};
 
 pub(crate) struct MediaModule {
     bar_button: Controller<BarButton>,
+    config: Arc<ConfigService>,
     active_player_watcher_token: WatcherToken,
+    media: Arc<MediaService>,
 }
 
 #[relm4::component(pub(crate))]
@@ -40,8 +44,7 @@ impl Component for MediaModule {
         _root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let config_service = services::get::<ConfigService>();
-        let config = config_service.config();
+        let config = init.config.config();
         let media_config = &config.modules.media;
 
         let bar_button = BarButton::builder()
@@ -74,11 +77,13 @@ impl Component for MediaModule {
                 BarButtonOutput::ScrollDown => MediaMsg::ScrollDown,
             });
 
-        watchers::spawn_watchers(&sender, media_config);
+        watchers::spawn_watchers(&sender, media_config, &init.media);
 
         let model = Self {
             bar_button,
+            config: init.config,
             active_player_watcher_token: WatcherToken::new(),
+            media: init.media,
         };
         let bar_button = model.bar_button.widget();
         let widgets = view_output!();
@@ -87,8 +92,7 @@ impl Component for MediaModule {
     }
 
     fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, _root: &Self::Root) {
-        let config_service = services::get::<ConfigService>();
-        let config = &config_service.config().modules.media;
+        let config = &self.config.config().modules.media;
 
         let cmd = match msg {
             MediaMsg::LeftClick => config.left_click.get(),
@@ -102,8 +106,7 @@ impl Component for MediaModule {
     }
 
     fn update_cmd(&mut self, msg: MediaCmd, sender: ComponentSender<Self>, root: &Self::Root) {
-        let config_service = services::get::<ConfigService>();
-        let media_config = &config_service.config().modules.media;
+        let media_config = &self.config.config().modules.media;
 
         match msg {
             MediaCmd::PlayerChanged(player) => {
@@ -132,15 +135,13 @@ impl Component for MediaModule {
                 }
             }
             MediaCmd::MetadataChanged => {
-                let media_service = services::get::<MediaService>();
-                if let Some(player) = media_service.active_player() {
+                if let Some(player) = self.media.active_player() {
                     let label = helpers::build_label(media_config, &player);
                     self.bar_button.emit(BarButtonInput::SetLabel(label));
                 }
             }
             MediaCmd::PlaybackStateChanged => {
-                let media_service = services::get::<MediaService>();
-                if let Some(player) = media_service.active_player() {
+                if let Some(player) = self.media.active_player() {
                     let label = helpers::build_label(media_config, &player);
                     self.bar_button.emit(BarButtonInput::SetLabel(label));
                     let state = player.playback_state.get();
@@ -151,12 +152,11 @@ impl Component for MediaModule {
                 self.bar_button.emit(BarButtonInput::SetIcon(icon));
             }
             MediaCmd::IconTypeChanged => {
-                let media_service = services::get::<MediaService>();
-                let use_disc = media_service.active_player().is_some()
+                let use_disc = self.media.active_player().is_some()
                     && media_config.icon_type.get() == MediaIconType::SpinningDisc;
                 Self::update_disc_mode(root, use_disc);
 
-                if let Some(player) = media_service.active_player() {
+                if let Some(player) = self.media.active_player() {
                     let icon = helpers::build_icon(media_config, &player);
                     self.bar_button.emit(BarButtonInput::SetIcon(icon));
 

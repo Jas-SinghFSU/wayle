@@ -1,5 +1,7 @@
+use std::sync::Arc;
+
 use relm4::ComponentSender;
-use wayle_common::{ConfigProperty, services, watch};
+use wayle_common::{ConfigProperty, watch};
 use wayle_config::ConfigService;
 use wayle_systray::SystemTrayService;
 
@@ -8,11 +10,12 @@ use super::{SystrayCmd, SystrayModule};
 pub(super) fn spawn_watchers(
     sender: &ComponentSender<SystrayModule>,
     is_vertical: &ConfigProperty<bool>,
+    systray: &Arc<SystemTrayService>,
+    config_service: &Arc<ConfigService>,
 ) {
-    let systray = services::get::<SystemTrayService>();
-    let config_service = services::get::<ConfigService>();
-    let systray_config = &config_service.config().modules.systray;
-    let bar_config = &config_service.config().bar;
+    let full_config = config_service.config();
+    let systray_config = &full_config.modules.systray;
+    let bar_config = &full_config.bar;
 
     let items = systray.items.clone();
     let blacklist = systray_config.blacklist.clone();

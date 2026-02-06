@@ -1,8 +1,10 @@
 mod watchers;
 
+use std::sync::Arc;
+
 use relm4::{gtk::prelude::*, prelude::*};
 use tracing::warn;
-use wayle_common::{ConfigProperty, process, services};
+use wayle_common::{ConfigProperty, process};
 use wayle_config::{ConfigService, schemas::styling::CssToken};
 use wayle_hyprland::HyprlandService;
 use wayle_widgets::{
@@ -17,9 +19,11 @@ use super::{
     helpers,
     messages::{KeybindModeCmd, KeybindModeInit, KeybindModeMsg},
 };
+use crate::i18n::t;
 
 pub(crate) struct HyprlandKeybindMode {
     bar_button: Controller<BarButton>,
+    config: Arc<ConfigService>,
     current_mode: String,
 }
 
@@ -42,11 +46,10 @@ impl Component for HyprlandKeybindMode {
         _root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let config_service = services::get::<ConfigService>();
-        let config = config_service.config();
+        let config = init.config.config();
         let mode_config = &config.modules.keybind_mode;
 
-        let initial_mode = Self::initial_mode();
+        let initial_mode = Self::initial_mode(&init.hyprland);
         let formatted_label = helpers::format_label(&mode_config.format.get(), &initial_mode);
 
         let bar_button = BarButton::builder()
@@ -79,10 +82,11 @@ impl Component for HyprlandKeybindMode {
                 BarButtonOutput::ScrollDown => KeybindModeMsg::ScrollDown,
             });
 
-        watchers::spawn_watchers(&sender, mode_config);
+        watchers::spawn_watchers(&sender, mode_config, &init.hyprland);
 
         let model = Self {
             bar_button,
+            config: init.config,
             current_mode: initial_mode,
         };
         let bar_button = model.bar_button.widget();
@@ -92,8 +96,7 @@ impl Component for HyprlandKeybindMode {
     }
 
     fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, _root: &Self::Root) {
-        let config_service = services::get::<ConfigService>();
-        let mode_config = &config_service.config().modules.keybind_mode;
+        let mode_config = &self.config.config().modules.keybind_mode;
 
         let cmd = match msg {
             KeybindModeMsg::LeftClick => mode_config.left_click.get(),
@@ -118,13 +121,11 @@ impl Component for HyprlandKeybindMode {
                 self.update_display(&format, root);
             }
             KeybindModeCmd::FormatChanged => {
-                let config_service = services::get::<ConfigService>();
-                let format = config_service.config().modules.keybind_mode.format.get();
+                let format = self.config.config().modules.keybind_mode.format.get();
                 self.update_display(&format, root);
             }
             KeybindModeCmd::AutoHideChanged => {
-                let config_service = services::get::<ConfigService>();
-                let auto_hide = config_service.config().modules.keybind_mode.auto_hide.get();
+                let auto_hide = self.config.config().modules.keybind_mode.auto_hide.get();
                 let visible = helpers::compute_visibility(&self.current_mode, auto_hide);
                 if let Some(parent) = root.parent() {
                     parent.set_visible(visible);
@@ -140,8 +141,7 @@ impl Component for HyprlandKeybindMode {
 
 impl HyprlandKeybindMode {
     fn update_display(&self, format: &str, root: &gtk::Box) {
-        let config_service = services::get::<ConfigService>();
-        let auto_hide = config_service.config().modules.keybind_mode.auto_hide.get();
+        let auto_hide = self.config.config().modules.keybind_mode.auto_hide.get();
 
         let label = helpers::format_label(format, &self.current_mode);
         self.bar_button.emit(BarButtonInput::SetLabel(label));
@@ -154,10 +154,13 @@ impl HyprlandKeybindMode {
         force_window_resize(root);
     }
 
-    fn initial_mode() -> String {
-        let Some(hyprland) = services::try_get::<HyprlandService>() else {
-            warn!(service = "HyprlandService", "unavailable, using empty mode");
-            return String::new();
+    fn initial_mode(hyprland: &Option<Arc<HyprlandService>>) -> String {
+        let Some(hyprland) = hyprland else {
+            warn!(
+                service = "HyprlandService",
+                "unavailable, using default mode"
+            );
+            return t!("bar-keybind-mode-default");
         };
 
         let runtime = tokio::runtime::Handle::current();
@@ -165,7 +168,7 @@ impl HyprlandKeybindMode {
             Ok(mode) => mode,
             Err(err) => {
                 warn!(error = %err, "cannot get current keybind mode");
-                String::new()
+                t!("bar-keybind-mode-default")
             }
         }
     }

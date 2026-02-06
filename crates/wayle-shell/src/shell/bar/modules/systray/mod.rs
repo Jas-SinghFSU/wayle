@@ -11,7 +11,7 @@ use helpers::is_blacklisted;
 use item::{SystrayItem, SystrayItemInit};
 pub(crate) use messages::{SystrayCmd, SystrayInit, SystrayMsg};
 use relm4::{ComponentParts, ComponentSender, factory::FactoryVecDeque, gtk, prelude::*};
-use wayle_common::{ConfigProperty, services};
+use wayle_common::ConfigProperty;
 use wayle_config::ConfigService;
 use wayle_systray::core::item::TrayItem;
 use wayle_widgets::prelude::{
@@ -23,6 +23,7 @@ pub(crate) struct SystrayModule {
     items: FactoryVecDeque<SystrayItem>,
     css_provider: gtk::CssProvider,
     visible: ConfigProperty<bool>,
+    config: Arc<ConfigService>,
 }
 
 #[relm4::component(pub(crate))]
@@ -47,10 +48,10 @@ impl Component for SystrayModule {
         _root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let config_service = services::get::<ConfigService>();
-        let config = &config_service.config().modules.systray;
-        let styling_config = &config_service.config().styling;
-        let bar_config = &config_service.config().bar;
+        let full_config = init.config.config();
+        let config = &full_config.modules.systray;
+        let styling_config = &full_config.styling;
+        let bar_config = &full_config.bar;
 
         let visible = ConfigProperty::new(false);
 
@@ -80,15 +81,16 @@ impl Component for SystrayModule {
             .launch(gtk::Box::new(orientation, 0))
             .detach();
 
-        let css_provider = styling::init_css_provider(items.widget());
+        let css_provider = styling::init_css_provider(items.widget(), &init.config);
 
-        watchers::spawn_watchers(&sender, &init.is_vertical);
+        watchers::spawn_watchers(&sender, &init.is_vertical, &init.systray, &init.config);
 
         let model = Self {
             container,
             items,
             css_provider,
             visible,
+            config: init.config,
         };
         let container = model.container.widget();
         let items_box = model.items.widget();
@@ -112,7 +114,7 @@ impl Component for SystrayModule {
                 force_window_resize(root);
             }
             SystrayCmd::StylingChanged => {
-                styling::reload_css(&self.css_provider);
+                styling::reload_css(&self.css_provider, &self.config);
                 force_window_resize(root);
             }
             SystrayCmd::OrientationChanged(vertical) => {
@@ -130,8 +132,7 @@ impl Component for SystrayModule {
 
 impl SystrayModule {
     fn update_items(&mut self, items: Vec<Arc<TrayItem>>) {
-        let config_service = services::get::<ConfigService>();
-        let config = &config_service.config().modules.systray;
+        let config = &self.config.config().modules.systray;
 
         let mut guard = self.items.guard();
         guard.clear();
@@ -140,7 +141,10 @@ impl SystrayModule {
             if is_blacklisted(&item, config) {
                 continue;
             }
-            guard.push_back(SystrayItemInit { item });
+            guard.push_back(SystrayItemInit {
+                item,
+                config: self.config.clone(),
+            });
         }
 
         self.visible.set(!guard.is_empty());

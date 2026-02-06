@@ -2,8 +2,10 @@ mod helpers;
 mod messages;
 mod watchers;
 
+use std::sync::Arc;
+
 use relm4::prelude::*;
-use wayle_common::{ConfigProperty, process, services};
+use wayle_common::{ConfigProperty, process};
 use wayle_config::{ConfigService, schemas::styling::CssToken};
 use wayle_widgets::{
     prelude::{
@@ -17,6 +19,7 @@ pub(crate) use self::messages::{WorldClockCmd, WorldClockInit, WorldClockMsg};
 
 pub(crate) struct WorldClockModule {
     bar_button: Controller<BarButton>,
+    config: Arc<ConfigService>,
 }
 
 #[relm4::component(pub(crate))]
@@ -38,8 +41,7 @@ impl Component for WorldClockModule {
         _root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let config_service = services::get::<ConfigService>();
-        let config = config_service.config();
+        let config = init.config.config();
         let world_clock = &config.modules.world_clock;
         let label = helpers::format_world_clock(&world_clock.format.get());
 
@@ -75,7 +77,10 @@ impl Component for WorldClockModule {
 
         watchers::spawn_watchers(&sender, world_clock);
 
-        let model = Self { bar_button };
+        let model = Self {
+            bar_button,
+            config: init.config,
+        };
         let bar_button = model.bar_button.widget();
         let widgets = view_output!();
 
@@ -83,8 +88,7 @@ impl Component for WorldClockModule {
     }
 
     fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, _root: &Self::Root) {
-        let config_service = services::get::<ConfigService>();
-        let world_clock = &config_service.config().modules.world_clock;
+        let world_clock = &self.config.config().modules.world_clock;
 
         let cmd = match msg {
             WorldClockMsg::LeftClick => world_clock.left_click.get(),

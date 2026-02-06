@@ -1,5 +1,7 @@
+use std::sync::Arc;
+
 use relm4::ComponentSender;
-use wayle_common::{ConfigProperty, services, watch};
+use wayle_common::{ConfigProperty, watch};
 use wayle_config::ConfigService;
 
 use super::{SeparatorCmd, SeparatorModule};
@@ -8,11 +10,12 @@ use super::{SeparatorCmd, SeparatorModule};
 pub(super) fn spawn_watchers(
     sender: &ComponentSender<SeparatorModule>,
     is_vertical: ConfigProperty<bool>,
+    config_service: &Arc<ConfigService>,
 ) {
-    let config_service = services::get::<ConfigService>();
-    let sep_config = &config_service.config().modules.separator;
-    let bar_config = &config_service.config().bar;
-    let styling = &config_service.config().styling;
+    let full_config = config_service.config();
+    let sep_config = &full_config.modules.separator;
+    let bar_config = &full_config.bar;
+    let styling = &full_config.styling;
 
     let size = sep_config.size.clone();
     let length = sep_config.length.clone();

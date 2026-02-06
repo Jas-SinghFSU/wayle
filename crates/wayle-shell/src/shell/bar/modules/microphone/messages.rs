@@ -1,10 +1,13 @@
 use std::sync::Arc;
 
-use wayle_audio::core::device::input::InputDevice;
+use wayle_audio::{AudioService, core::device::input::InputDevice};
+use wayle_config::ConfigService;
 use wayle_widgets::prelude::BarSettings;
 
 pub(crate) struct MicrophoneInit {
     pub settings: BarSettings,
+    pub audio: Arc<AudioService>,
+    pub config: Arc<ConfigService>,
 }
 
 #[derive(Debug)]

@@ -1,5 +1,7 @@
+use std::sync::Arc;
+
 use relm4::ComponentSender;
-use wayle_common::{services, watch};
+use wayle_common::watch;
 use wayle_config::schemas::modules::NotificationConfig;
 use wayle_notification::NotificationService;
 
@@ -8,20 +10,17 @@ use super::{NotificationModule, messages::NotificationCmd};
 pub(super) fn spawn_watchers(
     sender: &ComponentSender<NotificationModule>,
     config: &NotificationConfig,
+    notification: &Arc<NotificationService>,
 ) {
-    let notification_service = services::get::<NotificationService>();
-
-    let notifications = notification_service.notifications.clone();
+    let notifications = notification.notifications.clone();
     watch!(sender, [notifications.watch()], |out| {
-        let service = services::get::<NotificationService>();
-        let count = service.notifications.get().len();
+        let count = notifications.get().len();
         let _ = out.send(NotificationCmd::NotificationsChanged(count));
     });
 
-    let dnd = notification_service.dnd.clone();
+    let dnd = notification.dnd.clone();
     watch!(sender, [dnd.watch()], |out| {
-        let service = services::get::<NotificationService>();
-        let _ = out.send(NotificationCmd::DndChanged(service.dnd.get()));
+        let _ = out.send(NotificationCmd::DndChanged(dnd.get()));
     });
 
     let icon_name = config.icon_name.clone();

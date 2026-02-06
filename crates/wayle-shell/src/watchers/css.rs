@@ -1,21 +1,22 @@
 //! CSS hot-reload watcher.
 
-use futures::StreamExt;
+use futures::{
+    StreamExt,
+    stream::{self, BoxStream},
+};
 use relm4::ComponentSender;
-use wayle_common::{services, watch, watchers::changes_stream};
-use wayle_config::{ConfigService, schemas::styling::ThemeProvider};
+use wayle_common::{watch, watchers::changes_stream};
+use wayle_config::schemas::styling::ThemeProvider;
 use wayle_styling::compile;
-use wayle_wallpaper::WallpaperService;
 
-use crate::shell::{Shell, ShellCmd, ShellInput};
+use crate::shell::{Shell, ShellCmd, ShellInput, ShellServices};
 
 /// Spawns the CSS hot-reload watcher.
 ///
 /// Watches styling config properties and color extraction events. Recompiles
 /// CSS only when switching to Wayle provider or after extraction completes.
-pub fn spawn(sender: &ComponentSender<Shell>) {
-    let config = services::get::<ConfigService>().config().clone();
-    let wallpaper_service = services::get::<WallpaperService>();
+pub fn spawn(sender: &ComponentSender<Shell>, services: &ShellServices) {
+    let config = services.config.config().clone();
 
     if let Ok(css) = compile_css(&config) {
         sender.input_sender().send(ShellInput::ReloadCss(css)).ok();
@@ -33,7 +34,10 @@ pub fn spawn(sender: &ComponentSender<Shell>) {
         .watch()
         .filter(|provider| std::future::ready(*provider == ThemeProvider::Wayle));
 
-    let extraction_stream = wallpaper_service.watch_extraction();
+    let extraction_stream: BoxStream<'static, ()> = match &services.wallpaper {
+        Some(ws) => ws.watch_extraction().boxed(),
+        None => stream::pending().boxed(),
+    };
 
     let config_clone = config.clone();
     watch!(sender,

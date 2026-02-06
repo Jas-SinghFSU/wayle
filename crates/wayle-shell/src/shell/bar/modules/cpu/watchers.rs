@@ -1,14 +1,17 @@
-use std::time::Duration;
+use std::{sync::Arc, time::Duration};
 
 use relm4::ComponentSender;
-use wayle_common::{services, watch};
+use wayle_common::watch;
 use wayle_config::schemas::modules::CpuConfig;
 use wayle_sysinfo::SysinfoService;
 
 use super::{CpuModule, helpers::format_label, messages::CpuCmd};
 
-pub(super) fn spawn_watchers(sender: &ComponentSender<CpuModule>, config: &CpuConfig) {
-    let sysinfo = services::get::<SysinfoService>();
+pub(super) fn spawn_watchers(
+    sender: &ComponentSender<CpuModule>,
+    config: &CpuConfig,
+    sysinfo: &Arc<SysinfoService>,
+) {
     let format = config.format.clone();
 
     let sysinfo_cpu = sysinfo.clone();
@@ -38,7 +41,8 @@ pub(super) fn spawn_watchers(sender: &ComponentSender<CpuModule>, config: &CpuCo
     });
 
     let poll_interval = config.poll_interval_ms.clone();
+    let sysinfo_interval = sysinfo.clone();
     watch!(sender, [poll_interval.watch()], |_out| {
-        sysinfo.set_cpu_interval(Duration::from_millis(poll_interval.get()));
+        sysinfo_interval.set_cpu_interval(Duration::from_millis(poll_interval.get()));
     });
 }

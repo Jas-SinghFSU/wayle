@@ -1,14 +1,18 @@
+use std::sync::Arc;
+
 use relm4::ComponentSender;
 use tokio_util::sync::CancellationToken;
 use wayle_bluetooth::BluetoothService;
-use wayle_common::{services, watch, watch_cancellable};
+use wayle_common::{watch, watch_cancellable};
 use wayle_config::schemas::modules::BluetoothConfig;
 
 use super::{BluetoothModule, messages::BluetoothCmd};
 
-pub(super) fn spawn_watchers(sender: &ComponentSender<BluetoothModule>, config: &BluetoothConfig) {
-    let bt = services::get::<BluetoothService>();
-
+pub(super) fn spawn_watchers(
+    sender: &ComponentSender<BluetoothModule>,
+    config: &BluetoothConfig,
+    bt: &Arc<BluetoothService>,
+) {
     let available = bt.available.clone();
     let enabled = bt.enabled.clone();
     let connected = bt.connected.clone();
@@ -54,9 +58,8 @@ pub(super) fn spawn_watchers(sender: &ComponentSender<BluetoothModule>, config: 
 pub(super) fn spawn_adapter_watchers(
     sender: &ComponentSender<BluetoothModule>,
     token: CancellationToken,
+    bt: &Arc<BluetoothService>,
 ) {
-    let bt = services::get::<BluetoothService>();
-
     if let Some(adapter) = bt.primary_adapter.get() {
         let discovering = adapter.discovering.clone();
         watch_cancellable!(sender, token, [discovering.watch()], |out| {

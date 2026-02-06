@@ -1,12 +1,17 @@
+use std::sync::Arc;
+
 use relm4::ComponentSender;
-use wayle_common::{services, watch};
+use wayle_common::watch;
 use wayle_config::schemas::modules::RamConfig;
 use wayle_sysinfo::SysinfoService;
 
 use super::{RamModule, helpers::format_label, messages::RamCmd};
 
-pub(super) fn spawn_watchers(sender: &ComponentSender<RamModule>, config: &RamConfig) {
-    let sysinfo = services::get::<SysinfoService>();
+pub(super) fn spawn_watchers(
+    sender: &ComponentSender<RamModule>,
+    config: &RamConfig,
+    sysinfo: &Arc<SysinfoService>,
+) {
     let format = config.format.clone();
 
     let sysinfo_memory = sysinfo.clone();

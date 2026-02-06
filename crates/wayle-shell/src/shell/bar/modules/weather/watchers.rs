@@ -1,5 +1,7 @@
+use std::sync::Arc;
+
 use relm4::ComponentSender;
-use wayle_common::{services, watch};
+use wayle_common::watch;
 use wayle_config::schemas::modules::WeatherConfig;
 use wayle_weather::WeatherService;
 
@@ -9,15 +11,20 @@ use super::{
     messages::WeatherCmd,
 };
 
-pub(super) fn spawn_watchers(sender: &ComponentSender<WeatherModule>, config: &WeatherConfig) {
-    spawn_weather_watcher(sender, config);
+pub(super) fn spawn_watchers(
+    sender: &ComponentSender<WeatherModule>,
+    config: &WeatherConfig,
+    weather: &Arc<WeatherService>,
+) {
+    spawn_weather_watcher(sender, config, weather);
 }
 
-fn spawn_weather_watcher(sender: &ComponentSender<WeatherModule>, config: &WeatherConfig) {
-    let Some(weather_service) = services::try_get::<WeatherService>() else {
-        return;
-    };
-    let weather_prop = weather_service.weather.clone();
+fn spawn_weather_watcher(
+    sender: &ComponentSender<WeatherModule>,
+    config: &WeatherConfig,
+    weather: &Arc<WeatherService>,
+) {
+    let weather_prop = weather.weather.clone();
     let units_config = config.units.clone();
     let format_config = config.format.clone();
     let fallback_icon = config.icon_name.clone();

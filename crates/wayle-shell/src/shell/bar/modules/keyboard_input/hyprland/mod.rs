@@ -1,8 +1,10 @@
 mod watchers;
 
+use std::sync::Arc;
+
 use relm4::prelude::*;
 use tracing::warn;
-use wayle_common::{ConfigProperty, process, services};
+use wayle_common::{ConfigProperty, process};
 use wayle_config::{ConfigService, schemas::styling::CssToken};
 use wayle_hyprland::HyprlandService;
 use wayle_widgets::{
@@ -20,6 +22,7 @@ use super::{
 
 pub(crate) struct HyprlandKeyboardInput {
     bar_button: Controller<BarButton>,
+    config: Arc<ConfigService>,
     current_layout: String,
 }
 
@@ -42,11 +45,10 @@ impl Component for HyprlandKeyboardInput {
         _root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let config_service = services::get::<ConfigService>();
-        let config = config_service.config();
+        let config = init.config.config();
         let keyboard_input = &config.modules.keyboard_input;
 
-        let initial_layout = initial_layout();
+        let initial_layout = initial_layout(&init.hyprland);
         let formatted_label = helpers::format_label(&keyboard_input.format.get(), &initial_layout);
 
         let bar_button = BarButton::builder()
@@ -79,10 +81,11 @@ impl Component for HyprlandKeyboardInput {
                 BarButtonOutput::ScrollDown => KeyboardInputMsg::ScrollDown,
             });
 
-        watchers::spawn_watchers(&sender, keyboard_input);
+        watchers::spawn_watchers(&sender, keyboard_input, &init.hyprland);
 
         let model = Self {
             bar_button,
+            config: init.config,
             current_layout: initial_layout,
         };
         let bar_button = model.bar_button.widget();
@@ -92,8 +95,7 @@ impl Component for HyprlandKeyboardInput {
     }
 
     fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, _root: &Self::Root) {
-        let config_service = services::get::<ConfigService>();
-        let keyboard_input = &config_service.config().modules.keyboard_input;
+        let keyboard_input = &self.config.config().modules.keyboard_input;
 
         let cmd = match msg {
             KeyboardInputMsg::LeftClick => keyboard_input.left_click.get(),
@@ -118,8 +120,7 @@ impl Component for HyprlandKeyboardInput {
                 self.update_label(&format, root);
             }
             KeyboardInputCmd::FormatChanged => {
-                let config_service = services::get::<ConfigService>();
-                let format = config_service.config().modules.keyboard_input.format.get();
+                let format = self.config.config().modules.keyboard_input.format.get();
                 self.update_label(&format, root);
             }
             KeyboardInputCmd::UpdateIcon(icon) => {
@@ -137,8 +138,8 @@ impl HyprlandKeyboardInput {
     }
 }
 
-fn initial_layout() -> String {
-    let Some(hyprland) = services::try_get::<HyprlandService>() else {
+fn initial_layout(hyprland: &Option<Arc<HyprlandService>>) -> String {
+    let Some(hyprland) = hyprland else {
         warn!(
             service = "HyprlandService",
             "unavailable, using fallback layout"

@@ -1,6 +1,8 @@
+use std::sync::Arc;
+
 use relm4::ComponentSender;
 use wayle_battery::BatteryService;
-use wayle_common::{services, watch};
+use wayle_common::watch;
 use wayle_config::schemas::modules::BatteryConfig;
 
 use super::{
@@ -9,13 +11,16 @@ use super::{
     messages::BatteryCmd,
 };
 
-pub(super) fn spawn_watchers(sender: &ComponentSender<BatteryModule>, config: &BatteryConfig) {
+pub(super) fn spawn_watchers(
+    sender: &ComponentSender<BatteryModule>,
+    config: &BatteryConfig,
+    battery: &Arc<BatteryService>,
+) {
     let level_icons = config.level_icons.clone();
     let charging_icon = config.charging_icon.clone();
     let alert_icon = config.alert_icon.clone();
 
-    let battery_service = services::get::<BatteryService>();
-    let device = battery_service.device.clone();
+    let device = battery.device.clone();
 
     let percentage_stream = device.percentage.watch();
     let state_stream = device.state.watch();

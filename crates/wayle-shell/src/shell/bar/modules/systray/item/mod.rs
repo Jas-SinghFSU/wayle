@@ -13,7 +13,6 @@ use relm4::{
 };
 use tokio_util::sync::CancellationToken;
 use tracing::debug;
-use wayle_common::services;
 use wayle_config::ConfigService;
 use wayle_systray::{
     adapters::gtk4::{Adapter, TrayMenuModel},
@@ -25,10 +24,12 @@ use super::helpers::find_override;
 
 pub(super) struct SystrayItemInit {
     pub(super) item: Arc<TrayItem>,
+    pub(super) config: Arc<ConfigService>,
 }
 
 pub(super) struct SystrayItem {
     item: Arc<TrayItem>,
+    config: Arc<ConfigService>,
     button: Option<gtk::Button>,
     icon: Option<gtk::Image>,
     popover: Option<gtk::PopoverMenu>,
@@ -76,6 +77,7 @@ impl FactoryComponent for SystrayItem {
     ) -> Self {
         Self {
             item: init.item,
+            config: init.config,
             button: None,
             icon: None,
             popover: None,
@@ -301,8 +303,7 @@ impl SystrayItem {
     }
 
     fn update_icon(&self, image: &gtk::Image) {
-        let config_service = services::get::<ConfigService>();
-        let overrides = config_service.config().modules.systray.overrides.get();
+        let overrides = self.config.config().modules.systray.overrides.get();
         let override_match = find_override(&self.item, &overrides);
 
         let icon_name = override_match

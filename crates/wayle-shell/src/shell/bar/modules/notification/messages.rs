@@ -1,7 +1,13 @@
+use std::sync::Arc;
+
+use wayle_config::ConfigService;
+use wayle_notification::NotificationService;
 use wayle_widgets::prelude::BarSettings;
 
 pub(crate) struct NotificationInit {
     pub settings: BarSettings,
+    pub notification: Arc<NotificationService>,
+    pub config: Arc<ConfigService>,
 }
 
 #[derive(Debug)]

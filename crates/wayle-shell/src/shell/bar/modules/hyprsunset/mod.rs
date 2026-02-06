@@ -2,9 +2,11 @@ mod helpers;
 mod messages;
 mod watchers;
 
+use std::sync::Arc;
+
 use relm4::prelude::*;
 use tracing::debug;
-use wayle_common::{ConfigProperty, process, services};
+use wayle_common::{ConfigProperty, process};
 use wayle_config::{ConfigService, schemas::styling::CssToken};
 use wayle_widgets::prelude::{
     BarButton, BarButtonBehavior, BarButtonColors, BarButtonInit, BarButtonInput, BarButtonOutput,
@@ -15,6 +17,7 @@ pub(crate) use self::messages::{HyprsunsetCmd, HyprsunsetInit, HyprsunsetMsg};
 
 pub(crate) struct HyprsunsetModule {
     bar_button: Controller<BarButton>,
+    config: Arc<ConfigService>,
     enabled: bool,
     current_temp: u32,
     current_gamma: u32,
@@ -39,8 +42,8 @@ impl Component for HyprsunsetModule {
         _root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let config_service = services::get::<ConfigService>();
-        let config = &config_service.config().modules.hyprsunset;
+        let config_service = init.config;
+        let config = config_service.config().modules.hyprsunset.clone();
 
         let bar_button = BarButton::builder()
             .launch(BarButtonInit {
@@ -72,11 +75,12 @@ impl Component for HyprsunsetModule {
                 BarButtonOutput::ScrollDown => HyprsunsetMsg::ScrollDown,
             });
 
-        watchers::spawn_config_watchers(&sender, config);
+        watchers::spawn_config_watchers(&sender, &config);
         watchers::spawn_state_watcher(&sender);
 
         let model = Self {
             bar_button,
+            config: config_service,
             enabled: false,
             current_temp: config.temperature.get(),
             current_gamma: config.gamma.get(),
@@ -88,8 +92,7 @@ impl Component for HyprsunsetModule {
     }
 
     fn update(&mut self, msg: Self::Input, sender: ComponentSender<Self>, _root: &Self::Root) {
-        let config_service = services::get::<ConfigService>();
-        let config = &config_service.config().modules.hyprsunset;
+        let config = &self.config.config().modules.hyprsunset;
 
         match msg {
             HyprsunsetMsg::LeftClick => {
@@ -113,8 +116,7 @@ impl Component for HyprsunsetModule {
         _sender: ComponentSender<Self>,
         _root: &Self::Root,
     ) {
-        let config_service = services::get::<ConfigService>();
-        let config = &config_service.config().modules.hyprsunset;
+        let config = &self.config.config().modules.hyprsunset;
 
         match msg {
             HyprsunsetCmd::ConfigChanged => {

@@ -1,9 +1,10 @@
 //! Synchronizes theme provider config with wallpaper service color extractor.
 
 use futures::StreamExt;
-use wayle_common::services;
-use wayle_config::{ConfigService, schemas::styling::ThemeProvider};
-use wayle_wallpaper::{WallpaperService, types::ColorExtractor};
+use wayle_config::schemas::styling::ThemeProvider;
+use wayle_wallpaper::types::ColorExtractor;
+
+use crate::shell::ShellServices;
 
 fn map_to_extractor(provider: ThemeProvider) -> ColorExtractor {
     match provider {
@@ -14,9 +15,12 @@ fn map_to_extractor(provider: ThemeProvider) -> ColorExtractor {
     }
 }
 
-pub(crate) fn spawn() {
-    let config_service = services::get::<ConfigService>();
-    let wallpaper = services::get::<WallpaperService>();
+pub(crate) fn spawn(services: &ShellServices) {
+    let Some(wallpaper) = services.wallpaper.clone() else {
+        return;
+    };
+
+    let config_service = services.config.clone();
     let theme_provider = config_service.config().styling.theme_provider.clone();
 
     let initial = theme_provider.get();

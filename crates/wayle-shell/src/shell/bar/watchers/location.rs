@@ -1,11 +1,13 @@
+use std::sync::Arc;
+
 use relm4::ComponentSender;
-use wayle_common::{services, watch, watchers::changes_stream};
+use wayle_common::{watch, watchers::changes_stream};
 use wayle_config::ConfigService;
 
 use crate::shell::bar::{Bar, BarCmd};
 
-pub(crate) fn spawn(sender: &ComponentSender<Bar>) {
-    let config = services::get::<ConfigService>().config().clone();
+pub(crate) fn spawn(sender: &ComponentSender<Bar>, config_service: &Arc<ConfigService>) {
+    let config = config_service.config().clone();
     let location_prop = config.bar.location.clone();
 
     watch!(sender, [changes_stream(&config.bar.location)], |out| {

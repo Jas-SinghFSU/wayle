@@ -2,19 +2,20 @@ use std::sync::Arc;
 
 use relm4::ComponentSender;
 use tokio_util::sync::CancellationToken;
-use wayle_common::{services, watch, watch_cancellable};
+use wayle_common::{watch, watch_cancellable};
 use wayle_config::schemas::modules::{MediaConfig, MediaIconType};
 use wayle_media::{MediaService, core::player::Player};
 
 use super::{MediaModule, messages::MediaCmd};
 
-pub(super) fn spawn_watchers(sender: &ComponentSender<MediaModule>, config: &MediaConfig) {
-    let media_service = services::get::<MediaService>();
-
-    let active_stream = media_service.active_player.watch();
-    watch!(sender, [active_stream], |out| {
-        let media_service = services::get::<MediaService>();
-        let _ = out.send(MediaCmd::PlayerChanged(media_service.active_player()));
+pub(super) fn spawn_watchers(
+    sender: &ComponentSender<MediaModule>,
+    config: &MediaConfig,
+    media: &Arc<MediaService>,
+) {
+    let active_player = media.active_player.clone();
+    watch!(sender, [active_player.watch()], |out| {
+        let _ = out.send(MediaCmd::PlayerChanged(active_player.get()));
     });
 
     let format = config.format.clone();

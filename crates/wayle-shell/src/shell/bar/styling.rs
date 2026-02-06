@@ -2,11 +2,8 @@
 
 use relm4::{ComponentSender, gtk};
 use tokio::sync::mpsc;
-use wayle_common::{SubscribeChanges, services};
-use wayle_config::{
-    ConfigService,
-    schemas::{bar::BorderLocation, styling::ThemeProvider},
-};
+use wayle_common::SubscribeChanges;
+use wayle_config::schemas::{bar::BorderLocation, styling::ThemeProvider};
 use wayle_widgets::styling::{InlineStyling, resolve_color};
 
 use super::{Bar, BarCmd};
@@ -29,7 +26,7 @@ impl InlineStyling for Bar {
     }
 
     fn spawn_style_watcher(&self, sender: &Self::Sender) {
-        let config = services::get::<ConfigService>().config().clone();
+        let config = self.services.config.config().clone();
         let bar = &config.bar;
 
         let (tx, mut rx) = mpsc::unbounded_channel();
@@ -75,8 +72,7 @@ impl InlineStyling for Bar {
     }
 
     fn build_css(&self) -> String {
-        let config_service = services::get::<ConfigService>();
-        let config = config_service.config();
+        let config = self.services.config.config();
         let bar = &config.bar;
         let styling = &config.styling;
         let is_wayle = matches!(styling.theme_provider.get(), ThemeProvider::Wayle);

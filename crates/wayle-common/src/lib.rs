@@ -1,7 +1,7 @@
 //! Common utilities and types shared across Wayle services.
 //!
 //! Provides reusable components including property watchers, macros,
-//! runtime state management, and the global service registry.
+//! and runtime state management.
 
 mod diagnostic;
 /// Glob pattern matching utilities.
@@ -14,8 +14,6 @@ pub mod macros;
 /// Shell command execution utilities.
 pub mod process;
 mod property;
-/// Global service registry for dependency injection.
-pub mod services;
 /// Shared constants for wayle-shell IPC.
 pub mod shell;
 mod state;

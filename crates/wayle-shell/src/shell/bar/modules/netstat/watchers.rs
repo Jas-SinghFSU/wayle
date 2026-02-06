@@ -1,12 +1,17 @@
+use std::sync::Arc;
+
 use relm4::ComponentSender;
-use wayle_common::{services, watch};
+use wayle_common::watch;
 use wayle_config::schemas::modules::NetstatConfig;
 use wayle_sysinfo::SysinfoService;
 
 use super::{NetstatModule, helpers, messages::NetstatCmd};
 
-pub(super) fn spawn_watchers(sender: &ComponentSender<NetstatModule>, config: &NetstatConfig) {
-    let sysinfo = services::get::<SysinfoService>();
+pub(super) fn spawn_watchers(
+    sender: &ComponentSender<NetstatModule>,
+    config: &NetstatConfig,
+    sysinfo: &Arc<SysinfoService>,
+) {
     let format = config.format.clone();
     let interface = config.interface.clone();
 

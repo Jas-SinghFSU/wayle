@@ -1,14 +1,17 @@
-use std::path::Path;
+use std::{path::Path, sync::Arc};
 
 use relm4::ComponentSender;
-use wayle_common::{services, watch};
+use wayle_common::watch;
 use wayle_config::schemas::modules::StorageConfig;
 use wayle_sysinfo::SysinfoService;
 
 use super::{StorageModule, helpers::format_label, messages::StorageCmd};
 
-pub(super) fn spawn_watchers(sender: &ComponentSender<StorageModule>, config: &StorageConfig) {
-    let sysinfo = services::get::<SysinfoService>();
+pub(super) fn spawn_watchers(
+    sender: &ComponentSender<StorageModule>,
+    config: &StorageConfig,
+    sysinfo: &Arc<SysinfoService>,
+) {
     let format = config.format.clone();
     let mount_point = config.mount_point.clone();
 

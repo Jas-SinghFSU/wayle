@@ -2,8 +2,11 @@ mod messages;
 mod styling;
 mod watchers;
 
+use std::sync::Arc;
+
 use gtk4::prelude::OrientableExt;
 use relm4::prelude::*;
+use wayle_config::ConfigService;
 
 pub(crate) use self::messages::{SeparatorCmd, SeparatorInit};
 
@@ -12,6 +15,7 @@ pub(crate) struct SeparatorModule {
     separator: gtk::Separator,
     css_provider: gtk::CssProvider,
     is_vertical: bool,
+    config: Arc<ConfigService>,
 }
 
 #[relm4::component(pub(crate))]
@@ -46,12 +50,13 @@ impl Component for SeparatorModule {
             separator: separator.clone(),
             css_provider: gtk::CssProvider::new(),
             is_vertical,
+            config: init.config.clone(),
         };
         let widgets = view_output!();
 
         styling::init_css_provider(&model.separator, &model.css_provider);
-        styling::apply_styling(&model.css_provider, model.is_vertical);
-        watchers::spawn_watchers(&sender, init.is_vertical);
+        styling::apply_styling(&model.css_provider, model.is_vertical, &init.config);
+        watchers::spawn_watchers(&sender, init.is_vertical, &init.config);
 
         ComponentParts { model, widgets }
     }
@@ -64,11 +69,11 @@ impl Component for SeparatorModule {
     ) {
         match msg {
             SeparatorCmd::StylingChanged => {
-                styling::apply_styling(&self.css_provider, self.is_vertical);
+                styling::apply_styling(&self.css_provider, self.is_vertical, &self.config);
             }
             SeparatorCmd::OrientationChanged(is_vertical) => {
                 self.is_vertical = is_vertical;
-                styling::apply_styling(&self.css_provider, self.is_vertical);
+                styling::apply_styling(&self.css_provider, self.is_vertical, &self.config);
             }
         }
     }

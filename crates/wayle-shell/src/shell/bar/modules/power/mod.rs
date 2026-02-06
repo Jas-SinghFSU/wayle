@@ -1,8 +1,10 @@
 mod messages;
 mod watchers;
 
+use std::sync::Arc;
+
 use relm4::prelude::*;
-use wayle_common::{ConfigProperty, process, services};
+use wayle_common::{ConfigProperty, process};
 use wayle_config::{ConfigService, schemas::styling::CssToken};
 use wayle_widgets::prelude::{
     BarButton, BarButtonBehavior, BarButtonColors, BarButtonInit, BarButtonInput, BarButtonOutput,
@@ -13,6 +15,7 @@ pub(crate) use self::messages::{PowerCmd, PowerInit, PowerMsg};
 
 pub(crate) struct PowerModule {
     bar_button: Controller<BarButton>,
+    config: Arc<ConfigService>,
 }
 
 #[relm4::component(pub(crate))]
@@ -34,8 +37,7 @@ impl Component for PowerModule {
         _root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let config_service = services::get::<ConfigService>();
-        let config = config_service.config();
+        let config = init.config.config();
         let power = &config.modules.power;
 
         let bar_button = BarButton::builder()
@@ -72,7 +74,10 @@ impl Component for PowerModule {
 
         watchers::spawn_watchers(&sender, power);
 
-        let model = Self { bar_button };
+        let model = Self {
+            bar_button,
+            config: init.config,
+        };
         let bar_button = model.bar_button.widget();
         let widgets = view_output!();
 
@@ -80,8 +85,7 @@ impl Component for PowerModule {
     }
 
     fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, _root: &Self::Root) {
-        let config_service = services::get::<ConfigService>();
-        let power = &config_service.config().modules.power;
+        let power = &self.config.config().modules.power;
 
         let cmd = match msg {
             PowerMsg::LeftClick => String::new(),
@@ -97,8 +101,7 @@ impl Component for PowerModule {
     fn update_cmd(&mut self, msg: PowerCmd, _sender: ComponentSender<Self>, _root: &Self::Root) {
         match msg {
             PowerCmd::IconConfigChanged => {
-                let config_service = services::get::<ConfigService>();
-                let power = &config_service.config().modules.power;
+                let power = &self.config.config().modules.power;
                 self.bar_button
                     .emit(BarButtonInput::SetIcon(power.icon_name.get()));
             }

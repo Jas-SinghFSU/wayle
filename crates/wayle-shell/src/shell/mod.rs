@@ -1,5 +1,6 @@
 mod bar;
 mod helpers;
+pub(crate) mod services;
 
 use std::{
     collections::{HashMap, HashSet, hash_map::Entry},
@@ -15,6 +16,7 @@ use relm4::{
     gtk::{gdk, prelude::*},
     prelude::*,
 };
+pub(crate) use services::ShellServices;
 use tracing::{debug, info, warn};
 
 use crate::{
@@ -31,6 +33,12 @@ const BASE_RETRY_DELAY_MS: u64 = 50;
 pub(crate) struct Shell {
     css_provider: CssProvider,
     bars: HashMap<String, Controller<Bar>>,
+    services: ShellServices,
+}
+
+pub(crate) struct ShellInit {
+    pub(crate) timer: StartupTimer,
+    pub(crate) services: ShellServices,
 }
 
 #[derive(Debug)]
@@ -46,7 +54,7 @@ pub(crate) enum ShellCmd {
 
 #[relm4::component(pub(crate))]
 impl Component for Shell {
-    type Init = StartupTimer;
+    type Init = ShellInit;
     type Input = ShellInput;
     type Output = ();
     type CommandOutput = ShellCmd;
@@ -60,11 +68,11 @@ impl Component for Shell {
 
     #[allow(clippy::expect_used)]
     fn init(
-        timer: Self::Init,
+        init: Self::Init,
         root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        timer.print_gtk_overhead();
+        init.timer.print_gtk_overhead();
         let start = Instant::now();
 
         root.init_layer_shell();
@@ -76,10 +84,10 @@ impl Component for Shell {
 
         helpers::init_icons();
         helpers::register_app_actions();
-        watchers::init(&sender);
+        watchers::init(&sender, &init.services);
 
-        let css_provider = helpers::init_css_provider(&display);
-        let bars = helpers::create_bars();
+        let css_provider = helpers::init_css_provider(&display, &init.services.config);
+        let bars = helpers::create_bars(&init.services);
 
         let elapsed = start.elapsed();
         eprintln!(
@@ -89,9 +97,13 @@ impl Component for Shell {
         );
         info!(elapsed_ms = elapsed.as_millis(), "Shell initialized");
 
-        timer.finish();
+        init.timer.finish();
 
-        let model = Shell { css_provider, bars };
+        let model = Shell {
+            css_provider,
+            bars,
+            services: init.services,
+        };
         let widgets = view_output!();
 
         ComponentParts { model, widgets }
@@ -187,7 +199,12 @@ impl Shell {
         for (connector, monitor) in monitors {
             if let Entry::Vacant(entry) = self.bars.entry(connector) {
                 info!(connector = %entry.key(), "Creating bar for monitor");
-                let bar = Bar::builder().launch(BarInit { monitor }).detach();
+                let bar = Bar::builder()
+                    .launch(BarInit {
+                        monitor,
+                        services: self.services.clone(),
+                    })
+                    .detach();
                 entry.insert(bar);
             }
         }

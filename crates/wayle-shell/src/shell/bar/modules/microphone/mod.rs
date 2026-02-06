@@ -2,9 +2,11 @@ mod helpers;
 mod messages;
 mod watchers;
 
+use std::sync::Arc;
+
 use relm4::prelude::*;
 use wayle_audio::{AudioService, core::device::input::InputDevice};
-use wayle_common::{ConfigProperty, WatcherToken, process, services};
+use wayle_common::{ConfigProperty, WatcherToken, process};
 use wayle_config::{
     ConfigService,
     schemas::{modules::MicrophoneConfig, styling::CssToken},
@@ -18,7 +20,9 @@ pub(crate) use self::messages::{MicrophoneCmd, MicrophoneInit, MicrophoneMsg};
 
 pub(crate) struct MicrophoneModule {
     bar_button: Controller<BarButton>,
+    config: Arc<ConfigService>,
     active_device_watcher_token: WatcherToken,
+    audio: Arc<AudioService>,
 }
 
 #[relm4::component(pub(crate))]
@@ -40,8 +44,7 @@ impl Component for MicrophoneModule {
         _root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let config_service = services::get::<ConfigService>();
-        let config = config_service.config();
+        let config = init.config.config();
         let mic_config = &config.modules.microphone;
 
         let initial_icon = mic_config.icon_muted.get();
@@ -76,11 +79,13 @@ impl Component for MicrophoneModule {
                 BarButtonOutput::ScrollDown => MicrophoneMsg::ScrollDown,
             });
 
-        watchers::spawn_watchers(&sender, mic_config);
+        watchers::spawn_watchers(&sender, mic_config, &init.audio);
 
         let model = Self {
             bar_button,
+            config: init.config,
             active_device_watcher_token: WatcherToken::new(),
+            audio: init.audio,
         };
         let bar_button = model.bar_button.widget();
         let widgets = view_output!();
@@ -89,8 +94,7 @@ impl Component for MicrophoneModule {
     }
 
     fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, _root: &Self::Root) {
-        let config_service = services::get::<ConfigService>();
-        let config = &config_service.config().modules.microphone;
+        let config = &self.config.config().modules.microphone;
 
         let cmd = match msg {
             MicrophoneMsg::LeftClick => config.left_click.get(),
@@ -109,8 +113,7 @@ impl Component for MicrophoneModule {
         sender: ComponentSender<Self>,
         _root: &Self::Root,
     ) {
-        let config_service = services::get::<ConfigService>();
-        let mic_config = &config_service.config().modules.microphone;
+        let mic_config = &self.config.config().modules.microphone;
 
         match msg {
             MicrophoneCmd::DeviceChanged(device) => {
@@ -122,8 +125,7 @@ impl Component for MicrophoneModule {
                 }
             }
             MicrophoneCmd::VolumeOrMuteChanged | MicrophoneCmd::IconConfigChanged => {
-                let audio_service = services::get::<AudioService>();
-                if let Some(device) = audio_service.default_input.get() {
+                if let Some(device) = self.audio.default_input.get() {
                     self.update_display(mic_config, &device);
                 }
             }
