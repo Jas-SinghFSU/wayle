@@ -1,9 +1,11 @@
+mod factory;
 mod helpers;
 mod messages;
 mod watchers;
 
 use std::sync::Arc;
 
+use gtk::prelude::*;
 use relm4::prelude::*;
 use wayle_common::{ConfigProperty, process};
 use wayle_config::{ConfigService, schemas::styling::CssToken};
@@ -15,7 +17,10 @@ use wayle_widgets::{
     utils::force_window_resize,
 };
 
-pub(crate) use self::messages::{WeatherCmd, WeatherInit, WeatherMsg};
+pub(crate) use self::{
+    factory::Factory,
+    messages::{WeatherCmd, WeatherInit, WeatherMsg},
+};
 
 pub(crate) struct WeatherModule {
     bar_button: Controller<BarButton>,
@@ -31,6 +36,8 @@ impl Component for WeatherModule {
 
     view! {
         gtk::Box {
+            add_css_class: "weather",
+
             #[local_ref]
             bar_button -> gtk::MenuButton {},
         }

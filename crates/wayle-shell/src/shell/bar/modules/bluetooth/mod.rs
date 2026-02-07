@@ -1,9 +1,11 @@
+mod factory;
 mod helpers;
 mod messages;
 mod watchers;
 
 use std::sync::Arc;
 
+use gtk::prelude::*;
 use relm4::prelude::*;
 use wayle_bluetooth::BluetoothService;
 use wayle_common::{ConfigProperty, WatcherToken, process};
@@ -16,7 +18,10 @@ use wayle_widgets::prelude::{
 };
 
 use self::helpers::{BluetoothContext, format_label, select_icon};
-pub(crate) use self::messages::{BluetoothCmd, BluetoothInit, BluetoothMsg};
+pub(crate) use self::{
+    factory::Factory,
+    messages::{BluetoothCmd, BluetoothInit, BluetoothMsg},
+};
 
 pub(crate) struct BluetoothModule {
     bar_button: Controller<BarButton>,
@@ -34,6 +39,8 @@ impl Component for BluetoothModule {
 
     view! {
         gtk::Box {
+            add_css_class: "bluetooth",
+
             #[local_ref]
             bar_button -> gtk::MenuButton {},
         }

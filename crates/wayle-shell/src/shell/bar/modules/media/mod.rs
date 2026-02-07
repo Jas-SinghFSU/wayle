@@ -1,3 +1,4 @@
+mod factory;
 mod helpers;
 mod messages;
 mod watchers;
@@ -16,7 +17,10 @@ use wayle_widgets::prelude::{
     BarButton, BarButtonBehavior, BarButtonColors, BarButtonInit, BarButtonInput, BarButtonOutput,
 };
 
-pub(crate) use self::messages::{MediaCmd, MediaInit, MediaMsg};
+pub(crate) use self::{
+    factory::Factory,
+    messages::{MediaCmd, MediaInit, MediaMsg},
+};
 
 pub(crate) struct MediaModule {
     bar_button: Controller<BarButton>,
@@ -34,6 +38,8 @@ impl Component for MediaModule {
 
     view! {
         gtk::Box {
+            add_css_class: "media",
+
             #[local_ref]
             bar_button -> gtk::MenuButton {},
         }

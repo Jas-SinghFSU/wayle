@@ -1,3 +1,4 @@
+mod factory;
 mod helpers;
 mod item;
 mod messages;
@@ -9,13 +10,17 @@ use std::sync::Arc;
 use gtk4::prelude::{OrientableExt, WidgetExt};
 use helpers::is_blacklisted;
 use item::{SystrayItem, SystrayItemInit};
-pub(crate) use messages::{SystrayCmd, SystrayInit, SystrayMsg};
 use relm4::{ComponentParts, ComponentSender, factory::FactoryVecDeque, gtk, prelude::*};
 use wayle_common::ConfigProperty;
 use wayle_config::ConfigService;
 use wayle_systray::core::item::TrayItem;
 use wayle_widgets::prelude::{
     BarContainer, BarContainerBehavior, BarContainerColors, BarContainerInit, force_window_resize,
+};
+
+pub(crate) use self::{
+    factory::Factory,
+    messages::{SystrayCmd, SystrayInit, SystrayMsg},
 };
 
 pub(crate) struct SystrayModule {
@@ -35,6 +40,8 @@ impl Component for SystrayModule {
 
     view! {
         gtk::Box {
+            add_css_class: "systray",
+
             #[local_ref]
             container -> gtk::Box {
                 #[local_ref]

@@ -1,14 +1,18 @@
+mod factory;
 mod messages;
 mod styling;
 mod watchers;
 
 use std::sync::Arc;
 
-use gtk4::prelude::OrientableExt;
+use gtk::prelude::*;
 use relm4::prelude::*;
 use wayle_config::ConfigService;
 
-pub(crate) use self::messages::{SeparatorCmd, SeparatorInit};
+pub(crate) use self::{
+    factory::Factory,
+    messages::{SeparatorCmd, SeparatorInit},
+};
 
 /// Visual separator displayed between bar modules.
 pub(crate) struct SeparatorModule {
@@ -27,6 +31,7 @@ impl Component for SeparatorModule {
 
     view! {
         gtk::Box {
+            add_css_class: "separator",
             set_expand: true,
             set_align: gtk::Align::Center,
 

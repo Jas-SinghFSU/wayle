@@ -1,9 +1,11 @@
+mod factory;
 mod helpers;
 mod messages;
 mod watchers;
 
 use std::sync::Arc;
 
+use gtk::prelude::*;
 use relm4::prelude::*;
 use wayle_common::{ConfigProperty, process};
 use wayle_config::{ConfigService, schemas::styling::CssToken};
@@ -15,7 +17,10 @@ use wayle_widgets::{
     utils::force_window_resize,
 };
 
-pub(crate) use self::messages::{ClockCmd, ClockInit, ClockMsg};
+pub(crate) use self::{
+    factory::Factory,
+    messages::{ClockCmd, ClockInit, ClockMsg},
+};
 
 pub(crate) struct ClockModule {
     bar_button: Controller<BarButton>,
@@ -31,6 +36,7 @@ impl Component for ClockModule {
 
     view! {
         gtk::Box {
+            add_css_class: "clock",
             #[local_ref]
             bar_button -> gtk::MenuButton {},
         }

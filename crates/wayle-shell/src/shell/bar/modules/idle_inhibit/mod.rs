@@ -1,3 +1,4 @@
+mod factory;
 mod helpers;
 mod messages;
 mod watchers;
@@ -14,7 +15,10 @@ use wayle_widgets::prelude::{
 };
 
 use self::helpers::LabelContext;
-pub(crate) use self::messages::{IdleInhibitCmd, IdleInhibitInit, IdleInhibitMsg};
+pub(crate) use self::{
+    factory::Factory,
+    messages::{IdleInhibitCmd, IdleInhibitInit, IdleInhibitMsg},
+};
 use crate::services::idle_inhibit::IdleInhibitState;
 
 pub(crate) struct IdleInhibitModule {
@@ -33,6 +37,8 @@ impl Component for IdleInhibitModule {
 
     view! {
         gtk::Box {
+            add_css_class: "idle-inhibit",
+
             #[local_ref]
             bar_button -> gtk::MenuButton {},
         }

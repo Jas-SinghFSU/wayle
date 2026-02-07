@@ -2,6 +2,7 @@ mod watchers;
 
 use std::sync::Arc;
 
+use gtk::prelude::*;
 use relm4::prelude::*;
 use tracing::warn;
 use wayle_common::{ConfigProperty, process};
@@ -35,6 +36,8 @@ impl Component for HyprlandKeyboardInput {
 
     view! {
         gtk::Box {
+            add_css_class: "keyboard-input",
+
             #[local_ref]
             bar_button -> gtk::MenuButton {},
         }

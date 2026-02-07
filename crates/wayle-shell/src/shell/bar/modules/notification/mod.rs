@@ -1,9 +1,11 @@
+mod factory;
 mod helpers;
 mod messages;
 mod watchers;
 
 use std::sync::Arc;
 
+use gtk::prelude::*;
 use relm4::prelude::*;
 use wayle_common::{ConfigProperty, process};
 use wayle_config::{
@@ -15,7 +17,10 @@ use wayle_widgets::prelude::{
 };
 
 use self::helpers::{IconContext, format_label, select_icon};
-pub(crate) use self::messages::{NotificationCmd, NotificationInit, NotificationMsg};
+pub(crate) use self::{
+    factory::Factory,
+    messages::{NotificationCmd, NotificationInit, NotificationMsg},
+};
 
 pub(crate) struct NotificationModule {
     bar_button: Controller<BarButton>,
@@ -33,6 +38,8 @@ impl Component for NotificationModule {
 
     view! {
         gtk::Box {
+            add_css_class: "notification",
+
             #[local_ref]
             bar_button -> gtk::MenuButton {},
         }

@@ -1,9 +1,11 @@
+mod factory;
 mod helpers;
 mod messages;
 mod watchers;
 
 use std::sync::Arc;
 
+use gtk::prelude::*;
 use relm4::prelude::*;
 use wayle_common::{ConfigProperty, WatcherToken, process};
 use wayle_config::{
@@ -16,7 +18,10 @@ use wayle_widgets::prelude::{
 };
 
 use self::helpers::{WifiContext, WiredContext, wifi_icon, wifi_label, wired_icon, wired_label};
-pub(crate) use self::messages::{NetworkCmd, NetworkInit, NetworkMsg};
+pub(crate) use self::{
+    factory::Factory,
+    messages::{NetworkCmd, NetworkInit, NetworkMsg},
+};
 
 pub(crate) struct NetworkModule {
     bar_button: Controller<BarButton>,
@@ -35,6 +40,8 @@ impl Component for NetworkModule {
 
     view! {
         gtk::Box {
+            add_css_class: "network",
+
             #[local_ref]
             bar_button -> gtk::MenuButton {},
         }

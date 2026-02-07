@@ -2,6 +2,7 @@ mod watchers;
 
 use std::sync::Arc;
 
+use gtk::prelude::*;
 use relm4::prelude::*;
 use tokio::runtime::Handle;
 use tracing::warn;
@@ -38,6 +39,8 @@ impl Component for HyprlandWindowTitle {
 
     view! {
         gtk::Box {
+            add_css_class: "window-title",
+
             #[local_ref]
             bar_button -> gtk::MenuButton {},
         }

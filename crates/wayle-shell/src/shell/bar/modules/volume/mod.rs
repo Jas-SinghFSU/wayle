@@ -1,9 +1,11 @@
+mod factory;
 mod helpers;
 mod messages;
 mod watchers;
 
 use std::sync::Arc;
 
+use gtk::prelude::*;
 use relm4::prelude::*;
 use wayle_audio::{AudioService, core::device::output::OutputDevice};
 use wayle_common::{ConfigProperty, WatcherToken, process};
@@ -16,7 +18,10 @@ use wayle_widgets::prelude::{
 };
 
 use self::helpers::{IconContext, format_label, select_icon};
-pub(crate) use self::messages::{VolumeCmd, VolumeInit, VolumeMsg};
+pub(crate) use self::{
+    factory::Factory,
+    messages::{VolumeCmd, VolumeInit, VolumeMsg},
+};
 
 pub(crate) struct VolumeModule {
     bar_button: Controller<BarButton>,
@@ -34,6 +39,7 @@ impl Component for VolumeModule {
 
     view! {
         gtk::Box {
+            add_css_class: "volume",
             #[local_ref]
             bar_button -> gtk::MenuButton {},
         }

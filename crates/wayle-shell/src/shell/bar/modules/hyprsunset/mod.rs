@@ -1,9 +1,11 @@
+mod factory;
 mod helpers;
 mod messages;
 mod watchers;
 
 use std::sync::Arc;
 
+use gtk::prelude::*;
 use relm4::prelude::*;
 use tracing::debug;
 use wayle_common::{ConfigProperty, process};
@@ -13,7 +15,10 @@ use wayle_widgets::prelude::{
 };
 
 use self::helpers::LabelContext;
-pub(crate) use self::messages::{HyprsunsetCmd, HyprsunsetInit, HyprsunsetMsg};
+pub(crate) use self::{
+    factory::Factory,
+    messages::{HyprsunsetCmd, HyprsunsetInit, HyprsunsetMsg},
+};
 
 pub(crate) struct HyprsunsetModule {
     bar_button: Controller<BarButton>,
@@ -32,6 +37,8 @@ impl Component for HyprsunsetModule {
 
     view! {
         gtk::Box {
+            add_css_class: "hyprsunset",
+
             #[local_ref]
             bar_button -> gtk::MenuButton {},
         }

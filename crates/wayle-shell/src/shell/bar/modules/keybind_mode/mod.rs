@@ -1,6 +1,6 @@
+mod factory;
 mod helpers;
 mod hyprland;
 mod messages;
 
-pub(crate) use hyprland::HyprlandKeybindMode;
-pub(crate) use messages::KeybindModeInit;
+pub(crate) use self::{factory::Factory, hyprland::HyprlandKeybindMode, messages::KeybindModeInit};

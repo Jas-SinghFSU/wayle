@@ -1,6 +1,10 @@
+mod factory;
 mod helpers;
 mod hyprland;
 mod messages;
 
-pub(crate) use hyprland::HyprlandWindowTitle;
-pub(crate) use messages::{WindowTitleCmd, WindowTitleInit};
+pub(crate) use self::{
+    factory::Factory,
+    hyprland::HyprlandWindowTitle,
+    messages::{WindowTitleCmd, WindowTitleInit},
+};

@@ -1,9 +1,11 @@
+mod factory;
 mod helpers;
 mod messages;
 mod watchers;
 
 use std::sync::Arc;
 
+use gtk::prelude::*;
 use relm4::prelude::*;
 use wayle_audio::{AudioService, core::device::input::InputDevice};
 use wayle_common::{ConfigProperty, WatcherToken, process};
@@ -16,7 +18,10 @@ use wayle_widgets::prelude::{
 };
 
 use self::helpers::{IconContext, select_icon};
-pub(crate) use self::messages::{MicrophoneCmd, MicrophoneInit, MicrophoneMsg};
+pub(crate) use self::{
+    factory::Factory,
+    messages::{MicrophoneCmd, MicrophoneInit, MicrophoneMsg},
+};
 
 pub(crate) struct MicrophoneModule {
     bar_button: Controller<BarButton>,
@@ -34,6 +39,8 @@ impl Component for MicrophoneModule {
 
     view! {
         gtk::Box {
+            add_css_class: "microphone",
+
             #[local_ref]
             bar_button -> gtk::MenuButton {},
         }

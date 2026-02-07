@@ -36,6 +36,7 @@ impl Component for HyprlandKeybindMode {
 
     view! {
         gtk::Box {
+            add_css_class: "keybind-mode",
             #[local_ref]
             bar_button -> gtk::MenuButton {},
         }
