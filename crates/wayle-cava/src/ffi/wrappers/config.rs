@@ -1,6 +1,10 @@
 #![allow(unsafe_code)]
 
-use std::{ffi::CString, pin::Pin, ptr};
+use std::{
+    ffi::{CString, c_char},
+    pin::Pin,
+    ptr,
+};
 
 use super::super::types::{
     self, config_params, input_method, mono_option_AVERAGE, orientation_ORIENT_BOTTOM,
@@ -46,8 +50,8 @@ impl Config {
             fragment_shader: ptr::null_mut(),
             theme: ptr::null_mut(),
 
-            bar_delim: b';' as i8,
-            frame_delim: b'\n' as i8,
+            bar_delim: b';' as c_char,
+            frame_delim: b'\n' as c_char,
             monstercat: 0.0,
             integral: 0.0,
             gravity: 0.0,
