@@ -3,8 +3,8 @@
 window.colorchooser {
     background: var(--bg-surface);
     border: none;
-    min-height: calc(34rem * #{$global-scale});
-    min-width: calc(36rem * #{$global-scale});
+    min-height: calc(34rem * var(--global-scale));
+    min-width: calc(36rem * var(--global-scale));
 
     button {
         @include button-base;
@@ -23,7 +23,7 @@ window.colorchooser {
     headerbar {
         background: var(--bg-surface);
         border-bottom: 0.5px solid var(--border-subtle);
-        min-height: calc(2.5rem * #{$global-scale});
+        min-height: calc(2.5rem * var(--global-scale));
         padding: var(--space-sm);
 
         label {
@@ -42,8 +42,8 @@ window.colorchooser {
     colorswatch {
         border-radius: var(--rounding-element);
         transition: transform var(--duration-fast);
-        min-height: calc(3.75rem * #{$global-scale});
-        min-width: calc(3.6rem * #{$global-scale});
+        min-height: calc(3.75rem * var(--global-scale));
+        min-width: calc(3.6rem * var(--global-scale));
         margin-bottom: var(--space-xs);
 
         &:hover {
@@ -53,7 +53,7 @@ window.colorchooser {
 
         &:focus-visible {
             outline: var(--focus-ring-width) solid var(--accent);
-            outline-offset: calc(0.125rem * #{$global-scale});
+            outline-offset: calc(0.125rem * var(--global-scale));
         }
 
         overlay {
@@ -84,7 +84,7 @@ window.colorchooser {
 
         &:focus-visible {
             outline: var(--focus-ring-width) solid var(--accent);
-            outline-offset: calc(0.125rem * #{$global-scale});
+            outline-offset: calc(0.125rem * var(--global-scale));
         }
     }
 
@@ -94,7 +94,7 @@ window.colorchooser {
         border-radius: var(--rounding-element);
         padding: var(--space-sm) var(--space-md);
         font-size: var(--text-md);
-        min-width: calc(5rem * #{$global-scale});
+        min-width: calc(5rem * var(--global-scale));
         border: 1px solid var(--border-default);
 
         > text {
@@ -122,18 +122,18 @@ window.colorchooser {
 
     scale {
         &.vertical {
-            min-width: calc(1.5rem * #{$global-scale});
+            min-width: calc(1.5rem * var(--global-scale));
 
             trough {
-                min-width: calc(2.5rem * #{$global-scale});
+                min-width: calc(2.5rem * var(--global-scale));
                 border-radius: 0px;
             }
 
             slider {
-                min-width: calc(2.5rem * #{$global-scale});
-                min-height: calc(0.5rem * #{$global-scale});
-                margin-left: calc(-0.125rem * #{$global-scale});
-                margin-right: calc(-0.125rem * #{$global-scale});
+                min-width: calc(2.5rem * var(--global-scale));
+                min-height: calc(0.5rem * var(--global-scale));
+                margin-left: calc(-0.125rem * var(--global-scale));
+                margin-right: calc(-0.125rem * var(--global-scale));
                 border-radius: 0px;
                 box-shadow: var(--shadow-sm);
                 border: 2px solid var(--accent);
@@ -143,13 +143,13 @@ window.colorchooser {
 
         &.horizontal {
             trough {
-                min-height: calc(0.75rem * #{$global-scale});
+                min-height: calc(0.75rem * var(--global-scale));
                 border-radius: 0px;
             }
 
             slider {
-                min-width: calc(0.5rem * #{$global-scale});
-                min-height: calc(2rem * #{$global-scale});
+                min-width: calc(0.5rem * var(--global-scale));
+                min-height: calc(2rem * var(--global-scale));
                 background: var(--bg-elevated);
                 border-radius: 0px;
                 box-shadow: var(--shadow-sm);
@@ -164,8 +164,8 @@ window.colorchooser {
     }
 
     #sv {
-        min-width: calc(25rem * #{$global-scale});
-        min-height: calc(22rem * #{$global-scale});
+        min-width: calc(25rem * var(--global-scale));
+        min-height: calc(22rem * var(--global-scale));
     }
 
     overlay {
@@ -182,11 +182,11 @@ window.colorchooser {
     }
 
     .dialog-vbox.vertical {
-        min-width: calc(36.25rem * #{$global-scale});
+        min-width: calc(36.25rem * var(--global-scale));
     }
 
     #editor-color-sample {
-        min-height: calc(2.5rem * #{$global-scale});
-        min-width: calc(4rem * #{$global-scale});
+        min-height: calc(2.5rem * var(--global-scale));
+        min-width: calc(4rem * var(--global-scale));
     }
 }

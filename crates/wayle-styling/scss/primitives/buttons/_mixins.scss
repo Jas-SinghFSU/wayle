@@ -29,7 +29,7 @@
 
     &:focus-visible {
         outline: var(--focus-ring-width) solid var(--fg-muted);
-        outline-offset: calc(0.125rem * #{$global-scale});
+        outline-offset: calc(0.125rem * var(--global-scale));
     }
 }
 
@@ -48,7 +48,7 @@
 
     &:focus-visible {
         outline: var(--focus-ring-width) solid var(--fg-subtle);
-        outline-offset: calc(0.125rem * #{$global-scale});
+        outline-offset: calc(0.125rem * var(--global-scale));
     }
 }
 
@@ -66,7 +66,7 @@
 
     &:focus-visible {
         outline: var(--focus-ring-width) solid var(--accent);
-        outline-offset: calc(0.125rem * #{$global-scale});
+        outline-offset: calc(0.125rem * var(--global-scale));
     }
 }
 
@@ -85,7 +85,7 @@
 
     &:focus-visible {
         outline: var(--focus-ring-width) solid var(--fg-muted);
-        outline-offset: calc(0.125rem * #{$global-scale});
+        outline-offset: calc(0.125rem * var(--global-scale));
     }
 }
 
@@ -103,7 +103,7 @@
 
     &:focus-visible {
         outline: var(--focus-ring-width) solid var(--fg-subtle);
-        outline-offset: calc(0.125rem * #{$global-scale});
+        outline-offset: calc(0.125rem * var(--global-scale));
     }
 }
 
@@ -121,7 +121,7 @@
 
     &:focus-visible {
         outline: var(--focus-ring-width) solid var(--status-error);
-        outline-offset: calc(0.125rem * #{$global-scale});
+        outline-offset: calc(0.125rem * var(--global-scale));
     }
 }
 
@@ -141,7 +141,7 @@
 
     &:focus-visible {
         outline: var(--focus-ring-width) solid var(--accent);
-        outline-offset: calc(0.125rem * #{$global-scale});
+        outline-offset: calc(0.125rem * var(--global-scale));
     }
 }
 
@@ -181,7 +181,7 @@
 @mixin menubutton-menu {
     > button.toggle {
         all: unset;
-        min-width: calc(10rem * #{$global-scale});
+        min-width: calc(10rem * var(--global-scale));
         padding: var(--space-sm) var(--space-sm);
 
         font-size: var(--text-md);
@@ -205,7 +205,7 @@
 
         &:focus-visible {
             outline: var(--focus-ring-width) solid var(--border-strong);
-            outline-offset: calc(0.125rem * #{$global-scale});
+            outline-offset: calc(0.125rem * var(--global-scale));
         }
     }
 }

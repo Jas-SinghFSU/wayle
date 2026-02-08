@@ -6,13 +6,13 @@
 window.fontchooser {
     background: var(--bg-surface);
     border: none;
-    min-height: calc(31rem * #{$global-scale});
-    min-width: calc(25rem * #{$global-scale});
+    min-height: calc(31rem * var(--global-scale));
+    min-width: calc(25rem * var(--global-scale));
 
     headerbar {
         background: var(--bg-surface);
         border-bottom: 0.5px solid var(--border-subtle);
-        min-height: calc(2.5rem * #{$global-scale});
+        min-height: calc(2.5rem * var(--global-scale));
         padding: var(--space-sm);
 
         label {
@@ -59,7 +59,7 @@ window.fontchooser {
 
     entry.search {
         @include entry-base;
-        min-height: calc(2.25rem * #{$global-scale});
+        min-height: calc(2.25rem * var(--global-scale));
 
         > text {
             padding: var(--space-sm) var(--space-xs);
@@ -83,8 +83,8 @@ window.fontchooser {
             all: unset;
             background: var(--bg-overlay);
             padding: var(--space-sm);
-            min-height: calc(2.25rem * #{$global-scale});
-            min-width: calc(2.25rem * #{$global-scale});
+            min-height: calc(2.25rem * var(--global-scale));
+            min-width: calc(2.25rem * var(--global-scale));
             transition: background var(--duration-fast);
 
             &:hover {
@@ -102,7 +102,7 @@ window.fontchooser {
 
             &:focus-visible {
                 outline: var(--focus-ring-width) solid var(--accent);
-                outline-offset: calc(-0.125rem * #{$global-scale});
+                outline-offset: calc(-0.125rem * var(--global-scale));
             }
         }
     }
@@ -128,7 +128,7 @@ window.fontchooser {
 
                 &:focus-visible {
                     outline: var(--focus-ring-width) solid var(--accent);
-                    outline-offset: calc(-0.125rem * #{$global-scale});
+                    outline-offset: calc(-0.125rem * var(--global-scale));
                 }
 
                 label {
@@ -141,7 +141,7 @@ window.fontchooser {
 
     entry {
         @include entry-base;
-        min-height: calc(2.5rem * #{$global-scale});
+        min-height: calc(2.5rem * var(--global-scale));
         background: var(--bg-overlay);
         border: 1px solid var(--border-default);
 
@@ -179,14 +179,14 @@ window.fontchooser {
         background: var(--bg-overlay);
         border-radius: var(--rounding-element);
         border: 1px solid var(--border-default);
-        min-width: calc(4rem * #{$global-scale});
+        min-width: calc(4rem * var(--global-scale));
 
         > text {
             padding: var(--space-sm) var(--space-sm);
             color: var(--fg-default);
             font-size: var(--text-md);
             font-weight: var(--weight-medium);
-            min-width: calc(2rem * #{$global-scale});
+            min-width: calc(2rem * var(--global-scale));
         }
 
         button {
@@ -247,18 +247,18 @@ window.fontchooser {
             background: transparent;
             padding: 0;
             border-radius: var(--radius-sm);
-            margin-left: calc(-1rem * #{$global-scale});
-            margin-right: calc(-0.25rem * #{$global-scale});
+            margin-left: calc(-1rem * var(--global-scale));
+            margin-right: calc(-0.25rem * var(--global-scale));
 
             entry.search {
-                min-height: calc(2rem * #{$global-scale});
+                min-height: calc(2rem * var(--global-scale));
                 margin-bottom: var(--space-sm);
             }
 
             scrolledwindow {
                 background: var(--bg-overlay);
                 border: 1px solid var(--border-subtle);
-                min-height: calc(12rem * #{$global-scale});
+                min-height: calc(12rem * var(--global-scale));
                 margin-left: 0;
 
                 listview {

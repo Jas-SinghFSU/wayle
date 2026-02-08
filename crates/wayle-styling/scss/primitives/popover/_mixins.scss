@@ -3,8 +3,8 @@
     background: var(--bg-surface);
     border: 1px solid var(--bg-hover);
     box-shadow: var(--shadow);
-    min-width: calc(20rem * #{$global-scale});
-    min-height: calc(2.5rem * #{$global-scale});
+    min-width: calc(20rem * var(--global-scale));
+    min-height: calc(2.5rem * var(--global-scale));
 }
 
 @mixin popover-header {
@@ -16,7 +16,7 @@
 }
 
 @mixin popover-item {
-    min-height: calc(4rem * #{$global-scale});
+    min-height: calc(4rem * var(--global-scale));
 
     &:hover {
         transition: background var(--duration-fast);
@@ -26,7 +26,7 @@
     &:focus-visible {
         background: var(--bg-overlay);
         outline: var(--focus-ring-width) solid var(--accent);
-        outline-offset: calc(-0.125rem * #{$global-scale});
+        outline-offset: calc(-0.125rem * var(--global-scale));
     }
 }
 
@@ -89,8 +89,8 @@
     padding: var(--space-xs) 0;
 
     check {
-        min-width: calc(1.125rem * #{$global-scale});
-        min-height: calc(1.125rem * #{$global-scale});
+        min-width: calc(1.125rem * var(--global-scale));
+        min-height: calc(1.125rem * var(--global-scale));
         border-radius: var(--rounding-element);
         background: var(--bg-overlay);
         border: 1px solid var(--border-strong);
@@ -118,7 +118,7 @@
 
     &:focus-visible check {
         outline: var(--focus-ring-width) solid var(--accent);
-        outline-offset: calc(0.125rem * #{$global-scale});
+        outline-offset: calc(0.125rem * var(--global-scale));
     }
 }
 
@@ -143,7 +143,7 @@
     > row {
         padding: var(--space-xs) var(--space-sm);
         border-radius: var(--rounding-element);
-        min-height: calc(1.75rem * #{$global-scale});
+        min-height: calc(1.75rem * var(--global-scale));
         transition: background var(--duration-fast);
 
         &:hover {
@@ -156,7 +156,7 @@
 
         &:focus-visible {
             outline: var(--focus-ring-width) solid var(--accent);
-            outline-offset: calc(-0.125rem * #{$global-scale});
+            outline-offset: calc(-0.125rem * var(--global-scale));
         }
 
         label {

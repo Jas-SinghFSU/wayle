@@ -7,6 +7,9 @@ description = "SCSS compilation and theming for Wayle"
 repository.workspace = true
 license.workspace = true
 
+[build-dependencies]
+grass.workspace = true
+
 [dependencies]
 grass.workspace = true
 serde.workspace = true

@@ -1,7 +1,7 @@
 .status-dot {
     all: unset;
-    min-width: calc(0.55rem * #{$global-scale});
-    min-height: calc(0.55rem * #{$global-scale});
+    min-width: calc(0.55rem * var(--global-scale));
+    min-height: calc(0.55rem * var(--global-scale));
     border-radius: var(--radius-full);
     background: var(--fg-subtle);
 

@@ -10,7 +10,7 @@ use relm4::ComponentSender;
 use tokio::sync::mpsc;
 use tracing::{debug, error, info};
 use wayle_config::ConfigService;
-use wayle_styling::{compile, scss_dir};
+use wayle_styling::{compile_dev, scss_dir, theme_css};
 
 use crate::shell::{Shell, ShellCmd, ShellServices};
 
@@ -104,8 +104,10 @@ fn recompile_css(cmd_sender: &relm4::Sender<ShellCmd>, config_service: &ConfigSe
     let config = config_service.config();
     let palette = config.styling.palette();
 
-    match compile(&palette, &config.general, &config.bar, &config.styling) {
-        Ok(css) => {
+    match compile_dev() {
+        Ok(static_css) => {
+            let theme = theme_css(&palette, &config.general, &config.bar, &config.styling);
+            let css = format!("{static_css}\n{theme}");
             debug!("SCSS recompiled");
             let _ = cmd_sender.send(ShellCmd::CssRecompiled(css));
         }

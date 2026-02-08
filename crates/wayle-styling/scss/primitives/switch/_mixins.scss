@@ -1,12 +1,12 @@
 @mixin switch-base {
-    --puck-shadow: 0 0 calc(0.5rem * #{$global-scale}) calc(0.15rem * #{$global-scale})
+    --puck-shadow: 0 0 calc(0.5rem * var(--global-scale)) calc(0.15rem * var(--global-scale))
         rgba(0, 0, 0, 0.4);
 
     all: unset;
     border-radius: var(--rounding-element);
     background: var(--bg-active);
-    min-width: calc(2.5rem * #{$global-scale});
-    min-height: calc(1.375rem * #{$global-scale});
+    min-width: calc(2.5rem * var(--global-scale));
+    min-height: calc(1.375rem * var(--global-scale));
     transition: background var(--duration-fast);
 
     image {
@@ -18,9 +18,9 @@
 
     slider {
         all: unset;
-        min-width: calc(1.1rem * #{$global-scale});
-        min-height: calc(1.1rem * #{$global-scale});
-        margin: calc(0.15rem * #{$global-scale});
+        min-width: calc(1.1rem * var(--global-scale));
+        min-height: calc(1.1rem * var(--global-scale));
+        margin: calc(0.15rem * var(--global-scale));
         box-shadow: var(--puck-shadow);
         background: var(--fg-default);
         border-radius: var(--rounding-element);
@@ -40,6 +40,6 @@
 
     &:focus-visible {
         outline: var(--focus-ring-width) solid var(--accent);
-        outline-offset: calc(0.125rem * #{$global-scale});
+        outline-offset: calc(0.125rem * var(--global-scale));
     }
 }

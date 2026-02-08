@@ -1,20 +1,10 @@
-// Design tokens derived from palette variables.
-// Palette vars ($palette-*) are injected by Rust at runtime.
-// $global-scale affects dropdowns, dialogs, notifications.
-// $bar-scale affects bar spacing, radius, and general elements.
-// $bar-btn-*-scale variables control button content sizing independently.
-
-$global-scale: 1 !default;
-$bar-scale: 1 !default;
-
-$bar-btn-icon-scale: 1 !default;
-$bar-btn-icon-padding-scale: 1 !default;
-$bar-btn-label-scale: 1 !default;
-$bar-btn-label-padding-scale: 1 !default;
-$bar-btn-gap-scale: 1 !default;
-
-// Base values (unscaled) - single source of truth for the design scale.
-// These are multiplied by $global-scale or $bar-scale to produce final tokens.
+// Design tokens for Wayle theming.
+//
+// Dynamic values (palette, scale, fonts) are set via CSS custom properties
+// at runtime by Rust. This SCSS compiles once at build time.
+//
+// Base values below are compile-time constants that get multiplied by
+// var(--global-scale) or var(--bar-scale) in calc() expressions.
 
 $base-space-xs: 0.25rem;
 $base-space-sm: 0.5rem;
@@ -52,18 +42,6 @@ $base-btn-padding: 0.5rem;
 $base-btn-gap: 0.5rem;
 
 :root {
-    // Palette
-    --palette-bg: #{$palette-bg};
-    --palette-surface: #{$palette-surface};
-    --palette-elevated: #{$palette-elevated};
-    --palette-fg: #{$palette-fg};
-    --palette-fg-muted: #{$palette-fg-muted};
-    --palette-primary: #{$palette-primary};
-    --palette-red: #{$palette-red};
-    --palette-yellow: #{$palette-yellow};
-    --palette-green: #{$palette-green};
-    --palette-blue: #{$palette-blue};
-
     // Backgrounds
     --bg-base: var(--palette-bg);
     --bg-surface: var(--palette-surface);
@@ -115,21 +93,21 @@ $base-btn-gap: 0.5rem;
     --scrim: rgba(0, 0, 0, 0.6);
 
     // Spacing (global scale)
-    --space-xs: calc(#{$base-space-xs} * #{$global-scale});
-    --space-sm: calc(#{$base-space-sm} * #{$global-scale});
-    --space-md: calc(#{$base-space-md} * #{$global-scale});
-    --space-lg: calc(#{$base-space-lg} * #{$global-scale});
-    --space-xl: calc(#{$base-space-xl} * #{$global-scale});
+    --space-xs: calc(#{$base-space-xs} * var(--global-scale));
+    --space-sm: calc(#{$base-space-sm} * var(--global-scale));
+    --space-md: calc(#{$base-space-md} * var(--global-scale));
+    --space-lg: calc(#{$base-space-lg} * var(--global-scale));
+    --space-xl: calc(#{$base-space-xl} * var(--global-scale));
 
     // Typography (global scale)
-    --text-xs: calc(#{$base-text-xs} * #{$global-scale});
-    --text-sm: calc(#{$base-text-sm} * #{$global-scale});
-    --text-base: calc(#{$base-text-base} * #{$global-scale});
-    --text-md: calc(#{$base-text-md} * #{$global-scale});
-    --text-lg: calc(#{$base-text-lg} * #{$global-scale});
-    --text-xl: calc(#{$base-text-xl} * #{$global-scale});
-    --text-2xl: calc(#{$base-text-2xl} * #{$global-scale});
-    --text-3xl: calc(#{$base-text-3xl} * #{$global-scale});
+    --text-xs: calc(#{$base-text-xs} * var(--global-scale));
+    --text-sm: calc(#{$base-text-sm} * var(--global-scale));
+    --text-base: calc(#{$base-text-base} * var(--global-scale));
+    --text-md: calc(#{$base-text-md} * var(--global-scale));
+    --text-lg: calc(#{$base-text-lg} * var(--global-scale));
+    --text-xl: calc(#{$base-text-xl} * var(--global-scale));
+    --text-2xl: calc(#{$base-text-2xl} * var(--global-scale));
+    --text-3xl: calc(#{$base-text-3xl} * var(--global-scale));
 
     --weight-normal: 400;
     --weight-medium: 500;
@@ -149,40 +127,24 @@ $base-btn-gap: 0.5rem;
     --tracking-wide: 0.025em;
     --tracking-wider: 0.05em;
 
-    --font-sans: #{$font-sans};
-    --font-mono: #{$font-mono};
+    --font-sans: var(--cfg-font-sans);
+    --font-mono: var(--cfg-font-mono);
 
     // Border radius (global scale)
     --radius-none: 0;
-    --radius-sm: calc(#{$base-radius-sm} * #{$global-scale});
-    --radius-md: calc(#{$base-radius-md} * #{$global-scale});
-    --radius-lg: calc(#{$base-radius-lg} * #{$global-scale});
-    --radius-xl: calc(#{$base-radius-xl} * #{$global-scale});
+    --radius-sm: calc(#{$base-radius-sm} * var(--global-scale));
+    --radius-md: calc(#{$base-radius-md} * var(--global-scale));
+    --radius-lg: calc(#{$base-radius-lg} * var(--global-scale));
+    --radius-xl: calc(#{$base-radius-xl} * var(--global-scale));
     --radius-full: 9999px;
 
-    // Semantic rounding tokens
-    // User configures a single rounding preference (none/sm/md/lg).
-    // Components use these semantic tokens instead of raw --radius-* values.
-    //
-    // --rounding-element: Interactive components (buttons, inputs, chips, badges).
-    //                     Anything the user directly clicks or types into.
-    //
-    // --rounding-container: Wrapper components (cards, dialogs, dropdowns, panels).
-    //                       Larger surfaces that contain other elements.
-    //
-    // For always-rounded shapes (toggles, sliders, spinners), use --radius-full directly.
-    --rounding-element: #{$rounding-element};
-    --rounding-container: #{$rounding-container};
-
-    // Bar-specific semantic rounding (uses --bar-radius-* which scale with $bar-scale)
-    --bar-rounding-element: #{$bar-rounding-element};
-    --bar-rounding-container: #{$bar-rounding-container};
-
-    // Bar-specific Button semantic rounding (uses --bar-button-radius-* which scale with $bar-scale)
-    --bar-button-rounding-element: #{$bar-button-rounding-element};
-
-    // Bar-specific button-group semantic rounding (uses --bar-radius-* which scale with $bar-scale)
-    --bar-group-rounding-element: #{$bar-group-rounding-element};
+    // Semantic rounding tokens (set by Rust based on user preference)
+    --rounding-element: var(--cfg-rounding-element);
+    --rounding-container: var(--cfg-rounding-container);
+    --bar-rounding-element: var(--cfg-bar-rounding-element);
+    --bar-rounding-container: var(--cfg-bar-rounding-container);
+    --bar-button-rounding-element: var(--cfg-bar-button-rounding-element);
+    --bar-group-rounding-element: var(--cfg-bar-group-rounding-element);
 
     // Shadows
     --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.5);
@@ -199,15 +161,15 @@ $base-btn-gap: 0.5rem;
     --duration-slow: 350ms;
 
     // Icons (global scale)
-    --icon-xs: calc(#{$base-icon-xs} * #{$global-scale});
-    --icon-sm: calc(#{$base-icon-sm} * #{$global-scale});
-    --icon-md: calc(#{$base-icon-md} * #{$global-scale});
-    --icon-lg: calc(#{$base-icon-lg} * #{$global-scale});
-    --icon-xl: calc(#{$base-icon-xl} * #{$global-scale});
-    --icon-2xl: calc(#{$base-icon-2xl} * #{$global-scale});
-    --icon-3xl: calc(#{$base-icon-3xl} * #{$global-scale});
-    --icon-4xl: calc(#{$base-icon-4xl} * #{$global-scale});
-    --icon-6xl: calc(#{$base-icon-6xl} * #{$global-scale});
+    --icon-xs: calc(#{$base-icon-xs} * var(--global-scale));
+    --icon-sm: calc(#{$base-icon-sm} * var(--global-scale));
+    --icon-md: calc(#{$base-icon-md} * var(--global-scale));
+    --icon-lg: calc(#{$base-icon-lg} * var(--global-scale));
+    --icon-xl: calc(#{$base-icon-xl} * var(--global-scale));
+    --icon-2xl: calc(#{$base-icon-2xl} * var(--global-scale));
+    --icon-3xl: calc(#{$base-icon-3xl} * var(--global-scale));
+    --icon-4xl: calc(#{$base-icon-4xl} * var(--global-scale));
+    --icon-6xl: calc(#{$base-icon-6xl} * var(--global-scale));
 
     // Bar button global properties
     // Per-button colors are set via inline CSS in the BarButton component.
@@ -215,47 +177,43 @@ $base-btn-gap: 0.5rem;
     --bar-btn-border: none;
 
     // Bar button sizing (bar-scale * individual fine-tuning)
-    --bar-btn-icon-size: calc(#{$base-btn-icon-size} * #{$bar-scale} * #{$bar-btn-icon-scale});
-    --bar-btn-icon-padding: calc(
-        #{$base-btn-padding} * #{$bar-scale} * #{$bar-btn-icon-padding-scale}
-    );
-    --bar-btn-label-size: calc(#{$base-btn-label-size} * #{$bar-scale} * #{$bar-btn-label-scale});
-    --bar-btn-label-padding: calc(
-        #{$base-btn-padding} * #{$bar-scale} * #{$bar-btn-label-padding-scale}
-    );
-    --bar-btn-gap: calc(#{$base-btn-gap} * #{$bar-scale} * #{$bar-btn-gap-scale});
+    --bar-btn-icon-size: calc(#{$base-btn-icon-size} * var(--bar-scale) * var(--bar-btn-icon-scale));
+    --bar-btn-icon-padding: calc(#{$base-btn-padding} * var(--bar-scale) * var(--bar-btn-icon-padding-scale));
+    --bar-btn-label-size: calc(#{$base-btn-label-size} * var(--bar-scale) * var(--bar-btn-label-scale));
+    --bar-btn-label-padding: calc(#{$base-btn-padding} * var(--bar-scale) * var(--bar-btn-label-padding-scale));
+    --bar-btn-gap: calc(#{$base-btn-gap} * var(--bar-scale) * var(--bar-btn-gap-scale));
 
     // Bar-specific spacing (bar scale)
-    --bar-space-xs: calc(#{$base-space-xs} * #{$bar-scale});
-    --bar-space-sm: calc(#{$base-space-sm} * #{$bar-scale});
-    --bar-space-md: calc(#{$base-space-md} * #{$bar-scale});
-    --bar-space-lg: calc(#{$base-space-lg} * #{$bar-scale});
-    --bar-space-xl: calc(#{$base-space-xl} * #{$bar-scale});
+    --bar-space-xs: calc(#{$base-space-xs} * var(--bar-scale));
+    --bar-space-sm: calc(#{$base-space-sm} * var(--bar-scale));
+    --bar-space-md: calc(#{$base-space-md} * var(--bar-scale));
+    --bar-space-lg: calc(#{$base-space-lg} * var(--bar-scale));
+    --bar-space-xl: calc(#{$base-space-xl} * var(--bar-scale));
 
     // Bar-specific typography (bar scale)
-    --bar-text-xs: calc(#{$base-text-xs} * #{$bar-scale});
-    --bar-text-sm: calc(#{$base-text-sm} * #{$bar-scale});
-    --bar-text-base: calc(#{$base-text-base} * #{$bar-scale});
-    --bar-text-md: calc(#{$base-text-md} * #{$bar-scale});
-    --bar-text-lg: calc(#{$base-text-lg} * #{$bar-scale});
-    --bar-text-xl: calc(#{$base-text-xl} * #{$bar-scale});
+    --bar-text-xs: calc(#{$base-text-xs} * var(--bar-scale));
+    --bar-text-sm: calc(#{$base-text-sm} * var(--bar-scale));
+    --bar-text-base: calc(#{$base-text-base} * var(--bar-scale));
+    --bar-text-md: calc(#{$base-text-md} * var(--bar-scale));
+    --bar-text-lg: calc(#{$base-text-lg} * var(--bar-scale));
+    --bar-text-xl: calc(#{$base-text-xl} * var(--bar-scale));
 
     // Bar-specific icons (bar scale)
-    --bar-icon-xs: calc(#{$base-icon-xs} * #{$bar-scale});
-    --bar-icon-sm: calc(#{$base-icon-sm} * #{$bar-scale});
-    --bar-icon-md: calc(#{$base-icon-md} * #{$bar-scale});
-    --bar-icon-lg: calc(#{$base-icon-lg} * #{$bar-scale});
-    --bar-icon-xl: calc(#{$base-icon-xl} * #{$bar-scale});
+    --bar-icon-xs: calc(#{$base-icon-xs} * var(--bar-scale));
+    --bar-icon-sm: calc(#{$base-icon-sm} * var(--bar-scale));
+    --bar-icon-md: calc(#{$base-icon-md} * var(--bar-scale));
+    --bar-icon-lg: calc(#{$base-icon-lg} * var(--bar-scale));
+    --bar-icon-xl: calc(#{$base-icon-xl} * var(--bar-scale));
 
     // Bar-specific radius (bar scale)
-    --bar-radius-sm: calc(#{$base-radius-sm} * #{$bar-scale});
-    --bar-radius-md: calc(#{$base-radius-md} * #{$bar-scale});
-    --bar-radius-lg: calc(#{$base-radius-lg} * #{$bar-scale});
-    --bar-radius-xl: calc(#{$base-radius-xl} * #{$bar-scale});
+    --bar-radius-sm: calc(#{$base-radius-sm} * var(--bar-scale));
+    --bar-radius-md: calc(#{$base-radius-md} * var(--bar-scale));
+    --bar-radius-lg: calc(#{$base-radius-lg} * var(--bar-scale));
+    --bar-radius-xl: calc(#{$base-radius-xl} * var(--bar-scale));
 
-    // Bar-specific button radius (bar button scale)
-    --bar-button-radius-sm: calc(#{$base-radius-sm} * #{$bar-scale});
-    --bar-button-radius-md: calc(#{$base-radius-md} * #{$bar-scale});
-    --bar-button-radius-lg: calc(#{$base-radius-lg} * #{$bar-scale});
-    --bar-button-radius-xl: calc(#{$base-radius-xl} * #{$bar-scale});
+    // Bar-specific button radius (bar scale)
+    --bar-button-radius-sm: calc(#{$base-radius-sm} * var(--bar-scale));
+    --bar-button-radius-md: calc(#{$base-radius-md} * var(--bar-scale));
+    --bar-button-radius-lg: calc(#{$base-radius-lg} * var(--bar-scale));
+    --bar-button-radius-xl: calc(#{$base-radius-xl} * var(--bar-scale));
 }

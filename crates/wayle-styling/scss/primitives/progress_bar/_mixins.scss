@@ -4,34 +4,34 @@
     trough {
         background: var(--bg-active);
         border-radius: var(--rounding-element);
-        min-height: calc(0.5rem * #{$global-scale});
+        min-height: calc(0.5rem * var(--global-scale));
         border: none;
 
         progress {
             border: none;
             background: var(--accent);
             border-radius: var(--rounding-element);
-            min-height: calc(0.5rem * #{$global-scale});
+            min-height: calc(0.5rem * var(--global-scale));
         }
     }
 }
 
 @mixin progress-bar-sm {
     trough {
-        min-height: calc(0.25rem * #{$global-scale});
+        min-height: calc(0.25rem * var(--global-scale));
 
         progress {
-            min-height: calc(0.25rem * #{$global-scale});
+            min-height: calc(0.25rem * var(--global-scale));
         }
     }
 }
 
 @mixin progress-bar-lg {
     trough {
-        min-height: calc(0.75rem * #{$global-scale});
+        min-height: calc(0.75rem * var(--global-scale));
 
         progress {
-            min-height: calc(0.75rem * #{$global-scale});
+            min-height: calc(0.75rem * var(--global-scale));
         }
     }
 }

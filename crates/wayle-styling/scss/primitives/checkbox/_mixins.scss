@@ -4,14 +4,14 @@
 
     check {
         all: unset;
-        min-width: calc(1.125rem * #{$global-scale});
-        min-height: calc(1.125rem * #{$global-scale});
+        min-width: calc(1.125rem * var(--global-scale));
+        min-height: calc(1.125rem * var(--global-scale));
         border: 2px solid var(--fg-muted);
         border-radius: var(--radius-sm);
         background: transparent;
         transition: all var(--duration-fast);
 
-        -gtk-icon-size: calc(0.875rem * #{$global-scale});
+        -gtk-icon-size: calc(0.875rem * var(--global-scale));
     }
 
     &:hover check {
@@ -53,7 +53,7 @@
 
     &:focus-visible check {
         outline: var(--focus-ring-width) solid var(--accent);
-        outline-offset: calc(0.125rem * #{$global-scale});
+        outline-offset: calc(0.125rem * var(--global-scale));
     }
 
     label {

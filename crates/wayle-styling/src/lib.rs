@@ -1,12 +1,12 @@
-//! SCSS compilation and theming for Wayle.
+//! CSS theming for Wayle.
 //!
-//! Runtime CSS generation from theme configuration.
-//! Compiles embedded SCSS files with user-provided palette values.
+//! Static CSS is compiled from SCSS at build time and embedded in the binary.
+//! Runtime theming is done via CSS custom properties.
 
 mod errors;
 mod palette_provider;
 
-use std::{fs, path::PathBuf};
+use std::path::PathBuf;
 
 pub use errors::Error;
 use tracing::error;
@@ -19,6 +19,9 @@ use wayle_config::{
     },
 };
 
+/// Static CSS compiled at build time.
+pub const STATIC_CSS: &str = include_str!(concat!(env!("OUT_DIR"), "/style.css"));
+
 /// Returns the SCSS source directory path.
 ///
 /// Only useful during development for hot-reload watching.
@@ -26,38 +29,102 @@ pub fn scss_dir() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("scss")
 }
 
-/// Compiles the complete stylesheet from palette, font, and bar config.
+/// Generates CSS custom property overrides for the current theme.
 ///
-/// # Errors
-///
-/// Returns an error if SCSS compilation fails.
-pub fn compile(
+/// Returns a `:root { ... }` block that sets all dynamic values.
+pub fn theme_css(
     palette: &Palette,
     general: &GeneralConfig,
     bar: &BarConfig,
     styling: &StylingConfig,
-) -> Result<String, Error> {
+) -> String {
     let theme_provider = styling.theme_provider.get();
-    let resolved_palette = resolve_palette(palette, &theme_provider);
+    let resolved = resolve_palette(palette, &theme_provider);
 
-    let variables = format!(
-        "{}\n{}\n{}\n{}\n{}\n",
-        palette_to_scss(&resolved_palette),
-        fonts_to_scss(general),
-        global_scale_to_scss(styling),
-        scale_to_scss(bar),
-        rounding_to_scss(styling, bar)
-    );
+    let global_rounding = styling.rounding.get();
+    let bar_rounding = bar.rounding.get();
+    let button_rounding = bar.button_rounding.get();
+    let group_rounding = bar.button_group_rounding.get();
+    let global = global_rounding.to_css_values();
+    let bar_values = bar_rounding.to_bar_css_values();
+    let bar_button_values = button_rounding.to_bar_element_css_values();
+    let bar_group_values = group_rounding.to_bar_element_css_values();
+
+    format!(
+        r#":root {{
+    --palette-bg: {bg};
+    --palette-surface: {surface};
+    --palette-elevated: {elevated};
+    --palette-fg: {fg};
+    --palette-fg-muted: {fg_muted};
+    --palette-primary: {primary};
+    --palette-red: {red};
+    --palette-yellow: {yellow};
+    --palette-green: {green};
+    --palette-blue: {blue};
+
+    --cfg-font-sans: "{font_sans}";
+    --cfg-font-mono: "{font_mono}";
+
+    --global-scale: {global_scale};
+    --bar-scale: {bar_scale};
+    --bar-btn-icon-scale: {btn_icon_scale};
+    --bar-btn-icon-padding-scale: {btn_icon_padding_scale};
+    --bar-btn-label-scale: {btn_label_scale};
+    --bar-btn-label-padding-scale: {btn_label_padding_scale};
+    --bar-btn-gap-scale: {btn_gap_scale};
+
+    --cfg-rounding-element: {rounding_element};
+    --cfg-rounding-container: {rounding_container};
+    --cfg-bar-rounding-element: {bar_rounding_element};
+    --cfg-bar-rounding-container: {bar_rounding_container};
+    --cfg-bar-button-rounding-element: {bar_button_rounding_element};
+    --cfg-bar-group-rounding-element: {bar_group_rounding_element};
+}}"#,
+        bg = resolved.bg,
+        surface = resolved.surface,
+        elevated = resolved.elevated,
+        fg = resolved.fg,
+        fg_muted = resolved.fg_muted,
+        primary = resolved.primary,
+        red = resolved.red,
+        yellow = resolved.yellow,
+        green = resolved.green,
+        blue = resolved.blue,
+        font_sans = general.font_sans.get(),
+        font_mono = general.font_mono.get(),
+        global_scale = styling.scale.get(),
+        bar_scale = bar.scale.get(),
+        btn_icon_scale = bar.button_icon_size.get(),
+        btn_icon_padding_scale = bar.button_icon_padding.get(),
+        btn_label_scale = bar.button_label_size.get(),
+        btn_label_padding_scale = bar.button_label_padding.get(),
+        btn_gap_scale = bar.button_gap.get(),
+        rounding_element = global.element,
+        rounding_container = global.container,
+        bar_rounding_element = bar_values.element,
+        bar_rounding_container = bar_values.container,
+        bar_button_rounding_element = bar_button_values.element,
+        bar_group_rounding_element = bar_group_values.element,
+    )
+}
+
+/// Compiles SCSS from disk (development only).
+///
+/// Used when `WAYLE_DEV=1` for hot-reload of SCSS structure changes.
+///
+/// # Errors
+///
+/// Returns error if SCSS files cannot be read or compilation fails.
+pub fn compile_dev() -> Result<String, Error> {
+    use std::fs;
 
     let scss_path = scss_dir();
     let main_path = scss_path.join("main.scss");
-
     let main_content = fs::read_to_string(&main_path).map_err(Error::Io)?;
-    let full_scss = main_content.replace("@import \"variables\";", &variables);
-
     let options = grass::Options::default().load_path(&scss_path);
 
-    grass::from_string(&full_scss, &options).map_err(Error::Compilation)
+    grass::from_string(&main_content, &options).map_err(Error::Compilation)
 }
 
 fn resolve_palette(fallback: &Palette, theme_provider: &ThemeProvider) -> Palette {
@@ -84,88 +151,6 @@ fn resolve_palette(fallback: &Palette, theme_provider: &ThemeProvider) -> Palett
     }
 }
 
-fn palette_to_scss(palette: &Palette) -> String {
-    format!(
-        r#"$palette-bg: {};
-$palette-surface: {};
-$palette-elevated: {};
-$palette-fg: {};
-$palette-fg-muted: {};
-$palette-primary: {};
-$palette-red: {};
-$palette-yellow: {};
-$palette-green: {};
-$palette-blue: {};
-"#,
-        palette.bg,
-        palette.surface,
-        palette.elevated,
-        palette.fg,
-        palette.fg_muted,
-        palette.primary,
-        palette.red,
-        palette.yellow,
-        palette.green,
-        palette.blue
-    )
-}
-
-fn fonts_to_scss(general: &GeneralConfig) -> String {
-    format!(
-        r#"$font-sans: "{}";
-$font-mono: "{}";
-"#,
-        general.font_sans.get(),
-        general.font_mono.get()
-    )
-}
-
-fn global_scale_to_scss(styling: &StylingConfig) -> String {
-    format!("$global-scale: {};\n", styling.scale.get())
-}
-
-fn scale_to_scss(bar: &BarConfig) -> String {
-    format!(
-        "$bar-scale: {};\n\
-         $bar-btn-icon-scale: {};\n\
-         $bar-btn-icon-padding-scale: {};\n\
-         $bar-btn-label-scale: {};\n\
-         $bar-btn-label-padding-scale: {};\n\
-         $bar-btn-gap-scale: {};\n",
-        bar.scale.get(),
-        bar.button_icon_size.get(),
-        bar.button_icon_padding.get(),
-        bar.button_label_size.get(),
-        bar.button_label_padding.get(),
-        bar.button_gap.get()
-    )
-}
-
-fn rounding_to_scss(styling: &StylingConfig, bar: &BarConfig) -> String {
-    let global_rounding = styling.rounding.get();
-    let bar_rounding = bar.rounding.get();
-    let button_rounding = bar.button_rounding.get();
-    let group_rounding = bar.button_group_rounding.get();
-    let global = global_rounding.to_css_values();
-    let bar_values = bar_rounding.to_bar_css_values();
-    let bar_button_values = button_rounding.to_bar_element_css_values();
-    let bar_group_values = group_rounding.to_bar_element_css_values();
-    format!(
-        "$rounding-element: {};\n\
-        $rounding-container: {};\n\
-        $bar-rounding-element: {};\n\
-        $bar-rounding-container: {};\n\
-        $bar-button-rounding-element: {};\n\
-        $bar-group-rounding-element: {};\n",
-        global.element,
-        global.container,
-        bar_values.element,
-        bar_values.container,
-        bar_button_values.element,
-        bar_group_values.element
-    )
-}
-
 #[cfg(test)]
 mod tests {
     use wayle_config::{
@@ -176,27 +161,22 @@ mod tests {
     use super::*;
 
     #[test]
-    fn compiled_css_loads_into_gtk4() {
+    fn css_loads_into_gtk4() {
         gtk4::init().unwrap();
 
-        let theme = palettes::builtins().into_iter().next().unwrap();
-        let general = GeneralConfig::default();
-        let bar = BarConfig::default();
-        let styling = StylingConfig::default();
-        let css = compile(&theme.palette, &general, &bar, &styling).unwrap();
-
         let provider = gtk4::CssProvider::new();
-        provider.load_from_string(&css);
-    }
 
-    #[test]
-    fn debug_print_css() {
+        provider.load_from_string(STATIC_CSS);
+
         let theme = palettes::builtins().into_iter().next().unwrap();
         let general = GeneralConfig::default();
         let bar = BarConfig::default();
         let styling = StylingConfig::default();
-        let css = compile(&theme.palette, &general, &bar, &styling).unwrap();
+        let theme_str = theme_css(&theme.palette, &general, &bar, &styling);
 
-        println!("\n=== COMPILED CSS ===\n{}\n=== END ===", css);
+        provider.load_from_string(&theme_str);
+
+        let combined = format!("{STATIC_CSS}\n{theme_str}");
+        provider.load_from_string(&combined);
     }
 }

@@ -4,7 +4,7 @@
     border-radius: var(--rounding-container);
     border: 1px solid var(--border-default);
     box-shadow: var(--shadow);
-    min-width: calc(28rem * #{$global-scale});
+    min-width: calc(28rem * var(--global-scale));
 }
 
 .dropdown-header {

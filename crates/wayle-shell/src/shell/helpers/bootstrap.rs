@@ -16,7 +16,7 @@ use relm4::{
 use tracing::{info, warn};
 use wayle_config::ConfigService;
 use wayle_icons::IconRegistry;
-use wayle_styling::compile;
+use wayle_styling::{STATIC_CSS, theme_css};
 
 use super::get_current_monitors;
 use crate::shell::{
@@ -42,16 +42,11 @@ pub(crate) fn init_css_provider(
 
     let config = config_service.config();
     let palette = config.styling.palette();
+    let theme = theme_css(&palette, &config.general, &config.bar, &config.styling);
+    let css = format!("{STATIC_CSS}\n{theme}");
 
-    let css_result = compile(&palette, &config.general, &config.bar, &config.styling);
-
-    match css_result {
-        Ok(css) => {
-            provider.load_from_string(&css);
-            info!("Initial CSS loaded");
-        }
-        Err(err) => warn!(error = %err, "CSS load failed"),
-    }
+    provider.load_from_string(&css);
+    info!("Initial CSS loaded");
 
     style_context_add_provider_for_display(display, &provider, STYLE_PROVIDER_PRIORITY_USER);
 

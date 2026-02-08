@@ -4,8 +4,8 @@
     trough {
         background: var(--bg-active);
         border-radius: var(--rounding-element);
-        min-height: calc(0.5rem * #{$global-scale});
-        min-width: calc(10rem * #{$global-scale});
+        min-height: calc(0.5rem * var(--global-scale));
+        min-width: calc(10rem * var(--global-scale));
         border: none;
 
         highlight {
@@ -17,9 +17,9 @@
         slider {
             background: var(--fg-default);
             border-radius: var(--rounding-element);
-            min-width: calc(1rem * #{$global-scale});
-            min-height: calc(1rem * #{$global-scale});
-            margin: calc(-0.3125rem * #{$global-scale});
+            min-width: calc(1rem * var(--global-scale));
+            min-height: calc(1rem * var(--global-scale));
+            margin: calc(-0.3125rem * var(--global-scale));
             border: none;
             box-shadow: var(--shadow-sm);
         }
@@ -32,8 +32,8 @@
         mark {
             indicator {
                 background: var(--fg-subtle);
-                min-width: calc(0.125rem * #{$global-scale});
-                min-height: calc(0.5rem * #{$global-scale});
+                min-width: calc(0.125rem * var(--global-scale));
+                min-height: calc(0.5rem * var(--global-scale));
             }
 
             label {
@@ -62,6 +62,6 @@
 
     &:focus-visible {
         outline: var(--focus-ring-width) solid var(--accent);
-        outline-offset: calc(0.125rem * #{$global-scale});
+        outline-offset: calc(0.125rem * var(--global-scale));
     }
 }

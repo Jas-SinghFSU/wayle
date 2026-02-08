@@ -4,7 +4,10 @@ use wayle_icons::IconRegistry;
 
 use crate::cli::CliAction;
 
-const RESOURCES_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../resources/icons");
+const RESOURCES_DIR: &str = concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/../resources/icons/hicolor/scalable/actions"
+);
 
 /// Installs bundled icons from the resources directory.
 ///

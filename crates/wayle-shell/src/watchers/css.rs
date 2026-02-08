@@ -7,20 +7,19 @@ use futures::{
 use relm4::ComponentSender;
 use wayle_common::{watch, watchers::changes_stream};
 use wayle_config::schemas::styling::ThemeProvider;
-use wayle_styling::compile;
+use wayle_styling::{STATIC_CSS, theme_css};
 
 use crate::shell::{Shell, ShellCmd, ShellInput, ShellServices};
 
 /// Spawns the CSS hot-reload watcher.
 ///
-/// Watches styling config properties and color extraction events. Recompiles
-/// CSS only when switching to Wayle provider or after extraction completes.
+/// Watches styling config properties and color extraction events. Regenerates
+/// theme CSS when config changes or after color extraction completes.
 pub fn spawn(sender: &ComponentSender<Shell>, services: &ShellServices) {
     let config = services.config.config().clone();
 
-    if let Ok(css) = compile_css(&config) {
-        sender.input_sender().send(ShellInput::ReloadCss(css)).ok();
-    }
+    let css = build_css(&config);
+    sender.input_sender().send(ShellInput::ReloadCss(css)).ok();
 
     let palette_stream = changes_stream(&config.styling.palette);
     let general_stream = changes_stream(&config.general);
@@ -50,12 +49,13 @@ pub fn spawn(sender: &ComponentSender<Shell>, services: &ShellServices) {
             theme_provider_stream,
             extraction_stream,
         ],
-        move || compile_css(&config_clone) => ShellCmd::CssRecompiled
+        move || Ok::<_, std::convert::Infallible>(build_css(&config_clone)) => ShellCmd::CssRecompiled
     );
 }
 
-fn compile_css(config: &wayle_config::Config) -> Result<String, wayle_styling::Error> {
+fn build_css(config: &wayle_config::Config) -> String {
     let palette = config.styling.palette();
+    let theme = theme_css(&palette, &config.general, &config.bar, &config.styling);
 
-    compile(&palette, &config.general, &config.bar, &config.styling)
+    format!("{STATIC_CSS}\n{theme}")
 }

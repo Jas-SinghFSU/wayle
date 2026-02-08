@@ -27,7 +27,7 @@ menubutton.bar-button {
 
     &:focus-visible > button.toggle {
         outline: var(--focus-ring-width) solid var(--fg-muted);
-        outline-offset: calc(0.125rem * #{$bar-scale});
+        outline-offset: calc(0.125rem * var(--bar-scale));
     }
 
     .bar-button-label {

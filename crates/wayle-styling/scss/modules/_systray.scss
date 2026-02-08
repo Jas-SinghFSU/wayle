@@ -47,13 +47,13 @@
 
     > contents {
         @include popover-contents;
-        min-width: calc(12rem * #{$global-scale});
+        min-width: calc(12rem * var(--global-scale));
         padding: var(--space-xs);
 
         modelbutton {
             all: unset;
             @include popover-item;
-            min-height: calc(1.75rem * #{$global-scale});
+            min-height: calc(1.75rem * var(--global-scale));
             border-radius: var(--rounding-element);
             padding: var(--space-sm);
 
@@ -69,8 +69,8 @@
 
             check,
             radio {
-                min-width: calc(1.125rem * #{$global-scale});
-                min-height: calc(1.125rem * #{$global-scale});
+                min-width: calc(1.125rem * var(--global-scale));
+                min-height: calc(1.125rem * var(--global-scale));
                 margin-right: var(--space-sm);
                 border-radius: var(--rounding-element);
                 background: var(--bg-overlay);
@@ -83,7 +83,7 @@
                     border-color: var(--accent);
                     color: var(--fg-on-accent);
                     -gtk-icon-source: -gtk-icontheme("object-select-symbolic");
-                    -gtk-icon-size: calc(0.75rem * #{$global-scale});
+                    -gtk-icon-size: calc(0.75rem * var(--global-scale));
                 }
             }
 
@@ -128,7 +128,7 @@
     border: 1px solid var(--border-default);
     box-shadow: var(--shadow);
     padding: var(--space-sm);
-    min-width: calc(12rem * #{$global-scale});
+    min-width: calc(12rem * var(--global-scale));
 }
 
 .systray-menu-divider {
@@ -156,7 +156,7 @@
 
     &:focus-visible {
         outline: var(--focus-ring-width) solid var(--accent);
-        outline-offset: calc(-0.125rem * #{$global-scale});
+        outline-offset: calc(-0.125rem * var(--global-scale));
     }
 
     &:disabled {

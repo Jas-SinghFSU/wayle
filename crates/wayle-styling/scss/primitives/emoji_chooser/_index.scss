@@ -5,7 +5,7 @@ popover.emoji-picker {
     @include popover-base;
 
     > contents {
-        min-width: calc(30rem * #{$global-scale});
+        min-width: calc(30rem * var(--global-scale));
         padding: 0;
     }
 
@@ -15,7 +15,7 @@ popover.emoji-picker {
 
         entry {
             @include entry-base;
-            min-height: calc(2.25rem * #{$global-scale});
+            min-height: calc(2.25rem * var(--global-scale));
 
             > text {
                 padding: var(--space-sm) var(--space-xs);
@@ -40,8 +40,8 @@ popover.emoji-picker {
         emoji {
             padding: var(--space-xs);
             border-radius: var(--rounding-element);
-            min-width: calc(2.25rem * #{$global-scale});
-            min-height: calc(2.25rem * #{$global-scale});
+            min-width: calc(2.25rem * var(--global-scale));
+            min-height: calc(2.25rem * var(--global-scale));
             transition: transform var(--duration-fast);
 
             &:hover {
@@ -56,11 +56,11 @@ popover.emoji-picker {
 
             &:focus-visible {
                 outline: var(--focus-ring-width) solid var(--accent);
-                outline-offset: calc(-0.125rem * #{$global-scale});
+                outline-offset: calc(-0.125rem * var(--global-scale));
             }
 
             > label {
-                font-size: calc(1.5rem * #{$global-scale});
+                font-size: calc(1.5rem * var(--global-scale));
             }
         }
     }
@@ -79,14 +79,14 @@ popover.emoji-picker {
         padding: var(--space-xs);
 
         > flowboxchild {
-            min-width: calc(2rem * #{$global-scale});
-            min-height: calc(2rem * #{$global-scale});
+            min-width: calc(2rem * var(--global-scale));
+            min-height: calc(2rem * var(--global-scale));
             padding: var(--space-xs);
 
             > button.emoji-section {
                 all: unset;
-                min-width: calc(1.75rem * #{$global-scale});
-                min-height: calc(1.75rem * #{$global-scale});
+                min-width: calc(1.75rem * var(--global-scale));
+                min-height: calc(1.75rem * var(--global-scale));
                 padding: var(--space-xs);
                 border-radius: var(--rounding-element);
                 transition: background var(--duration-fast);
@@ -105,11 +105,11 @@ popover.emoji-picker {
 
                 &:focus-visible {
                     outline: var(--focus-ring-width) solid var(--accent);
-                    outline-offset: calc(-0.125rem * #{$global-scale});
+                    outline-offset: calc(-0.125rem * var(--global-scale));
                 }
 
                 > label {
-                    font-size: calc(1.125rem * #{$global-scale});
+                    font-size: calc(1.125rem * var(--global-scale));
                 }
             }
         }

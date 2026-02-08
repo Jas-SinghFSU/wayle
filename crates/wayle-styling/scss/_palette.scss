@@ -1,17 +1,34 @@
-// Default palette values for editor intellisense.
-// Not used at runtime - Rust generates the actual values.
+// Default CSS custom property values.
+// These provide fallbacks for build-time compilation.
+// Rust sets actual values at runtime.
 
-$palette-bg: #11111b !default;
-$palette-surface: #181825 !default;
-$palette-elevated: #1e1e2e !default;
-$palette-fg: #cdd6f4 !default;
-$palette-fg-muted: #bac2de !default;
-$palette-primary: #b4befe !default;
-$palette-red: #f38ba8 !default;
-$palette-yellow: #f9e2af !default;
-$palette-green: #a6e3a1 !default;
-$palette-blue: #74c7ec !default;
+:root {
+    --palette-bg: #11111b;
+    --palette-surface: #181825;
+    --palette-elevated: #1e1e2e;
+    --palette-fg: #cdd6f4;
+    --palette-fg-muted: #bac2de;
+    --palette-primary: #b4befe;
+    --palette-red: #f38ba8;
+    --palette-yellow: #f9e2af;
+    --palette-green: #a6e3a1;
+    --palette-blue: #74c7ec;
 
-$font-sans: "Inter" !default;
-$font-mono: "JetBrains Mono" !default;
-$global-scale: 1 !default;
+    --cfg-font-sans: "Inter";
+    --cfg-font-mono: "JetBrains Mono";
+
+    --global-scale: 1;
+    --bar-scale: 1;
+    --bar-btn-icon-scale: 1;
+    --bar-btn-icon-padding-scale: 1;
+    --bar-btn-label-scale: 1;
+    --bar-btn-label-padding-scale: 1;
+    --bar-btn-gap-scale: 1;
+
+    --cfg-rounding-element: var(--radius-md);
+    --cfg-rounding-container: var(--radius-lg);
+    --cfg-bar-rounding-element: var(--bar-radius-md);
+    --cfg-bar-rounding-container: var(--bar-radius-lg);
+    --cfg-bar-button-rounding-element: var(--bar-button-radius-md);
+    --cfg-bar-group-rounding-element: var(--bar-radius-md);
+}

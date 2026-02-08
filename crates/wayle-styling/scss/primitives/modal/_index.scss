@@ -1,7 +1,7 @@
 .modal {
     all: unset;
     background: var(--bg-surface);
-    min-width: calc(29rem * #{$global-scale});
+    min-width: calc(29rem * var(--global-scale));
 
     .modal-header {
         padding: var(--space-lg);

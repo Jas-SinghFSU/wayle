@@ -1,8 +1,8 @@
 .progress-ring {
     all: unset;
 
-    min-width: calc(2.5rem * #{$global-scale});
-    min-height: calc(2.5rem * #{$global-scale});
+    min-width: calc(2.5rem * var(--global-scale));
+    min-height: calc(2.5rem * var(--global-scale));
 
     .ring-text {
         font-size: var(--text-sm);
@@ -11,8 +11,8 @@
     }
 
     &.sm {
-        min-width: calc(2rem * #{$global-scale});
-        min-height: calc(2rem * #{$global-scale});
+        min-width: calc(2rem * var(--global-scale));
+        min-height: calc(2rem * var(--global-scale));
 
         .ring-text {
             font-size: var(--text-xs);
@@ -20,8 +20,8 @@
     }
 
     &.md {
-        min-width: calc(3rem * #{$global-scale});
-        min-height: calc(3rem * #{$global-scale});
+        min-width: calc(3rem * var(--global-scale));
+        min-height: calc(3rem * var(--global-scale));
 
         .ring-text {
             font-size: var(--text-md);
@@ -29,8 +29,8 @@
     }
 
     &.lg {
-        min-width: calc(4rem * #{$global-scale});
-        min-height: calc(4rem * #{$global-scale});
+        min-width: calc(4rem * var(--global-scale));
+        min-height: calc(4rem * var(--global-scale));
 
         .ring-text {
             font-size: var(--text-md);
@@ -38,8 +38,8 @@
     }
 
     &.xl {
-        min-width: calc(5rem * #{$global-scale});
-        min-height: calc(5rem * #{$global-scale});
+        min-width: calc(5rem * var(--global-scale));
+        min-height: calc(5rem * var(--global-scale));
 
         .ring-text {
             font-size: var(--text-lg);
@@ -47,8 +47,8 @@
     }
 
     &.xxl {
-        min-width: calc(6rem * #{$global-scale});
-        min-height: calc(6rem * #{$global-scale});
+        min-width: calc(6rem * var(--global-scale));
+        min-height: calc(6rem * var(--global-scale));
 
         .ring-text {
             font-size: var(--text-lg);
@@ -56,8 +56,8 @@
     }
 
     &.xxxl {
-        min-width: calc(7rem * #{$global-scale});
-        min-height: calc(7rem * #{$global-scale});
+        min-width: calc(7rem * var(--global-scale));
+        min-height: calc(7rem * var(--global-scale));
 
         .ring-text {
             font-size: var(--text-xl);
@@ -68,7 +68,7 @@
 .progress-ring-canvas {
     border-style: solid;
     border-color: transparent;
-    border-width: calc(3px * #{$global-scale});
+    border-width: calc(3px * var(--global-scale));
     color: var(--accent);
 
     &.success {
@@ -84,26 +84,26 @@
     }
 
     &.sm {
-        border-width: calc(2px * #{$global-scale});
+        border-width: calc(2px * var(--global-scale));
     }
 
     &.md {
-        border-width: calc(3px * #{$global-scale});
+        border-width: calc(3px * var(--global-scale));
     }
 
     &.lg {
-        border-width: calc(4px * #{$global-scale});
+        border-width: calc(4px * var(--global-scale));
     }
 
     &.xl {
-        border-width: calc(5px * #{$global-scale});
+        border-width: calc(5px * var(--global-scale));
     }
 
     &.xxl {
-        border-width: calc(6px * #{$global-scale});
+        border-width: calc(6px * var(--global-scale));
     }
 
     &.xxxl {
-        border-width: calc(7px * #{$global-scale});
+        border-width: calc(7px * var(--global-scale));
     }
 }

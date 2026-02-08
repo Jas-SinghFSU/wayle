@@ -12,6 +12,8 @@ use tracing::{debug, info, warn};
 
 use crate::error::{Error, Result};
 
+const SYSTEM_ICONS_PATH: &str = "/usr/share/wayle/icons";
+
 const INDEX_THEME_CONTENT: &str = r#"[Icon Theme]
 Name=Wayle Icons
 Comment=Icons installed by Wayle
@@ -224,7 +226,7 @@ impl IconRegistry {
         Self::refresh_gtk_theme(&path)
     }
 
-    fn refresh_gtk_theme(base_path: &PathBuf) -> Result<()> {
+    fn refresh_gtk_theme(user_path: &PathBuf) -> Result<()> {
         let display = gdk::Display::default().ok_or_else(|| Error::RegistryError {
             reason: "no display available",
         })?;
@@ -234,15 +236,39 @@ impl IconRegistry {
         let mut paths: Vec<PathBuf> = icon_theme
             .search_path()
             .into_iter()
-            .filter(|p| p != base_path)
+            .filter(|p| p != user_path)
             .collect();
 
-        paths.push(base_path.clone());
+        for system_path in Self::system_icon_paths() {
+            if !paths.contains(&system_path) {
+                paths.push(system_path);
+            }
+        }
+        paths.push(user_path.clone());
 
         let path_refs: Vec<&std::path::Path> = paths.iter().map(|p| p.as_path()).collect();
         icon_theme.set_search_path(&path_refs);
 
         Ok(())
+    }
+
+    fn system_icon_paths() -> Vec<PathBuf> {
+        let mut paths = Vec::new();
+
+        let xdg_dirs = std::env::var("XDG_DATA_DIRS").unwrap_or_default();
+        for dir in xdg_dirs.split(':').filter(|d| !d.is_empty()) {
+            let path = PathBuf::from(dir).join("wayle/icons");
+            if path.exists() {
+                paths.push(path);
+            }
+        }
+
+        let system_path = PathBuf::from(SYSTEM_ICONS_PATH);
+        if system_path.exists() && !paths.contains(&system_path) {
+            paths.push(system_path);
+        }
+
+        paths
     }
 
     /// Checks if the icon directory and theme are properly set up.

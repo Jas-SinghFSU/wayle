@@ -1,8 +1,8 @@
 @mixin radio-base {
     radio {
         all: unset;
-        min-width: calc(0.875rem * #{$global-scale});
-        min-height: calc(0.875rem * #{$global-scale});
+        min-width: calc(0.875rem * var(--global-scale));
+        min-height: calc(0.875rem * var(--global-scale));
         border: 2px solid var(--fg-muted);
         border-radius: var(--radius-full);
         transition: all var(--duration-fast);
@@ -33,7 +33,7 @@
 
     &:focus-visible radio {
         outline: var(--focus-ring-width) solid var(--accent);
-        outline-offset: calc(0.125rem * #{$global-scale});
+        outline-offset: calc(0.125rem * var(--global-scale));
     }
 
     &:disabled {
