@@ -155,13 +155,13 @@ Switch to nightly Rust:
 
 ```bash
 rustup toolchain install nightly
-rustup default nightly
+rustup override set nightly
 ```
 
-Then clone the repository and build:
+Then clone the repository recursively and build:
 
 ```bash
-git clone https://github.com/Jas-SinghFSU/wayle
+git clone --recursive https://github.com/Jas-SinghFSU/wayle
 cd wayle
 cargo install --path crates/wayle-shell
 cargo install --path wayle
