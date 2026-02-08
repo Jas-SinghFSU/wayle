@@ -67,9 +67,13 @@ pub fn from_cli_name(name: &str) -> Result<Box<dyn IconSource>> {
         "simple-icons" => Ok(Box::new(SimpleIcons)),
         "material" => Ok(Box::new(Material)),
         "lucide" => Ok(Box::new(Lucide)),
-        _ => Err(Error::InvalidSource {
-            name: name.to_string(),
-        }),
+        _ => {
+            let available: Vec<_> = all().iter().map(|s| s.cli_name()).collect();
+            Err(Error::InvalidSource {
+                name: name.to_string(),
+                available: available.join(", "),
+            })
+        }
     }
 }
 

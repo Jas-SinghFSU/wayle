@@ -20,6 +20,7 @@ pub(crate) struct Bar {
     services: ShellServices,
     layout: BarLayout,
     css_provider: gtk::CssProvider,
+    last_css: String,
 
     left: FactoryVecDeque<BarItemFactory>,
     center: FactoryVecDeque<BarItemFactory>,
@@ -89,6 +90,8 @@ impl Component for Bar {
         let inset_ends = config.bar.inset_ends.get().value();
         let is_floating = inset_edge > 0.0 || inset_ends > 0.0;
 
+        let monitor_name = init.monitor.connector().map(|s| s.to_string());
+
         let settings = BarSettings {
             variant: config.bar.button_variant.clone(),
             theme_provider: config.styling.theme_provider.clone(),
@@ -97,6 +100,7 @@ impl Component for Bar {
             icon_position: config.bar.button_icon_position.clone(),
             is_vertical: ConfigProperty::new(location.is_vertical()),
             scroll_sensitivity: 1.0,
+            monitor_name,
         };
 
         root.init_layer_shell();
@@ -132,7 +136,7 @@ impl Component for Bar {
         watchers::layout::spawn(&sender, &init.monitor, &init.services.config);
         watchers::location::spawn(&sender, &init.services.config);
 
-        let model = Self {
+        let mut model = Self {
             location,
             settings,
             services: init.services,
@@ -144,13 +148,15 @@ impl Component for Bar {
                 right: Vec::new(),
             },
             css_provider,
+            last_css: String::new(),
             left,
             center,
             right,
         };
 
         model.spawn_style_watcher(&sender);
-        model.reload_css();
+        model.last_css = model.build_css();
+        model.css_provider.load_from_string(&model.last_css);
 
         let widgets = view_output!();
 
@@ -181,7 +187,11 @@ impl Component for Bar {
                 self.apply_layout(layout);
             }
             BarCmd::StyleChanged => {
-                self.reload_css();
+                let new_css = self.build_css();
+                if new_css != self.last_css {
+                    self.css_provider.load_from_string(&new_css);
+                    self.last_css = new_css;
+                }
             }
             BarCmd::LocationChanged(location) => {
                 self.apply_location_change(root, location);

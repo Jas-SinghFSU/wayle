@@ -2,6 +2,16 @@ use serde::Deserialize;
 
 use crate::{Address, MonitorId, WorkspaceId, deserialize_optional_address};
 
+/// A workspace rule from Hyprland configuration.
+#[derive(Debug, Deserialize, Clone, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct WorkspaceRule {
+    /// The workspace identifier string (could be name or ID).
+    pub workspace_string: String,
+    /// The monitor this workspace is bound to.
+    pub monitor: String,
+}
+
 #[derive(Debug, Deserialize, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct WorkspaceData {

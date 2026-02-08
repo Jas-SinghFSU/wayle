@@ -5,10 +5,6 @@ use thiserror::Error;
 /// Reason why SVG validation failed.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SvgValidationError {
-    /// Content does not start with '<'.
-    NotXml,
-    /// Missing `<svg>` element.
-    MissingSvgElement,
     /// SVG parsing failed.
     ParseError(String),
 }
@@ -16,8 +12,6 @@ pub enum SvgValidationError {
 impl std::fmt::Display for SvgValidationError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::NotXml => write!(f, "content does not start with '<'"),
-            Self::MissingSvgElement => write!(f, "missing <svg> element"),
             Self::ParseError(msg) => write!(f, "{msg}"),
         }
     }
@@ -79,10 +73,12 @@ pub enum Error {
     },
 
     /// Invalid icon source.
-    #[error("unknown icon source '{name}', expected one of: tabler, simple-icons, lucide")]
+    #[error("unknown icon source '{name}', expected one of: {available}")]
     InvalidSource {
         /// The invalid source name provided.
         name: String,
+        /// Comma-separated list of valid source names.
+        available: String,
     },
 
     /// Invalid SVG content.

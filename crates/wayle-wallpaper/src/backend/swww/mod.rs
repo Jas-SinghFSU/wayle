@@ -1,3 +1,4 @@
+mod daemon;
 mod transition;
 
 use std::{
@@ -6,6 +7,7 @@ use std::{
     process::{Command, Stdio},
 };
 
+pub(crate) use daemon::spawn_daemon_if_needed;
 use tracing::instrument;
 pub use transition::{
     BezierCurve, Position, TransitionAngle, TransitionConfig, TransitionDuration, TransitionFps,

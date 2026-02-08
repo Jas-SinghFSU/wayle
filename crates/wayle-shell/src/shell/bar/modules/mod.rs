@@ -4,6 +4,7 @@ mod clock;
 mod compositor;
 mod cpu;
 mod dashboard;
+mod hyprland_workspaces;
 mod hyprsunset;
 mod idle_inhibit;
 mod keybind_mode;
@@ -56,6 +57,7 @@ register_modules! {
     Clock => clock::Factory,
     Cpu => cpu::Factory,
     Dashboard => dashboard::Factory,
+    HyprlandWorkspaces => hyprland_workspaces::Factory,
     Hyprsunset => hyprsunset::Factory,
     IdleInhibit => idle_inhibit::Factory,
     KeybindMode => keybind_mode::Factory,

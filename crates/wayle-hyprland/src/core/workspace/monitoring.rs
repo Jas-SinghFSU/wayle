@@ -1,4 +1,7 @@
-use std::sync::{Arc, Weak};
+use std::{
+    error::Error as StdError,
+    sync::{Arc, Weak},
+};
 
 use tokio::sync::broadcast::Receiver;
 use tokio_util::sync::CancellationToken;
@@ -98,7 +101,12 @@ async fn update_workspace(id: WorkspaceId, hypr_messenger: &HyprMessenger, works
     let workspace_data = match hypr_messenger.workspace(id).await {
         Ok(ws_data) => ws_data,
         Err(e) => {
-            warn!(error = %e, workspace_id = id, "cannot get data for workspace");
+            warn!(
+                error = %e,
+                source = %StdError::source(&e).map(|s| s.to_string()).unwrap_or_default(),
+                workspace_id = id,
+                "cannot get data for workspace"
+            );
             return;
         }
     };

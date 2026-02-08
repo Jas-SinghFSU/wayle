@@ -5,7 +5,7 @@ use tracing::instrument;
 use super::HyprMessenger;
 use crate::{
     Address, BindData, ClientData, CursorPosition, DeviceInfo, Error, LayerData, LayerLevel,
-    MonitorData, MonitorLayers, Result, WorkspaceData, WorkspaceId,
+    MonitorData, MonitorLayers, Result, WorkspaceData, WorkspaceId, WorkspaceRule,
 };
 
 impl HyprMessenger {
@@ -36,6 +36,12 @@ impl HyprMessenger {
     #[instrument(skip(self), err)]
     pub(crate) async fn workspaces(&self) -> Result<Vec<WorkspaceData>> {
         let response = self.send("j/workspaces").await?;
+        serde_json::from_str(&response).map_err(Error::JsonParseError)
+    }
+
+    #[instrument(skip(self), err)]
+    pub(crate) async fn workspace_rules(&self) -> Result<Vec<WorkspaceRule>> {
+        let response = self.send("j/workspacerules").await?;
         serde_json::from_str(&response).map_err(Error::JsonParseError)
     }
 

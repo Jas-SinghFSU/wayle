@@ -14,6 +14,7 @@ pub use layer::*;
 pub use monitor::*;
 use serde::{Deserialize, Deserializer};
 pub(crate) use workspace::WorkspaceData;
+pub use workspace::WorkspaceRule;
 
 use crate::Error;
 

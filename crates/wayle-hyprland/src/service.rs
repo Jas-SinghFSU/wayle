@@ -10,6 +10,7 @@ use wayle_traits::ServiceMonitoring;
 
 use crate::{
     Address, BindData, CursorPosition, DeviceInfo, HyprlandEvent, Result, WorkspaceId,
+    WorkspaceRule,
     core::{client::Client, layer::Layer, monitor::Monitor, workspace::Workspace},
     discovery::HyprlandDiscovery,
     ipc::{
@@ -48,7 +49,12 @@ impl HyprlandService {
         let cancellation_token = CancellationToken::new();
         let hypr_messenger = HyprMessenger::new()?;
 
-        events::subscribe(internal_tx.clone(), hyprland_tx.clone()).await?;
+        events::subscribe(
+            internal_tx.clone(),
+            hyprland_tx.clone(),
+            cancellation_token.clone(),
+        )
+        .await?;
 
         let HyprlandDiscovery {
             workspaces,
@@ -292,6 +298,15 @@ impl HyprlandService {
     #[instrument(skip(self), err)]
     pub async fn binds(&self) -> Result<Vec<BindData>> {
         self.hypr_messenger.binds().await
+    }
+
+    /// Returns all workspace rules from Hyprland configuration.
+    ///
+    /// # Errors
+    /// Returns error if IPC communication fails.
+    #[instrument(skip(self), err)]
+    pub async fn workspace_rules(&self) -> Result<Vec<WorkspaceRule>> {
+        self.hypr_messenger.workspace_rules().await
     }
 
     /// Returns information about all input devices.

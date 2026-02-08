@@ -5,6 +5,7 @@
 
 use std::{fs, path::Path};
 
+use futures::future::join_all;
 use tracing::{debug, info, warn};
 use usvg::{Options, Tree};
 
@@ -85,8 +86,7 @@ impl IconManager {
 
     /// Installs icons from a source by fetching from CDN.
     ///
-    /// Continues installing remaining icons even if some fail. Returns an
-    /// [`InstallResult`] containing both successful and failed installations.
+    /// Returns an [`InstallResult`] containing both successful and failed installations.
     ///
     /// # Arguments
     ///
@@ -99,59 +99,71 @@ impl IconManager {
     /// icon failures are captured in [`InstallResult::failed`].
     pub async fn install(&self, source: &dyn IconSource, slugs: &[&str]) -> Result<InstallResult> {
         let icons_dir = self.registry.icons_dir();
-        fs::create_dir_all(&icons_dir).map_err(|source| Error::DirectoryError {
+        fs::create_dir_all(&icons_dir).map_err(|err| Error::DirectoryError {
             path: icons_dir.clone(),
-            source,
+            source: err,
         })?;
 
-        let mut result = InstallResult::default();
+        let source_name = source.cli_name();
+        let fetch_data: Vec<_> = slugs
+            .iter()
+            .map(|slug| {
+                let url = source.cdn_url(slug);
+                let icon_name = source.icon_name(slug);
+                (*slug, url, icon_name)
+            })
+            .collect();
 
-        for slug in slugs {
-            match self.install_single(source, slug, &icons_dir).await {
+        let futures: Vec<_> = fetch_data
+            .iter()
+            .map(|(slug, url, icon_name)| self.fetch_and_save(slug, url, icon_name, &icons_dir))
+            .collect();
+
+        let results = join_all(futures).await;
+
+        let mut install_result = InstallResult::default();
+        for (slug, result) in fetch_data.iter().map(|(s, _, _)| *s).zip(results) {
+            match result {
                 Ok(name) => {
-                    info!(icon = %name, source = source.cli_name(), "Installed icon");
-                    result.installed.push(name);
+                    info!(icon = %name, source = source_name, "Installed icon");
+                    install_result.installed.push(name);
                 }
                 Err(err) => {
-                    warn!(slug = %slug, source = source.cli_name(), error = %err, "cannot install icon");
-                    result.failed.push(InstallFailure {
-                        slug: (*slug).to_string(),
+                    warn!(slug = %slug, source = source_name, error = %err, "cannot install icon");
+                    install_result.failed.push(InstallFailure {
+                        slug: slug.to_string(),
                         error: err.to_string(),
                     });
                 }
             }
         }
 
-        Ok(result)
+        Ok(install_result)
     }
 
-    async fn install_single(
+    async fn fetch_and_save(
         &self,
-        source: &dyn IconSource,
         slug: &str,
+        url: &str,
+        icon_name: &str,
         icons_dir: &Path,
     ) -> Result<String> {
-        let url = source.cdn_url(slug);
-        let icon_name = source.icon_name(slug);
-
         debug!(url = %url, "Fetching icon");
 
-        let response = self.client.get(&url).send().await?;
+        let response = self.client.get(url).send().await?;
 
         if !response.status().is_success() {
             return Err(Error::FetchError {
                 slug: slug.to_string(),
-                icon_source: source.cli_name().to_string(),
+                icon_source: "cdn".to_string(),
                 status: response.status(),
             });
         }
 
         let svg_content = response.text().await?;
-
         Self::validate_svg(&svg_content, slug)?;
 
         let transformed = transform::to_symbolic(&svg_content);
-
         let file_path = icons_dir.join(format!("{icon_name}-symbolic.svg"));
         fs::write(&file_path, &transformed).map_err(|source| Error::WriteError {
             path: file_path,
@@ -366,22 +378,10 @@ impl IconManager {
     }
 
     fn validate_svg(content: &str, slug: &str) -> Result<()> {
-        let trimmed = content.trim();
-
-        if !trimmed.starts_with('<') {
-            return Err(Error::InvalidSvg {
-                slug: slug.to_string(),
-                reason: SvgValidationError::NotXml,
-            });
-        }
-
-        if !trimmed.contains("<svg") {
-            return Err(Error::InvalidSvg {
-                slug: slug.to_string(),
-                reason: SvgValidationError::MissingSvgElement,
-            });
-        }
-
+        Tree::from_str(content, &Options::default()).map_err(|err| Error::InvalidSvg {
+            slug: slug.to_string(),
+            reason: SvgValidationError::ParseError(err.to_string()),
+        })?;
         Ok(())
     }
 }

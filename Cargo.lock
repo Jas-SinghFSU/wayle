@@ -4359,6 +4359,7 @@ dependencies = [
 name = "wayle-icons"
 version = "0.1.0"
 dependencies = [
+ "futures",
  "gtk4",
  "notify",
  "reqwest",

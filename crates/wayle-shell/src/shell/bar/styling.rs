@@ -1,5 +1,7 @@
 //! CSS variable generation for bar styling.
 
+use std::time::Duration;
+
 use relm4::{ComponentSender, gtk};
 use tokio::sync::mpsc;
 use wayle_common::SubscribeChanges;
@@ -57,6 +59,8 @@ impl InlineStyling for Bar {
         bar.shadow.subscribe_changes(tx);
 
         sender.command(move |out, shutdown| async move {
+            const DEBOUNCE: Duration = Duration::from_millis(50);
+
             let shutdown_fut = shutdown.wait();
             tokio::pin!(shutdown_fut);
 
@@ -64,7 +68,16 @@ impl InlineStyling for Bar {
                 tokio::select! {
                     () = &mut shutdown_fut => break,
                     Some(()) = rx.recv() => {
-                        let _ = out.send(BarCmd::StyleChanged);
+                        loop {
+                            tokio::select! {
+                                () = &mut shutdown_fut => return,
+                                Some(()) = rx.recv() => continue,
+                                () = tokio::time::sleep(DEBOUNCE) => {
+                                    let _ = out.send(BarCmd::StyleChanged);
+                                    break;
+                                }
+                            }
+                        }
                     }
                 }
             }

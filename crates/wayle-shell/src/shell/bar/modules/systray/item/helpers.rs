@@ -1,7 +1,4 @@
-#[allow(deprecated)]
-use gtk4::prelude::StyleContextExt;
 use gtk4::{gdk, glib, prelude::Cast};
-use relm4::gtk::{self, prelude::WidgetExt};
 use wayle_systray::types::item::IconPixmap;
 
 const TARGET_ICON_SIZE: i32 = 24;
@@ -41,17 +38,6 @@ pub(super) fn load_icon_from_theme_path(theme_path: &str, icon_name: &str) -> Op
     }
 
     None
-}
-
-pub(super) fn apply_icon_color(image: &gtk::Image, css_color: &str) {
-    let provider = gtk::CssProvider::new();
-    let css = format!("image {{ color: {css_color}; }}");
-    provider.load_from_string(&css);
-
-    #[allow(deprecated)]
-    image
-        .style_context()
-        .add_provider(&provider, gtk::STYLE_PROVIDER_PRIORITY_USER + 1);
 }
 
 fn argb_to_rgba(argb: &[u8]) -> Vec<u8> {

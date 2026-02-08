@@ -4,18 +4,18 @@
     border-radius: var(--bar-button-rounding-element);
 
     &.border-top {
-        border-top: var(--bar-container-border-width) solid var(--bar-container-border-color);
+        box-shadow: inset 0 var(--bar-container-border-width) 0 0 var(--bar-container-border-color);
     }
     &.border-bottom {
-        border-bottom: var(--bar-container-border-width) solid var(--bar-container-border-color);
+        box-shadow: inset 0 calc(-1 * var(--bar-container-border-width)) 0 0 var(--bar-container-border-color);
     }
     &.border-left {
-        border-left: var(--bar-container-border-width) solid var(--bar-container-border-color);
+        box-shadow: inset var(--bar-container-border-width) 0 0 0 var(--bar-container-border-color);
     }
     &.border-right {
-        border-right: var(--bar-container-border-width) solid var(--bar-container-border-color);
+        box-shadow: inset calc(-1 * var(--bar-container-border-width)) 0 0 0 var(--bar-container-border-color);
     }
     &.border-all {
-        border: var(--bar-container-border-width) solid var(--bar-container-border-color);
+        box-shadow: inset 0 0 0 var(--bar-container-border-width) var(--bar-container-border-color);
     }
 }

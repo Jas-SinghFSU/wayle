@@ -4,9 +4,9 @@ mod watchers;
 use std::sync::Arc;
 
 use gtk4::gio::SimpleActionGroup;
-use helpers::{
-    apply_icon_color, create_texture_from_pixmap, load_icon_from_theme_path, select_best_pixmap,
-};
+#[allow(deprecated)]
+use gtk4::prelude::StyleContextExt;
+use helpers::{create_texture_from_pixmap, load_icon_from_theme_path, select_best_pixmap};
 use relm4::{
     gtk::{self, prelude::*},
     prelude::*,
@@ -32,6 +32,7 @@ pub(super) struct SystrayItem {
     config: Arc<ConfigService>,
     button: Option<gtk::Button>,
     icon: Option<gtk::Image>,
+    icon_color_provider: Option<gtk::CssProvider>,
     popover: Option<gtk::PopoverMenu>,
     action_group: Option<SimpleActionGroup>,
     registered_accels: Vec<String>,
@@ -80,6 +81,7 @@ impl FactoryComponent for SystrayItem {
             config: init.config,
             button: None,
             icon: None,
+            icon_color_provider: None,
             popover: None,
             action_group: None,
             registered_accels: Vec::new(),
@@ -181,8 +183,8 @@ impl FactoryComponent for SystrayItem {
                 self.rebuild_menu_if_visible();
             }
             SystrayItemMsg::IconUpdated => {
-                if let Some(icon) = self.icon.as_ref() {
-                    self.update_icon(icon);
+                if let Some(icon) = self.icon.clone() {
+                    self.update_icon(&icon);
                 }
             }
         }
@@ -302,7 +304,7 @@ impl SystrayItem {
         });
     }
 
-    fn update_icon(&self, image: &gtk::Image) {
+    fn update_icon(&mut self, image: &gtk::Image) {
         let overrides = self.config.config().modules.systray.overrides.get();
         let override_match = find_override(&self.item, &overrides);
 
@@ -313,7 +315,30 @@ impl SystrayItem {
         self.apply_icon(image, icon_name.as_deref());
 
         if let Some(color) = override_match.and_then(|m| m.color.clone()) {
-            apply_icon_color(image, &color.to_css());
+            self.apply_icon_color(image, &color.to_css());
+        } else {
+            self.clear_icon_color(image);
+        }
+    }
+
+    fn apply_icon_color(&mut self, image: &gtk::Image, css_color: &str) {
+        let provider = self
+            .icon_color_provider
+            .get_or_insert_with(gtk::CssProvider::new);
+
+        let css = format!("image {{ color: {css_color}; }}");
+        provider.load_from_string(&css);
+
+        #[allow(deprecated)]
+        image
+            .style_context()
+            .add_provider(provider, gtk::STYLE_PROVIDER_PRIORITY_USER + 1);
+    }
+
+    fn clear_icon_color(&mut self, image: &gtk::Image) {
+        if let Some(provider) = self.icon_color_provider.take() {
+            #[allow(deprecated)]
+            image.style_context().remove_provider(&provider);
         }
     }
 

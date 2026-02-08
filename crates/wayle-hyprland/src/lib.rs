@@ -82,7 +82,13 @@ mod monitoring;
 mod service;
 mod types;
 
+pub use core::{client::Client, monitor::Monitor, workspace::Workspace};
+
 pub use error::{Error, Result};
 pub use ipc::events::types::HyprlandEvent;
 pub use service::HyprlandService;
-pub use types::*;
+pub(crate) use types::*;
+pub use types::{
+    Address, BindData, CursorPosition, DeviceInfo, FocusHistoryId, MonitorId, ProcessId,
+    ScreencastOwner, WorkspaceId, WorkspaceInfo, WorkspaceRule,
+};

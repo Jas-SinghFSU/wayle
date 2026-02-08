@@ -1,4 +1,7 @@
-use std::sync::{Arc, Weak};
+use std::{
+    error::Error as StdError,
+    sync::{Arc, Weak},
+};
 
 use tokio::sync::broadcast::Receiver;
 use tokio_util::sync::CancellationToken;
@@ -96,7 +99,12 @@ async fn update_monitor(hypr_messenger: &HyprMessenger, monitor: &Monitor) {
     let monitor_data = match hypr_messenger.monitor(&name).await {
         Ok(monitor_data) => monitor_data,
         Err(e) => {
-            warn!(error = %e, monitor_name = %name, "cannot get data for monitor");
+            warn!(
+                error = %e,
+                source = %StdError::source(&e).map(|s| s.to_string()).unwrap_or_default(),
+                monitor_name = %name,
+                "cannot get data for monitor"
+            );
             return;
         }
     };

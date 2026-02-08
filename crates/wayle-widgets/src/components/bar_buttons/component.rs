@@ -140,6 +140,7 @@ impl Component for BarButton {
                     gtk::Label {
                         add_css_class: "bar-button-label",
                         set_align: gtk::Align::Center,
+                        set_justify: gtk::Justification::Center,
 
                         #[watch]
                         set_hexpand: model.settings.is_vertical.get(),

@@ -75,6 +75,8 @@ pub struct BarSettings {
     pub is_vertical: ConfigProperty<bool>,
     /// Scroll sensitivity multiplier.
     pub scroll_sensitivity: f64,
+    /// Monitor connector name (e.g., "DP-1", "HDMI-A-1").
+    pub monitor_name: Option<String>,
 }
 
 /// CSS class constants for bar button modifiers.

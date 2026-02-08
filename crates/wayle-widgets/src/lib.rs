@@ -18,6 +18,7 @@
 //! ```
 
 pub mod components;
+pub mod icons;
 pub mod primitives;
 pub mod styling;
 pub mod utils;

@@ -5,6 +5,7 @@ use relm4::gtk;
 use wayle_common::glob;
 use wayle_config::schemas::modules::{BUILTIN_MAPPINGS, MediaConfig, MediaIconType};
 use wayle_media::{core::player::Player, types::PlaybackState};
+use wayle_widgets::icons::icon_exists;
 
 pub(crate) const PLAY_ICON: &str = "󰐊";
 pub(crate) const PAUSE_ICON: &str = "󰏤";
@@ -161,14 +162,6 @@ fn find_by_startup_wm_class(wm_class: &str) -> Option<gtk::gio::DesktopAppInfo> 
         }
     }
     None
-}
-
-fn icon_exists(icon_name: &str) -> bool {
-    let Some(display) = gtk::gdk::Display::default() else {
-        return false;
-    };
-    let theme = gtk::IconTheme::for_display(&display);
-    theme.has_icon(icon_name)
 }
 
 #[cfg(test)]

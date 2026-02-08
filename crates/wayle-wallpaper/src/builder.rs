@@ -8,7 +8,7 @@ use wayle_traits::ServiceMonitoring;
 use zbus::Connection;
 
 use crate::{
-    backend::TransitionConfig,
+    backend::{TransitionConfig, spawn_daemon_if_needed},
     dbus::{SERVICE_NAME, SERVICE_PATH, WallpaperDaemon},
     error::Error,
     service::WallpaperService,
@@ -54,6 +54,8 @@ impl WallpaperServiceBuilder {
     ///
     /// Returns error if D-Bus connection fails or service registration fails.
     pub async fn build(self) -> Result<Arc<WallpaperService>, Error> {
+        spawn_daemon_if_needed();
+
         let connection = Connection::session().await.map_err(|err| {
             Error::ServiceInitializationFailed(format!("D-Bus connection failed: {err}"))
         })?;

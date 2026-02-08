@@ -1,7 +1,6 @@
 use std::fs;
 
-use gdk4::Display;
-use gtk4::IconTheme;
+use wayle_widgets::icons::icon_exists;
 
 const FALLBACK_ICON: &str = "cm-wayle-symbolic";
 
@@ -103,12 +102,6 @@ pub(crate) fn build_icon(icon_override: &str) -> String {
     }
 
     FALLBACK_ICON.to_string()
-}
-
-fn icon_exists(name: &str) -> bool {
-    Display::default()
-        .map(|display| IconTheme::for_display(&display).has_icon(name))
-        .unwrap_or(false)
 }
 
 #[cfg(test)]

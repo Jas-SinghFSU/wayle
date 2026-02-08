@@ -3,6 +3,7 @@ mod bluetooth;
 mod clock;
 mod cpu;
 mod dashboard;
+mod hyprland_workspaces;
 mod hyprsunset;
 mod idle_inhibit;
 mod keybind_mode;
@@ -27,6 +28,9 @@ pub use bluetooth::BluetoothConfig;
 pub use clock::ClockConfig;
 pub use cpu::CpuConfig;
 pub use dashboard::DashboardConfig;
+pub use hyprland_workspaces::{
+    ActiveIndicator, DisplayMode, HyprlandWorkspacesConfig, Numbering, WorkspaceStyle,
+};
 pub use hyprsunset::HyprsunsetConfig;
 pub use idle_inhibit::IdleInhibitConfig;
 pub use keybind_mode::KeybindModeConfig;
@@ -60,6 +64,9 @@ pub struct ModulesConfig {
     pub cpu: CpuConfig,
     /// Dashboard module.
     pub dashboard: DashboardConfig,
+    /// Hyprland workspace switcher module.
+    #[serde(rename = "hyprland-workspaces")]
+    pub hyprland_workspaces: HyprlandWorkspacesConfig,
     /// Hyprsunset (blue light filter) module.
     pub hyprsunset: HyprsunsetConfig,
     /// Idle inhibitor module.

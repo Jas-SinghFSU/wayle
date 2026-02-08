@@ -43,23 +43,22 @@ menubutton.bar-button {
         border-radius: var(--radius-full);
     }
 
-    // Border location classes
-    // Border color and width are set via inline CSS in Reml4.
     &.border-top > button.toggle {
-        border-top: var(--bar-btn-border-width) solid var(--bar-btn-border-color);
+        box-shadow: inset 0 var(--bar-btn-border-width) 0 0 var(--bar-btn-border-color);
     }
     &.border-bottom > button.toggle {
-        border-bottom: var(--bar-btn-border-width) solid var(--bar-btn-border-color);
+        box-shadow: inset 0 calc(-1 * var(--bar-btn-border-width)) 0 0 var(--bar-btn-border-color);
     }
     &.border-left > button.toggle {
-        border-left: var(--bar-btn-border-width) solid var(--bar-btn-border-color);
+        box-shadow: inset var(--bar-btn-border-width) 0 0 0 var(--bar-btn-border-color);
     }
     &.border-right > button.toggle {
-        border-right: var(--bar-btn-border-width) solid var(--bar-btn-border-color);
+        box-shadow: inset calc(-1 * var(--bar-btn-border-width)) 0 0 0 var(--bar-btn-border-color);
     }
     &.border-all > button.toggle {
-        border: var(--bar-btn-border-width) solid var(--bar-btn-border-color);
+        box-shadow: inset 0 0 0 var(--bar-btn-border-width) var(--bar-btn-border-color);
     }
+
 }
 
 .media-disc menubutton.bar-button .icon-container image {
