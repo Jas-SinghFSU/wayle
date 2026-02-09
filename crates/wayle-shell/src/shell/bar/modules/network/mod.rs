@@ -18,6 +18,7 @@ use wayle_widgets::prelude::{
 };
 
 use self::helpers::{WifiContext, WiredContext, wifi_icon, wifi_label, wired_icon, wired_label};
+use crate::i18n::t;
 pub(crate) use self::{
     factory::Factory,
     messages::{NetworkCmd, NetworkInit, NetworkMsg},
@@ -169,7 +170,7 @@ impl NetworkModule {
                 } else {
                     (
                         config.wifi_offline_icon.get().clone(),
-                        String::from("No WiFi"),
+                        t!("bar-network-no-wifi"),
                     )
                 }
             }
@@ -182,7 +183,7 @@ impl NetworkModule {
                 } else {
                     (
                         config.wired_disconnected_icon.get().clone(),
-                        String::from("No Ethernet"),
+                        t!("bar-network-no-ethernet"),
                     )
                 }
             }
@@ -204,7 +205,7 @@ impl NetworkModule {
                 } else {
                     (
                         config.wifi_offline_icon.get().clone(),
-                        String::from("Offline"),
+                        t!("bar-network-offline"),
                     )
                 }
             }

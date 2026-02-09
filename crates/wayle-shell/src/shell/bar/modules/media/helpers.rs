@@ -7,6 +7,8 @@ use wayle_config::schemas::modules::{BUILTIN_MAPPINGS, MediaConfig, MediaIconTyp
 use wayle_media::{core::player::Player, types::PlaybackState};
 use wayle_widgets::icons::icon_exists;
 
+use crate::i18n::t;
+
 pub(crate) const PLAY_ICON: &str = "󰐊";
 pub(crate) const PAUSE_ICON: &str = "󰏤";
 pub(crate) const STOP_ICON: &str = "󰓛";
@@ -21,9 +23,9 @@ pub(crate) struct FormatContext<'a> {
 
 pub(crate) fn format_label(ctx: &FormatContext<'_>) -> String {
     let status_text = match ctx.state {
-        PlaybackState::Playing => "Playing",
-        PlaybackState::Paused => "Paused",
-        PlaybackState::Stopped => "Stopped",
+        PlaybackState::Playing => t!("bar-media-playing"),
+        PlaybackState::Paused => t!("bar-media-paused"),
+        PlaybackState::Stopped => t!("bar-media-stopped"),
     };
 
     let status_icon = match ctx.state {
@@ -36,7 +38,7 @@ pub(crate) fn format_label(ctx: &FormatContext<'_>) -> String {
         .replace("{title}", ctx.title)
         .replace("{artist}", ctx.artist)
         .replace("{album}", ctx.album)
-        .replace("{status}", status_text)
+        .replace("{status}", &status_text)
         .replace("{status_icon}", status_icon)
 }
 
@@ -167,6 +169,7 @@ fn find_by_startup_wm_class(wm_class: &str) -> Option<gtk::gio::DesktopAppInfo> 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::i18n::t;
 
     #[test]
     fn format_label_basic_placeholders() {
@@ -191,9 +194,10 @@ mod tests {
             state: PlaybackState::Playing,
         });
 
+        let expected_status = t!("bar-media-playing");
         assert_eq!(
             result,
-            format!("{PLAY_ICON} Track by Band from Record (Playing)")
+            format!("{PLAY_ICON} Track by Band from Record ({expected_status})")
         );
     }
 
@@ -207,7 +211,8 @@ mod tests {
             state: PlaybackState::Paused,
         });
 
-        assert_eq!(result, format!("{PAUSE_ICON} Paused"));
+        let expected_status = t!("bar-media-paused");
+        assert_eq!(result, format!("{PAUSE_ICON} {expected_status}"));
     }
 
     #[test]
@@ -220,7 +225,7 @@ mod tests {
             state: PlaybackState::Stopped,
         });
 
-        assert_eq!(result, "Stopped");
+        assert_eq!(result, t!("bar-media-stopped"));
     }
 
     #[test]

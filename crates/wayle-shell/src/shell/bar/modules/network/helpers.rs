@@ -40,7 +40,10 @@ pub(crate) fn wifi_icon(config: &NetworkConfig, ctx: &WifiContext<'_>) -> String
 
 pub(crate) fn wifi_label(ctx: &WifiContext<'_>) -> String {
     match ctx.connectivity {
-        NetworkStatus::Connected => ctx.ssid.unwrap_or("WiFi").to_string(),
+        NetworkStatus::Connected => ctx
+            .ssid
+            .map(String::from)
+            .unwrap_or_else(|| t!("bar-network-wifi-fallback")),
         NetworkStatus::Connecting => t!("bar-network-connecting"),
         NetworkStatus::Disconnected => t!("bar-network-disconnected"),
     }
