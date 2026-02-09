@@ -3,6 +3,7 @@ mod bluetooth;
 mod clock;
 mod compositor;
 mod cpu;
+mod custom;
 mod dashboard;
 mod hyprland_workspaces;
 mod hyprsunset;
@@ -85,5 +86,10 @@ pub(crate) fn create_module(
 ) -> Option<ModuleInstance> {
     let module = module_ref.module();
     let class = module_ref.class().map(String::from);
-    create_from_variant(module, settings, services, class)
+
+    if let Some(id) = module.custom_id() {
+        return custom::Factory::create_for_id(id, settings, services, class);
+    }
+
+    create_from_variant(module.clone(), settings, services, class)
 }

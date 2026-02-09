@@ -2,6 +2,7 @@ mod battery;
 mod bluetooth;
 mod clock;
 mod cpu;
+mod custom;
 mod dashboard;
 mod hyprland_workspaces;
 mod hyprsunset;
@@ -27,6 +28,7 @@ pub use battery::BatteryConfig;
 pub use bluetooth::BluetoothConfig;
 pub use clock::ClockConfig;
 pub use cpu::CpuConfig;
+pub use custom::{CustomModuleDefinition, ExecutionMode};
 pub use dashboard::DashboardConfig;
 pub use hyprland_workspaces::{
     ActiveIndicator, DisplayMode, HyprlandWorkspacesConfig, Numbering, WorkspaceStyle,
@@ -46,6 +48,7 @@ pub use separator::SeparatorConfig;
 pub use storage::StorageConfig;
 pub use systray::{SystrayConfig, TrayItemOverride};
 pub use volume::VolumeConfig;
+use wayle_common::ConfigProperty;
 use wayle_derive::wayle_config;
 pub use weather::{TemperatureUnit, WeatherConfig, WeatherProvider};
 pub use window_title::{BUILTIN_MAPPINGS as WINDOW_TITLE_BUILTIN_MAPPINGS, WindowTitleConfig};
@@ -108,4 +111,7 @@ pub struct ModulesConfig {
     /// World clock module.
     #[serde(rename = "world-clock")]
     pub world_clock: WorldClockConfig,
+    /// Custom user-defined modules.
+    #[default(Vec::new())]
+    pub custom: ConfigProperty<Vec<CustomModuleDefinition>>,
 }

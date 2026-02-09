@@ -27,6 +27,9 @@ rust-embed.workspace = true
 indicatif.workspace = true
 notify.workspace = true
 relm4.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+serde_json_path.workspace = true
 thiserror.workspace = true
 tokio = { workspace = true, features = ["full"] }
 tokio-stream.workspace = true

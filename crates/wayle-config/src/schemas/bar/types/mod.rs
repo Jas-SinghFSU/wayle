@@ -1,7 +1,9 @@
 mod shadow;
 
+use std::fmt;
+
 use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, Serializer, de};
 pub use shadow::ShadowPreset;
 
 /// Layout configuration for a bar on a specific monitor.
@@ -121,10 +123,10 @@ pub enum ModuleRef {
 
 impl ModuleRef {
     /// Returns the underlying module type.
-    pub fn module(&self) -> BarModule {
+    pub fn module(&self) -> &BarModule {
         match self {
-            Self::Plain(m) => *m,
-            Self::Classed(c) => c.module,
+            Self::Plain(m) => m,
+            Self::Classed(c) => &c.module,
         }
     }
 
@@ -147,8 +149,11 @@ pub struct ClassedModule {
 }
 
 /// Available bar modules.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "kebab-case")]
+///
+/// Built-in modules use kebab-case names (e.g., `"clock"`, `"battery"`).
+/// Custom modules use the pattern `custom-<id>` where `<id>` is the module
+/// ID defined in `[[modules.custom]]`.
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum BarModule {
     /// Battery status and percentage.
     Battery,
@@ -200,7 +205,174 @@ pub enum BarModule {
     WindowTitle,
     /// World clock with multiple timezones.
     WorldClock,
+    /// User-defined custom module by ID.
+    Custom(String),
 }
+
+impl schemars::JsonSchema for BarModule {
+    fn schema_name() -> std::borrow::Cow<'static, str> {
+        std::borrow::Cow::Borrowed("BarModule")
+    }
+
+    fn json_schema(_generator: &mut schemars::SchemaGenerator) -> schemars::Schema {
+        schemars::json_schema!({
+            "description": "Bar module name. Built-in modules or custom modules with 'custom-<id>' pattern.",
+            "anyOf": [
+                { "enum": BUILTIN_MODULES },
+                {
+                    "type": "string",
+                    "pattern": "^custom-[a-z0-9-]+$",
+                    "description": "Custom module ID (e.g., 'custom-gpu-temp')"
+                }
+            ]
+        })
+    }
+}
+
+impl BarModule {
+    const CUSTOM_PREFIX: &str = "custom-";
+
+    fn to_kebab_case(&self) -> &'static str {
+        match self {
+            Self::Battery => "battery",
+            Self::Bluetooth => "bluetooth",
+            Self::Clock => "clock",
+            Self::Cpu => "cpu",
+            Self::Dashboard => "dashboard",
+            Self::KeybindMode => "keybind-mode",
+            Self::HyprlandWorkspaces => "hyprland-workspaces",
+            Self::IdleInhibit => "idle-inhibit",
+            Self::Hyprsunset => "hyprsunset",
+            Self::KeyboardInput => "keyboard-input",
+            Self::Media => "media",
+            Self::Microphone => "microphone",
+            Self::Network => "network",
+            Self::Netstat => "netstat",
+            Self::Notifications => "notifications",
+            Self::Power => "power",
+            Self::Ram => "ram",
+            Self::Separator => "separator",
+            Self::Storage => "storage",
+            Self::Systray => "systray",
+            Self::Updates => "updates",
+            Self::Volume => "volume",
+            Self::Weather => "weather",
+            Self::WindowTitle => "window-title",
+            Self::WorldClock => "world-clock",
+            Self::Custom(_) => unreachable!("Custom modules use dynamic serialization"),
+        }
+    }
+
+    fn from_kebab_case(s: &str) -> Option<Self> {
+        let module = match s {
+            "battery" => Self::Battery,
+            "bluetooth" => Self::Bluetooth,
+            "clock" => Self::Clock,
+            "cpu" => Self::Cpu,
+            "dashboard" => Self::Dashboard,
+            "keybind-mode" => Self::KeybindMode,
+            "hyprland-workspaces" => Self::HyprlandWorkspaces,
+            "idle-inhibit" => Self::IdleInhibit,
+            "hyprsunset" => Self::Hyprsunset,
+            "keyboard-input" => Self::KeyboardInput,
+            "media" => Self::Media,
+            "microphone" => Self::Microphone,
+            "network" => Self::Network,
+            "netstat" => Self::Netstat,
+            "notifications" => Self::Notifications,
+            "power" => Self::Power,
+            "ram" => Self::Ram,
+            "separator" => Self::Separator,
+            "storage" => Self::Storage,
+            "systray" => Self::Systray,
+            "updates" => Self::Updates,
+            "volume" => Self::Volume,
+            "weather" => Self::Weather,
+            "window-title" => Self::WindowTitle,
+            "world-clock" => Self::WorldClock,
+            _ => return None,
+        };
+        Some(module)
+    }
+
+    /// Returns the custom module ID if this is a custom module.
+    pub fn custom_id(&self) -> Option<&str> {
+        match self {
+            Self::Custom(id) => Some(id),
+            _ => None,
+        }
+    }
+}
+
+impl Serialize for BarModule {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        match self {
+            Self::Custom(id) => {
+                let name = format!("{}{}", Self::CUSTOM_PREFIX, id);
+                serializer.serialize_str(&name)
+            }
+            _ => serializer.serialize_str(self.to_kebab_case()),
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for BarModule {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+
+        if let Some(id) = s.strip_prefix(Self::CUSTOM_PREFIX) {
+            if id.is_empty() {
+                return Err(de::Error::custom("custom module ID cannot be empty"));
+            }
+            return Ok(Self::Custom(id.to_owned()));
+        }
+
+        Self::from_kebab_case(&s).ok_or_else(|| de::Error::unknown_variant(&s, BUILTIN_MODULES))
+    }
+}
+
+impl fmt::Display for BarModule {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Custom(id) => write!(f, "{}{}", Self::CUSTOM_PREFIX, id),
+            _ => f.write_str(self.to_kebab_case()),
+        }
+    }
+}
+
+const BUILTIN_MODULES: &[&str] = &[
+    "battery",
+    "bluetooth",
+    "clock",
+    "cpu",
+    "dashboard",
+    "hyprland-workspaces",
+    "hyprsunset",
+    "idle-inhibit",
+    "keybind-mode",
+    "keyboard-input",
+    "media",
+    "microphone",
+    "netstat",
+    "network",
+    "notifications",
+    "power",
+    "ram",
+    "separator",
+    "storage",
+    "systray",
+    "updates",
+    "volume",
+    "weather",
+    "window-title",
+    "world-clock",
+];
 
 /// Bar position on screen.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, JsonSchema)]

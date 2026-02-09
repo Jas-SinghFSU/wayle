@@ -34,7 +34,7 @@ experience. A successor to HyprPanel without the pain or dependency on Hyprland.
 ### UI Components
 
 - [x] **Component Library** - Base Relm4 widgets and containers
-- [ ] **Bar Modules (WIP)**:
+- [x] **Bar Modules (WIP)**:
     - [x] Battery
     - [x] Media
     - [x] Volume
@@ -60,7 +60,7 @@ experience. A successor to HyprPanel without the pain or dependency on Hyprland.
     - [x] Hyprland submap
     - [x] Hyprsunset
     - [x] Hyprland workspaces
-    - [ ] Custom Modules
+    - [x] Custom Modules
 
 #### Scoped out
 
