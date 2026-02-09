@@ -25,7 +25,7 @@ fn main() {
 #[cfg(not(feature = "vendored"))]
 fn build_system() -> Vec<PathBuf> {
     let lib =
-        pkg_config::probe_library("libcava").unwrap_or_else(|e| panic!("libcava not found: {e}"));
+        pkg_config::probe_library("cava").unwrap_or_else(|e| panic!("libcava not found: {e}"));
 
     println!("cargo:rustc-env=LIBCAVA_VERSION={}", lib.version);
     println!("cargo:rustc-link-lib=cava");
