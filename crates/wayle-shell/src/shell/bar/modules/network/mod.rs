@@ -18,11 +18,11 @@ use wayle_widgets::prelude::{
 };
 
 use self::helpers::{WifiContext, WiredContext, wifi_icon, wifi_label, wired_icon, wired_label};
-use crate::i18n::t;
 pub(crate) use self::{
     factory::Factory,
     messages::{NetworkCmd, NetworkInit, NetworkMsg},
 };
+use crate::i18n::t;
 
 pub(crate) struct NetworkModule {
     bar_button: Controller<BarButton>,

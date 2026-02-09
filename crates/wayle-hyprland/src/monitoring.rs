@@ -129,6 +129,7 @@ async fn handle_internal_events(
                             handle_layer_removed(
                                 namespace,
                                 &layers,
+                                &hypr_messenger,
                             ).await;
                         }
 
@@ -319,14 +320,38 @@ pub(super) async fn handle_layer_created(
     }
 }
 
-pub(super) async fn handle_layer_removed(namespace: String, layers: &Property<Vec<Layer>>) {
-    let mut updated_layers = layers.get();
-    let original_len = updated_layers.len();
-    updated_layers.retain(|layer| layer.namespace.get() != namespace);
+pub(super) async fn handle_layer_removed(
+    namespace: String,
+    layers: &Property<Vec<Layer>>,
+    hypr_messenger: &HyprMessenger,
+) {
+    let live_layers = match hypr_messenger.layers().await {
+        Ok(data) => data,
+        Err(e) => {
+            error!(
+                error = %e,
+                layer_namespace = %namespace,
+                "cannot query layers while handling close-layer event"
+            );
+            return;
+        }
+    };
 
-    if updated_layers.len() != original_len {
-        layers.set(updated_layers);
-    } else {
-        warn!(layer_namespace = %namespace, "cannot remove layer: not found");
+    let current_layers = layers.get();
+    let mut reconciled_layers: Vec<Layer> = current_layers
+        .iter()
+        .filter(|layer| layer.namespace.get() != namespace)
+        .cloned()
+        .collect();
+
+    reconciled_layers.extend(
+        live_layers
+            .into_iter()
+            .filter(|layer| layer.namespace == namespace)
+            .map(Layer::from_props),
+    );
+
+    if reconciled_layers != current_layers {
+        layers.set(reconciled_layers);
     }
 }
