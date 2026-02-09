@@ -129,32 +129,61 @@ fn spawn_name_monitoring(
                     return;
                 }
                 Some(signal) = name_owner_changed.next() => {
-            let Ok(args) = signal.args() else { continue };
+                    let Ok(args) = signal.args() else { continue };
 
-            if !args.name().starts_with(MPRIS_BUS_PREFIX) {
-                continue;
-            }
+                    if !args.name().starts_with(MPRIS_BUS_PREFIX) {
+                        continue;
+                    }
 
-            let player_id = PlayerId::from_bus_name(args.name());
+                    let player_id = PlayerId::from_bus_name(args.name());
 
-            let is_player_added = args.old_owner().is_none() && args.new_owner().is_some();
-            let is_player_removed = args.old_owner().is_some() && args.new_owner().is_none();
+                    let is_player_added = args.old_owner().is_none() && args.new_owner().is_some();
+                    let is_player_removed = args.old_owner().is_some() && args.new_owner().is_none();
+                    let is_owner_replaced = args.old_owner().is_some() && args.new_owner().is_some();
 
-            if is_player_added && !should_ignore(args.name(), &ignored_patterns) {
-                handle_player_added(
-                    &connection,
-                    &players,
-                    &player_list,
-                    &active_player,
-                    &priority_patterns,
-                    player_id.clone(),
-                    cancellation_token.child_token(),
-                )
-                .await;
-            } else if is_player_removed {
-                handle_player_removed(&players, &player_list, &active_player, &priority_patterns, player_id)
-                    .await;
-            }
+                    if is_player_added && !should_ignore(args.name(), &ignored_patterns) {
+                        handle_player_added(
+                            &connection,
+                            &players,
+                            &player_list,
+                            &active_player,
+                            &priority_patterns,
+                            player_id,
+                            cancellation_token.child_token(),
+                        )
+                        .await;
+                    } else if is_player_removed {
+                        handle_player_removed(
+                            &players,
+                            &player_list,
+                            &active_player,
+                            &priority_patterns,
+                            player_id,
+                        )
+                        .await;
+                    } else if is_owner_replaced {
+                        handle_player_removed(
+                            &players,
+                            &player_list,
+                            &active_player,
+                            &priority_patterns,
+                            player_id.clone(),
+                        )
+                        .await;
+
+                        if !should_ignore(args.name(), &ignored_patterns) {
+                            handle_player_added(
+                                &connection,
+                                &players,
+                                &player_list,
+                                &active_player,
+                                &priority_patterns,
+                                player_id,
+                                cancellation_token.child_token(),
+                            )
+                            .await;
+                        }
+                    }
                 }
                 else => {
                     return;
@@ -188,9 +217,24 @@ async fn handle_player_added(
     };
 
     let mut players_map = players.write().await;
-    players_map.insert(player_id.clone(), Arc::clone(&player));
+    if let Some(existing) = players_map.insert(player_id.clone(), Arc::clone(&player))
+        && let Some(cancel_token) = existing.cancellation_token.as_ref()
+    {
+        cancel_token.cancel();
+    }
 
     let mut current_list = player_list.get();
+    current_list.retain(|existing| {
+        if existing.id != player_id {
+            return true;
+        }
+
+        if let Some(cancel_token) = existing.cancellation_token.as_ref() {
+            cancel_token.cancel();
+        }
+
+        false
+    });
     current_list.push(player.clone());
     player_list.set(current_list.clone());
 
@@ -211,7 +255,11 @@ async fn handle_player_removed(
     player_id: PlayerId,
 ) {
     let mut players_map = players.write().await;
-    players_map.remove(&player_id);
+    if let Some(removed) = players_map.remove(&player_id)
+        && let Some(cancel_token) = removed.cancellation_token.as_ref()
+    {
+        cancel_token.cancel();
+    }
 
     let mut current_players = player_list.get();
     current_players.retain(|player| {
