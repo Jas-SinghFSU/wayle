@@ -7,9 +7,6 @@ use serde::Deserialize;
 
 use crate::{Address, ProcessId};
 
-/// Layer namespace identifier.
-pub type Namespace = String;
-
 /// Layer surface level in the compositor stack.
 #[derive(Debug, Clone, PartialEq)]
 pub enum LayerLevel {

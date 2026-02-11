@@ -13,15 +13,12 @@ use crate::{
     WorkspaceRule,
     core::{client::Client, layer::Layer, monitor::Monitor, workspace::Workspace},
     discovery::HyprlandDiscovery,
-    ipc::{
-        DismissProps, HyprMessenger, OutputCommand, SetErrorCommand,
-        events::{self, types::ServiceNotification},
-    },
+    ipc::{DismissProps, HyprMessenger, OutputCommand, SetErrorCommand, events},
 };
 
 /// Hyprland compositor service. See [crate-level docs](crate) for usage.
 pub struct HyprlandService {
-    pub(crate) internal_tx: Sender<ServiceNotification>,
+    pub(crate) event_tx: Sender<HyprlandEvent>,
     pub(crate) hyprland_tx: Sender<HyprlandEvent>,
     pub(crate) cancellation_token: CancellationToken,
     pub(crate) hypr_messenger: HyprMessenger,
@@ -43,28 +40,23 @@ impl HyprlandService {
     /// Returns error if IPC socket connection fails or initial state query fails.
     #[instrument(err)]
     pub async fn new() -> Result<Arc<Self>> {
-        let (internal_tx, _) = broadcast::channel(100);
+        let (event_tx, _) = broadcast::channel(100);
         let (hyprland_tx, _) = broadcast::channel(100);
 
         let cancellation_token = CancellationToken::new();
         let hypr_messenger = HyprMessenger::new()?;
 
-        events::subscribe(
-            internal_tx.clone(),
-            hyprland_tx.clone(),
-            cancellation_token.clone(),
-        )
-        .await?;
+        events::subscribe(event_tx.clone(), cancellation_token.clone()).await?;
 
         let HyprlandDiscovery {
             workspaces,
             clients,
             monitors,
             layers,
-        } = HyprlandDiscovery::new(hypr_messenger.clone(), &internal_tx, &cancellation_token).await;
+        } = HyprlandDiscovery::new(hypr_messenger.clone()).await;
 
         let service = Arc::new(Self {
-            internal_tx,
+            event_tx,
             hyprland_tx,
             cancellation_token,
             hypr_messenger,

@@ -1,6 +1,5 @@
 use tokio::sync::broadcast::Sender;
 
-use super::types::ServiceNotification;
 use crate::{Error, HyprlandEvent, Result};
 
 pub(crate) fn handle_focused_mon(
@@ -29,7 +28,6 @@ pub(crate) fn handle_focused_mon(
 pub(crate) fn handle_focused_mon_v2(
     event: &str,
     data: &str,
-    internal_tx: Sender<ServiceNotification>,
     hyprland_tx: Sender<HyprlandEvent>,
 ) -> Result<()> {
     let event_data = format!("{event}>>{data}");
@@ -54,10 +52,6 @@ pub(crate) fn handle_focused_mon_v2(
         workspace_id,
     })?;
 
-    internal_tx
-        .send(ServiceNotification::MonitorUpdated(monitor_name))
-        .map_err(|e| Error::InternalEventTransmitError(e.to_string()))?;
-
     Ok(())
 }
 
@@ -73,7 +67,6 @@ pub(crate) fn handle_monitor_removed(data: &str, hyprland_tx: Sender<HyprlandEve
 pub(crate) fn handle_monitor_removed_v2(
     event: &str,
     data: &str,
-    internal_tx: Sender<ServiceNotification>,
     hyprland_tx: Sender<HyprlandEvent>,
 ) -> Result<()> {
     let event_data = format!("{event}>>{data}");
@@ -100,10 +93,6 @@ pub(crate) fn handle_monitor_removed_v2(
         description: (*description).to_string(),
     })?;
 
-    internal_tx
-        .send(ServiceNotification::MonitorRemoved(monitor_name))
-        .map_err(|e| Error::InternalEventTransmitError(e.to_string()))?;
-
     Ok(())
 }
 
@@ -117,7 +106,6 @@ pub(crate) fn handle_monitor_added(data: &str, hyprland_tx: Sender<HyprlandEvent
 pub(crate) fn handle_monitor_added_v2(
     event: &str,
     data: &str,
-    internal_tx: Sender<ServiceNotification>,
     hyprland_tx: Sender<HyprlandEvent>,
 ) -> Result<()> {
     let event_data = format!("{event}>>{data}");
@@ -143,10 +131,6 @@ pub(crate) fn handle_monitor_added_v2(
         name: monitor_name.clone(),
         description: (*description).to_string(),
     })?;
-
-    internal_tx
-        .send(ServiceNotification::MonitorCreated(monitor_name))
-        .map_err(|e| Error::InternalEventTransmitError(e.to_string()))?;
 
     Ok(())
 }

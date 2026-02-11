@@ -1,28 +1,13 @@
-mod monitoring;
-pub(crate) mod types;
-
-use std::sync::Arc;
-
-use tokio::sync::broadcast::Sender;
-use tokio_util::sync::CancellationToken;
-use tracing::instrument;
-use types::{LiveMonitorParams, MonitorParams};
 use wayle_common::Property;
-use wayle_traits::{ModelMonitoring, Reactive};
 
 use crate::{
-    Address, DirectScanoutBlocker, Error, MonitorData, MonitorId, Reserved, SolitaryBlocker,
+    Address, DirectScanoutBlocker, MonitorData, MonitorId, Reserved, SolitaryBlocker,
     TearingBlocker, Transform, WorkspaceInfo,
-    ipc::{HyprMessenger, events::types::ServiceNotification},
 };
 
 /// A Hyprland monitor (display output) with reactive state.
 #[derive(Debug, Clone)]
 pub struct Monitor {
-    pub(crate) hypr_messenger: HyprMessenger,
-    pub(crate) internal_tx: Option<Sender<ServiceNotification>>,
-    pub(crate) cancellation_token: Option<CancellationToken>,
-
     /// Monitor ID.
     pub id: Property<MonitorId>,
     /// Monitor name (e.g., "DP-1", "HDMI-A-1").
@@ -93,50 +78,9 @@ impl PartialEq for Monitor {
     }
 }
 
-impl Reactive for Monitor {
-    type Error = Error;
-    type Context<'a> = MonitorParams<'a>;
-    type LiveContext<'a> = LiveMonitorParams<'a>;
-
-    #[instrument(skip(context), fields(name = %context.name), err)]
-    async fn get(context: Self::Context<'_>) -> Result<Self, Self::Error> {
-        let monitor_data = context.hypr_messenger.monitor(&context.name).await?;
-
-        Ok(Self::from_props(
-            monitor_data,
-            context.hypr_messenger,
-            None,
-            None,
-        ))
-    }
-
-    #[instrument(skip(context), fields(name = %context.name), err)]
-    async fn get_live(context: Self::LiveContext<'_>) -> Result<Arc<Self>, Self::Error> {
-        let monitor_data = context.hypr_messenger.monitor(&context.name).await?;
-        let arc_monitor = Arc::new(Self::from_props(
-            monitor_data,
-            context.hypr_messenger,
-            Some(context.internal_tx.clone()),
-            Some(context.cancellation_token.child_token()),
-        ));
-
-        arc_monitor.clone().start_monitoring().await?;
-
-        Ok(arc_monitor)
-    }
-}
-
 impl Monitor {
-    pub(crate) fn from_props(
-        monitor_data: MonitorData,
-        hypr_messenger: &HyprMessenger,
-        internal_tx: Option<Sender<ServiceNotification>>,
-        cancellation_token: Option<CancellationToken>,
-    ) -> Self {
+    pub(crate) fn from_props(monitor_data: MonitorData) -> Self {
         Self {
-            hypr_messenger: hypr_messenger.clone(),
-            internal_tx,
-            cancellation_token,
             id: Property::new(monitor_data.id),
             name: Property::new(monitor_data.name),
             description: Property::new(monitor_data.description),

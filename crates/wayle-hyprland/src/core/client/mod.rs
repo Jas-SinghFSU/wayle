@@ -1,28 +1,13 @@
-mod monitoring;
-pub(crate) mod types;
-
-use std::sync::Arc;
-
-use tokio::sync::broadcast::Sender;
-use tokio_util::sync::CancellationToken;
-use tracing::instrument;
-use types::{ClientParams, LiveClientParams};
 use wayle_common::Property;
-use wayle_traits::{ModelMonitoring, Reactive};
 
 use crate::{
-    Address, ClientData, ClientLocation, ClientSize, Error, FocusHistoryId, FullscreenMode,
-    MonitorId, ProcessId, WorkspaceInfo,
-    ipc::{HyprMessenger, events::types::ServiceNotification},
+    Address, ClientData, ClientLocation, ClientSize, FocusHistoryId, FullscreenMode, MonitorId,
+    ProcessId, WorkspaceInfo,
 };
 
 /// A Hyprland client window with reactive state.
 #[derive(Debug, Clone)]
 pub struct Client {
-    pub(crate) hypr_messenger: HyprMessenger,
-    pub(crate) internal_tx: Option<Sender<ServiceNotification>>,
-    pub(crate) cancellation_token: Option<CancellationToken>,
-
     /// Window address (unique identifier).
     pub address: Property<Address>,
     /// Whether the window surface is mapped.
@@ -81,49 +66,9 @@ impl PartialEq for Client {
     }
 }
 
-impl Reactive for Client {
-    type Error = Error;
-    type Context<'a> = ClientParams<'a>;
-    type LiveContext<'a> = LiveClientParams<'a>;
-
-    #[instrument(skip(context), fields(address = %context.address), err)]
-    async fn get(context: Self::Context<'_>) -> Result<Self, Self::Error> {
-        let client_data = context.hypr_messenger.client(&context.address).await?;
-        Ok(Self::from_props(
-            client_data,
-            context.hypr_messenger,
-            None,
-            None,
-        ))
-    }
-
-    #[instrument(skip(context), fields(address = %context.address), err)]
-    async fn get_live(context: Self::LiveContext<'_>) -> Result<Arc<Self>, Self::Error> {
-        let client_data = context.hypr_messenger.client(&context.address).await?;
-        let arc_client_data = Arc::new(Self::from_props(
-            client_data,
-            context.hypr_messenger,
-            Some(context.internal_tx.clone()),
-            Some(context.cancellation_token.child_token()),
-        ));
-
-        arc_client_data.clone().start_monitoring().await?;
-
-        Ok(arc_client_data)
-    }
-}
-
 impl Client {
-    pub(crate) fn from_props(
-        client_data: ClientData,
-        hypr_messenger: &HyprMessenger,
-        internal_tx: Option<Sender<ServiceNotification>>,
-        cancellation_token: Option<CancellationToken>,
-    ) -> Self {
+    pub(crate) fn from_props(client_data: ClientData) -> Self {
         Self {
-            hypr_messenger: hypr_messenger.clone(),
-            internal_tx,
-            cancellation_token,
             address: Property::new(client_data.address),
             mapped: Property::new(client_data.mapped),
             hidden: Property::new(client_data.hidden),

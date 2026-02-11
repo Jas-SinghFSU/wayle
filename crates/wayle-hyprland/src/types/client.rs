@@ -9,16 +9,20 @@ use crate::{
 #[derive(Debug, Deserialize, Clone, PartialEq)]
 pub struct ClientSize {
     /// Width in pixels.
-    pub width: u32,
+    ///
+    /// Hyprland may transiently report negative values during resize/animation churn.
+    pub width: i32,
     /// Height in pixels.
-    pub height: u32,
+    ///
+    /// Hyprland may transiently report negative values during resize/animation churn.
+    pub height: i32,
 }
 
 pub(crate) fn deserialize_window_size<'de, D>(deserializer: D) -> Result<ClientSize, D::Error>
 where
     D: Deserializer<'de>,
 {
-    let [width, height]: [u32; 2] = Deserialize::deserialize(deserializer)?;
+    let [width, height]: [i32; 2] = Deserialize::deserialize(deserializer)?;
 
     Ok(ClientSize { width, height })
 }
@@ -156,5 +160,20 @@ mod tests {
 
         assert_eq!(result.location.x, 100);
         assert_eq!(result.location.y, 200);
+    }
+
+    #[test]
+    fn deserialize_window_size_accepts_negative_values() {
+        #[derive(Deserialize)]
+        struct TestStruct {
+            #[serde(deserialize_with = "deserialize_window_size")]
+            size: ClientSize,
+        }
+
+        let json = r#"{"size": [-3, -1]}"#;
+        let result: TestStruct = serde_json::from_str(json).unwrap();
+
+        assert_eq!(result.size.width, -3);
+        assert_eq!(result.size.height, -1);
     }
 }

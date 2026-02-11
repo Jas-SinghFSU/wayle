@@ -1,25 +1,4 @@
-use crate::{Address, MonitorId, Namespace, ScreencastOwner, WorkspaceId};
-
-#[derive(Debug, Clone)]
-pub(crate) enum ServiceNotification {
-    WorkspaceCreated(WorkspaceId),
-    WorkspaceUpdated(WorkspaceId),
-    WorkspaceRemoved(WorkspaceId),
-    WorkspaceFocused(WorkspaceId),
-    WorkspaceMoved(WorkspaceId),
-
-    MonitorCreated(String),
-    MonitorUpdated(String),
-    MonitorRemoved(String),
-
-    ClientCreated(Address),
-    ClientUpdated(Address),
-    ClientRemoved(Address),
-    ClientMoved(Address, WorkspaceId),
-
-    LayerCreated(Namespace),
-    LayerRemoved(Namespace),
-}
+use crate::{Address, MonitorId, ScreencastOwner, WorkspaceId};
 
 /// Structured events emitted by Hyprland
 #[derive(Debug, Clone)]

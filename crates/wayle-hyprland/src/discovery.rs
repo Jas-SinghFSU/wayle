@@ -1,13 +1,10 @@
 use std::sync::Arc;
 
-use tokio::sync::broadcast::Sender;
-use tokio_util::sync::CancellationToken;
 use tracing::{error, instrument};
-use wayle_traits::ModelMonitoring;
 
 use crate::{
     core::{client::Client, layer::Layer, monitor::Monitor, workspace::Workspace},
-    ipc::{HyprMessenger, events::types::ServiceNotification},
+    ipc::HyprMessenger,
 };
 
 pub(super) struct HyprlandDiscovery {
@@ -18,12 +15,8 @@ pub(super) struct HyprlandDiscovery {
 }
 
 impl HyprlandDiscovery {
-    #[instrument(skip(hypr_messenger, internal_tx, cancellation_token))]
-    pub async fn new(
-        hypr_messenger: HyprMessenger,
-        internal_tx: &Sender<ServiceNotification>,
-        cancellation_token: &CancellationToken,
-    ) -> Self {
+    #[instrument(skip(hypr_messenger))]
+    pub async fn new(hypr_messenger: HyprMessenger) -> Self {
         let all_layers = hypr_messenger.layers().await.unwrap_or_else(|e| {
             error!(error = %e, "cannot discover layers");
             vec![]
@@ -50,66 +43,15 @@ impl HyprlandDiscovery {
         let layers = all_layers.into_iter().map(Layer::from_props).collect();
 
         for client_data in all_clients {
-            let client_address = client_data.address.clone();
-            let client = Arc::new(Client::from_props(
-                client_data,
-                &hypr_messenger,
-                Some(internal_tx.clone()),
-                Some(cancellation_token.child_token()),
-            ));
-
-            match client.clone().start_monitoring().await {
-                Ok(_) => clients.push(client),
-                Err(e) => {
-                    error!(
-                        error = %e,
-                        client_address = %client_address,
-                        "cannot start monitoring for client, discarding"
-                    )
-                }
-            }
+            clients.push(Arc::new(Client::from_props(client_data)));
         }
 
         for monitor_data in all_monitors {
-            let monitor_name = monitor_data.name.clone();
-            let monitor = Arc::new(Monitor::from_props(
-                monitor_data,
-                &hypr_messenger,
-                Some(internal_tx.clone()),
-                Some(cancellation_token.child_token()),
-            ));
-
-            match monitor.clone().start_monitoring().await {
-                Ok(_) => monitors.push(monitor),
-                Err(e) => {
-                    error!(
-                        error = %e,
-                        monitor_name,
-                        "cannot start monitoring for monitor, discarding"
-                    )
-                }
-            }
+            monitors.push(Arc::new(Monitor::from_props(monitor_data)));
         }
 
         for workspace_data in all_workspaces {
-            let workspace_id = workspace_data.id;
-            let workspace = Arc::new(Workspace::from_props(
-                workspace_data,
-                &hypr_messenger,
-                Some(internal_tx.clone()),
-                Some(cancellation_token.child_token()),
-            ));
-
-            match workspace.clone().start_monitoring().await {
-                Ok(_) => workspaces.push(workspace),
-                Err(e) => {
-                    error!(
-                        error = %e,
-                        workspace_id,
-                        "cannot start monitoring for workspace, discarding"
-                    )
-                }
-            }
+            workspaces.push(Arc::new(Workspace::from_props(workspace_data)));
         }
 
         Self {

@@ -1,63 +1,37 @@
 use std::collections::HashMap;
 
-use tracing::instrument;
+use serde::de::DeserializeOwned;
+use tracing::{instrument, warn};
 
 use super::HyprMessenger;
 use crate::{
     Address, BindData, ClientData, CursorPosition, DeviceInfo, Error, LayerData, LayerLevel,
-    MonitorData, MonitorLayers, Result, WorkspaceData, WorkspaceId, WorkspaceRule,
+    MonitorData, MonitorLayers, Result, WorkspaceData, WorkspaceRule,
 };
 
 impl HyprMessenger {
-    #[instrument(skip(self), fields(name = %name), err)]
-    pub(crate) async fn monitor(&self, name: &str) -> Result<MonitorData> {
-        let monitors = self.monitors().await?;
-        monitors
-            .into_iter()
-            .find(|monitor| monitor.name == name)
-            .ok_or(Error::MonitorNotFound(name.to_string()))
-    }
-
     #[instrument(skip(self), err)]
     pub(crate) async fn monitors(&self) -> Result<Vec<MonitorData>> {
         let response = self.send("j/monitors").await?;
-        serde_json::from_str(&response).map_err(Error::JsonParseError)
-    }
-
-    #[instrument(skip(self), fields(id = %id), err)]
-    pub(crate) async fn workspace(&self, id: WorkspaceId) -> Result<WorkspaceData> {
-        let workspaces = self.workspaces().await?;
-        workspaces
-            .into_iter()
-            .find(|workspace| workspace.id == id)
-            .ok_or(Error::WorkspaceNotFound(id))
+        parse_json_response("j/monitors", &response)
     }
 
     #[instrument(skip(self), err)]
     pub(crate) async fn workspaces(&self) -> Result<Vec<WorkspaceData>> {
         let response = self.send("j/workspaces").await?;
-        serde_json::from_str(&response).map_err(Error::JsonParseError)
+        parse_json_response("j/workspaces", &response)
     }
 
     #[instrument(skip(self), err)]
     pub(crate) async fn workspace_rules(&self) -> Result<Vec<WorkspaceRule>> {
         let response = self.send("j/workspacerules").await?;
-        serde_json::from_str(&response).map_err(Error::JsonParseError)
-    }
-
-    #[instrument(skip(self), fields(address = %address), err)]
-    pub(crate) async fn client(&self, address: &Address) -> Result<ClientData> {
-        let clients = self.clients().await?;
-        clients
-            .into_iter()
-            .find(|client| client.address == *address)
-            .ok_or(Error::ClientNotFound(address.clone()))
+        parse_json_response("j/workspacerules", &response)
     }
 
     #[instrument(skip(self), err)]
     pub(crate) async fn clients(&self) -> Result<Vec<ClientData>> {
         let response = self.send("j/clients").await?;
-        serde_json::from_str(&response).map_err(Error::JsonParseError)
+        parse_json_response("j/clients", &response)
     }
 
     #[instrument(skip(self), fields(address = %address), err)]
@@ -72,8 +46,7 @@ impl HyprMessenger {
     #[instrument(skip(self), err)]
     pub(crate) async fn layers(&self) -> Result<Vec<LayerData>> {
         let response = self.send("j/layers").await?;
-        let monitors: HashMap<String, MonitorLayers> =
-            serde_json::from_str(&response).map_err(Error::JsonParseError)?;
+        let monitors: HashMap<String, MonitorLayers> = parse_json_response("j/layers", &response)?;
 
         let layers = monitors
             .into_iter()
@@ -110,7 +83,7 @@ impl HyprMessenger {
     #[instrument(skip(self), err)]
     pub(crate) async fn active_workspace(&self) -> Result<WorkspaceData> {
         let response = self.send("j/activeworkspace").await?;
-        serde_json::from_str(&response).map_err(Error::JsonParseError)
+        parse_json_response("j/activeworkspace", &response)
     }
 
     #[instrument(skip(self), err)]
@@ -119,9 +92,7 @@ impl HyprMessenger {
         if response.trim() == "{}" {
             return Ok(None);
         }
-        serde_json::from_str(&response)
-            .map(Some)
-            .map_err(Error::JsonParseError)
+        parse_json_response("j/activewindow", &response).map(Some)
     }
 
     #[instrument(skip(self), err)]
@@ -168,19 +139,19 @@ impl HyprMessenger {
     #[instrument(skip(self), err)]
     pub(crate) async fn binds(&self) -> Result<Vec<BindData>> {
         let response = self.send("j/binds").await?;
-        serde_json::from_str(&response).map_err(Error::JsonParseError)
+        parse_json_response("j/binds", &response)
     }
 
     #[instrument(skip(self), err)]
     pub(crate) async fn devices(&self) -> Result<DeviceInfo> {
         let response = self.send("j/devices").await?;
-        serde_json::from_str(&response).map_err(Error::JsonParseError)
+        parse_json_response("j/devices", &response)
     }
 
     #[instrument(skip(self), err)]
     pub(crate) async fn layouts(&self) -> Result<Vec<String>> {
         let response = self.send("j/layouts").await?;
-        serde_json::from_str(&response).map_err(Error::JsonParseError)
+        parse_json_response("j/layouts", &response)
     }
 
     #[instrument(skip(self), err)]
@@ -188,4 +159,32 @@ impl HyprMessenger {
         let response = self.send("submap").await?;
         Ok(response.trim().to_string())
     }
+}
+
+const RESPONSE_PREVIEW_CHARS: usize = 256;
+
+fn parse_json_response<T>(command: &'static str, response: &str) -> Result<T>
+where
+    T: DeserializeOwned,
+{
+    serde_json::from_str(response).map_err(|error| {
+        let (preview, truncated) = response_preview(response);
+        warn!(
+            %command,
+            response_len = response.len(),
+            response_preview_truncated = truncated,
+            response_preview = %preview,
+            parse_error = %error,
+            "cannot parse hyprland JSON response"
+        );
+        Error::JsonParseError(error)
+    })
+}
+
+fn response_preview(response: &str) -> (String, bool) {
+    let mut chars = response.chars();
+    let preview: String = chars.by_ref().take(RESPONSE_PREVIEW_CHARS).collect();
+    let truncated = chars.next().is_some();
+    let escaped_preview = preview.chars().flat_map(|ch| ch.escape_default()).collect();
+    (escaped_preview, truncated)
 }

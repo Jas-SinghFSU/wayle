@@ -14,13 +14,11 @@ use tokio::{
 };
 use tokio_util::sync::CancellationToken;
 use tracing::{debug, warn};
-use types::ServiceNotification;
 
 use crate::{Error, HyprlandEvent, Result};
 
 pub(crate) async fn subscribe(
-    internal_tx: Sender<ServiceNotification>,
-    hyprland_tx: Sender<HyprlandEvent>,
+    event_tx: Sender<HyprlandEvent>,
     cancel_token: CancellationToken,
 ) -> Result<()> {
     let his = env::var("HYPRLAND_INSTANCE_SIGNATURE").map_err(|_| Error::HyprlandNotRunning)?;
@@ -54,10 +52,7 @@ pub(crate) async fn subscribe(
                                 continue;
                             };
 
-                            if let Err(e) =
-                                dispatcher::dispatch(event, data, internal_tx.clone(), hyprland_tx.clone())
-                                    .await
-                            {
+                            if let Err(e) = dispatcher::dispatch(event, data, event_tx.clone()).await {
                                 warn!(error = %e, event, "cannot handle event");
                             }
                         }

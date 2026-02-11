@@ -1,27 +1,10 @@
-mod monitoring;
-pub(crate) mod types;
-
-use std::sync::Arc;
-
-use tokio::sync::broadcast::Sender;
-use tokio_util::sync::CancellationToken;
-use tracing::instrument;
-use types::{LiveWorkspaceParams, WorkspaceParams};
 use wayle_common::Property;
-use wayle_traits::{ModelMonitoring, Reactive};
 
-use crate::{
-    Address, Error, MonitorId, WorkspaceData, WorkspaceId,
-    ipc::{HyprMessenger, events::types::ServiceNotification},
-};
+use crate::{Address, MonitorId, WorkspaceData, WorkspaceId};
 
 /// A Hyprland workspace with reactive state.
 #[derive(Debug, Clone)]
 pub struct Workspace {
-    pub(crate) hypr_messenger: HyprMessenger,
-    pub(crate) internal_tx: Option<Sender<ServiceNotification>>,
-    pub(crate) cancellation_token: Option<CancellationToken>,
-
     /// Workspace ID (negative for special workspaces).
     pub id: Property<WorkspaceId>,
     /// Workspace name.
@@ -48,50 +31,9 @@ impl PartialEq for Workspace {
     }
 }
 
-impl Reactive for Workspace {
-    type Error = Error;
-    type Context<'a> = WorkspaceParams<'a>;
-    type LiveContext<'a> = LiveWorkspaceParams<'a>;
-
-    #[instrument(skip(context), fields(id = %context.id), err)]
-    async fn get(context: Self::Context<'_>) -> Result<Self, Self::Error> {
-        let workspace_data = context.hypr_messenger.workspace(context.id).await?;
-
-        Ok(Self::from_props(
-            workspace_data,
-            context.hypr_messenger,
-            None,
-            None,
-        ))
-    }
-
-    #[instrument(skip(context), fields(id = %context.id), err)]
-    async fn get_live(context: Self::LiveContext<'_>) -> Result<Arc<Self>, Self::Error> {
-        let workspace_data = context.hypr_messenger.workspace(context.id).await?;
-        let arc_workspace = Arc::new(Self::from_props(
-            workspace_data,
-            context.hypr_messenger,
-            Some(context.internal_tx.clone()),
-            Some(context.cancellation_token.child_token()),
-        ));
-
-        arc_workspace.clone().start_monitoring().await?;
-
-        Ok(arc_workspace)
-    }
-}
-
 impl Workspace {
-    pub(crate) fn from_props(
-        workspace_data: WorkspaceData,
-        hypr_messenger: &HyprMessenger,
-        internal_tx: Option<Sender<ServiceNotification>>,
-        cancellation_token: Option<CancellationToken>,
-    ) -> Self {
+    pub(crate) fn from_props(workspace_data: WorkspaceData) -> Self {
         Self {
-            hypr_messenger: hypr_messenger.clone(),
-            internal_tx,
-            cancellation_token,
             id: Property::new(workspace_data.id),
             name: Property::new(workspace_data.name),
             monitor: Property::new(workspace_data.monitor),
