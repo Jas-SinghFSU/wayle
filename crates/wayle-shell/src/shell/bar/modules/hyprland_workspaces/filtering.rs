@@ -166,6 +166,7 @@ fn add_placeholder_workspaces(
     if ctx.active_workspace_id > 0
         && !existing_ids.contains(&ctx.active_workspace_id)
         && !matches_ignore_patterns(ctx.active_workspace_id, ctx.ignore_patterns)
+        && should_include_active_workspace_placeholder(all_workspaces, ctx)
     {
         filtered.push(FilteredWorkspace {
             id: ctx.active_workspace_id,
@@ -173,6 +174,31 @@ fn add_placeholder_workspaces(
             windows: 0,
         });
     }
+}
+
+fn should_include_active_workspace_placeholder(
+    all_workspaces: &[WorkspaceData],
+    ctx: &FilterContext<'_>,
+) -> bool {
+    if !ctx.monitor_specific {
+        return true;
+    }
+
+    let Some(bar_monitor) = ctx.bar_monitor else {
+        return true;
+    };
+
+    let active_monitor = all_workspaces
+        .iter()
+        .find(|ws| ws.id == ctx.active_workspace_id)
+        .map(|ws| ws.monitor.as_str())
+        .or_else(|| {
+            ctx.workspace_monitor_rules
+                .get(&ctx.active_workspace_id)
+                .map(String::as_str)
+        });
+
+    !matches!(active_monitor, Some(monitor) if monitor != bar_monitor)
 }
 
 pub(crate) fn monitor_workspaces_sorted(
@@ -403,6 +429,105 @@ mod tests {
             let result = filter_workspaces(&workspaces, &ctx);
             let ids: Vec<_> = result.iter().map(|ws| ws.id).collect();
             assert!(!ids.contains(&9));
+        }
+
+        #[test]
+        fn monitor_specific_does_not_readd_active_workspace_from_other_monitor() {
+            let workspaces = vec![make_workspace(1, "DP-1"), make_workspace(9, "DP-2")];
+
+            let ctx = FilterContext {
+                show_special: false,
+                monitor_specific: true,
+                min_workspace_count: 8,
+                active_workspace_id: 9,
+                bar_monitor: Some("DP-1"),
+                ignore_patterns: &[],
+                workspace_monitor_rules: &HashMap::new(),
+            };
+
+            let result = filter_workspaces(&workspaces, &ctx);
+            let ids: Vec<_> = result.iter().map(|ws| ws.id).collect();
+            assert!(!ids.contains(&9));
+        }
+
+        #[test]
+        fn monitor_specific_does_not_readd_active_workspace_from_other_monitor_rule() {
+            let workspaces = vec![make_workspace(1, "DP-1")];
+            let mut rules = HashMap::new();
+            rules.insert(9, "DP-2".to_string());
+
+            let ctx = FilterContext {
+                show_special: false,
+                monitor_specific: true,
+                min_workspace_count: 8,
+                active_workspace_id: 9,
+                bar_monitor: Some("DP-1"),
+                ignore_patterns: &[],
+                workspace_monitor_rules: &rules,
+            };
+
+            let result = filter_workspaces(&workspaces, &ctx);
+            let ids: Vec<_> = result.iter().map(|ws| ws.id).collect();
+            assert!(!ids.contains(&9));
+        }
+
+        #[test]
+        fn monitor_specific_includes_occupied_workspace_beyond_min_count_on_bar_monitor() {
+            let workspaces = vec![make_workspace(1, "DP-1"), make_workspace(9, "DP-1")];
+
+            let ctx = FilterContext {
+                show_special: false,
+                monitor_specific: true,
+                min_workspace_count: 8,
+                active_workspace_id: 1,
+                bar_monitor: Some("DP-1"),
+                ignore_patterns: &[],
+                workspace_monitor_rules: &HashMap::new(),
+            };
+
+            let result = filter_workspaces(&workspaces, &ctx);
+            let ids: Vec<_> = result.iter().map(|ws| ws.id).collect();
+            assert!(ids.contains(&9));
+        }
+
+        #[test]
+        fn monitor_specific_excludes_occupied_workspace_beyond_min_count_on_other_monitor() {
+            let workspaces = vec![make_workspace(1, "DP-1"), make_workspace(9, "DP-2")];
+
+            let ctx = FilterContext {
+                show_special: false,
+                monitor_specific: true,
+                min_workspace_count: 8,
+                active_workspace_id: 1,
+                bar_monitor: Some("DP-1"),
+                ignore_patterns: &[],
+                workspace_monitor_rules: &HashMap::new(),
+            };
+
+            let result = filter_workspaces(&workspaces, &ctx);
+            let ids: Vec<_> = result.iter().map(|ws| ws.id).collect();
+            assert!(!ids.contains(&9));
+        }
+
+        #[test]
+        fn monitor_specific_readds_active_workspace_placeholder_when_rule_matches_bar_monitor() {
+            let workspaces = vec![make_workspace(1, "DP-1")];
+            let mut rules = HashMap::new();
+            rules.insert(9, "DP-1".to_string());
+
+            let ctx = FilterContext {
+                show_special: false,
+                monitor_specific: true,
+                min_workspace_count: 8,
+                active_workspace_id: 9,
+                bar_monitor: Some("DP-1"),
+                ignore_patterns: &[],
+                workspace_monitor_rules: &rules,
+            };
+
+            let result = filter_workspaces(&workspaces, &ctx);
+            let ids: Vec<_> = result.iter().map(|ws| ws.id).collect();
+            assert!(ids.contains(&9));
         }
 
         #[test]
