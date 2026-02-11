@@ -38,7 +38,7 @@ pub(crate) fn filter_workspaces(
 
     let mut filtered: Vec<FilteredWorkspace> = workspaces
         .iter()
-        .filter(|ws| should_include_workspace(ws.id, &ws.monitor, ctx, max_id))
+        .filter(|ws| should_include_workspace(ws.id, ws.windows, &ws.monitor, ctx, max_id))
         .map(|ws| FilteredWorkspace {
             id: ws.id,
             name: ws.name.clone(),
@@ -58,6 +58,7 @@ pub(crate) fn filter_workspaces(
 
 fn should_include_workspace(
     id: WorkspaceId,
+    windows: u16,
     monitor: &str,
     ctx: &FilterContext<'_>,
     max_id: WorkspaceId,
@@ -71,7 +72,13 @@ fn should_include_workspace(
         return false;
     }
 
-    if exceeds_min_count_limit(id, max_id, ctx.active_workspace_id, ctx.min_workspace_count) {
+    if exceeds_min_count_limit(
+        id,
+        windows,
+        max_id,
+        ctx.active_workspace_id,
+        ctx.min_workspace_count,
+    ) {
         return false;
     }
 
@@ -84,6 +91,7 @@ fn should_include_workspace(
 
 fn exceeds_min_count_limit(
     id: WorkspaceId,
+    windows: u16,
     max_id: WorkspaceId,
     active_id: WorkspaceId,
     min_count: usize,
@@ -92,8 +100,9 @@ fn exceeds_min_count_limit(
     let is_normal = id > 0;
     let beyond_limit = id > max_id;
     let is_active = id == active_id;
+    let is_occupied = windows > 0;
 
-    has_limit && is_normal && beyond_limit && !is_active
+    has_limit && is_normal && beyond_limit && !is_active && !is_occupied
 }
 
 fn belongs_to_different_monitor(
@@ -226,6 +235,15 @@ mod tests {
             }
         }
 
+        fn make_empty_workspace(id: WorkspaceId, monitor: &str) -> WorkspaceData {
+            WorkspaceData {
+                id,
+                name: id.to_string(),
+                windows: 0,
+                monitor: monitor.to_string(),
+            }
+        }
+
         #[test]
         fn filters_by_monitor_when_monitor_specific() {
             let workspaces = vec![
@@ -347,6 +365,44 @@ mod tests {
             let result = filter_workspaces(&workspaces, &ctx);
             let ids: Vec<_> = result.iter().map(|ws| ws.id).collect();
             assert!(ids.contains(&5));
+        }
+
+        #[test]
+        fn includes_occupied_workspace_beyond_min_count_limit() {
+            let workspaces = vec![make_workspace(1, "DP-1"), make_workspace(9, "DP-1")];
+
+            let ctx = FilterContext {
+                show_special: false,
+                monitor_specific: false,
+                min_workspace_count: 8,
+                active_workspace_id: 1,
+                bar_monitor: None,
+                ignore_patterns: &[],
+                workspace_monitor_rules: &HashMap::new(),
+            };
+
+            let result = filter_workspaces(&workspaces, &ctx);
+            let ids: Vec<_> = result.iter().map(|ws| ws.id).collect();
+            assert!(ids.contains(&9));
+        }
+
+        #[test]
+        fn excludes_empty_workspace_beyond_min_count_limit_when_not_active() {
+            let workspaces = vec![make_workspace(1, "DP-1"), make_empty_workspace(9, "DP-1")];
+
+            let ctx = FilterContext {
+                show_special: false,
+                monitor_specific: false,
+                min_workspace_count: 8,
+                active_workspace_id: 1,
+                bar_monitor: None,
+                ignore_patterns: &[],
+                workspace_monitor_rules: &HashMap::new(),
+            };
+
+            let result = filter_workspaces(&workspaces, &ctx);
+            let ids: Vec<_> = result.iter().map(|ws| ws.id).collect();
+            assert!(!ids.contains(&9));
         }
 
         #[test]
