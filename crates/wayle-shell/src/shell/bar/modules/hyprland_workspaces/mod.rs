@@ -172,6 +172,8 @@ impl Component for HyprlandWorkspaces {
             WorkspacesCmd::ActiveWorkspaceChanged(id) => {
                 let config = self.config.config();
                 let monitor_specific = config.modules.hyprland_workspaces.monitor_specific.get();
+                let has_min_workspace_count =
+                    config.modules.hyprland_workspaces.min_workspace_count.get() > 0;
 
                 if !self.should_apply_active_workspace_change(id, monitor_specific) {
                     return;
@@ -179,7 +181,7 @@ impl Component for HyprlandWorkspaces {
 
                 self.clear_urgent_windows_for_workspace(id);
                 self.active_workspace_id = id;
-                self.update_active_state();
+                self.sync_after_active_workspace_change(has_min_workspace_count);
             }
             WorkspacesCmd::MonitorFocused {
                 monitor,
@@ -189,6 +191,8 @@ impl Component for HyprlandWorkspaces {
 
                 let config = self.config.config();
                 let monitor_specific = config.modules.hyprland_workspaces.monitor_specific.get();
+                let has_min_workspace_count =
+                    config.modules.hyprland_workspaces.min_workspace_count.get() > 0;
 
                 if should_update_for_monitor(
                     monitor_specific,
@@ -197,7 +201,7 @@ impl Component for HyprlandWorkspaces {
                 ) {
                     self.clear_urgent_windows_for_workspace(workspace_id);
                     self.active_workspace_id = workspace_id;
-                    self.update_active_state();
+                    self.sync_after_active_workspace_change(has_min_workspace_count);
                 }
             }
             WorkspacesCmd::HyprlandConfigReloaded => {
@@ -476,6 +480,15 @@ impl HyprlandWorkspaces {
                 },
             );
         }
+    }
+
+    fn sync_after_active_workspace_change(&mut self, has_min_workspace_count: bool) {
+        if has_min_workspace_count {
+            self.rebuild_buttons();
+            return;
+        }
+
+        self.update_active_state();
     }
 
     fn update_app_icons_on_title_change(&mut self) {

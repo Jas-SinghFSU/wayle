@@ -61,6 +61,7 @@ pub(super) fn for_event(event: &HyprlandEvent) -> SyncPlan {
         },
         HyprlandEvent::Workspace { .. } | HyprlandEvent::WorkspaceV2 { .. } => SyncPlan {
             monitors: true,
+            workspaces: true,
             ..SyncPlan::default()
         },
         HyprlandEvent::CreateWorkspace { .. }
@@ -120,7 +121,7 @@ mod tests {
     }
 
     #[test]
-    fn workspace_event_targets_monitors_only() {
+    fn workspace_event_targets_monitors_and_workspaces() {
         let plan = for_event(&HyprlandEvent::Workspace {
             name: String::from("2"),
         });
@@ -129,6 +130,7 @@ mod tests {
             plan,
             SyncPlan {
                 monitors: true,
+                workspaces: true,
                 ..SyncPlan::default()
             }
         );
