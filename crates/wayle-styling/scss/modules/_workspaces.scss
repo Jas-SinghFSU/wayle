@@ -1,7 +1,11 @@
 .workspaces {
     all: unset;
     border-radius: calc(var(--bar-button-rounding-element) * 1.2);
-    background-color: var(--ws-container-bg-color);
+    background-color: color-mix(
+        in srgb,
+        var(--ws-container-bg-color) var(--bar-button-bg-opacity),
+        transparent
+    );
 
     &.border-all {
         box-shadow: inset 0 0 0 var(--ws-border-width) var(--ws-border-color);

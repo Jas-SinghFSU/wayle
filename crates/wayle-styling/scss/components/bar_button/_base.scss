@@ -9,7 +9,11 @@ menubutton.bar-button {
 
     > button.toggle {
         all: unset;
-        background-color: color-mix(in srgb, var(--bar-btn-bg) var(--bar-button-bg-opacity), transparent);
+        background-color: color-mix(
+            in srgb,
+            var(--bar-btn-bg) var(--bar-button-bg-opacity),
+            transparent
+        );
         border-radius: var(--bar-button-rounding-element);
     }
 
