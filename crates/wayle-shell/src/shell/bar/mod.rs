@@ -239,4 +239,14 @@ impl Bar {
             });
         }
     }
+
+    pub(super) fn rebuild_all_sections(&mut self) {
+        let settings = &self.settings;
+        let services = &self.services;
+        let layout = self.layout.clone();
+
+        Self::rebuild_section(&mut self.left, &layout.left, settings, services);
+        Self::rebuild_section(&mut self.center, &layout.center, settings, services);
+        Self::rebuild_section(&mut self.right, &layout.right, settings, services);
+    }
 }

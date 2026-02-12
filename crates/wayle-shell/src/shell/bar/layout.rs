@@ -120,6 +120,7 @@ impl Bar {
             );
         }
 
+        self.rebuild_all_sections();
         self.reload_css();
     }
 }
