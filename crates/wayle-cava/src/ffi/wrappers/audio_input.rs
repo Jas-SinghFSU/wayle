@@ -1,14 +1,9 @@
 #![allow(unsafe_code)]
 
-use std::{
-    ffi::{self, CString},
-    mem::MaybeUninit,
-    pin::Pin,
-    ptr, thread,
-};
+use std::{ffi, mem::MaybeUninit, pin::Pin, ptr, thread};
 
 use super::{
-    super::types::{audio_data, get_input},
+    super::types::{InputFn, audio_data, get_input},
     Config,
 };
 use crate::{Error, Result};
@@ -19,27 +14,22 @@ unsafe impl Send for SendPtr {}
 
 pub(crate) struct AudioInput {
     pub(super) inner: Pin<Box<audio_data>>,
-    _cava_in_buffer: Vec<f64>,
-    _source_string: CString,
     input_thread: Option<thread::JoinHandle<()>>,
 }
 
 impl AudioInput {
-    pub fn new(buffer_size: usize, channels: u32, samplerate: u32, source: &str) -> Result<Self> {
-        let source_string = CString::new(source)?;
-        let mut cava_in_buffer = vec![0.0; buffer_size];
-
+    pub fn new(buffer_size: usize, channels: u32, samplerate: u32) -> Result<Self> {
         const PER_READ_CHUNK_SIZE: usize = 512;
 
         let mut audio = Box::new(audio_data {
-            cava_in: cava_in_buffer.as_mut_ptr(),
+            cava_in: ptr::null_mut(),
             input_buffer_size: (PER_READ_CHUNK_SIZE * channels as usize) as i32,
             cava_buffer_size: buffer_size as i32,
-            format: -1,
+            format: 16,
             rate: samplerate,
             channels,
             threadparams: 0,
-            source: source_string.as_ptr() as *mut _,
+            source: ptr::null_mut(),
             im: 0,
             terminate: 0,
             error_message: [0; 1024],
@@ -86,21 +76,29 @@ impl AudioInput {
 
         Ok(Self {
             inner: Pin::new(audio),
-            _cava_in_buffer: cava_in_buffer,
-            _source_string: source_string,
             input_thread: None,
         })
     }
 
-    pub fn start_input(&mut self, mut config: Config) -> Result<()> {
-        if self.input_thread.is_some() {
-            return Ok(());
-        }
-
+    /// Calls `get_input` to configure audio buffers and obtain the input
+    /// thread function. Must be called before [`AudioOutput::init`] to match
+    /// the order expected by libcava.
+    ///
+    /// # Errors
+    ///
+    /// Returns error if `get_input` returns null (unsupported input method).
+    pub fn setup_input(&mut self, config: &mut Config) -> Result<InputFn> {
         // SAFETY: Both pointers are valid and point to initialized structs.
-        // get_input returns a function pointer or None.
-        let input_fn =
-            unsafe { get_input(self.as_ptr(), config.as_ptr()) }.ok_or(Error::NoInputFunction)?;
+        // get_input allocates `cava_in` and `source` buffers via malloc,
+        // sets audio format/rate/channels, and returns a function pointer.
+        unsafe { get_input(self.as_ptr(), config.as_ptr()) }.ok_or(Error::NoInputFunction)
+    }
+
+    /// Spawns the audio input thread using the function from [`setup_input`].
+    pub fn spawn_input_thread(&mut self, input_fn: InputFn) {
+        if self.input_thread.is_some() {
+            return;
+        }
 
         let audio_ptr = SendPtr(self.as_ptr() as usize);
 
@@ -113,8 +111,6 @@ impl AudioInput {
         });
 
         self.input_thread = Some(handle);
-
-        Ok(())
     }
 
     pub(crate) fn as_ptr(&mut self) -> *mut audio_data {
@@ -171,6 +167,14 @@ impl Drop for AudioInput {
             libc::pthread_mutex_destroy(
                 ptr::addr_of_mut!(self.inner.lock) as *mut libc::pthread_mutex_t
             );
+        }
+
+        // SAFETY: `cava_in` and `source` were allocated by C (get_input /
+        // audio_raw_init) via malloc. free(NULL) is safe if setup_input was
+        // never called.
+        unsafe {
+            libc::free(self.inner.cava_in as *mut ffi::c_void);
+            libc::free(self.inner.source as *mut ffi::c_void);
         }
     }
 }

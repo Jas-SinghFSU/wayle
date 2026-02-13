@@ -1,5 +1,6 @@
 mod battery;
 mod bluetooth;
+mod cava;
 mod clock;
 mod compositor;
 mod cpu;
@@ -55,6 +56,7 @@ macro_rules! register_modules {
 register_modules! {
     Battery => battery::Factory,
     Bluetooth => bluetooth::Factory,
+    Cava => cava::Factory,
     Clock => clock::Factory,
     Cpu => cpu::Factory,
     Dashboard => dashboard::Factory,

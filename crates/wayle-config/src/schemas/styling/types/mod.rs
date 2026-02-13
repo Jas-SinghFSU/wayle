@@ -10,4 +10,4 @@ pub use rounding::{RadiusClass, RoundingLevel};
 pub use sizing::{GapClass, IconSizeClass, PaddingClass};
 pub use theme::ThemeEntry;
 pub use typography::{FontWeightClass, TextSizeClass};
-pub use validated::{HexColor, InvalidHexColor, Percentage, ScaleFactor, Spacing};
+pub use validated::{HexColor, InvalidHexColor, NormalizedF64, Percentage, ScaleFactor, Spacing};

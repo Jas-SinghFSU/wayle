@@ -7,6 +7,7 @@
 
 use std::{env, path::PathBuf};
 
+#[cfg(feature = "vendored")]
 const REQUIRED_VERSION: &str = "0.10.6";
 
 fn main() {
@@ -123,8 +124,6 @@ fn generate_bindings(include_paths: &[PathBuf]) {
     let mut builder = bindgen::Builder::default()
         .header("wrapper.h")
         .rust_target(bindgen::RustTarget::stable(82, 0).expect("valid Rust version"))
-        .raw_line("pub type fftw_plan = *mut fftw_plan_s;")
-        .raw_line("pub type fftw_complex = [f64; 2];")
         .allowlist_type("cava_plan")
         .allowlist_type("config_params")
         .allowlist_type("audio_data")
@@ -142,10 +141,6 @@ fn generate_bindings(include_paths: &[PathBuf]) {
         .allowlist_function("audio_raw_init")
         .allowlist_function("audio_raw_clean")
         .allowlist_function("audio_raw_destroy")
-        .blocklist_type("fftw_plan")
-        .blocklist_type("fftw_complex")
-        .opaque_type("fftw_plan_s")
-        .opaque_type("fftw_complex")
         .derive_debug(true)
         .derive_default(false)
         .generate_comments(false)

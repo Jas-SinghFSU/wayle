@@ -1,11 +1,11 @@
 use std::time::Duration;
 
-use tracing::{debug, error};
+use tracing::{debug, error, warn};
 use wayle_traits::ServiceMonitoring;
 
 use crate::{
     Error,
-    ffi::{AudioInput, AudioOutput, Config, Plan},
+    ffi::{AudioInput, AudioOutput, Config},
     service::CavaService,
 };
 
@@ -13,11 +13,22 @@ impl ServiceMonitoring for CavaService {
     type Error = Error;
 
     async fn start_monitoring(&self) -> Result<(), Self::Error> {
-        let bars = self.bars.get();
-        let autosens = self.autosens.get();
+        let bars_raw = self.bars.get();
         let stereo = self.stereo.get();
+        let bars_adjusted = bars_raw.adjusted_for_stereo(stereo);
+        if bars_adjusted != bars_raw {
+            warn!(
+                requested = %bars_raw,
+                adjusted = %bars_adjusted,
+                "odd bar count rounded up for stereo output"
+            );
+        }
+        let bars = bars_adjusted.value() as usize;
+        let autosens = self.autosens.get();
         let noise_reduction = self.noise_reduction.get();
-        let framerate = self.framerate.get();
+        let monstercat = self.monstercat.get();
+        let waves = self.waves.get();
+        let framerate = self.framerate.get().value();
         let input = self.input.get();
         let source = self.source.get();
         let low_cutoff = self.low_cutoff.get();
@@ -27,12 +38,14 @@ impl ServiceMonitoring for CavaService {
         let channels = if stereo { 2 } else { 1 };
         let buffer_size = calculate_cava_buffer_size(samplerate, channels);
 
-        let mut audio_input = AudioInput::new(buffer_size, channels, samplerate, &source)?;
+        let mut audio_input = AudioInput::new(buffer_size, channels, samplerate)?;
         let mut config = Config::new(
             bars,
             autosens,
             stereo,
             noise_reduction,
+            monstercat,
+            waves,
             framerate,
             input.into(),
             channels,
@@ -41,21 +54,13 @@ impl ServiceMonitoring for CavaService {
             high_cutoff,
             &source,
         )?;
+
+        let input_fn = audio_input.setup_input(&mut config)?;
+
         let mut audio_output = AudioOutput::new(bars);
+        let plan = audio_output.init(&mut audio_input, &mut config)?;
 
-        let plan = Plan::new(
-            bars,
-            samplerate,
-            channels,
-            autosens,
-            noise_reduction,
-            low_cutoff,
-            high_cutoff,
-        )?;
-
-        audio_output.init(&mut audio_input, &mut config, &plan)?;
-
-        audio_input.start_input(config)?;
+        audio_input.spawn_input_thread(input_fn);
 
         let values = self.values.clone();
         let cancellation = {

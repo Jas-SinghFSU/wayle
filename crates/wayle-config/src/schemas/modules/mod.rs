@@ -1,5 +1,6 @@
 mod battery;
 mod bluetooth;
+mod cava;
 mod clock;
 mod cpu;
 mod custom;
@@ -26,6 +27,10 @@ mod world_clock;
 
 pub use battery::BatteryConfig;
 pub use bluetooth::BluetoothConfig;
+pub use cava::{
+    BarCount as CavaBarCount, CavaConfig, CavaDirection, CavaInput, CavaStyle,
+    Framerate as CavaFramerate, FrequencyHz,
+};
 pub use clock::ClockConfig;
 pub use cpu::CpuConfig;
 pub use custom::{CustomModuleDefinition, ExecutionMode};
@@ -61,6 +66,8 @@ pub struct ModulesConfig {
     pub battery: BatteryConfig,
     /// Bluetooth connection module.
     pub bluetooth: BluetoothConfig,
+    /// Cava audio visualizer module.
+    pub cava: CavaConfig,
     /// Clock display module.
     pub clock: ClockConfig,
     /// CPU usage module.

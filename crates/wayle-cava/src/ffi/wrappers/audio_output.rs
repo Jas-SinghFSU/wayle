@@ -1,6 +1,10 @@
 #![allow(unsafe_code)]
 
-use std::{pin::Pin, ptr, slice};
+use std::{
+    pin::Pin,
+    ptr::{self, NonNull},
+    slice,
+};
 
 use super::{
     super::types::{audio_raw, audio_raw_clean, audio_raw_init, cava_plan},
@@ -39,22 +43,26 @@ impl AudioOutput {
         }
     }
 
-    pub fn init(
-        &mut self,
-        audio_input: &mut AudioInput,
-        config: &mut Config,
-        plan: &Plan,
-    ) -> Result<()> {
-        let mut plan_ptr = plan.as_ptr();
+    /// Initializes the audio output buffers and creates the FFT plan.
+    ///
+    /// The plan is created internally by `audio_raw_init` with the correct
+    /// bar count adjusted for stereo output channels.
+    ///
+    /// # Errors
+    ///
+    /// Returns error if initialization fails or the plan pointer is null.
+    pub fn init(&mut self, audio_input: &mut AudioInput, config: &mut Config) -> Result<Plan> {
+        let mut plan_ptr: *mut cava_plan = ptr::null_mut();
 
         // SAFETY: All pointers are valid and point to initialized structs.
-        // audio_raw_init takes a pointer-to-pointer for the plan.
+        // audio_raw_init creates a cava_plan internally via cava_init and writes
+        // its pointer to plan_ptr. We capture this pointer to construct a Plan.
         let ret = unsafe {
             audio_raw_init(
                 audio_input.as_ptr(),
                 self.as_ptr(),
                 config.as_ptr(),
-                &mut plan_ptr as *mut *mut cava_plan,
+                &mut plan_ptr,
             )
         };
 
@@ -62,7 +70,8 @@ impl AudioOutput {
             return Err(Error::AudioRawInitFailed(ret));
         }
 
-        Ok(())
+        let ptr = NonNull::new(plan_ptr).ok_or(Error::NullPlan)?;
+        Ok(Plan::from_raw(ptr))
     }
 
     pub(crate) fn as_ptr(&mut self) -> *mut audio_raw {

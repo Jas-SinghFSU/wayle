@@ -2,18 +2,18 @@ use std::sync::Mutex;
 
 use tokio::sync::Mutex as AsyncMutex;
 use tokio_util::sync::CancellationToken;
-use tracing::instrument;
+use tracing::{instrument, warn};
 use wayle_common::Property;
 use wayle_traits::ServiceMonitoring;
 
 use crate::{
     Error,
     service::{
-        CavaService, DEFAULT_AUTOSENS, DEFAULT_BARS, DEFAULT_FRAMERATE, DEFAULT_HIGH_CUTOFF,
-        DEFAULT_INPUT, DEFAULT_LOW_CUTOFF, DEFAULT_NOISE_REDUCTION, DEFAULT_SAMPLERATE,
-        DEFAULT_SOURCE, DEFAULT_STEREO, MAX_BARS,
+        CavaService, DEFAULT_AUTOSENS, DEFAULT_HIGH_CUTOFF, DEFAULT_INPUT, DEFAULT_LOW_CUTOFF,
+        DEFAULT_MONSTERCAT, DEFAULT_NOISE_REDUCTION, DEFAULT_SAMPLERATE, DEFAULT_SOURCE,
+        DEFAULT_STEREO, DEFAULT_WAVES,
     },
-    types::InputMethod,
+    types::{BarCount, Framerate, InputMethod},
 };
 
 /// Builder for configuring and creating a [`CavaService`].
@@ -21,11 +21,13 @@ use crate::{
 /// Provides a fluent interface for setting audio visualization parameters.
 /// All parameters have sensible defaults and can be selectively overridden.
 pub struct CavaServiceBuilder {
-    bars: usize,
+    bars: BarCount,
     autosens: bool,
     stereo: bool,
     noise_reduction: f64,
-    framerate: u32,
+    monstercat: f64,
+    waves: u32,
+    framerate: Framerate,
     input: InputMethod,
     source: String,
     low_cutoff: u32,
@@ -43,11 +45,13 @@ impl CavaServiceBuilder {
     /// Creates a new builder with default audio visualization settings.
     pub fn new() -> Self {
         Self {
-            bars: DEFAULT_BARS,
+            bars: BarCount::DEFAULT,
             autosens: DEFAULT_AUTOSENS,
             stereo: DEFAULT_STEREO,
             noise_reduction: DEFAULT_NOISE_REDUCTION,
-            framerate: DEFAULT_FRAMERATE,
+            monstercat: DEFAULT_MONSTERCAT,
+            waves: DEFAULT_WAVES,
+            framerate: Framerate::DEFAULT,
             input: DEFAULT_INPUT,
             source: DEFAULT_SOURCE.to_string(),
             low_cutoff: DEFAULT_LOW_CUTOFF,
@@ -58,9 +62,9 @@ impl CavaServiceBuilder {
 
     /// Sets the number of frequency bars to generate.
     ///
-    /// Valid range: 1-256.
-    pub fn bars(mut self, bars: usize) -> Self {
-        self.bars = bars;
+    /// Accepts [`BarCount`] (clamped to 1-256) or raw `usize`/`u16`.
+    pub fn bars(mut self, bars: impl Into<BarCount>) -> Self {
+        self.bars = bars.into();
         self
     }
 
@@ -88,11 +92,28 @@ impl CavaServiceBuilder {
         self
     }
 
+    /// Sets monstercat-style smoothing across adjacent bars.
+    ///
+    /// 0.0 disables monstercat smoothing. Higher values produce smoother falloff.
+    pub fn monstercat(mut self, monstercat: f64) -> Self {
+        self.monstercat = monstercat;
+        self
+    }
+
+    /// Sets wave-style smoothing count.
+    ///
+    /// 0 disables wave smoothing. Mutually exclusive with monstercat
+    /// (monstercat takes priority if both non-zero).
+    pub fn waves(mut self, waves: u32) -> Self {
+        self.waves = waves;
+        self
+    }
+
     /// Sets the visualization update rate in frames per second.
     ///
-    /// Must be greater than 0.
-    pub fn framerate(mut self, framerate: u32) -> Self {
-        self.framerate = framerate;
+    /// Accepts [`Framerate`] (clamped to 1-360) or raw `u32`.
+    pub fn framerate(mut self, framerate: impl Into<Framerate>) -> Self {
+        self.framerate = framerate.into();
         self
     }
 
@@ -140,38 +161,19 @@ impl CavaServiceBuilder {
 
     /// Builds and initializes the CAVA service with the configured parameters.
     ///
-    /// Validates all parameters and starts the audio visualization loop.
+    /// `bars` and `framerate` are validated by their newtypes (clamped on construction).
+    /// Cross-field constraints (cutoffs, samplerate, noise_reduction) are validated here.
     ///
     /// # Errors
     /// Returns error if:
-    /// - `bars` is 0 or exceeds 256
-    /// - `framerate`, `low_cutoff`, `high_cutoff`, or `samplerate` is 0
+    /// - `low_cutoff`, `high_cutoff`, or `samplerate` is 0
     /// - `high_cutoff` is not greater than `low_cutoff`
-    /// - `samplerate` is not greater than 2 * `high_cutoff` (violates Nyquist theorem)
+    /// - `samplerate` is not greater than 2 * `high_cutoff` (Nyquist theorem)
     /// - `noise_reduction` is not in range 0.0-1.0
-    /// - Audio initialization fails
-    /// - Selected input method is unavailable
+    /// - `monstercat` is negative
+    /// - Audio initialization fails or input method is unavailable
     #[instrument(skip(self))]
     pub async fn build(self) -> Result<CavaService, Error> {
-        if self.bars == 0 {
-            return Err(Error::InvalidParameter(
-                "bars must be greater than 0".into(),
-            ));
-        }
-
-        if self.bars > MAX_BARS {
-            return Err(Error::InvalidParameter(format!(
-                "bars must not exceed {} (CAVA limitation), got {}",
-                MAX_BARS, self.bars
-            )));
-        }
-
-        if self.framerate == 0 {
-            return Err(Error::InvalidParameter(
-                "framerate must be greater than 0".into(),
-            ));
-        }
-
         if self.low_cutoff == 0 {
             return Err(Error::InvalidParameter(
                 "low_cutoff must be greater than 0".into(),
@@ -211,14 +213,30 @@ impl CavaServiceBuilder {
             )));
         }
 
+        if self.monstercat < 0.0 {
+            return Err(Error::InvalidParameter("monstercat must be >= 0.0".into()));
+        }
+
+        let effective_bars = self.bars.adjusted_for_stereo(self.stereo);
+        if effective_bars != self.bars {
+            warn!(
+                requested = %self.bars,
+                adjusted = %effective_bars,
+                "odd bar count rounded up for stereo output"
+            );
+        }
+        let bar_count = effective_bars.value() as usize;
+
         let service = CavaService {
             cancellation_token: Mutex::new(CancellationToken::new()),
             restart_lock: AsyncMutex::new(()),
-            values: Property::new(vec![0.0; self.bars]),
+            values: Property::new(vec![0.0; bar_count]),
             bars: Property::new(self.bars),
             autosens: Property::new(self.autosens),
             stereo: Property::new(self.stereo),
             noise_reduction: Property::new(self.noise_reduction),
+            monstercat: Property::new(self.monstercat),
+            waves: Property::new(self.waves),
             framerate: Property::new(self.framerate),
             input: Property::new(self.input),
             source: Property::new(self.source),

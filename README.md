@@ -61,7 +61,7 @@ experience. A successor to HyprPanel without the pain or dependency on Hyprland.
     - [x] Hyprsunset
     - [x] Hyprland workspaces
     - [x] Custom Modules
-    - [ ] Cava (WIP - almost done)
+    - [x] Cava
 
 #### Scoped out
 

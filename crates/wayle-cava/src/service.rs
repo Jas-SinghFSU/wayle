@@ -7,14 +7,17 @@ use tracing::instrument;
 use wayle_common::Property;
 use wayle_traits::ServiceMonitoring;
 
-use crate::{Error, builder::CavaServiceBuilder, types::InputMethod};
+use crate::{
+    Error,
+    builder::CavaServiceBuilder,
+    types::{BarCount, Framerate, InputMethod},
+};
 
-pub(crate) const DEFAULT_BARS: usize = 20;
-pub(crate) const MAX_BARS: usize = 256;
 pub(crate) const DEFAULT_AUTOSENS: bool = true;
 pub(crate) const DEFAULT_STEREO: bool = false;
 pub(crate) const DEFAULT_NOISE_REDUCTION: f64 = 0.77;
-pub(crate) const DEFAULT_FRAMERATE: u32 = 60;
+pub(crate) const DEFAULT_MONSTERCAT: f64 = 0.0;
+pub(crate) const DEFAULT_WAVES: u32 = 0;
 pub(crate) const DEFAULT_INPUT: InputMethod = InputMethod::PipeWire;
 pub(crate) const DEFAULT_SOURCE: &str = "auto";
 pub(crate) const DEFAULT_LOW_CUTOFF: u32 = 50;
@@ -34,8 +37,8 @@ pub struct CavaService {
     /// Bar amplitudes, updated at `framerate`. Stereo splits L/R halves.
     pub values: Property<Vec<f64>>,
 
-    /// Frequency bar count (1-256, default 20).
-    pub bars: Property<usize>,
+    /// Frequency bar count, clamped to 1-256 (libcava limitation).
+    pub bars: Property<BarCount>,
 
     /// Auto-adjust sensitivity to keep values in 0-1 range.
     pub autosens: Property<bool>,
@@ -46,8 +49,14 @@ pub struct CavaService {
     /// Smoothing filter: 0.0 = fast/noisy, 1.0 = slow/smooth (default 0.77).
     pub noise_reduction: Property<f64>,
 
-    /// Update rate in fps (default 60).
-    pub framerate: Property<u32>,
+    /// Monstercat-style smoothing across adjacent bars (0.0 = off).
+    pub monstercat: Property<f64>,
+
+    /// Wave-style smoothing (0 = off).
+    pub waves: Property<u32>,
+
+    /// Visualization update rate, clamped to 1-360 fps.
+    pub framerate: Property<Framerate>,
 
     /// Audio capture backend (default PipeWire).
     pub input: Property<InputMethod>,
@@ -85,24 +94,13 @@ impl CavaService {
 
     /// Sets the number of frequency bars.
     ///
-    /// Updates the configuration and restarts the visualization service.
+    /// Accepts [`BarCount`] (clamped to 1-256) or raw `usize`/`u16`.
+    /// Restarts the visualization service with the new bar count.
     ///
     /// # Errors
-    /// Returns error if bars is 0, exceeds 256, or if service restart fails.
-    pub async fn set_bars(&self, bars: usize) -> Result<(), Error> {
-        if bars == 0 {
-            return Err(Error::InvalidParameter(
-                "bars must be greater than 0".into(),
-            ));
-        }
-
-        if bars > MAX_BARS {
-            return Err(Error::InvalidParameter(format!(
-                "bars must not exceed {MAX_BARS} (CAVA limitation), got {bars}"
-            )));
-        }
-
-        self.bars.set(bars);
+    /// Returns error if service restart fails.
+    pub async fn set_bars(&self, bars: impl Into<BarCount>) -> Result<(), Error> {
+        self.bars.set(bars.into());
         self.restart().await
     }
 
@@ -139,19 +137,42 @@ impl CavaService {
         self.restart().await
     }
 
-    /// Sets the visualization update framerate.
+    /// Sets monstercat-style smoothing level across adjacent bars.
     ///
-    /// Updates the configuration and restarts the visualization service.
+    /// 0.0 disables monstercat smoothing. Higher values produce smoother falloff
+    /// between neighboring bars.
     ///
     /// # Errors
-    /// Returns error if framerate is 0 or if service restart fails.
-    pub async fn set_framerate(&self, framerate: u32) -> Result<(), Error> {
-        if framerate == 0 {
-            return Err(Error::InvalidParameter(
-                "framerate must be greater than 0".into(),
-            ));
+    /// Returns error if `monstercat` is negative or if service restart fails.
+    pub async fn set_monstercat(&self, monstercat: f64) -> Result<(), Error> {
+        if monstercat < 0.0 {
+            return Err(Error::InvalidParameter("monstercat must be >= 0.0".into()));
         }
-        self.framerate.set(framerate);
+        self.monstercat.set(monstercat);
+        self.restart().await
+    }
+
+    /// Sets wave-style smoothing count.
+    ///
+    /// 0 disables wave smoothing. Mutually exclusive with monstercat smoothing
+    /// (monstercat takes priority if both are non-zero).
+    ///
+    /// # Errors
+    /// Returns error if service restart fails.
+    pub async fn set_waves(&self, waves: u32) -> Result<(), Error> {
+        self.waves.set(waves);
+        self.restart().await
+    }
+
+    /// Sets the visualization update framerate.
+    ///
+    /// Accepts [`Framerate`] (clamped to 1-360) or raw `u32`.
+    /// Restarts the visualization service with the new framerate.
+    ///
+    /// # Errors
+    /// Returns error if service restart fails.
+    pub async fn set_framerate(&self, framerate: impl Into<Framerate>) -> Result<(), Error> {
+        self.framerate.set(framerate.into());
         self.restart().await
     }
 
@@ -254,16 +275,13 @@ impl Drop for CavaService {
 mod tests {
     use super::*;
 
-    const VALID_BARS: usize = 20;
-    const VALID_FRAMERATE: u32 = 60;
+    const VALID_BARS: BarCount = BarCount::DEFAULT;
+    const VALID_FRAMERATE: Framerate = Framerate::DEFAULT;
     const VALID_LOW_CUTOFF: u32 = 50;
     const VALID_HIGH_CUTOFF: u32 = 10000;
     const VALID_SAMPLERATE: u32 = 44100;
     const VALID_NOISE_REDUCTION: f64 = 0.77;
 
-    const ZERO_BARS: usize = 0;
-    const EXCESSIVE_BARS: usize = MAX_BARS + 1;
-    const ZERO_FRAMERATE: u32 = 0;
     const ZERO_LOW_CUTOFF: u32 = 0;
     const ZERO_HIGH_CUTOFF: u32 = 0;
     const ZERO_SAMPLERATE: u32 = 0;
@@ -276,37 +294,6 @@ mod tests {
             .high_cutoff(VALID_HIGH_CUTOFF)
             .samplerate(VALID_SAMPLERATE)
             .noise_reduction(VALID_NOISE_REDUCTION)
-    }
-
-    #[tokio::test]
-    async fn builder_build_with_zero_bars_returns_error() {
-        let builder = valid_builder().bars(ZERO_BARS);
-
-        let result = builder.build().await;
-
-        assert!(result.is_err());
-        assert!(matches!(result.unwrap_err(), Error::InvalidParameter(_)));
-    }
-
-    #[tokio::test]
-    async fn builder_build_with_bars_exceeding_max_returns_error() {
-        let builder = valid_builder().bars(EXCESSIVE_BARS);
-
-        let result = builder.build().await;
-
-        assert!(result.is_err());
-        let err = result.unwrap_err();
-        assert!(matches!(err, Error::InvalidParameter(_)));
-    }
-
-    #[tokio::test]
-    async fn builder_build_with_zero_framerate_returns_error() {
-        let builder = valid_builder().framerate(ZERO_FRAMERATE);
-
-        let result = builder.build().await;
-
-        assert!(result.is_err());
-        assert!(matches!(result.unwrap_err(), Error::InvalidParameter(_)));
     }
 
     #[tokio::test]
@@ -400,6 +387,16 @@ mod tests {
         let above_one = 1.1;
 
         let result = valid_builder().noise_reduction(above_one).build().await;
+
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), Error::InvalidParameter(_)));
+    }
+
+    #[tokio::test]
+    async fn builder_build_with_negative_monstercat_returns_error() {
+        let negative = -0.1;
+
+        let result = valid_builder().monstercat(negative).build().await;
 
         assert!(result.is_err());
         assert!(matches!(result.unwrap_err(), Error::InvalidParameter(_)));

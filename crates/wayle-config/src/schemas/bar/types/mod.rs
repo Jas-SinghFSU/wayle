@@ -159,6 +159,8 @@ pub enum BarModule {
     Battery,
     /// Bluetooth connection status and devices.
     Bluetooth,
+    /// Audio frequency visualizer.
+    Cava,
     /// Current time display.
     Clock,
     /// CPU usage indicator.
@@ -236,6 +238,7 @@ impl BarModule {
         match self {
             Self::Battery => "battery",
             Self::Bluetooth => "bluetooth",
+            Self::Cava => "cava",
             Self::Clock => "clock",
             Self::Cpu => "cpu",
             Self::Dashboard => "dashboard",
@@ -267,6 +270,7 @@ impl BarModule {
         let module = match s {
             "battery" => Self::Battery,
             "bluetooth" => Self::Bluetooth,
+            "cava" => Self::Cava,
             "clock" => Self::Clock,
             "cpu" => Self::Cpu,
             "dashboard" => Self::Dashboard,
@@ -349,6 +353,7 @@ impl fmt::Display for BarModule {
 const BUILTIN_MODULES: &[&str] = &[
     "battery",
     "bluetooth",
+    "cava",
     "clock",
     "cpu",
     "dashboard",

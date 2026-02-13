@@ -77,6 +77,8 @@
 //! | [`autosens`] | `bool` | Auto-adjust sensitivity |
 //! | [`stereo`] | `bool` | Split bars between L/R channels |
 //! | [`noise_reduction`] | `f64` | Smoothing filter (0.0-1.0) |
+//! | [`monstercat`] | `f64` | Monstercat smoothing (0.0 = off) |
+//! | [`waves`] | `u32` | Wave smoothing (0 = off) |
 //! | [`low_cutoff`] | `u32` | Low frequency filter (Hz) |
 //! | [`high_cutoff`] | `u32` | High frequency filter (Hz) |
 //! | [`samplerate`] | `u32` | Audio sample rate (Hz) |
@@ -89,6 +91,8 @@
 //! [`autosens`]: CavaService::autosens
 //! [`stereo`]: CavaService::stereo
 //! [`noise_reduction`]: CavaService::noise_reduction
+//! [`monstercat`]: CavaService::monstercat
+//! [`waves`]: CavaService::waves
 //! [`low_cutoff`]: CavaService::low_cutoff
 //! [`high_cutoff`]: CavaService::high_cutoff
 //! [`samplerate`]: CavaService::samplerate
@@ -139,4 +143,4 @@ pub mod types;
 pub use builder::CavaServiceBuilder;
 pub use error::{Error, Result};
 pub use service::CavaService;
-pub use types::InputMethod;
+pub use types::{BarCount, Framerate, InputMethod};
