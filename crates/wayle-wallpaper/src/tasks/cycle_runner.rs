@@ -11,7 +11,7 @@ use super::{
     watcher::{DirectoryChangeSender, DirectoryWatcher},
 };
 use crate::{
-    backend::{SwwwBackend, TransitionConfig},
+    backend::{AwwwBackend, TransitionConfig},
     types::{CyclingConfig, CyclingMode, MonitorState},
 };
 
@@ -250,7 +250,7 @@ impl CyclingTask {
             .collect();
 
         let results = join_all(tasks.iter().map(|(name, path, fit_mode)| {
-            SwwwBackend::apply(path, *fit_mode, Some(name.as_str()), &transition)
+            AwwwBackend::apply(path, *fit_mode, Some(name.as_str()), &transition)
         }))
         .await;
 

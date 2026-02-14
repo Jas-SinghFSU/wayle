@@ -1,4 +1,4 @@
-//! Wallpaper management via swww with cycling and theming support.
+//! Wallpaper management via awww with cycling and theming support.
 //!
 //! # Quick Start
 //!
@@ -52,7 +52,7 @@
 //! | `color_extractor(ColorExtractor)` | Tool for extracting dominant colors |
 //! | `theming_monitor(Option<String>)` | Which monitor drives color extraction |
 //! | `shared_cycle(bool)` | Sync cycling across monitors in shuffle mode |
-//! | `engine_active(bool)` | Toggle swww rendering (state tracking continues) |
+//! | `engine_active(bool)` | Toggle awww rendering (state tracking continues) |
 //!
 //! ```rust,no_run
 //! use wayle_wallpaper::{WallpaperService, TransitionConfig, TransitionType};

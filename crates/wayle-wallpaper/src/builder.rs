@@ -68,7 +68,7 @@ impl WallpaperServiceBuilder {
         self
     }
 
-    /// Enables or disables the built-in wallpaper engine (swww).
+    /// Enables or disables the awww wallpaper engine.
     pub fn engine_active(mut self, active: bool) -> Self {
         self.engine_active = active;
         self

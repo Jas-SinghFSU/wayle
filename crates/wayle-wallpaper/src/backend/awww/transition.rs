@@ -13,7 +13,7 @@ impl Position {
     /// CLI flag for this parameter.
     pub const FLAG: &'static str = "--transition-pos";
 
-    /// Center of the screen (swww default).
+    /// Center of the screen (awww default).
     pub const CENTER: Self = Self { x: 0.5, y: 0.5 };
 
     /// Top-left corner.
@@ -72,7 +72,7 @@ impl BezierCurve {
     /// CLI flag for this parameter.
     pub const FLAG: &'static str = "--transition-bezier";
 
-    /// swww default bezier curve.
+    /// awww default bezier curve.
     pub const DEFAULT: Self = Self {
         x1: 0.54,
         y1: 0.0,
@@ -188,7 +188,7 @@ impl Display for TransitionAngle {
 pub enum TransitionType {
     /// Instant change with no animation.
     None,
-    /// Basic fade into the new image (swww default).
+    /// Basic fade into the new image (awww default).
     #[default]
     Simple,
     /// Fade with bezier-controlled timing.
@@ -315,7 +315,7 @@ impl Display for TransitionType {
 
 /// Configuration for wallpaper transitions.
 ///
-/// Default values match swww defaults.
+/// Default values match awww defaults.
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub struct TransitionConfig {
     /// Transition type with its parameters.

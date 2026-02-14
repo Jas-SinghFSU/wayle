@@ -13,7 +13,7 @@ use wayle_common::Property;
 use zbus::Connection;
 
 use crate::{
-    backend::{SwwwBackend, TransitionConfig},
+    backend::{AwwwBackend, TransitionConfig, wait_for_daemon},
     builder::WallpaperServiceBuilder,
     error::Error,
     types::{ColorExtractor, CyclingConfig, CyclingMode, FitMode, MonitorState},
@@ -46,10 +46,10 @@ pub struct WallpaperService {
     /// When `true`, all monitors show the same image during shuffle cycling.
     /// Sequential mode always shows the same image regardless of this setting.
     pub shared_cycle: Property<bool>,
-    /// Whether wayle's built-in wallpaper engine (swww) is active.
+    /// Whether the awww wallpaper engine is active.
     ///
     /// When `false`, all state tracking and color extraction continue but
-    /// swww commands are skipped.
+    /// awww commands are skipped.
     pub engine_active: Property<bool>,
 }
 
@@ -91,8 +91,8 @@ impl WallpaperService {
     ///
     /// # Errors
     ///
-    /// Returns error if the image file does not exist, swww is not installed,
-    /// or the swww daemon is not running.
+    /// Returns error if the image file does not exist, awww is not installed,
+    /// or the awww daemon is not running.
     #[instrument(skip(self), fields(path = %path.display(), monitor))]
     pub async fn set_wallpaper(&self, path: PathBuf, monitor: Option<&str>) -> Result<(), Error> {
         if !path.exists() {
@@ -111,7 +111,7 @@ impl WallpaperService {
                         .map(|s| s.fit_mode)
                         .unwrap_or_default();
                     let transition = self.transition.get();
-                    SwwwBackend::apply(&path, fit_mode, Some(name), &transition).await?;
+                    AwwwBackend::apply(&path, fit_mode, Some(name), &transition).await?;
                 }
             }
             None => {
@@ -136,7 +136,7 @@ impl WallpaperService {
     ///
     /// # Errors
     ///
-    /// Returns error if swww fails to apply wallpapers.
+    /// Returns error if awww fails to apply wallpapers.
     #[instrument(skip(self), fields(mode = %mode, monitor))]
     pub async fn set_fit_mode(&self, mode: FitMode, monitor: Option<&str>) -> Result<(), Error> {
         let mut monitors = self.monitors.get();
@@ -154,7 +154,7 @@ impl WallpaperService {
                     && let Some(path) = path
                 {
                     let transition = self.transition.get();
-                    SwwwBackend::apply(&path, mode, Some(name), &transition).await?;
+                    AwwwBackend::apply(&path, mode, Some(name), &transition).await?;
                 }
             }
             None => {
@@ -178,7 +178,7 @@ impl WallpaperService {
     /// # Errors
     ///
     /// Returns error if the directory doesn't exist, contains no valid images,
-    /// or swww fails to apply wallpapers.
+    /// or awww fails to apply wallpapers.
     #[instrument(skip(self), fields(dir = %directory.display()))]
     pub fn start_cycling(
         &self,
@@ -218,7 +218,7 @@ impl WallpaperService {
     ///
     /// # Errors
     ///
-    /// Returns error if swww fails to apply wallpapers.
+    /// Returns error if awww fails to apply wallpapers.
     #[instrument(skip(self))]
     pub async fn advance_cycle(&self) -> Result<(), Error> {
         let Some(config) = self.cycling.get() else {
@@ -245,7 +245,7 @@ impl WallpaperService {
     ///
     /// # Errors
     ///
-    /// Returns error if swww fails to apply wallpapers.
+    /// Returns error if awww fails to apply wallpapers.
     #[instrument(skip(self))]
     pub async fn rewind_cycle(&self) -> Result<(), Error> {
         let Some(config) = self.cycling.get() else {
@@ -383,7 +383,7 @@ impl WallpaperService {
         if self.engine_active.get() {
             let transition = self.transition.get();
             let futures = to_apply.iter().map(|(name, path, fit_mode)| {
-                SwwwBackend::apply(path, *fit_mode, Some(name.as_str()), &transition)
+                AwwwBackend::apply(path, *fit_mode, Some(name.as_str()), &transition)
             });
             try_join_all(futures).await?;
         }
@@ -394,10 +394,12 @@ impl WallpaperService {
     /// Renders all monitors' wallpapers in a background task.
     ///
     /// State must already be updated via `monitors.set()` before calling this.
-    /// Only the swww rendering runs in the background.
+    /// Only the awww rendering runs in the background. Waits for the daemon
+    /// startup thread to signal readiness before attempting the render.
     pub fn render_all_background(self: &Arc<Self>) {
         let service = Arc::clone(self);
         tokio::spawn(async move {
+            wait_for_daemon().await;
             if let Err(e) = service.rerender_all().await {
                 warn!(error = %e, "background wallpaper render failed");
             }
@@ -415,7 +417,7 @@ impl WallpaperService {
 
         let futures = monitors.iter().filter_map(|(name, state)| {
             state.wallpaper.as_ref().map(|path| {
-                SwwwBackend::apply(path, state.fit_mode, Some(name.as_str()), &transition)
+                AwwwBackend::apply(path, state.fit_mode, Some(name.as_str()), &transition)
             })
         });
         try_join_all(futures).await?;

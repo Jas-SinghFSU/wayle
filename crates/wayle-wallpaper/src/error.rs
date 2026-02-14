@@ -44,18 +44,18 @@ pub enum Error {
     #[error("image path contains invalid UTF-8: {}", .0.display())]
     InvalidImagePath(PathBuf),
 
-    /// swww is not installed or not in PATH.
-    #[error("swww is not installed or not in PATH")]
-    SwwwNotInstalled,
+    /// Neither awww nor swww is installed.
+    #[error("neither awww nor swww found in PATH")]
+    AwwwNotInstalled,
 
-    /// swww-daemon is not running.
-    #[error("swww-daemon is not running - start it with `swww-daemon`")]
-    SwwwDaemonNotRunning,
+    /// Wallpaper daemon is not running.
+    #[error("wallpaper daemon is not running - start awww-daemon or swww-daemon")]
+    AwwwDaemonNotRunning,
 
-    /// swww command failed.
-    #[error("swww command failed: {stderr}")]
-    SwwwCommandFailed {
-        /// The stderr output from swww.
+    /// Wallpaper command failed.
+    #[error("wallpaper command failed: {stderr}")]
+    AwwwCommandFailed {
+        /// The stderr output from awww/swww.
         stderr: String,
     },
 

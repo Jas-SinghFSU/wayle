@@ -10,8 +10,8 @@ use wayle_derive::wayle_config;
 /// Wallpaper management configuration.
 #[wayle_config]
 pub struct WallpaperConfig {
-    /// Enable wayle's built-in wallpaper engine (swww). Disable to use an
-    /// external wallpaper tool while keeping color extraction and theming.
+    /// Enable the awww wallpaper engine. Disable to use an external wallpaper
+    /// tool while keeping color extraction and theming.
     #[serde(rename = "engine-enabled")]
     #[default(true)]
     pub engine_enabled: ConfigProperty<bool>,
