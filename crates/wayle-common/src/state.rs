@@ -1,6 +1,7 @@
-use std::{fs, io::Error, path::PathBuf, time::SystemTime};
+use std::{io::Error, path::PathBuf, time::SystemTime};
 
 use serde::{Deserialize, Serialize};
+use tokio::fs;
 
 /// Runtime state that persists between service operations
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -44,12 +45,14 @@ impl RuntimeState {
     pub async fn load() -> Result<Self, Error> {
         let path = Self::state_file_path()?;
 
-        if path.exists() {
-            let content = fs::read_to_string(&path)?;
-            let state: Self = serde_json::from_str(&content).unwrap_or_else(|_| Self::default());
-            Ok(state)
-        } else {
-            Ok(Self::default())
+        match fs::read_to_string(&path).await {
+            Ok(content) => {
+                let state: Self =
+                    serde_json::from_str(&content).unwrap_or_else(|_| Self::default());
+                Ok(state)
+            }
+            Err(err) if err.kind() == std::io::ErrorKind::NotFound => Ok(Self::default()),
+            Err(err) => Err(err),
         }
     }
 
@@ -61,11 +64,11 @@ impl RuntimeState {
         let path = Self::state_file_path()?;
 
         if let Some(parent) = path.parent() {
-            fs::create_dir_all(parent)?;
+            fs::create_dir_all(parent).await?;
         }
 
         let content = serde_json::to_string_pretty(self).map_err(Error::other)?;
-        fs::write(&path, content)?;
+        fs::write(&path, content).await?;
 
         Ok(())
     }
@@ -96,7 +99,7 @@ impl RuntimeState {
 #[cfg(test)]
 #[allow(unsafe_code)]
 mod tests {
-    use std::{env, sync::Mutex};
+    use std::{env, fs, sync::Mutex};
 
     use super::*;
 

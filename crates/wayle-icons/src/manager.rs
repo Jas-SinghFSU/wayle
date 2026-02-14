@@ -6,6 +6,7 @@
 use std::{fs, path::Path};
 
 use futures::future::join_all;
+use tokio::fs as async_fs;
 use tracing::{debug, info, warn};
 use usvg::{Options, Tree};
 
@@ -99,10 +100,12 @@ impl IconManager {
     /// icon failures are captured in [`InstallResult::failed`].
     pub async fn install(&self, source: &dyn IconSource, slugs: &[&str]) -> Result<InstallResult> {
         let icons_dir = self.registry.icons_dir();
-        fs::create_dir_all(&icons_dir).map_err(|err| Error::DirectoryError {
-            path: icons_dir.clone(),
-            source: err,
-        })?;
+        async_fs::create_dir_all(&icons_dir)
+            .await
+            .map_err(|err| Error::DirectoryError {
+                path: icons_dir.clone(),
+                source: err,
+            })?;
 
         let source_name = source.cli_name();
         let fetch_data: Vec<_> = slugs
@@ -165,10 +168,12 @@ impl IconManager {
 
         let transformed = transform::to_symbolic(&svg_content);
         let file_path = icons_dir.join(format!("{icon_name}-symbolic.svg"));
-        fs::write(&file_path, &transformed).map_err(|source| Error::WriteError {
-            path: file_path,
-            source,
-        })?;
+        async_fs::write(&file_path, &transformed)
+            .await
+            .map_err(|source| Error::WriteError {
+                path: file_path,
+                source,
+            })?;
 
         Ok(format!("{icon_name}-symbolic"))
     }

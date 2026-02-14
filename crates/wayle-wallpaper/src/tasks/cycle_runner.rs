@@ -1,6 +1,6 @@
 use std::{collections::HashMap, path::PathBuf};
 
-use futures::StreamExt;
+use futures::{StreamExt, future::join_all};
 use tokio::{select, sync::mpsc};
 use tokio_util::sync::CancellationToken;
 use tracing::{info, warn};
@@ -12,14 +12,15 @@ use super::{
 };
 use crate::{
     backend::{SwwwBackend, TransitionConfig},
-    types::{CyclingConfig, FitMode, MonitorState},
+    types::{CyclingConfig, CyclingMode, MonitorState},
 };
 
 pub(crate) struct CyclingTask {
     cycling: Property<Option<CyclingConfig>>,
     monitors: Property<HashMap<String, MonitorState>>,
-    fit_mode: Property<FitMode>,
     transition: Property<TransitionConfig>,
+    shared_cycle: Property<bool>,
+    engine_active: Property<bool>,
 
     timer: CyclingTimer,
     directory_watcher: Option<DirectoryWatcher>,
@@ -33,16 +34,18 @@ impl CyclingTask {
     pub fn new(
         cycling: Property<Option<CyclingConfig>>,
         monitors: Property<HashMap<String, MonitorState>>,
-        fit_mode: Property<FitMode>,
         transition: Property<TransitionConfig>,
+        shared_cycle: Property<bool>,
+        engine_active: Property<bool>,
     ) -> Self {
         let (directory_change_sender, directory_change_receiver) = mpsc::unbounded_channel();
 
         Self {
             cycling,
             monitors,
-            fit_mode,
             transition,
+            shared_cycle,
+            engine_active,
             timer: CyclingTimer::new(),
             directory_watcher: None,
             watched_directory: None,
@@ -53,6 +56,7 @@ impl CyclingTask {
 
     pub async fn run(mut self, cancellation: CancellationToken) {
         let mut cycling_stream = self.cycling.watch();
+        let mut shared_cycle_stream = self.shared_cycle.watch();
 
         loop {
             select! {
@@ -63,6 +67,10 @@ impl CyclingTask {
 
                 Some(config) = cycling_stream.next() => {
                     self.handle_cycling_change(config).await;
+                }
+
+                Some(shared) = shared_cycle_stream.next() => {
+                    self.handle_shared_cycle_change(shared).await;
                 }
 
                 Some(()) = self.timer.wait(), if self.timer.is_scheduled() => {
@@ -86,6 +94,7 @@ impl CyclingTask {
                     "Cycling started"
                 );
 
+                self.render_current(cfg).await;
                 self.timer.schedule(cfg.interval);
                 self.ensure_directory_watcher(&cfg.directory);
             }
@@ -98,6 +107,50 @@ impl CyclingTask {
                 self.watched_directory = None;
             }
         }
+    }
+
+    async fn handle_shared_cycle_change(&self, shared: bool) {
+        let Some(config) = self.cycling.get() else {
+            return;
+        };
+
+        if config.mode != CyclingMode::Shuffle {
+            return;
+        }
+
+        let image_count = config.image_count();
+        if image_count == 0 {
+            return;
+        }
+
+        let mut monitors = self.monitors.get();
+
+        if shared {
+            let Some(target_index) = monitors.values().next().map(|s| s.cycle_index) else {
+                return;
+            };
+
+            for state in monitors.values_mut() {
+                state.cycle_index = target_index;
+            }
+
+            info!("Synchronized cycle indices across monitors");
+        } else {
+            for state in monitors.values_mut() {
+                state.cycle_index = rand::random_range(0..image_count);
+            }
+
+            info!("Desynchronized cycle indices across monitors");
+        }
+
+        for state in monitors.values_mut() {
+            if let Some(path) = config.image_at(state.cycle_index) {
+                state.wallpaper = Some(path.clone());
+            }
+        }
+
+        self.monitors.set(monitors.clone());
+        self.apply_wallpapers(&config, &monitors).await;
     }
 
     fn ensure_directory_watcher(&mut self, directory: &PathBuf) {
@@ -143,9 +196,19 @@ impl CyclingTask {
             return;
         }
 
+        let independent_shuffle = config.mode == CyclingMode::Shuffle && !self.shared_cycle.get();
+
         let mut monitors = self.monitors.get();
         for state in monitors.values_mut() {
-            state.advance(image_count);
+            if independent_shuffle {
+                state.cycle_index = rand::random_range(0..image_count);
+            } else {
+                state.advance(image_count);
+            }
+
+            if let Some(path) = config.image_at(state.cycle_index) {
+                state.wallpaper = Some(path.clone());
+            }
         }
         self.monitors.set(monitors.clone());
 
@@ -153,25 +216,49 @@ impl CyclingTask {
         self.timer.schedule(config.interval);
     }
 
+    async fn render_current(&self, config: &CyclingConfig) {
+        let mut monitors = self.monitors.get();
+
+        for state in monitors.values_mut() {
+            if let Some(path) = config.image_at(state.cycle_index) {
+                state.wallpaper = Some(path.clone());
+            }
+        }
+
+        self.monitors.set(monitors.clone());
+        self.apply_wallpapers(config, &monitors).await;
+    }
+
     async fn apply_wallpapers(
         &self,
         config: &CyclingConfig,
         monitors: &HashMap<String, MonitorState>,
     ) {
-        let fit_mode = self.fit_mode.get();
+        if !self.engine_active.get() {
+            return;
+        }
+
         let transition = self.transition.get();
 
-        for (monitor_name, state) in monitors {
-            let Some(path) = config.image_at(state.cycle_index) else {
-                continue;
-            };
+        let tasks: Vec<_> = monitors
+            .iter()
+            .filter_map(|(name, state)| {
+                config
+                    .image_at(state.cycle_index)
+                    .map(|path| (name, path, state.fit_mode))
+            })
+            .collect();
 
-            if let Err(err) =
-                SwwwBackend::apply(path, fit_mode, Some(monitor_name), &transition).await
-            {
+        let results = join_all(tasks.iter().map(|(name, path, fit_mode)| {
+            SwwwBackend::apply(path, *fit_mode, Some(name.as_str()), &transition)
+        }))
+        .await;
+
+        for (result, (name, path, _)) in results.into_iter().zip(tasks.iter()) {
+            if let Err(err) = result {
                 warn!(
                     error = %err,
-                    monitor = monitor_name,
+                    monitor = %name,
                     path = %path.display(),
                     "cannot apply wallpaper"
                 );

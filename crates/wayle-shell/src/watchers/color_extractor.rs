@@ -20,19 +20,27 @@ pub(crate) fn spawn(services: &ShellServices) {
         return;
     };
 
-    let config_service = services.config.clone();
-    let theme_provider = config_service.config().styling.theme_provider.clone();
+    let styling = &services.config.config().styling;
 
-    let initial = theme_provider.get();
-    let extractor = map_to_extractor(initial);
-    wallpaper.color_extractor.set(extractor);
-
+    let theme_provider = styling.theme_provider.clone();
     tokio::spawn(async move {
         let mut stream = theme_provider.watch();
-
         while let Some(provider) = stream.next().await {
-            let extractor = map_to_extractor(provider);
-            wallpaper.color_extractor.set(extractor);
+            wallpaper.color_extractor.set(map_to_extractor(provider));
+        }
+    });
+
+    let wallpaper = services.wallpaper.clone().unwrap();
+    let theming_monitor = styling.theming_monitor.clone();
+    tokio::spawn(async move {
+        let mut stream = theming_monitor.watch();
+        while let Some(monitor) = stream.next().await {
+            let opt = if monitor.is_empty() {
+                None
+            } else {
+                Some(monitor)
+            };
+            wallpaper.set_theming_monitor(opt);
         }
     });
 }

@@ -1,13 +1,10 @@
 mod daemon;
 mod transition;
 
-use std::{
-    io::ErrorKind,
-    path::Path,
-    process::{Command, Stdio},
-};
+use std::{io::ErrorKind, path::Path, process::Stdio};
 
 pub(crate) use daemon::spawn_daemon_if_needed;
+use tokio::process::Command;
 use tracing::instrument;
 pub use transition::{
     BezierCurve, Position, TransitionAngle, TransitionConfig, TransitionDuration, TransitionFps,
@@ -68,7 +65,7 @@ impl SwwwBackend {
         cmd.stdout(Stdio::null());
         cmd.stderr(Stdio::piped());
 
-        let output = cmd.output().map_err(|err| {
+        let output = cmd.output().await.map_err(|err| {
             if err.kind() == ErrorKind::NotFound {
                 Error::SwwwNotInstalled
             } else {

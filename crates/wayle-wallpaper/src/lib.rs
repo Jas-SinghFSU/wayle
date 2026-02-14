@@ -13,9 +13,8 @@
 //! wp.set_wallpaper(PathBuf::from("/path/to/image.jpg"), None).await?;
 //!
 //! // Check current state
-//! println!("Fit mode: {:?}", wp.fit_mode.get());
 //! for (monitor, state) in wp.monitors.get().iter() {
-//!     println!("{}: {:?}", monitor, state.wallpaper);
+//!     println!("{}: {:?} (fit: {})", monitor, state.wallpaper, state.fit_mode);
 //! }
 //! # Ok(())
 //! # }
@@ -34,7 +33,7 @@
 //!     PathBuf::from("/path/to/wallpapers"),
 //!     Duration::from_secs(300),
 //!     CyclingMode::Sequential,
-//! ).await?;
+//! )?;
 //!
 //! // Manual navigation
 //! wp.advance_cycle().await?;
@@ -49,16 +48,17 @@
 //!
 //! | Method | Effect |
 //! |--------|--------|
-//! | `fit_mode(FitMode)` | How images scale to fit the screen |
 //! | `transition(TransitionConfig)` | Animation when changing wallpapers |
 //! | `color_extractor(ColorExtractor)` | Tool for extracting dominant colors |
+//! | `theming_monitor(Option<String>)` | Which monitor drives color extraction |
+//! | `shared_cycle(bool)` | Sync cycling across monitors in shuffle mode |
+//! | `engine_active(bool)` | Toggle swww rendering (state tracking continues) |
 //!
 //! ```rust,no_run
-//! use wayle_wallpaper::{WallpaperService, FitMode, TransitionConfig, TransitionType};
+//! use wayle_wallpaper::{WallpaperService, TransitionConfig, TransitionType};
 //!
 //! # async fn example() -> Result<(), wayle_wallpaper::Error> {
 //! let wp = WallpaperService::builder()
-//!     .fit_mode(FitMode::Fill)
 //!     .transition(TransitionConfig {
 //!         transition_type: TransitionType::Left,
 //!         ..Default::default()
@@ -79,9 +79,8 @@
 //!
 //! | Field | Type | Description |
 //! |-------|------|-------------|
-//! | `fit_mode` | [`FitMode`] | Image scaling mode |
 //! | `cycling` | `Option<CyclingConfig>` | Active cycling state |
-//! | `monitors` | `HashMap<String, MonitorState>` | Per-monitor wallpaper state |
+//! | `monitors` | `HashMap<String, MonitorState>` | Per-monitor wallpaper and fit mode |
 //! | `transition` | [`TransitionConfig`] | Animation settings |
 //!
 //! # Control Methods
@@ -89,7 +88,7 @@
 //! - `set_wallpaper()` - Apply wallpaper to one or all monitors
 //! - `start_cycling()` / `stop_cycling()` - Directory cycling
 //! - `advance_cycle()` / `rewind_cycle()` - Manual navigation
-//! - `set_fit_mode()` - Change scaling mode
+//! - `set_fit_mode()` - Change scaling mode per monitor or globally
 //! - `set_transition()` - Configure animations
 //!
 //! # D-Bus Interface

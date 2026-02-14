@@ -1,11 +1,14 @@
 use std::{collections::HashMap, path::PathBuf, sync::Arc, time::Duration};
 
 use derive_more::Debug;
-use futures::stream::{Stream, StreamExt};
+use futures::{
+    future::try_join_all,
+    stream::{Stream, StreamExt},
+};
 use tokio::sync::broadcast;
 use tokio_stream::wrappers::BroadcastStream;
 use tokio_util::sync::CancellationToken;
-use tracing::{info, instrument};
+use tracing::{info, instrument, warn};
 use wayle_common::Property;
 use zbus::Connection;
 
@@ -28,18 +31,26 @@ pub struct WallpaperService {
     #[debug(skip)]
     pub(crate) extraction_complete: broadcast::Sender<()>,
 
-    /// Image scaling mode applied to all monitors.
-    pub fit_mode: Property<FitMode>,
     /// Monitor used for color extraction, or first available if `None`.
     pub theming_monitor: Property<Option<String>>,
     /// Active cycling state, or `None` when cycling is stopped.
     pub cycling: Property<Option<CyclingConfig>>,
-    /// Per-monitor wallpaper paths and cycle indices.
+    /// Per-monitor wallpaper state (path, fit mode, cycle index).
     pub monitors: Property<HashMap<String, MonitorState>>,
     /// Tool for extracting color palettes from wallpapers.
     pub color_extractor: Property<ColorExtractor>,
     /// Animation settings for wallpaper transitions.
     pub transition: Property<TransitionConfig>,
+    /// Synchronize cycling across all monitors in shuffle mode.
+    ///
+    /// When `true`, all monitors show the same image during shuffle cycling.
+    /// Sequential mode always shows the same image regardless of this setting.
+    pub shared_cycle: Property<bool>,
+    /// Whether wayle's built-in wallpaper engine (swww) is active.
+    ///
+    /// When `false`, all state tracking and color extraction continue but
+    /// swww commands are skipped.
+    pub engine_active: Property<bool>,
 }
 
 impl WallpaperService {
@@ -73,8 +84,9 @@ impl WallpaperService {
         self.cycling.get()
     }
 
-    /// Sets a wallpaper on specific monitors or all monitors.
+    /// Sets a wallpaper on a specific monitor or all monitors.
     ///
+    /// Uses each monitor's own fit mode for scaling.
     /// If `monitor` is `None`, applies to all known monitors.
     ///
     /// # Errors
@@ -87,30 +99,74 @@ impl WallpaperService {
             return Err(Error::ImageNotFound(path));
         }
 
-        let fit_mode = self.fit_mode.get();
-        let transition = self.transition.get();
-
         match monitor {
             Some(name) => {
                 self.store_wallpaper(name, path.clone());
-                SwwwBackend::apply(&path, fit_mode, Some(name), &transition).await
+
+                if self.engine_active.get() {
+                    let fit_mode = self
+                        .monitors
+                        .get()
+                        .get(name)
+                        .map(|s| s.fit_mode)
+                        .unwrap_or_default();
+                    let transition = self.transition.get();
+                    SwwwBackend::apply(&path, fit_mode, Some(name), &transition).await?;
+                }
             }
             None => {
                 self.store_wallpaper_all(path.clone());
-                SwwwBackend::apply(&path, fit_mode, None, &transition).await
+                self.rerender_all().await?;
             }
         }
+
+        Ok(())
     }
 
-    /// Sets the fit mode and re-applies wallpapers.
+    /// Returns the fit mode for a monitor.
+    ///
+    /// Returns `None` if the monitor isn't registered.
+    pub fn fit_mode(&self, monitor: &str) -> Option<FitMode> {
+        self.monitors.get().get(monitor).map(|s| s.fit_mode)
+    }
+
+    /// Sets the fit mode for a monitor and re-applies its wallpaper.
+    ///
+    /// If `monitor` is `None`, sets the fit mode for all monitors.
     ///
     /// # Errors
     ///
     /// Returns error if swww fails to apply wallpapers.
-    #[instrument(skip(self), fields(mode = %mode))]
-    pub async fn set_fit_mode(&self, mode: FitMode) -> Result<(), Error> {
-        self.fit_mode.set(mode);
-        self.rerender_all().await
+    #[instrument(skip(self), fields(mode = %mode, monitor))]
+    pub async fn set_fit_mode(&self, mode: FitMode, monitor: Option<&str>) -> Result<(), Error> {
+        let mut monitors = self.monitors.get();
+
+        match monitor {
+            Some(name) => {
+                let Some(state) = monitors.get_mut(name) else {
+                    return Ok(());
+                };
+                state.fit_mode = mode;
+                let path = state.wallpaper.clone();
+                self.monitors.set(monitors);
+
+                if self.engine_active.get()
+                    && let Some(path) = path
+                {
+                    let transition = self.transition.get();
+                    SwwwBackend::apply(&path, mode, Some(name), &transition).await?;
+                }
+            }
+            None => {
+                for state in monitors.values_mut() {
+                    state.fit_mode = mode;
+                }
+                self.monitors.set(monitors);
+                self.rerender_all().await?;
+            }
+        }
+
+        Ok(())
     }
 
     /// Starts cycling through wallpapers in a directory.
@@ -124,7 +180,7 @@ impl WallpaperService {
     /// Returns error if the directory doesn't exist, contains no valid images,
     /// or swww fails to apply wallpapers.
     #[instrument(skip(self), fields(dir = %directory.display()))]
-    pub async fn start_cycling(
+    pub fn start_cycling(
         &self,
         directory: PathBuf,
         interval: Duration,
@@ -135,7 +191,7 @@ impl WallpaperService {
 
         self.reset_cycle_indices(mode, image_count);
         self.cycling.set(Some(config));
-        self.render_cycle().await
+        Ok(())
     }
 
     /// Stops wallpaper cycling.
@@ -312,9 +368,6 @@ impl WallpaperService {
         };
 
         let mut monitors = self.monitors.get();
-        let fit_mode = self.fit_mode.get();
-        let transition = self.transition.get();
-
         let mut to_apply = Vec::new();
 
         for (monitor_name, state) in monitors.iter_mut() {
@@ -322,29 +375,50 @@ impl WallpaperService {
                 continue;
             };
             state.wallpaper = Some(path.clone());
-            to_apply.push((monitor_name.clone(), path));
+            to_apply.push((monitor_name.clone(), path, state.fit_mode));
         }
 
         self.monitors.set(monitors);
 
-        for (monitor_name, path) in to_apply {
-            SwwwBackend::apply(path, fit_mode, Some(&monitor_name), &transition).await?;
+        if self.engine_active.get() {
+            let transition = self.transition.get();
+            let futures = to_apply.iter().map(|(name, path, fit_mode)| {
+                SwwwBackend::apply(path, *fit_mode, Some(name.as_str()), &transition)
+            });
+            try_join_all(futures).await?;
         }
 
         Ok(())
     }
 
+    /// Renders all monitors' wallpapers in a background task.
+    ///
+    /// State must already be updated via `monitors.set()` before calling this.
+    /// Only the swww rendering runs in the background.
+    pub fn render_all_background(self: &Arc<Self>) {
+        let service = Arc::clone(self);
+        tokio::spawn(async move {
+            if let Err(e) = service.rerender_all().await {
+                warn!(error = %e, "background wallpaper render failed");
+            }
+        });
+    }
+
     /// Re-renders all monitors with their current wallpaper.
     async fn rerender_all(&self) -> Result<(), Error> {
+        if !self.engine_active.get() {
+            return Ok(());
+        }
+
         let monitors = self.monitors.get();
-        let fit_mode = self.fit_mode.get();
         let transition = self.transition.get();
 
-        for (monitor_name, state) in monitors.iter() {
-            if let Some(ref path) = state.wallpaper {
-                SwwwBackend::apply(path, fit_mode, Some(monitor_name), &transition).await?;
-            }
-        }
+        let futures = monitors.iter().filter_map(|(name, state)| {
+            state.wallpaper.as_ref().map(|path| {
+                SwwwBackend::apply(path, state.fit_mode, Some(name.as_str()), &transition)
+            })
+        });
+        try_join_all(futures).await?;
 
         Ok(())
     }
@@ -370,11 +444,14 @@ impl WallpaperService {
             return;
         }
 
+        let shared = self.shared_cycle.get();
+        let shared_index = rand::random_range(0..image_count);
         let mut monitors = self.monitors.get();
 
         for state in monitors.values_mut() {
             state.cycle_index = match mode {
                 CyclingMode::Sequential => 0,
+                CyclingMode::Shuffle if shared => shared_index,
                 CyclingMode::Shuffle => rand::random_range(0..image_count),
             };
         }
@@ -394,6 +471,13 @@ impl WallpaperService {
 
         match config.mode {
             CyclingMode::Sequential => 0,
+            CyclingMode::Shuffle if self.shared_cycle.get() => self
+                .monitors
+                .get()
+                .values()
+                .next()
+                .map(|s| s.cycle_index)
+                .unwrap_or(0),
             CyclingMode::Shuffle => rand::random_range(0..image_count),
         }
     }

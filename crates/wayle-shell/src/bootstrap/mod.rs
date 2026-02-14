@@ -1,5 +1,8 @@
 //! Application bootstrap: service initialization and instance detection.
 
+mod wallpaper;
+mod weather;
+
 use std::{error::Error, sync::Arc, time::Duration};
 
 use tracing::warn;
@@ -7,15 +10,14 @@ use wayle_audio::AudioService;
 use wayle_battery::BatteryService;
 use wayle_bluetooth::BluetoothService;
 use wayle_common::shell::APP_ID;
-use wayle_config::{ConfigService, infrastructure::schema, secrets};
+use wayle_config::{ConfigService, infrastructure::schema, schemas::styling::ThemeProvider};
 use wayle_hyprland::HyprlandService;
 use wayle_media::MediaService;
 use wayle_network::NetworkService;
 use wayle_notification::NotificationService;
 use wayle_sysinfo::SysinfoService;
 use wayle_systray::{SystemTrayService, types::TrayMode};
-use wayle_wallpaper::WallpaperService;
-use wayle_weather::{LocationQuery, TemperatureUnit, WeatherProviderKind, WeatherService};
+use wayle_wallpaper::{WallpaperService, types::ColorExtractor};
 use zbus::{Connection, fdo::DBusProxy};
 
 use crate::{services::IdleInhibitService, shell::ShellServices, startup::StartupTimer};
@@ -90,10 +92,12 @@ pub async fn init_services() -> Result<(StartupTimer, ShellServices), Box<dyn Er
     let config_service = timer.time("Config", ConfigService::load()).await?;
 
     let (weather, core, daemons) = {
-        let modules_config = &config_service.config().modules;
-        let weather = timer.time_sync("Weather", || build_weather_service(modules_config));
-        let core = init_core_services(&mut timer, modules_config).await?;
-        let daemons = init_daemon_services(&mut timer, modules_config).await;
+        let config = config_service.config();
+        let weather = timer.time_sync("Weather", || {
+            weather::build_weather_service(&config.modules)
+        });
+        let core = init_core_services(&mut timer, config).await?;
+        let daemons = init_daemon_services(&mut timer, &config.modules).await;
         (weather, core, daemons)
     };
 
@@ -123,11 +127,30 @@ pub async fn init_services() -> Result<(StartupTimer, ShellServices), Box<dyn Er
 #[allow(clippy::cognitive_complexity)]
 async fn init_core_services(
     timer: &mut StartupTimer,
-    modules: &wayle_config::schemas::modules::ModulesConfig,
+    config: &wayle_config::Config,
 ) -> Result<CoreServices, Box<dyn Error>> {
+    let modules = &config.modules;
+
     let battery = try_service!(timer, "Battery", BatteryService::new());
     let network = try_service!(timer, "Network", NetworkService::new());
-    let wallpaper = try_service!(timer, "Wallpaper", WallpaperService::new(), no_wrap);
+    let theming_monitor = config.styling.theming_monitor.get();
+    let theming_monitor = if theming_monitor.is_empty() {
+        None
+    } else {
+        Some(theming_monitor)
+    };
+    let color_extractor = match config.styling.theme_provider.get() {
+        ThemeProvider::Wayle => ColorExtractor::None,
+        ThemeProvider::Matugen => ColorExtractor::Matugen,
+        ThemeProvider::Pywal => ColorExtractor::Pywal,
+        ThemeProvider::Wallust => ColorExtractor::Wallust,
+    };
+    let wallpaper = try_service!(
+        timer,
+        "Wallpaper",
+        wallpaper::build_wallpaper_service(&config.wallpaper, theming_monitor, color_extractor),
+        no_wrap
+    );
 
     let sysinfo = Arc::new(timer.time_sync("Sysinfo", || {
         SysinfoService::builder()
@@ -216,50 +239,4 @@ async fn init_daemon_services(
         notification,
         systray,
     }
-}
-
-fn build_weather_service(
-    modules: &wayle_config::schemas::modules::ModulesConfig,
-) -> Arc<WeatherService> {
-    use wayle_config::schemas::modules::{TemperatureUnit as CfgTempUnit, WeatherProvider};
-
-    let cfg = &modules.weather;
-
-    let location = parse_location(cfg.location.get().as_str());
-    let provider = match cfg.provider.get() {
-        WeatherProvider::OpenMeteo => WeatherProviderKind::OpenMeteo,
-        WeatherProvider::VisualCrossing => WeatherProviderKind::VisualCrossing,
-        WeatherProvider::WeatherApi => WeatherProviderKind::WeatherApi,
-    };
-    let units = match cfg.units.get() {
-        CfgTempUnit::Metric => TemperatureUnit::Metric,
-        CfgTempUnit::Imperial => TemperatureUnit::Imperial,
-    };
-    let poll_interval = Duration::from_secs(u64::from(cfg.refresh_interval_seconds.get()));
-
-    let mut builder = WeatherService::builder()
-        .poll_interval(poll_interval)
-        .provider(provider)
-        .location(location)
-        .units(units);
-
-    if let Some(key) = secrets::resolve(cfg.visual_crossing_key.get()) {
-        builder = builder.visual_crossing_key(key);
-    }
-    if let Some(key) = secrets::resolve(cfg.weatherapi_key.get()) {
-        builder = builder.weatherapi_key(key);
-    }
-
-    Arc::new(builder.build())
-}
-
-fn parse_location(location: &str) -> LocationQuery {
-    location
-        .split_once(',')
-        .and_then(|(lat, lon)| {
-            let lat = lat.trim().parse().ok()?;
-            let lon = lon.trim().parse().ok()?;
-            Some(LocationQuery::coords(lat, lon))
-        })
-        .unwrap_or_else(|| LocationQuery::city(location))
 }

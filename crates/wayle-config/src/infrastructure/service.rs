@@ -1,8 +1,6 @@
-use std::{
-    fs,
-    sync::{Arc, RwLock},
-};
+use std::sync::{Arc, RwLock};
 
+use tokio::fs;
 use tracing::{info, instrument, warn};
 use wayle_common::{ApplyConfigLayer, ApplyRuntimeLayer, ClearRuntimeByPath, ExtractRuntimeValues};
 
@@ -44,13 +42,22 @@ impl ConfigService {
         let config = Config::default();
         let config_path = ConfigPaths::main_config();
 
-        match Self::load_toml_file(&config_path) {
+        let config_result = tokio::task::spawn_blocking(move || Self::load_toml_file(&config_path))
+            .await
+            .map_err(|source| Error::TaskJoin { source })?;
+
+        match config_result {
             Ok(config_toml) => config.apply_config_layer(&config_toml, ""),
             Err(e) => warn!("using defaults, config.toml failed:\n{e}"),
         }
 
         let runtime_path = ConfigPaths::runtime_config();
-        match Self::load_toml_file(&runtime_path) {
+        let runtime_result =
+            tokio::task::spawn_blocking(move || Self::load_toml_file(&runtime_path))
+                .await
+                .map_err(|source| Error::TaskJoin { source })?;
+
+        match runtime_result {
             Ok(runtime_toml) => {
                 if let Err(e) = config.apply_runtime_layer(&runtime_toml, "") {
                     warn!("invalid runtime.toml value:\n{e}");
@@ -118,15 +125,19 @@ impl ConfigService {
                 source,
             })?;
 
-        fs::write(&temp_path, toml_str).map_err(|source| Error::Persistence {
-            path: temp_path.clone(),
-            source,
-        })?;
+        fs::write(&temp_path, toml_str)
+            .await
+            .map_err(|source| Error::Persistence {
+                path: temp_path.clone(),
+                source,
+            })?;
 
-        fs::rename(&temp_path, &runtime_path).map_err(|source| Error::Persistence {
-            path: runtime_path.clone(),
-            source,
-        })?;
+        fs::rename(&temp_path, &runtime_path)
+            .await
+            .map_err(|source| Error::Persistence {
+                path: runtime_path.clone(),
+                source,
+            })?;
 
         info!("Configuration saved to runtime.toml");
 
@@ -134,7 +145,7 @@ impl ConfigService {
     }
 
     pub(crate) fn load_toml_file(path: &std::path::Path) -> Result<toml::Value, Error> {
-        let content = fs::read_to_string(path).map_err(|source| Error::Io {
+        let content = std::fs::read_to_string(path).map_err(|source| Error::Io {
             operation: IoOperation::ReadFile,
             path: path.to_path_buf(),
             source,

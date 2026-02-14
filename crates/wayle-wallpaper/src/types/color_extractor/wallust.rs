@@ -2,12 +2,9 @@
 //!
 //! Runs wallust with user's config, then generates colors.json using wayle's template.
 
-use std::{
-    fs,
-    path::{Path, PathBuf},
-    process::Command,
-};
+use std::path::{Path, PathBuf};
 
+use tokio::{fs, process::Command};
 use tracing::debug;
 use wayle_config::ConfigPaths;
 
@@ -65,14 +62,14 @@ impl Arg<'_> {
     }
 }
 
-fn run(tool: Tool, args: &[Arg<'_>]) -> Result<(), Error> {
+async fn run(tool: Tool, args: &[Arg<'_>]) -> Result<(), Error> {
     let mut cmd = Command::new("wallust");
 
     for arg in args {
         arg.apply(&mut cmd);
     }
 
-    let output = tool.run(cmd)?;
+    let output = tool.run(cmd).await?;
     tool.check_success(&output)
 }
 
@@ -85,12 +82,12 @@ fn run(tool: Tool, args: &[Arg<'_>]) -> Result<(), Error> {
 /// # Errors
 ///
 /// Returns error if wallust command fails.
-pub fn extract(image_path: &str) -> Result<(), Error> {
+pub async fn extract(image_path: &str) -> Result<(), Error> {
     let path = Path::new(image_path);
 
-    run(Tool::Wallust, &[Arg::Run(path)])?;
+    run(Tool::Wallust, &[Arg::Run(path)]).await?;
 
-    let (config, templates_dir) = ensure_wayle_config()?;
+    let (config, templates_dir) = ensure_wayle_config().await?;
     run(
         Tool::WallustTemplates,
         &[
@@ -98,13 +95,14 @@ pub fn extract(image_path: &str) -> Result<(), Error> {
             Arg::ConfigFile(&config),
             Arg::TemplatesDir(&templates_dir),
         ],
-    )?;
+    )
+    .await?;
 
     debug!(image = %image_path, "Wallust color extraction complete");
     Ok(())
 }
 
-fn ensure_wayle_config() -> Result<(PathBuf, PathBuf), Error> {
+async fn ensure_wayle_config() -> Result<(PathBuf, PathBuf), Error> {
     let data_dir = ConfigPaths::data_dir().map_err(|source| Error::ConfigPathError {
         context: "wayle data directory",
         source,
@@ -115,10 +113,12 @@ fn ensure_wayle_config() -> Result<(PathBuf, PathBuf), Error> {
     let config_path = wallust_dir.join("wallust.toml");
     let template_path = templates_dir.join("colors.json");
 
-    fs::create_dir_all(&templates_dir).map_err(|source| Error::ConfigPathError {
-        context: "creating wallust templates directory",
-        source,
-    })?;
+    fs::create_dir_all(&templates_dir)
+        .await
+        .map_err(|source| Error::ConfigPathError {
+            context: "creating wallust templates directory",
+            source,
+        })?;
 
     let colors_output = ConfigPaths::wallust_colors().map_err(|source| Error::ConfigPathError {
         context: "wallust colors output path",
@@ -137,15 +137,19 @@ colors = {{ template = "colors.json", target = "{}" }}
         colors_output.display()
     );
 
-    fs::write(&config_path, config_content).map_err(|source| Error::ConfigPathError {
-        context: "writing wayle wallust config",
-        source,
-    })?;
+    fs::write(&config_path, config_content)
+        .await
+        .map_err(|source| Error::ConfigPathError {
+            context: "writing wayle wallust config",
+            source,
+        })?;
 
-    fs::write(&template_path, COLORS_TEMPLATE).map_err(|source| Error::ConfigPathError {
-        context: "writing colors.json template",
-        source,
-    })?;
+    fs::write(&template_path, COLORS_TEMPLATE)
+        .await
+        .map_err(|source| Error::ConfigPathError {
+            context: "writing colors.json template",
+            source,
+        })?;
 
     Ok((config_path, templates_dir))
 }

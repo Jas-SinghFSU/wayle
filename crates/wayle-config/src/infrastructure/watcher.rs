@@ -107,14 +107,22 @@ impl FileWatcher {
             let config = self.config_service.config();
 
             let config_path = ConfigPaths::main_config();
-            let toml_value = Config::load_toml_with_imports(&config_path)?;
+            let toml_value =
+                tokio::task::spawn_blocking(move || Config::load_toml_with_imports(&config_path))
+                    .await
+                    .map_err(|source| Error::TaskJoin { source })??;
 
             config.reset_config_layer();
             config.apply_config_layer(&toml_value, "");
 
             config.reset_runtime_layer();
             let runtime_path = ConfigPaths::runtime_config();
-            if let Ok(runtime_toml) = ConfigService::load_toml_file(&runtime_path) {
+            let runtime_result =
+                tokio::task::spawn_blocking(move || ConfigService::load_toml_file(&runtime_path))
+                    .await
+                    .map_err(|source| Error::TaskJoin { source })?;
+
+            if let Ok(runtime_toml) = runtime_result {
                 let _ = config.apply_runtime_layer(&runtime_toml, "");
             }
 

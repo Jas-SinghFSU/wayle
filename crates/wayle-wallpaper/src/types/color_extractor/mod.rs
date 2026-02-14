@@ -7,11 +7,12 @@ mod wallust;
 use std::{
     fmt::{Display, Formatter, Result as FmtResult},
     path::Path,
-    process::{Command, Output},
+    process::Output,
     str::FromStr,
 };
 
 use serde::{Deserialize, Serialize};
+use tokio::process::Command;
 use tracing::instrument;
 
 use crate::error::Error;
@@ -49,9 +50,9 @@ impl ColorExtractor {
         let image_str = image_path.to_string_lossy();
 
         match self {
-            Self::Wallust => wallust::extract(&image_str),
-            Self::Matugen => matugen::extract(&image_str),
-            Self::Pywal => pywal::extract(&image_str),
+            Self::Wallust => wallust::extract(&image_str).await,
+            Self::Matugen => matugen::extract(&image_str).await,
+            Self::Pywal => pywal::extract(&image_str).await,
             Self::None => Ok(()),
         }
     }
@@ -102,9 +103,9 @@ impl Tool {
         }
     }
 
-    pub(super) fn run(self, cmd: Command) -> Result<Output, Error> {
-        let mut cmd = cmd;
+    pub(super) async fn run(self, mut cmd: Command) -> Result<Output, Error> {
         cmd.output()
+            .await
             .map_err(|source| Error::ColorExtractionCommandFailed {
                 tool: self.name(),
                 source,

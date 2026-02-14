@@ -1,7 +1,8 @@
 //! Matugen color extraction (Material You colors).
 
-use std::{fs, path::Path, process::Command};
+use std::path::Path;
 
+use tokio::{fs, process::Command};
 use tracing::{debug, warn};
 use wayle_config::ConfigPaths;
 
@@ -30,14 +31,14 @@ impl Arg<'_> {
     }
 }
 
-fn run(args: &[Arg<'_>]) -> Result<Vec<u8>, Error> {
+async fn run(args: &[Arg<'_>]) -> Result<Vec<u8>, Error> {
     let mut cmd = Command::new("matugen");
 
     for arg in args {
         arg.apply(&mut cmd);
     }
 
-    let output = Tool::Matugen.run(cmd)?;
+    let output = Tool::Matugen.run(cmd).await?;
     Tool::Matugen.check_success(&output)?;
     Ok(output.stdout)
 }
@@ -49,25 +50,23 @@ fn run(args: &[Arg<'_>]) -> Result<Vec<u8>, Error> {
 /// # Errors
 ///
 /// Returns error if matugen command fails.
-pub fn extract(image_path: &str) -> Result<(), Error> {
+pub async fn extract(image_path: &str) -> Result<(), Error> {
     let path = Path::new(image_path);
-    let stdout = run(&[Arg::Image(path), Arg::Json("hex")])?;
-    save_output(&stdout);
+    let stdout = run(&[Arg::Image(path), Arg::Json("hex")]).await?;
+    save_output(&stdout).await;
     Ok(())
 }
 
-fn save_output(stdout: &[u8]) {
-    let cache_path = match ConfigPaths::matugen_colors() {
-        Ok(path) => path,
-        Err(err) => {
-            warn!(error = %err, "cannot get matugen cache path");
-            return;
-        }
+async fn save_output(stdout: &[u8]) {
+    let Ok(cache_path) = ConfigPaths::matugen_colors() else {
+        warn!("cannot get matugen cache path");
+        return;
     };
 
-    if let Err(err) = fs::write(&cache_path, stdout) {
+    if let Err(err) = fs::write(&cache_path, stdout).await {
         warn!(error = %err, path = %cache_path.display(), "cannot save matugen colors");
-    } else {
-        debug!(path = %cache_path.display(), "Saved matugen colors");
+        return;
     }
+
+    debug!(path = %cache_path.display(), "Saved matugen colors");
 }

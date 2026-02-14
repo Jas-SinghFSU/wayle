@@ -12,7 +12,7 @@ pub enum WallpaperCommands {
         /// Image fit mode
         #[arg(short, long, value_enum)]
         fit: Option<FitModeArg>,
-        /// Target monitor (e.g., DP-1, HDMI-A-1). If omitted, uses same-on-all setting.
+        /// Target monitor (e.g., DP-1, HDMI-A-1). If omitted, applies to all monitors.
         #[arg(long)]
         monitor: Option<String>,
     },

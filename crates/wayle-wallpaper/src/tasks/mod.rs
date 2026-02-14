@@ -47,8 +47,9 @@ fn spawn_cycling_task(service: &WallpaperService) {
     let task = CyclingTask::new(
         service.cycling.clone(),
         service.monitors.clone(),
-        service.fit_mode.clone(),
         service.transition.clone(),
+        service.shared_cycle.clone(),
+        service.engine_active.clone(),
     );
 
     let cancellation = service.cancellation_token.clone();
@@ -102,6 +103,7 @@ pub(crate) fn spawn_color_extractor(service: Arc<WallpaperService>) {
     tokio::spawn(async move {
         let mut monitor_watch = service.monitors.watch();
         let mut color_extractor = service.color_extractor.watch();
+        let mut theming_monitor = service.theming_monitor.watch();
 
         info!("Color extractor task started");
 
@@ -119,6 +121,13 @@ pub(crate) fn spawn_color_extractor(service: Arc<WallpaperService>) {
                 }
 
                 _ = color_extractor.next() => {
+                    service.last_extracted_wallpaper.set(None);
+                    if let Err(e) = service.extract_colors().await {
+                        error!(error = %e, "cannot extract colors");
+                    }
+                }
+
+                _ = theming_monitor.next() => {
                     service.last_extracted_wallpaper.set(None);
                     if let Err(e) = service.extract_colors().await {
                         error!(error = %e, "cannot extract colors");

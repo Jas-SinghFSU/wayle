@@ -1,20 +1,32 @@
 use std::path::PathBuf;
 
-/// State for a single monitor.
+use crate::types::FitMode;
+
+/// Per-monitor wallpaper state.
 ///
-/// Tracks the current wallpaper and cycling position for one monitor.
-/// All configuration (fit mode, cycling config, etc.) is shared at the
-/// service level.
-#[derive(Debug, Clone, Default, PartialEq)]
+/// Tracks wallpaper path, scaling mode, and cycling position for one monitor.
+#[derive(Debug, Clone, PartialEq)]
 pub struct MonitorState {
     /// Current wallpaper displayed on this monitor.
     pub wallpaper: Option<PathBuf>,
+    /// Image scaling mode for this monitor.
+    pub fit_mode: FitMode,
     /// Position in the cycling image list (only used when cycling is active).
     pub cycle_index: usize,
 }
 
+impl Default for MonitorState {
+    fn default() -> Self {
+        Self {
+            wallpaper: None,
+            fit_mode: FitMode::default(),
+            cycle_index: 0,
+        }
+    }
+}
+
 impl MonitorState {
-    /// Creates a new monitor state with no wallpaper.
+    /// Creates a new monitor state with no wallpaper and default fit mode.
     pub fn new() -> Self {
         Self::default()
     }
@@ -22,8 +34,8 @@ impl MonitorState {
     /// Creates a new monitor state with a specific cycle index.
     pub fn with_cycle_index(cycle_index: usize) -> Self {
         Self {
-            wallpaper: None,
             cycle_index,
+            ..Self::default()
         }
     }
 

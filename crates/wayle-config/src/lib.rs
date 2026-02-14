@@ -16,6 +16,8 @@ pub mod schemas {
     pub mod modules;
     /// Styling configuration.
     pub mod styling;
+    /// Wallpaper service configuration.
+    pub mod wallpaper;
 }
 
 /// Configuration infrastructure
@@ -51,7 +53,9 @@ pub use infrastructure::{
     service::{ConfigService, ConfigServiceCli},
     watcher::FileWatcher,
 };
-use schemas::{bar::BarConfig, modules::ModulesConfig, styling::StylingConfig};
+use schemas::{
+    bar::BarConfig, modules::ModulesConfig, styling::StylingConfig, wallpaper::WallpaperConfig,
+};
 use wayle_derive::wayle_config;
 
 use crate::schemas::general::GeneralConfig;
@@ -73,4 +77,7 @@ pub struct Config {
 
     /// Module-specific configurations.
     pub modules: ModulesConfig,
+
+    /// Wallpaper service settings.
+    pub wallpaper: WallpaperConfig,
 }

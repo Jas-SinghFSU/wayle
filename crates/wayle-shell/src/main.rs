@@ -12,6 +12,7 @@ mod services;
 mod shell;
 mod startup;
 mod tracing_init;
+mod wallpaper_map;
 mod watchers;
 
 use shell::{Shell, ShellInit};

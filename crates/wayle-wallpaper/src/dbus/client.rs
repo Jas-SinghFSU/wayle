@@ -17,8 +17,10 @@ pub trait Wallpaper {
     /// An empty string for `monitor` applies to all monitors.
     async fn set_wallpaper(&self, path: String, monitor: String) -> Result<()>;
 
-    /// Sets the fit mode for wallpaper scaling.
-    async fn set_fit_mode(&self, mode: String) -> Result<()>;
+    /// Sets the fit mode for a monitor or all monitors.
+    ///
+    /// An empty string for `monitor` targets all monitors.
+    async fn set_fit_mode(&self, mode: String, monitor: String) -> Result<()>;
 
     /// Starts cycling through wallpapers in a directory.
     async fn start_cycling(
@@ -43,8 +45,8 @@ pub trait Wallpaper {
     /// Gets the wallpaper path for a specific monitor.
     async fn wallpaper_for_monitor(&self, monitor: String) -> Result<String>;
 
-    /// Gets the current fit mode.
-    async fn get_fit_mode(&self) -> Result<String>;
+    /// Gets the fit mode for a monitor.
+    async fn get_fit_mode(&self, monitor: String) -> Result<String>;
 
     /// Checks if cycling is active.
     async fn get_is_cycling(&self) -> Result<bool>;
@@ -60,10 +62,6 @@ pub trait Wallpaper {
 
     /// Lists all registered monitors.
     async fn list_monitors(&self) -> Result<Vec<String>>;
-
-    /// Current fit mode.
-    #[zbus(property)]
-    fn fit_mode(&self) -> Result<String>;
 
     /// Whether cycling is active.
     #[zbus(property)]

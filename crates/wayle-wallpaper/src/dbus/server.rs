@@ -33,15 +33,17 @@ impl WallpaperDaemon {
             .map_err(|err| fdo::Error::Failed(err.to_string()))
     }
 
-    /// Sets the fit mode for wallpaper scaling.
-    #[instrument(skip(self), fields(mode = %mode))]
-    pub async fn set_fit_mode(&self, mode: String) -> fdo::Result<()> {
+    /// Sets the fit mode for a specific monitor or all monitors.
+    ///
+    /// An empty string for `monitor` targets all monitors.
+    #[instrument(skip(self), fields(mode = %mode, monitor = %monitor))]
+    pub async fn set_fit_mode(&self, mode: String, monitor: String) -> fdo::Result<()> {
         let fit_mode = mode
             .parse()
             .map_err(|err: String| fdo::Error::InvalidArgs(err))?;
 
         self.service
-            .set_fit_mode(fit_mode)
+            .set_fit_mode(fit_mode, Self::monitor_option(&monitor))
             .await
             .map_err(|err| fdo::Error::Failed(err.to_string()))
     }
@@ -67,7 +69,6 @@ impl WallpaperDaemon {
                 Duration::from_secs(u64::from(interval_secs)),
                 cycling_mode,
             )
-            .await
             .map_err(|err| fdo::Error::Failed(err.to_string()))
     }
 
@@ -114,10 +115,15 @@ impl WallpaperDaemon {
             .unwrap_or_default()
     }
 
-    /// Gets the current fit mode.
-    #[instrument(skip(self))]
-    pub async fn get_fit_mode(&self) -> String {
-        self.service.fit_mode.get().to_string()
+    /// Gets the fit mode for a monitor.
+    ///
+    /// Returns "fill" if the monitor is not registered.
+    #[instrument(skip(self), fields(monitor = %monitor))]
+    pub async fn get_fit_mode(&self, monitor: String) -> String {
+        self.service
+            .fit_mode(&monitor)
+            .unwrap_or_default()
+            .to_string()
     }
 
     /// Checks if cycling is active.
@@ -149,12 +155,6 @@ impl WallpaperDaemon {
     #[instrument(skip(self))]
     pub async fn list_monitors(&self) -> Vec<String> {
         self.service.monitor_names()
-    }
-
-    /// Current fit mode.
-    #[zbus(property)]
-    pub async fn fit_mode(&self) -> String {
-        self.service.fit_mode.get().to_string()
     }
 
     /// Whether cycling is active.

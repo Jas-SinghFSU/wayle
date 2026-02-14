@@ -25,7 +25,7 @@ pub async fn execute(path: PathBuf, fit: Option<FitModeArg>, monitor: Option<Str
             FitModeArg::Stretch => "stretch",
         };
         proxy
-            .set_fit_mode(mode.to_string())
+            .set_fit_mode(mode.to_string(), monitor_arg.clone())
             .await
             .map_err(|e| format_error("set fit mode", e))?;
     }

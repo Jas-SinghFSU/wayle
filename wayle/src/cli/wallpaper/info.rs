@@ -12,12 +12,12 @@ pub async fn execute(monitor: Option<String>) -> CliAction {
     let monitor_arg = monitor.clone().unwrap_or_default();
 
     let wallpaper = proxy
-        .wallpaper_for_monitor(monitor_arg)
+        .wallpaper_for_monitor(monitor_arg.clone())
         .await
         .map_err(|e| format_error("get wallpaper", e))?;
 
     let fit_mode = proxy
-        .get_fit_mode()
+        .get_fit_mode(monitor_arg)
         .await
         .map_err(|e| format_error("get fit mode", e))?;
 

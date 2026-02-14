@@ -143,6 +143,14 @@ pub enum Error {
         source: notify::Error,
     },
 
+    /// Blocking task failed to complete.
+    #[error("config task failed")]
+    TaskJoin {
+        /// The underlying join error.
+        #[source]
+        source: tokio::task::JoinError,
+    },
+
     /// Watcher state is poisoned.
     #[error("watcher state is poisoned")]
     WatcherPoisoned,

@@ -1,6 +1,8 @@
 //! Pywal color extraction.
 
-use std::{path::Path, process::Command};
+use std::path::Path;
+
+use tokio::process::Command;
 
 use super::Tool;
 use crate::error::Error;
@@ -53,14 +55,14 @@ impl Arg<'_> {
     }
 }
 
-fn run(args: &[Arg<'_>]) -> Result<(), Error> {
+async fn run(args: &[Arg<'_>]) -> Result<(), Error> {
     let mut cmd = Command::new("wal");
 
     for arg in args {
         arg.apply(&mut cmd);
     }
 
-    let output = Tool::Pywal.run(cmd)?;
+    let output = Tool::Pywal.run(cmd).await?;
     Tool::Pywal.check_success(&output)
 }
 
@@ -69,7 +71,7 @@ fn run(args: &[Arg<'_>]) -> Result<(), Error> {
 /// # Errors
 ///
 /// Returns error if pywal command fails.
-pub fn extract(image_path: &str) -> Result<(), Error> {
+pub async fn extract(image_path: &str) -> Result<(), Error> {
     let path = Path::new(image_path);
     run(&[
         Arg::Image(path),
@@ -77,4 +79,5 @@ pub fn extract(image_path: &str) -> Result<(), Error> {
         Arg::Saturate(0.05),
         Arg::Contrast(3.0),
     ])
+    .await
 }

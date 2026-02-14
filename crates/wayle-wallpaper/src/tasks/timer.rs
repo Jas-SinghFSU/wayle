@@ -24,8 +24,9 @@ impl CyclingTimer {
     }
 
     pub async fn wait(&mut self) -> Option<()> {
-        let fires_at = self.fires_at.take()?;
+        let fires_at = self.fires_at?;
         sleep_until(fires_at).await;
+        self.fires_at = None;
         Some(())
     }
 }
