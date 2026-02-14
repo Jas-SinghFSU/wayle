@@ -71,7 +71,7 @@ experience. A successor to HyprPanel without the pain or dependency on Hyprland.
 
 ### Dropdown Interfaces
 
-- [ ] **Audio Panel**
+- [ ] **Audio Panel (WIP)**
 - [ ] **Battery Panel**
 - [ ] **Bluetooth Panel**
 - [ ] **Calendar Panel**
