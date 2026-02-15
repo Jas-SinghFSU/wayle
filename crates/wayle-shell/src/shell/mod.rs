@@ -213,11 +213,10 @@ impl Shell {
     }
 }
 
-/// Triggers gtk4-layer-shell to reconfigure the surface size.
+/// Resets a layer-shell window's cached size so GTK recalculates from content.
 ///
-/// Layer-shell caches preferred size and only reconfigures when `default-width`
-/// or `default-height` signals fire. This toggles the size to force reconfiguration
-/// after CSS changes that affect widget dimensions.
+/// The exclusive zone is managed separately via a tick callback on each bar,
+/// so this poke does not cause compositor flicker.
 fn trigger_layer_shell_reconfigure(window: &gtk4::Window) {
     window.set_default_size(1, 1);
     window.set_default_size(0, 0);
