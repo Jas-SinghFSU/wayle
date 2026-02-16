@@ -29,29 +29,29 @@ pub struct NetstatConfig {
     ///
     /// ## Download Placeholders
     ///
-    /// - `{down_kib}` - Download speed in KiB/s
-    /// - `{down_mib}` - Download speed in MiB/s
-    /// - `{down_gib}` - Download speed in GiB/s
-    /// - `{down_auto}` - Download speed with auto unit (e.g., "1.5 MiB/s")
+    /// - `{{ down_kib }}` - Download speed in KiB/s
+    /// - `{{ down_mib }}` - Download speed in MiB/s
+    /// - `{{ down_gib }}` - Download speed in GiB/s
+    /// - `{{ down_auto }}` - Download speed with auto unit (e.g., "1.5 MiB/s")
     ///
     /// ## Upload Placeholders
     ///
-    /// - `{up_kib}` - Upload speed in KiB/s
-    /// - `{up_mib}` - Upload speed in MiB/s
-    /// - `{up_gib}` - Upload speed in GiB/s
-    /// - `{up_auto}` - Upload speed with auto unit (e.g., "256 KiB/s")
+    /// - `{{ up_kib }}` - Upload speed in KiB/s
+    /// - `{{ up_mib }}` - Upload speed in MiB/s
+    /// - `{{ up_gib }}` - Upload speed in GiB/s
+    /// - `{{ up_auto }}` - Upload speed with auto unit (e.g., "256 KiB/s")
     ///
     /// ## Other Placeholders
     ///
-    /// - `{interface}` - Interface name (e.g., "wlan0")
+    /// - `{{ interface }}` - Interface name (e.g., "wlan0")
     ///
     /// ## Examples
     ///
-    /// - `"{down_auto} {up_auto}"` - "1.5 MiB/s 256 KiB/s"
-    /// - `"D:{down_mib} U:{up_mib}"` - "D:1.5 U:0.2"
-    /// - `"{interface}: {down_auto}"` - "wlan0: 1.5 MiB/s"
+    /// - `"{{ down_auto }} {{ up_auto }}"` - "1.5 MiB/s 256 KiB/s"
+    /// - `"D:{{ down_mib }} U:{{ up_mib }}"` - "D:1.5 U:0.2"
+    /// - `"{{ interface }}: {{ down_auto }}"` - "wlan0: 1.5 MiB/s"
     #[serde(rename = "format")]
-    #[default(String::from("{down_auto} {up_auto}"))]
+    #[default(String::from("{{ down_auto }} {{ up_auto }}"))]
     pub format: ConfigProperty<String>,
 
     /// Icon name.

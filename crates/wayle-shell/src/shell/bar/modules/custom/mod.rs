@@ -21,6 +21,7 @@ use wayle_widgets::{
     utils::force_window_resize,
 };
 
+use self::helpers::{ParsedOutput, format_label};
 pub(crate) use self::{
     factory::Factory,
     messages::{CustomCmd, CustomInit, CustomMsg},
@@ -81,10 +82,12 @@ impl Component for CustomModule {
         let button_bg_color = ConfigProperty::new(definition.button_bg_color.clone());
         let border_color = ConfigProperty::new(definition.border_color.clone());
 
+        let initial_label = format_label(&definition, &ParsedOutput::default());
+
         let bar_button = BarButton::builder()
             .launch(BarButtonInit {
                 icon: definition.icon_name.clone(),
-                label: String::new(),
+                label: initial_label,
                 tooltip: None,
                 colors: BarButtonColors {
                     icon_color: icon_color.clone(),

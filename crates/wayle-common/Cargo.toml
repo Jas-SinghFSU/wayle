@@ -8,6 +8,7 @@ license.workspace = true
 
 [dependencies]
 futures.workspace = true
+minijinja.workspace = true
 owo-colors = "4.2.3"
 schemars = { workspace = true, optional = true }
 serde.workspace = true

@@ -1,3 +1,4 @@
+use serde_json::json;
 use wayle_config::schemas::modules::TemperatureUnit as ConfigTempUnit;
 use wayle_weather::{Temperature, TemperatureUnit, Weather, WeatherCondition};
 
@@ -27,16 +28,18 @@ pub(super) fn format_label(ctx: &FormatContext<'_>) -> String {
         .map(|daily| format_temp_value(daily.temp_low, ctx.units))
         .unwrap_or_default();
 
-    ctx.format
-        .replace("{temp}", &temp)
-        .replace("{temp_unit}", temp_unit)
-        .replace("{feels_like}", &feels_like)
-        .replace("{condition}", &condition)
-        .replace("{humidity}", &humidity)
-        .replace("{wind_speed}", &wind_speed)
-        .replace("{wind_dir}", wind_dir)
-        .replace("{high}", &high)
-        .replace("{low}", &low)
+    let template_ctx = json!({
+        "temp": temp,
+        "temp_unit": temp_unit,
+        "feels_like": feels_like,
+        "condition": condition,
+        "humidity": humidity,
+        "wind_speed": wind_speed,
+        "wind_dir": wind_dir,
+        "high": high,
+        "low": low,
+    });
+    wayle_common::template::render(ctx.format, template_ctx).unwrap_or_default()
 }
 
 pub(crate) fn condition_label(condition: WeatherCondition) -> String {
@@ -179,7 +182,7 @@ mod tests {
     fn format_label_default_format() {
         let weather = sample_weather();
         let result = format_label(&FormatContext {
-            format: "{temp}{temp_unit}",
+            format: "{{ temp }}{{ temp_unit }}",
             weather: &weather,
             units: TemperatureUnit::Metric,
         });
@@ -191,7 +194,7 @@ mod tests {
     fn format_label_imperial_units() {
         let weather = sample_weather();
         let result = format_label(&FormatContext {
-            format: "{temp}{temp_unit}",
+            format: "{{ temp }}{{ temp_unit }}",
             weather: &weather,
             units: TemperatureUnit::Imperial,
         });
@@ -203,34 +206,34 @@ mod tests {
     fn format_label_with_condition() {
         let weather = sample_weather();
         let result = format_label(&FormatContext {
-            format: "{temp}° {condition}",
+            format: "{{ temp }}° {{ condition }}",
             weather: &weather,
             units: TemperatureUnit::Metric,
         });
 
         assert!(result.starts_with("22° "));
-        assert!(!result.contains("{condition}"));
+        assert!(!result.contains("{{ condition }}"));
     }
 
     #[test]
     fn format_label_all_placeholders() {
         let weather = sample_weather();
         let result = format_label(&FormatContext {
-            format: "{temp}{temp_unit} (feels {feels_like}{temp_unit}) {condition} H:{high} L:{low} {humidity} {wind_dir} {wind_speed}",
+            format: "{{ temp }}{{ temp_unit }} (feels {{ feels_like }}{{ temp_unit }}) {{ condition }} H:{{ high }} L:{{ low }} {{ humidity }} {{ wind_dir }} {{ wind_speed }}",
             weather: &weather,
             units: TemperatureUnit::Metric,
         });
 
         assert!(result.starts_with("22°C (feels 24°C) "));
         assert!(result.contains("H:28 L:18 65% W 15 km/h"));
-        assert!(!result.contains("{condition}"));
+        assert!(!result.contains("{{ condition }}"));
     }
 
     #[test]
     fn format_label_imperial_wind_speed() {
         let weather = sample_weather();
         let result = format_label(&FormatContext {
-            format: "{wind_speed}",
+            format: "{{ wind_speed }}",
             weather: &weather,
             units: TemperatureUnit::Imperial,
         });

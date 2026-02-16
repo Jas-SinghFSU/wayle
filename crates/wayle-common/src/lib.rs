@@ -17,6 +17,8 @@ mod property;
 /// Shared constants for wayle-shell IPC.
 pub mod shell;
 mod state;
+/// Format string rendering with Jinja2 syntax and JSONPath support.
+pub mod template;
 /// Ergonomic watcher utilities for Relm4 components.
 pub mod watchers;
 

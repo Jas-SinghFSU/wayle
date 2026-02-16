@@ -34,9 +34,10 @@ pub enum ExecutionMode {
 ///
 /// Commands can output plain text or JSON:
 ///
-/// - **Plain text**: Use `{output}` placeholder in format strings
+/// - **Plain text**: Use `{{ output }}` in format strings
 /// - **JSON**: Auto-detected when output starts with `{` or `[`.
-///   Use JSONPath syntax like `{$.field}` or `{$.nested.value}`.
+///   Access fields directly (`{{ field }}`), use dot notation (`{{ nested.value }}`),
+///   or use the `jsonpath` filter (`{{ data | jsonpath('$.path') }}`).
 ///
 /// # JSON Reserved Fields
 ///
@@ -79,7 +80,7 @@ pub enum ExecutionMode {
 /// id = "gpu-temp"
 /// command = "nvidia-smi --query-gpu=temperature.gpu --format=csv,noheader,nounits"
 /// interval-ms = 5000
-/// format = "{output}°C"
+/// format = "{{ output }}°C"
 /// icon-name = "ld-gpu-symbolic"
 /// ```
 ///
@@ -98,7 +99,7 @@ pub enum ExecutionMode {
 /// fi
 /// '''
 /// interval-ms = 500
-/// format = "{$.percentage}%"
+/// format = "{{ percentage }}%"
 /// icon-names = [
 ///   "audio-volume-muted-symbolic",
 ///   "audio-volume-low-symbolic",
@@ -129,7 +130,7 @@ pub enum ExecutionMode {
 ///   fi
 /// done
 /// '''
-/// format = "{$.percentage}%"
+/// format = "{{ percentage }}%"
 /// icon-names = [
 ///   "ld-volume-symbolic",
 ///   "ld-volume-1-symbolic",
@@ -190,20 +191,26 @@ pub struct CustomModuleDefinition {
     #[serde(rename = "interval-ms", default = "default_interval")]
     pub interval_ms: u64,
 
-    /// Format string for the label.
+    /// Format string for the label using Jinja2 template syntax.
     ///
-    /// ## Placeholders
+    /// ## Variables
     ///
-    /// - `{output}` - Raw command output (plain text mode)
-    /// - `{$.field}` - JSONPath query (JSON mode)
-    /// - `{$.nested.field}` - Nested field access
-    /// - `{$.array[0]}` - Array index access
+    /// - `{{ output }}` - Raw command output
+    /// - `{{ field }}` - JSON field access
+    /// - `{{ nested.field }}` - Nested field access
+    /// - `{{ items.0 }}` - Array index access
+    ///
+    /// ## Filters
+    ///
+    /// - `{{ val | default('fallback') }}` - Fallback for missing values
+    /// - `{{ "%02d" | format(val) }}` - Zero-padding
+    /// - `{{ val | upper }}`, `| lower`, `| trim` - String transforms
     ///
     /// ## Examples
     ///
-    /// - `"{output}°C"` - Plain text: "72°C"
-    /// - `"{$.percentage}%"` - JSON field: "75%"
-    /// - `"{$.data.temp}°C"` - Nested: "22°C"
+    /// - `"{{ output }}°C"` - Plain text: "72°C"
+    /// - `"{{ percentage }}%"` - JSON field: "75%"
+    /// - `"{{ data.temp }}°C"` - Nested: "22°C"
     ///
     /// If JSON output contains a `text` field, it overrides this format.
     #[serde(default = "default_format")]
@@ -211,14 +218,14 @@ pub struct CustomModuleDefinition {
 
     /// Format string for the tooltip (hover text).
     ///
-    /// Supports the same placeholders as `format`. If not set, no tooltip is shown.
+    /// Supports the same Jinja2 syntax as `format`. If not set, no tooltip is shown.
     /// If JSON output contains a `tooltip` field, it overrides this format.
     ///
     /// ## Example
     ///
     /// ```toml
-    /// format = "{$.percentage}%"
-    /// tooltip-format = "Volume: {$.percentage}% on {$.device}"
+    /// format = "{{ percentage }}%"
+    /// tooltip-format = "Volume: {{ percentage }}% on {{ device }}"
     /// ```
     #[serde(rename = "tooltip-format", default)]
     pub tooltip_format: Option<String>,
@@ -295,7 +302,7 @@ pub struct CustomModuleDefinition {
 
     /// Format string for dynamic CSS classes.
     ///
-    /// Supports the same placeholders as `format`. The formatted result is
+    /// Supports the same Jinja2 syntax as `format`. The formatted result is
     /// split on whitespace and each word is added as a CSS class.
     ///
     /// Combined with the `class` field from JSON output (if present).
@@ -303,7 +310,7 @@ pub struct CustomModuleDefinition {
     /// ## Example
     ///
     /// ```toml
-    /// class-format = "volume-{$.alt}"
+    /// class-format = "volume-{{ alt }}"
     /// # Output: {"alt": "muted"} → adds class "volume-muted"
     /// ```
     #[serde(rename = "class-format", default)]
@@ -405,7 +412,7 @@ fn default_interval() -> u64 {
 }
 
 fn default_format() -> String {
-    String::from("{output}")
+    String::from("{{ output }}")
 }
 
 fn default_true() -> bool {

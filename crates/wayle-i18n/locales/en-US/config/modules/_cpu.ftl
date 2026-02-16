@@ -9,7 +9,7 @@ settings-modules-cpu-temp-sensor = Temperature Sensor
     .description = Sensor label for temperature readings (e.g., "Tctl", "auto")
 
 settings-modules-cpu-format = Display Format
-    .description = Format string with placeholders: {"{percent}"}, {"{freq_ghz}"}, {"{avg_freq_ghz}"}, {"{max_freq_ghz}"}, {"{temp_c}"}, {"{temp_f}"}
+    .description = Format string with placeholders: {"{{ percent }}"}, {"{{ freq_ghz }}"}, {"{{ avg_freq_ghz }}"}, {"{{ max_freq_ghz }}"}, {"{{ temp_c }}"}, {"{{ temp_f }}"}
 
 settings-modules-cpu-icon-name = Icon Name
     .description = Symbolic icon name

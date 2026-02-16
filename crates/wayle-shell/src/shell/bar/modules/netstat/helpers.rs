@@ -1,17 +1,20 @@
 use bytesize::ByteSize;
+use serde_json::json;
 use wayle_sysinfo::types::NetworkData;
 
 pub(super) fn format_label(format: &str, net: &NetworkData) -> String {
-    format
-        .replace("{down_kib}", &kib(net.rx_bytes_per_sec))
-        .replace("{down_mib}", &mib(net.rx_bytes_per_sec))
-        .replace("{down_gib}", &gib(net.rx_bytes_per_sec))
-        .replace("{down_auto}", &auto(net.rx_bytes_per_sec))
-        .replace("{up_kib}", &kib(net.tx_bytes_per_sec))
-        .replace("{up_mib}", &mib(net.tx_bytes_per_sec))
-        .replace("{up_gib}", &gib(net.tx_bytes_per_sec))
-        .replace("{up_auto}", &auto(net.tx_bytes_per_sec))
-        .replace("{interface}", &net.interface)
+    let ctx = json!({
+        "down_kib": kib(net.rx_bytes_per_sec),
+        "down_mib": mib(net.rx_bytes_per_sec),
+        "down_gib": gib(net.rx_bytes_per_sec),
+        "down_auto": auto(net.rx_bytes_per_sec),
+        "up_kib": kib(net.tx_bytes_per_sec),
+        "up_mib": mib(net.tx_bytes_per_sec),
+        "up_gib": gib(net.tx_bytes_per_sec),
+        "up_auto": auto(net.tx_bytes_per_sec),
+        "interface": &net.interface,
+    });
+    wayle_common::template::render(format, ctx).unwrap_or_default()
 }
 
 fn kib(bytes: u64) -> String {
@@ -65,77 +68,77 @@ mod tests {
     #[test]
     fn format_label_replaces_down_kib_placeholder() {
         let net = net_data("eth0", 500 * KIB, 100 * KIB);
-        let result = format_label("{down_kib} KiB/s", &net);
+        let result = format_label("{{ down_kib }} KiB/s", &net);
         assert_eq!(result, "500 KiB/s");
     }
 
     #[test]
     fn format_label_replaces_down_mib_placeholder() {
         let net = net_data("eth0", 50 * MIB, 10 * MIB);
-        let result = format_label("{down_mib} MiB/s", &net);
+        let result = format_label("{{ down_mib }} MiB/s", &net);
         assert_eq!(result, "50.0 MiB/s");
     }
 
     #[test]
     fn format_label_replaces_down_gib_placeholder() {
         let net = net_data("eth0", GIB, 100 * MIB);
-        let result = format_label("{down_gib} GiB/s", &net);
+        let result = format_label("{{ down_gib }} GiB/s", &net);
         assert_eq!(result, "1.00 GiB/s");
     }
 
     #[test]
     fn format_label_replaces_down_auto_placeholder() {
         let net = net_data("eth0", 500 * KIB, 100 * KIB);
-        let result = format_label("{down_auto}", &net);
+        let result = format_label("{{ down_auto }}", &net);
         assert_eq!(result, "500.0 KiB");
     }
 
     #[test]
     fn format_label_replaces_up_kib_placeholder() {
         let net = net_data("eth0", 100 * KIB, 250 * KIB);
-        let result = format_label("{up_kib} KiB/s", &net);
+        let result = format_label("{{ up_kib }} KiB/s", &net);
         assert_eq!(result, "250 KiB/s");
     }
 
     #[test]
     fn format_label_replaces_up_mib_placeholder() {
         let net = net_data("eth0", 10 * MIB, 25 * MIB);
-        let result = format_label("{up_mib} MiB/s", &net);
+        let result = format_label("{{ up_mib }} MiB/s", &net);
         assert_eq!(result, "25.0 MiB/s");
     }
 
     #[test]
     fn format_label_replaces_up_gib_placeholder() {
         let net = net_data("eth0", 100 * MIB, 2 * GIB);
-        let result = format_label("{up_gib} GiB/s", &net);
+        let result = format_label("{{ up_gib }} GiB/s", &net);
         assert_eq!(result, "2.00 GiB/s");
     }
 
     #[test]
     fn format_label_replaces_up_auto_placeholder() {
         let net = net_data("eth0", 100 * KIB, 2 * MIB);
-        let result = format_label("{up_auto}", &net);
+        let result = format_label("{{ up_auto }}", &net);
         assert_eq!(result, "2.0 MiB");
     }
 
     #[test]
     fn format_label_replaces_interface_placeholder() {
         let net = net_data("wlan0", 100 * KIB, 50 * KIB);
-        let result = format_label("[{interface}]", &net);
+        let result = format_label("[{{ interface }}]", &net);
         assert_eq!(result, "[wlan0]");
     }
 
     #[test]
     fn format_label_with_multiple_placeholders() {
         let net = net_data("eth0", 1024 * KIB, 512 * KIB);
-        let result = format_label("{down_kib}/{up_kib} on {interface}", &net);
+        let result = format_label("{{ down_kib }}/{{ up_kib }} on {{ interface }}", &net);
         assert_eq!(result, "1024/512 on eth0");
     }
 
     #[test]
     fn format_label_with_zero_traffic() {
         let net = net_data("eth0", 0, 0);
-        let result = format_label("{down_kib}/{up_kib}", &net);
+        let result = format_label("{{ down_kib }}/{{ up_kib }}", &net);
         assert_eq!(result, "0/0");
     }
 

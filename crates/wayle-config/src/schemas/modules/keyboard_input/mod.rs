@@ -14,12 +14,12 @@ pub struct KeyboardInputConfig {
     ///
     /// ## Placeholders
     ///
-    /// - `{layout}` - Keyboard layout code (e.g., "us", "de", "fr")
+    /// - `{{ layout }}` - Keyboard layout code (e.g., "us", "de", "fr")
     ///
     /// ## Examples
     ///
-    /// - `"{layout}"` - "us"
-    #[default(String::from("{layout}"))]
+    /// - `"{{ layout }}"` - "us"
+    #[default(String::from("{{ layout }}"))]
     pub format: ConfigProperty<String>,
 
     /// Symbolic icon name.

@@ -9,7 +9,7 @@ settings-modules-netstat-interface = Interface
     .description = Network interface to monitor ("auto" for active interface)
 
 settings-modules-netstat-format = Display Format
-    .description = Format string with placeholders: {"{down_kib}"}, {"{down_mib}"}, {"{down_gib}"}, {"{down_auto}"}, {"{up_kib}"}, {"{up_mib}"}, {"{up_gib}"}, {"{up_auto}"}, {"{interface}"}
+    .description = Format string with placeholders: {"{{ down_kib }}"}, {"{{ down_mib }}"}, {"{{ down_gib }}"}, {"{{ down_auto }}"}, {"{{ up_kib }}"}, {"{{ up_mib }}"}, {"{{ up_gib }}"}, {"{{ up_auto }}"}, {"{{ interface }}"}
 
 settings-modules-netstat-icon-name = Icon Name
     .description = Symbolic icon name

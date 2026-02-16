@@ -12,7 +12,7 @@ settings-modules-weather-units = Temperature Unit
     .description = Metric (Celsius) or Imperial (Fahrenheit)
 
 settings-modules-weather-format = Label Format
-    .description = Format string with placeholders: {"{temp}"}, {"{temp_unit}"}, {"{feels_like}"}, {"{condition}"}, {"{humidity}"}, {"{wind_speed}"}, {"{wind_dir}"}, {"{high}"}, {"{low}"}
+    .description = Format string with placeholders: {"{{ temp }}"}, {"{{ temp_unit }}"}, {"{{ feels_like }}"}, {"{{ condition }}"}, {"{{ humidity }}"}, {"{{ wind_speed }}"}, {"{{ wind_dir }}"}, {"{{ high }}"}, {"{{ low }}"}
 
 settings-modules-weather-refresh-interval = Refresh Interval
     .description = Polling interval in seconds

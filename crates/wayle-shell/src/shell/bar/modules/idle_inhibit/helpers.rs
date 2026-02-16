@@ -1,3 +1,5 @@
+use serde_json::json;
+
 use crate::i18n::t;
 
 fn format_duration(total_secs: u32) -> String {
@@ -36,10 +38,12 @@ pub(super) fn build_label(format: &str, ctx: &LabelContext) -> String {
         format!("{}", ctx.duration_mins)
     };
 
-    format
-        .replace("{state}", &state)
-        .replace("{remaining}", &remaining)
-        .replace("{duration}", &duration)
+    let template_ctx = json!({
+        "state": state,
+        "remaining": remaining,
+        "duration": duration,
+    });
+    wayle_common::template::render(format, template_ctx).unwrap_or_default()
 }
 
 /// Selects icon based on active state.
@@ -82,37 +86,37 @@ mod tests {
 
     #[test]
     fn build_label_state_on() {
-        assert_eq!(build_label("{state}", &ctx(true, 0, None)), "On");
+        assert_eq!(build_label("{{ state }}", &ctx(true, 0, None)), "On");
     }
 
     #[test]
     fn build_label_state_off() {
-        assert_eq!(build_label("{state}", &ctx(false, 0, None)), "Off");
+        assert_eq!(build_label("{{ state }}", &ctx(false, 0, None)), "Off");
     }
 
     #[test]
     fn build_label_remaining() {
         assert_eq!(
-            build_label("{remaining}", &ctx(true, 30, Some(125))),
+            build_label("{{ remaining }}", &ctx(true, 30, Some(125))),
             "2:05"
         );
     }
 
     #[test]
     fn build_label_duration_timed() {
-        assert_eq!(build_label("{duration}", &ctx(true, 30, None)), "30");
+        assert_eq!(build_label("{{ duration }}", &ctx(true, 30, None)), "30");
     }
 
     #[test]
     fn build_label_duration_indefinite() {
-        assert_eq!(build_label("{duration}", &ctx(true, 0, None)), "∞");
+        assert_eq!(build_label("{{ duration }}", &ctx(true, 0, None)), "∞");
     }
 
     #[test]
     fn build_label_all_placeholders() {
         assert_eq!(
             build_label(
-                "{state}: {remaining} / {duration}",
+                "{{ state }}: {{ remaining }} / {{ duration }}",
                 &ctx(true, 60, Some(1800))
             ),
             "On: 30:00 / 60"
@@ -121,12 +125,12 @@ mod tests {
 
     #[test]
     fn build_label_inactive_shows_dash() {
-        assert_eq!(build_label("{remaining}", &ctx(false, 30, None)), "-");
+        assert_eq!(build_label("{{ remaining }}", &ctx(false, 30, None)), "-");
     }
 
     #[test]
     fn build_label_active_indefinite_shows_infinity() {
-        assert_eq!(build_label("{remaining}", &ctx(true, 0, None)), "∞");
+        assert_eq!(build_label("{{ remaining }}", &ctx(true, 0, None)), "∞");
     }
 
     #[test]

@@ -15,7 +15,7 @@ settings-modules-hyprsunset-icon-on = Icon On
     .description = Icon when filter is enabled
 
 settings-modules-hyprsunset-format = Format
-    .description = Label format string. Placeholders: {"{status}"}, {"{temp}"}, {"{gamma}"}, {"{config_temp}"}, {"{config_gamma}"}
+    .description = Label format string. Placeholders: {"{{ status }}"}, {"{{ temp }}"}, {"{{ gamma }}"}, {"{{ config_temp }}"}, {"{{ config_gamma }}"}
 
 settings-modules-hyprsunset-border-show = Show Border
     .description = Display border around button

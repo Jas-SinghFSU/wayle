@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use serde_json::json;
 use wayle_common::glob;
 use wayle_config::schemas::modules::WINDOW_TITLE_BUILTIN_MAPPINGS;
 
@@ -8,7 +9,11 @@ use crate::i18n::t;
 const TITLE_PREFIX: &str = "title:";
 
 pub(super) fn format_label(format: &str, title: &str, app: &str) -> String {
-    let label = format.replace("{title}", title).replace("{app}", app);
+    let ctx = json!({
+        "title": title,
+        "app": app,
+    });
+    let label = wayle_common::template::render(format, ctx).unwrap_or_default();
     if label.trim().is_empty() {
         t!("bar-window-title-empty")
     } else {
@@ -62,18 +67,22 @@ mod tests {
 
     #[test]
     fn format_title_only() {
-        assert_eq!(format_label("{title}", "Firefox", "firefox"), "Firefox");
+        assert_eq!(format_label("{{ title }}", "Firefox", "firefox"), "Firefox");
     }
 
     #[test]
     fn format_app_only() {
-        assert_eq!(format_label("{app}", "Firefox", "firefox"), "firefox");
+        assert_eq!(format_label("{{ app }}", "Firefox", "firefox"), "firefox");
     }
 
     #[test]
     fn format_both_placeholders() {
         assert_eq!(
-            format_label("{app}: {title}", "Home - Mozilla Firefox", "firefox"),
+            format_label(
+                "{{ app }}: {{ title }}",
+                "Home - Mozilla Firefox",
+                "firefox"
+            ),
             "firefox: Home - Mozilla Firefox"
         );
     }
@@ -81,7 +90,7 @@ mod tests {
     #[test]
     fn format_with_prefix() {
         assert_eq!(
-            format_label("Window: {title}", "My App", "myapp"),
+            format_label("Window: {{ title }}", "My App", "myapp"),
             "Window: My App"
         );
     }
@@ -89,7 +98,7 @@ mod tests {
     #[test]
     fn format_multiple_same_placeholder() {
         assert_eq!(
-            format_label("{title} | {title}", "Hello", "app"),
+            format_label("{{ title }} | {{ title }}", "Hello", "app"),
             "Hello | Hello"
         );
     }
@@ -97,8 +106,8 @@ mod tests {
     #[test]
     fn format_empty_values_returns_placeholder() {
         let placeholder = t!("bar-window-title-empty");
-        assert_eq!(format_label("{title}", "", ""), placeholder);
-        assert_eq!(format_label("{app}", "", ""), placeholder);
+        assert_eq!(format_label("{{ title }}", "", ""), placeholder);
+        assert_eq!(format_label("{{ app }}", "", ""), placeholder);
     }
 
     #[test]

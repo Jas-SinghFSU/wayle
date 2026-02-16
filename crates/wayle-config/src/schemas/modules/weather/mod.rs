@@ -27,22 +27,22 @@ pub struct WeatherConfig {
     ///
     /// ## Placeholders
     ///
-    /// - `{temp}` - Current temperature (e.g., "72")
-    /// - `{temp_unit}` - Temperature unit symbol ("°F" or "°C")
-    /// - `{feels_like}` - Feels-like temperature
-    /// - `{condition}` - Weather condition text (e.g., "Cloudy")
-    /// - `{humidity}` - Humidity percentage (e.g., "65%")
-    /// - `{wind_speed}` - Wind speed with unit (e.g., "12 km/h")
-    /// - `{wind_dir}` - Wind direction (e.g., "NW")
-    /// - `{high}` - Today's high temperature
-    /// - `{low}` - Today's low temperature
+    /// - `{{ temp }}` - Current temperature (e.g., "72")
+    /// - `{{ temp_unit }}` - Temperature unit symbol ("°F" or "°C")
+    /// - `{{ feels_like }}` - Feels-like temperature
+    /// - `{{ condition }}` - Weather condition text (e.g., "Cloudy")
+    /// - `{{ humidity }}` - Humidity percentage (e.g., "65%")
+    /// - `{{ wind_speed }}` - Wind speed with unit (e.g., "12 km/h")
+    /// - `{{ wind_dir }}` - Wind direction (e.g., "NW")
+    /// - `{{ high }}` - Today's high temperature
+    /// - `{{ low }}` - Today's low temperature
     ///
     /// ## Examples
     ///
-    /// - `"{temp}{temp_unit}"` - "22°C"
-    /// - `"{temp}{temp_unit} {condition}"` - "22°C Partly Cloudy"
-    /// - `"{temp}{temp_unit} H:{high} L:{low}"` - "22°C H:25 L:18"
-    #[default(String::from("{temp}{temp_unit}"))]
+    /// - `"{{ temp }}{{ temp_unit }}"` - "22°C"
+    /// - `"{{ temp }}{{ temp_unit }} {{ condition }}"` - "22°C Partly Cloudy"
+    /// - `"{{ temp }}{{ temp_unit }} H:{{ high }} L:{{ low }}"` - "22°C H:25 L:18"
+    #[default(String::from("{{ temp }}{{ temp_unit }}"))]
     pub format: ConfigProperty<String>,
 
     /// Polling interval in seconds.

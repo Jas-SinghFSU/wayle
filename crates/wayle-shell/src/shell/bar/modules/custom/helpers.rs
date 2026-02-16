@@ -1,8 +1,5 @@
-use std::borrow::Cow;
-
 use serde::Deserialize;
 use serde_json::Value;
-use serde_json_path::JsonPath;
 use wayle_config::schemas::modules::CustomModuleDefinition;
 
 const MAX_JSON_PARSE_BYTES: usize = 64 * 1024;
@@ -55,7 +52,7 @@ pub struct ParsedOutput {
     pub tooltip: Option<String>,
     /// Extracted `class` field from JSON, added as CSS classes.
     pub class: Vec<String>,
-    /// Parsed JSON value for JSONPath queries.
+    /// Parsed JSON value for template rendering.
     pub json: Option<Value>,
 }
 
@@ -91,106 +88,28 @@ impl ParsedOutput {
             json: Some(json),
         }
     }
-}
 
-/// Segment of a parsed format string.
-#[derive(Debug, Clone)]
-pub enum FormatSegment {
-    /// Literal text to include as-is.
-    Literal(String),
-    /// JSONPath query to evaluate against JSON output.
-    JsonPath(JsonPath),
-    /// Plain output placeholder `{output}`.
-    Output,
-}
-
-/// Parsed format string ready for evaluation.
-#[derive(Debug, Clone)]
-pub struct ParsedFormat {
-    segments: Vec<FormatSegment>,
-}
-
-fn extract_placeholder(input: &str) -> Option<(&str, &str, &str)> {
-    let open = input.find('{')?;
-    let after_open = &input[open + 1..];
-    let close = after_open.find('}')?;
-
-    let before = &input[..open];
-    let placeholder = &after_open[..close];
-    let after = &after_open[close + 1..];
-
-    Some((before, placeholder, after))
-}
-
-fn parse_placeholder(placeholder: &str) -> FormatSegment {
-    if placeholder == "output" {
-        return FormatSegment::Output;
-    }
-    if let Ok(path) = JsonPath::parse(placeholder) {
-        return FormatSegment::JsonPath(path);
-    }
-    FormatSegment::Literal(format!("{{{placeholder}}}"))
-}
-
-impl ParsedFormat {
-    /// Parses a format string into segments.
+    /// Builds a template context merging JSON fields with the raw output.
     ///
-    /// Supports:
-    /// - `{output}` for raw output
-    /// - `{$.path}` for JSONPath queries
-    /// - Literal text between placeholders
-    pub fn parse(template: &str) -> Self {
-        let mut segments = Vec::new();
-        let mut unparsed = template;
+    /// JSON fields are accessible as top-level variables. The raw output
+    /// is always available as `output`.
+    fn template_context(&self) -> Value {
+        let mut ctx = self
+            .json
+            .clone()
+            .and_then(|v| if v.is_object() { Some(v) } else { None })
+            .unwrap_or_else(|| Value::Object(serde_json::Map::new()));
 
-        while let Some((before_placeholder, placeholder, after_placeholder)) =
-            extract_placeholder(unparsed)
-        {
-            if !before_placeholder.is_empty() {
-                segments.push(FormatSegment::Literal(before_placeholder.to_string()));
-            }
-            segments.push(parse_placeholder(placeholder));
-            unparsed = after_placeholder;
+        if let Value::Object(map) = &mut ctx {
+            map.insert("output".to_string(), Value::String(self.raw.clone()));
         }
 
-        if !unparsed.is_empty() {
-            segments.push(FormatSegment::Literal(unparsed.to_string()));
-        }
-
-        Self { segments }
-    }
-
-    /// Formats the parsed output using this format string.
-    pub fn format(&self, output: &ParsedOutput) -> String {
-        self.segments
-            .iter()
-            .map(|seg| match seg {
-                FormatSegment::Literal(s) => Cow::Borrowed(s.as_str()),
-                FormatSegment::Output => Cow::Borrowed(output.raw.as_str()),
-                FormatSegment::JsonPath(path) => {
-                    if let Some(json) = &output.json {
-                        let nodes = path.query(json);
-                        nodes
-                            .first()
-                            .map(|v| Cow::Owned(json_value_to_string(v)))
-                            .unwrap_or(Cow::Borrowed(""))
-                    } else {
-                        Cow::Borrowed("")
-                    }
-                }
-            })
-            .collect()
+        ctx
     }
 }
 
-fn json_value_to_string(value: &Value) -> String {
-    match value {
-        Value::Null => String::new(),
-        Value::Bool(b) => b.to_string(),
-        Value::Number(n) => n.to_string(),
-        Value::String(s) => s.clone(),
-        Value::Array(_) | Value::Object(_) => value.to_string(),
-    }
+fn render_format(template: &str, parsed: &ParsedOutput) -> String {
+    wayle_common::template::render(template, parsed.template_context()).unwrap_or_default()
 }
 
 /// Finds a custom module definition by ID.
@@ -259,8 +178,7 @@ pub fn resolve_classes(definition: &CustomModuleDefinition, parsed: &ParsedOutpu
     let mut classes = parsed.class.clone();
 
     if let Some(class_format) = &definition.class_format {
-        let format = ParsedFormat::parse(class_format);
-        let formatted = format.format(parsed);
+        let formatted = render_format(class_format, parsed);
         for class in formatted.split_whitespace() {
             if !class.is_empty() && !classes.contains(&class.to_string()) {
                 classes.push(class.to_string());
@@ -277,8 +195,7 @@ pub fn format_label(definition: &CustomModuleDefinition, parsed: &ParsedOutput) 
         return text.clone();
     }
 
-    let format = ParsedFormat::parse(&definition.format);
-    format.format(parsed)
+    render_format(&definition.format, parsed)
 }
 
 /// Formats the tooltip using the definition's tooltip-format and parsed output.
@@ -290,10 +207,10 @@ pub fn format_tooltip(
         return Some(tooltip.clone());
     }
 
-    definition.tooltip_format.as_ref().map(|tooltip_format| {
-        let format = ParsedFormat::parse(tooltip_format);
-        format.format(parsed)
-    })
+    definition
+        .tooltip_format
+        .as_ref()
+        .map(|fmt| render_format(fmt, parsed))
 }
 
 #[cfg(test)]
@@ -350,23 +267,35 @@ mod tests {
 
     #[test]
     fn format_output_placeholder() {
-        let format = ParsedFormat::parse("Value: {output}%");
         let output = ParsedOutput::parse("42");
-        assert_eq!(format.format(&output), "Value: 42%");
+        assert_eq!(render_format("Value: {{ output }}%", &output), "Value: 42%");
     }
 
     #[test]
-    fn format_jsonpath_placeholder() {
-        let format = ParsedFormat::parse("Volume: {$.percentage}%");
+    fn format_json_field() {
         let output = ParsedOutput::parse(r#"{"percentage": 50}"#);
-        assert_eq!(format.format(&output), "Volume: 50%");
+        assert_eq!(
+            render_format("Volume: {{ percentage }}%", &output),
+            "Volume: 50%"
+        );
     }
 
     #[test]
-    fn format_nested_jsonpath() {
-        let format = ParsedFormat::parse("Temp: {$.data.temp}C");
+    fn format_nested_field() {
         let output = ParsedOutput::parse(r#"{"data": {"temp": 22}}"#);
-        assert_eq!(format.format(&output), "Temp: 22C");
+        assert_eq!(
+            render_format("Temp: {{ data.temp }}C", &output),
+            "Temp: 22C"
+        );
+    }
+
+    #[test]
+    fn format_with_default_filter() {
+        let output = ParsedOutput::parse("plain text");
+        assert_eq!(
+            render_format("{{ missing | default('N/A') }}", &output),
+            "N/A"
+        );
     }
 
     #[test]
@@ -443,7 +372,7 @@ mod tests {
             command: None,
             mode: ExecutionMode::Poll,
             interval_ms: 5000,
-            format: "{output}".to_string(),
+            format: "{{ output }}".to_string(),
             tooltip_format: None,
             hide_if_empty: false,
             icon_name: String::new(),

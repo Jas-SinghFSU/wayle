@@ -19,14 +19,14 @@ pub struct WindowTitleConfig {
     ///
     /// ## Placeholders
     ///
-    /// - `{title}` - Window title
-    /// - `{app}` - Application name (WM_CLASS on Hyprland)
+    /// - `{{ title }}` - Window title
+    /// - `{{ app }}` - Application name (WM_CLASS on Hyprland)
     ///
     /// ## Examples
     ///
-    /// - `"{title}"` - "README.md - VSCode"
-    /// - `"{app}: {title}"` - "firefox: GitHub"
-    #[default(String::from("{title}"))]
+    /// - `"{{ title }}"` - "README.md - VSCode"
+    /// - `"{{ app }}: {{ title }}"` - "firefox: GitHub"
+    #[default(String::from("{{ title }}"))]
     pub format: ConfigProperty<String>,
 
     /// Fallback icon when no mapping matches.

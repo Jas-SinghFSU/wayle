@@ -49,18 +49,18 @@ pub struct MediaConfig {
     ///
     /// ## Placeholders
     ///
-    /// - `{title}` - Track title
-    /// - `{artist}` - Artist name(s)
-    /// - `{album}` - Album name
-    /// - `{status}` - Playback status text (Playing, Paused, Stopped)
-    /// - `{status_icon}` - Playback status icon character
+    /// - `{{ title }}` - Track title
+    /// - `{{ artist }}` - Artist name(s)
+    /// - `{{ album }}` - Album name
+    /// - `{{ status }}` - Playback status text (Playing, Paused, Stopped)
+    /// - `{{ status_icon }}` - Playback status icon character
     ///
     /// ## Examples
     ///
-    /// - `"{title} - {artist}"` - "Bohemian Rhapsody - Queen"
-    /// - `"{status_icon} {title}"` - "▶ Bohemian Rhapsody"
-    /// - `"{artist}: {title} ({album})"` - "Queen: Bohemian Rhapsody (A Night at the Opera)"
-    #[default(String::from("{title} - {artist}"))]
+    /// - `"{{ title }} - {{ artist }}"` - "Bohemian Rhapsody - Queen"
+    /// - `"{{ status_icon }} {{ title }}"` - "▶ Bohemian Rhapsody"
+    /// - `"{{ artist }}: {{ title }} ({{ album }})"` - "Queen: Bohemian Rhapsody (A Night at the Opera)"
+    #[default(String::from("{{ title }} - {{ artist }}"))]
     pub format: ConfigProperty<String>,
 
     /// Symbolic icon name for default mode.

@@ -3,7 +3,7 @@
 ## Keybind Mode Module Configuration
 
 settings-modules-keybind-mode-format = Label Format
-    .description = Format string with placeholders: {"{mode}"}
+    .description = Format string with placeholders: {"{{ mode }}"}
 
 settings-modules-keybind-mode-icon-name = Icon Name
     .description = Symbolic icon name

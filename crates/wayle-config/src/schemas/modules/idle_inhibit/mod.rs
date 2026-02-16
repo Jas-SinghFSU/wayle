@@ -32,17 +32,17 @@ pub struct IdleInhibitConfig {
     ///
     /// ## Placeholders
     ///
-    /// - `{state}` - Inhibitor state text (On, Off)
-    /// - `{remaining}` - Time remaining (e.g., "45m", shows "--" when indefinite)
-    /// - `{duration}` - Total duration (e.g., "60m", shows "--" when indefinite)
+    /// - `{{ state }}` - Inhibitor state text (On, Off)
+    /// - `{{ remaining }}` - Time remaining (e.g., "45m", shows "--" when indefinite)
+    /// - `{{ duration }}` - Total duration (e.g., "60m", shows "--" when indefinite)
     ///
     /// ## Examples
     ///
-    /// - `"{state}"` - "On"
-    /// - `"{remaining}/{duration}"` - "45m/60m"
-    /// - `"{state} ({remaining})"` - "On (45m)"
+    /// - `"{{ state }}"` - "On"
+    /// - `"{{ remaining }}/{{ duration }}"` - "45m/60m"
+    /// - `"{{ state }} ({{ remaining }})"` - "On (45m)"
     #[serde(rename = "format")]
-    #[default(String::from("{state}"))]
+    #[default(String::from("{{ state }}"))]
     pub format: ConfigProperty<String>,
 
     /// Display border around button.

@@ -14,19 +14,19 @@ pub struct HyprsunsetConfig {
     ///
     /// ## Placeholders
     ///
-    /// - `{status}` - Filter status text (On, Off)
-    /// - `{temp}` - Current temperature in Kelvin (shows "--" when disabled)
-    /// - `{gamma}` - Current gamma percentage (shows "--" when disabled)
-    /// - `{config_temp}` - Configured temperature (always available)
-    /// - `{config_gamma}` - Configured gamma (always available)
+    /// - `{{ status }}` - Filter status text (On, Off)
+    /// - `{{ temp }}` - Current temperature in Kelvin (shows "--" when disabled)
+    /// - `{{ gamma }}` - Current gamma percentage (shows "--" when disabled)
+    /// - `{{ config_temp }}` - Configured temperature (always available)
+    /// - `{{ config_gamma }}` - Configured gamma (always available)
     ///
     /// ## Examples
     ///
-    /// - `"{status}"` - "On"
-    /// - `"{temp}K {gamma}%"` - "4500K 80%"
-    /// - `"{status} ({temp}K)"` - "On (4500K)"
+    /// - `"{{ status }}"` - "On"
+    /// - `"{{ temp }}K {{ gamma }}%"` - "4500K 80%"
+    /// - `"{{ status }} ({{ temp }}K)"` - "On (4500K)"
     #[serde(rename = "format")]
-    #[default(String::from("{status}"))]
+    #[default(String::from("{{ status }}"))]
     pub format: ConfigProperty<String>,
 
     /// Color temperature in Kelvin when filter is enabled. Range: 1000-20000.

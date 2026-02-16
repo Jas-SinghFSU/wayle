@@ -6,7 +6,7 @@ settings-modules-ram-poll-interval-ms = Poll Interval
     .description = Polling interval in milliseconds
 
 settings-modules-ram-format = Display Format
-    .description = Format string with placeholders: {"{percent}"}, {"{used_gib}"}, {"{total_gib}"}, {"{available_gib}"}, {"{swap_percent}"}, {"{swap_used_gib}"}, {"{swap_total_gib}"}
+    .description = Format string with placeholders: {"{{ percent }}"}, {"{{ used_gib }}"}, {"{{ total_gib }}"}, {"{{ available_gib }}"}, {"{{ swap_percent }}"}, {"{{ swap_used_gib }}"}, {"{{ swap_total_gib }}"}
 
 settings-modules-ram-icon-name = Icon Name
     .description = Symbolic icon name

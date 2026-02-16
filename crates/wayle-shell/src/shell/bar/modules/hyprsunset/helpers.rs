@@ -1,5 +1,6 @@
 use std::{env, io, path::PathBuf, str};
 
+use serde_json::json;
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
     net::UnixStream,
@@ -33,12 +34,14 @@ pub(super) fn build_label(ctx: &LabelContext<'_>) -> String {
         )
     };
 
-    ctx.format
-        .replace("{status}", &status)
-        .replace("{temp}", &temp)
-        .replace("{gamma}", &gamma)
-        .replace("{config_temp}", &ctx.config_temp.to_string())
-        .replace("{config_gamma}", &ctx.config_gamma.to_string())
+    let template_ctx = json!({
+        "status": status,
+        "temp": temp,
+        "gamma": gamma,
+        "config_temp": ctx.config_temp.to_string(),
+        "config_gamma": ctx.config_gamma.to_string(),
+    });
+    wayle_common::template::render(ctx.format, template_ctx).unwrap_or_default()
 }
 
 pub(super) fn select_icon(enabled: bool, icon_off: &str, icon_on: &str) -> String {
@@ -136,34 +139,34 @@ mod tests {
     #[test]
     fn build_label_with_temp_and_gamma() {
         assert_eq!(
-            build_label(&ctx("{temp}K {gamma}%", 4500, 80, true)),
+            build_label(&ctx("{{ temp }}K {{ gamma }}%", 4500, 80, true)),
             "4500K 80%"
         );
     }
 
     #[test]
     fn build_label_temp_only() {
-        assert_eq!(build_label(&ctx("{temp}K", 5000, 100, true)), "5000K");
+        assert_eq!(build_label(&ctx("{{ temp }}K", 5000, 100, true)), "5000K");
     }
 
     #[test]
     fn build_label_with_status_enabled() {
-        assert_eq!(build_label(&ctx("{status}", 4500, 100, true)), "On");
+        assert_eq!(build_label(&ctx("{{ status }}", 4500, 100, true)), "On");
     }
 
     #[test]
     fn build_label_with_status_disabled() {
-        assert_eq!(build_label(&ctx("{status}", 4500, 100, false)), "Off");
+        assert_eq!(build_label(&ctx("{{ status }}", 4500, 100, false)), "Off");
     }
 
     #[test]
     fn build_label_temp_shows_dash_when_disabled() {
-        assert_eq!(build_label(&ctx("{temp}K", 4500, 100, false)), "--K");
+        assert_eq!(build_label(&ctx("{{ temp }}K", 4500, 100, false)), "--K");
     }
 
     #[test]
     fn build_label_gamma_shows_dash_when_disabled() {
-        assert_eq!(build_label(&ctx("{gamma}%", 4500, 80, false)), "--%");
+        assert_eq!(build_label(&ctx("{{ gamma }}%", 4500, 80, false)), "--%");
     }
 
     #[test]
@@ -179,7 +182,7 @@ mod tests {
     #[test]
     fn build_label_with_config_temp_and_gamma() {
         let ctx = LabelContext {
-            format: "{config_temp}K ({config_gamma}%)",
+            format: "{{ config_temp }}K ({{ config_gamma }}%)",
             temp: 4500,
             gamma: 80,
             config_temp: 5000,
@@ -192,7 +195,7 @@ mod tests {
     #[test]
     fn build_label_with_current_and_config() {
         let ctx = LabelContext {
-            format: "{temp}K -> {config_temp}K",
+            format: "{{ temp }}K -> {{ config_temp }}K",
             temp: 4000,
             gamma: 80,
             config_temp: 4500,

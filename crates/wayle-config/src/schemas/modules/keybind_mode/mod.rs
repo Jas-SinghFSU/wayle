@@ -14,14 +14,14 @@ pub struct KeybindModeConfig {
     ///
     /// ## Placeholders
     ///
-    /// - `{mode}` - Current keybind mode name (shows "default" when inactive)
+    /// - `{{ mode }}` - Current keybind mode name (shows "default" when inactive)
     ///
     /// ## Examples
     ///
-    /// - `"{mode}"` - "resize"
-    /// - `"Mode: {mode}"` - "Mode: resize"
-    /// - `"[{mode}]"` - "[resize]"
-    #[default(String::from("{mode}"))]
+    /// - `"{{ mode }}"` - "resize"
+    /// - `"Mode: {{ mode }}"` - "Mode: resize"
+    /// - `"[{{ mode }}]"` - "[resize]"
+    #[default(String::from("{{ mode }}"))]
     pub format: ConfigProperty<String>,
 
     /// Symbolic icon name.

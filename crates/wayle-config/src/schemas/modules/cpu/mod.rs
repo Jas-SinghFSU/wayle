@@ -28,20 +28,20 @@ pub struct CpuConfig {
     ///
     /// ## Placeholders
     ///
-    /// - `{percent}` - CPU usage (0-100)
-    /// - `{freq_ghz}` - Frequency of the busiest core (highest usage)
-    /// - `{avg_freq_ghz}` - Average frequency across cores
-    /// - `{max_freq_ghz}` - Maximum frequency among cores
-    /// - `{temp_c}` - Temperature in Celsius (if available)
-    /// - `{temp_f}` - Temperature in Fahrenheit (if available)
+    /// - `{{ percent }}` - CPU usage (0-100)
+    /// - `{{ freq_ghz }}` - Frequency of the busiest core (highest usage)
+    /// - `{{ avg_freq_ghz }}` - Average frequency across cores
+    /// - `{{ max_freq_ghz }}` - Maximum frequency among cores
+    /// - `{{ temp_c }}` - Temperature in Celsius (if available)
+    /// - `{{ temp_f }}` - Temperature in Fahrenheit (if available)
     ///
     /// ## Examples
     ///
-    /// - `"{percent}%"` - "45%"
-    /// - `"{percent}% @ {freq_ghz}GHz"` - "45% @ 3.2GHz"
-    /// - `"{percent}% {temp_c}C"` - "45% 62C"
+    /// - `"{{ percent }}%"` - "45%"
+    /// - `"{{ percent }}% @ {{ freq_ghz }}GHz"` - "45% @ 3.2GHz"
+    /// - `"{{ percent }}% {{ temp_c }}C"` - "45% 62C"
     #[serde(rename = "format")]
-    #[default(String::from("{percent}%"))]
+    #[default(String::from("{{ percent }}%"))]
     pub format: ConfigProperty<String>,
 
     /// Icon name.

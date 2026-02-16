@@ -15,7 +15,7 @@ settings-modules-media-player-priority = Player Priority
     .description = Preferred player order as glob patterns matching bus names
 
 settings-modules-media-format = Format
-    .description = Label format with placeholders: {"{title}"}, {"{artist}"}, {"{album}"}, {"{status}"}, {"{status_icon}"}
+    .description = Label format with placeholders: {"{{ title }}"}, {"{{ artist }}"}, {"{{ album }}"}, {"{{ status }}"}, {"{{ status_icon }}"}
 
 settings-modules-media-icon-name = Icon Name
     .description = Symbolic icon name for default mode

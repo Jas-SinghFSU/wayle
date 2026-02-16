@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use gtk::{gio::prelude::AppInfoExt, glib::prelude::Cast as _, prelude::IconExt};
 use relm4::gtk;
+use serde_json::json;
 use wayle_common::glob;
 use wayle_config::schemas::modules::{BUILTIN_MAPPINGS, MediaConfig, MediaIconType};
 use wayle_media::{core::player::Player, types::PlaybackState};
@@ -34,12 +35,14 @@ pub(crate) fn format_label(ctx: &FormatContext<'_>) -> String {
         PlaybackState::Stopped => STOP_ICON,
     };
 
-    ctx.format
-        .replace("{title}", ctx.title)
-        .replace("{artist}", ctx.artist)
-        .replace("{album}", ctx.album)
-        .replace("{status}", &status_text)
-        .replace("{status_icon}", status_icon)
+    let template_ctx = json!({
+        "title": ctx.title,
+        "artist": ctx.artist,
+        "album": ctx.album,
+        "status": status_text,
+        "status_icon": status_icon,
+    });
+    wayle_common::template::render(ctx.format, template_ctx).unwrap_or_default()
 }
 
 pub(crate) struct IconContext<'a> {
@@ -174,7 +177,7 @@ mod tests {
     #[test]
     fn format_label_basic_placeholders() {
         let result = format_label(&FormatContext {
-            format: "{title} - {artist}",
+            format: "{{ title }} - {{ artist }}",
             title: "Song Name",
             artist: "Artist Name",
             album: "Album Name",
@@ -187,7 +190,7 @@ mod tests {
     #[test]
     fn format_label_all_placeholders() {
         let result = format_label(&FormatContext {
-            format: "{status_icon} {title} by {artist} from {album} ({status})",
+            format: "{{ status_icon }} {{ title }} by {{ artist }} from {{ album }} ({{ status }})",
             title: "Track",
             artist: "Band",
             album: "Record",
@@ -204,7 +207,7 @@ mod tests {
     #[test]
     fn format_label_paused_state() {
         let result = format_label(&FormatContext {
-            format: "{status_icon} {status}",
+            format: "{{ status_icon }} {{ status }}",
             title: "",
             artist: "",
             album: "",
@@ -218,7 +221,7 @@ mod tests {
     #[test]
     fn format_label_stopped_state() {
         let result = format_label(&FormatContext {
-            format: "{status}",
+            format: "{{ status }}",
             title: "",
             artist: "",
             album: "",

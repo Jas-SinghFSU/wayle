@@ -12,7 +12,7 @@ settings-modules-idle-inhibit-icon-active = Active Icon
     .description = Icon when idle inhibitor is on
 
 settings-modules-idle-inhibit-format = Format
-    .description = Format string using placeholders: {state}, {remaining}, {duration}
+    .description = Format string using placeholders: {"{{ state }}"}, {"{{ remaining }}"}, {"{{ duration }}"}
 
 settings-modules-idle-inhibit-border-show = Show Border
     .description = Display border around button

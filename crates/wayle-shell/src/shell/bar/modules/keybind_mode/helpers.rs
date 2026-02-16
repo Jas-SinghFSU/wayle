@@ -1,3 +1,5 @@
+use serde_json::json;
+
 use crate::i18n::t;
 
 pub(super) fn format_label(format: &str, mode: &str) -> String {
@@ -6,7 +8,8 @@ pub(super) fn format_label(format: &str, mode: &str) -> String {
     } else {
         mode.to_string()
     };
-    format.replace("{mode}", &display_mode)
+    let ctx = json!({ "mode": display_mode });
+    wayle_common::template::render(format, ctx).unwrap_or_default()
 }
 
 pub(super) fn compute_visibility(mode: &str, auto_hide: bool) -> bool {
@@ -22,17 +25,20 @@ mod tests {
 
         #[test]
         fn placeholder_only() {
-            assert_eq!(format_label("{mode}", "resize"), "resize");
+            assert_eq!(format_label("{{ mode }}", "resize"), "resize");
         }
 
         #[test]
         fn with_prefix() {
-            assert_eq!(format_label("Mode: {mode}", "resize"), "Mode: resize");
+            assert_eq!(format_label("Mode: {{ mode }}", "resize"), "Mode: resize");
         }
 
         #[test]
         fn empty_mode_shows_default() {
-            assert_eq!(format_label("{mode}", ""), t!("bar-keybind-mode-default"));
+            assert_eq!(
+                format_label("{{ mode }}", ""),
+                t!("bar-keybind-mode-default")
+            );
         }
 
         #[test]

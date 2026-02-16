@@ -3,7 +3,7 @@
 ## Keyboard Input Module Configuration
 
 settings-modules-keyboard-input-format = Label Format
-    .description = Format string with placeholders: {"{layout}"}
+    .description = Format string with placeholders: {"{{ layout }}"}
 
 settings-modules-keyboard-input-icon-name = Icon Name
     .description = Symbolic icon name

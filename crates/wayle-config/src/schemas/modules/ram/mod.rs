@@ -21,24 +21,24 @@ pub struct RamConfig {
     ///
     /// ## Memory Placeholders
     ///
-    /// - `{percent}` - Memory usage as integer (0-100)
-    /// - `{used_gib}` - Used memory in GiB (e.g., "7.2")
-    /// - `{total_gib}` - Total memory in GiB (e.g., "16.0")
-    /// - `{available_gib}` - Available memory in GiB (e.g., "8.8")
+    /// - `{{ percent }}` - Memory usage as integer (0-100)
+    /// - `{{ used_gib }}` - Used memory in GiB (e.g., "7.2")
+    /// - `{{ total_gib }}` - Total memory in GiB (e.g., "16.0")
+    /// - `{{ available_gib }}` - Available memory in GiB (e.g., "8.8")
     ///
     /// ## Swap Placeholders
     ///
-    /// - `{swap_percent}` - Swap usage as integer (0-100)
-    /// - `{swap_used_gib}` - Used swap in GiB
-    /// - `{swap_total_gib}` - Total swap in GiB
+    /// - `{{ swap_percent }}` - Swap usage as integer (0-100)
+    /// - `{{ swap_used_gib }}` - Used swap in GiB
+    /// - `{{ swap_total_gib }}` - Total swap in GiB
     ///
     /// ## Examples
     ///
-    /// - `"{percent}%"` - "45%"
-    /// - `"{used_gib}/{total_gib} GiB"` - "7.2/16.0 GiB"
-    /// - `"{percent}% (Swap: {swap_percent}%)"` - "45% (Swap: 12%)"
+    /// - `"{{ percent }}%"` - "45%"
+    /// - `"{{ used_gib }}/{{ total_gib }} GiB"` - "7.2/16.0 GiB"
+    /// - `"{{ percent }}% (Swap: {{ swap_percent }}%)"` - "45% (Swap: 12%)"
     #[serde(rename = "format")]
-    #[default(String::from("{percent}%"))]
+    #[default(String::from("{{ percent }}%"))]
     pub format: ConfigProperty<String>,
 
     /// Icon name.

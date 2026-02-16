@@ -14,15 +14,15 @@ pub struct WorldClockConfig {
     ///
     /// ## Syntax
     ///
-    /// Use `{timezone strftime}` syntax to insert formatted times.
-    /// Text outside braces is preserved as literal text.
+    /// Use `{{ tz('timezone', 'strftime') }}` syntax to insert formatted times.
+    /// Text outside placeholders is preserved as literal text.
     ///
     /// ## Examples
     ///
-    /// - `"{UTC %H:%M %Z}"` - "14:30 UTC"
-    /// - `"NYC {America/New_York %H:%M}  TYO {Asia/Tokyo %H:%M}"` - "NYC 09:30  TYO 23:30"
-    /// - `"{America/New_York %H:%M %Z} | {Europe/London %H:%M %Z}"` - "09:30 EST | 14:30 GMT"
-    #[default(String::from("{UTC %H:%M %Z}"))]
+    /// - `"{{ tz('UTC', '%H:%M %Z') }}"` - "14:30 UTC"
+    /// - `"NYC {{ tz('America/New_York', '%H:%M') }}  TYO {{ tz('Asia/Tokyo', '%H:%M') }}"` - "NYC 09:30  TYO 23:30"
+    /// - `"{{ tz('America/New_York', '%H:%M %Z') }} | {{ tz('Europe/London', '%H:%M %Z') }}"` - "09:30 EST | 14:30 GMT"
+    #[default(String::from("{{ tz('UTC', '%H:%M %Z') }}"))]
     pub format: ConfigProperty<String>,
 
     /// Symbolic icon name.
