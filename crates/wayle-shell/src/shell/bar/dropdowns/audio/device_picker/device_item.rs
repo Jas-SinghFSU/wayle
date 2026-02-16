@@ -10,16 +10,11 @@ pub(super) struct DeviceOptionItem {
     is_active: bool,
 }
 
-#[derive(Debug)]
-pub(super) enum DeviceOptionOutput {
-    Selected(usize),
-}
-
 #[relm4::factory(pub(super))]
 impl FactoryComponent for DeviceOptionItem {
     type Init = DeviceInfo;
     type Input = ();
-    type Output = DeviceOptionOutput;
+    type Output = ();
     type CommandOutput = ();
     type ParentWidget = gtk::ListBox;
 
@@ -28,6 +23,7 @@ impl FactoryComponent for DeviceOptionItem {
         gtk::ListBoxRow {
             add_css_class: "audio-device-option",
             set_activatable: true,
+            set_cursor_from_name: Some("pointer"),
             #[watch]
             set_css_classes: if self.is_active {
                 &["audio-device-option", "selected"]
@@ -78,10 +74,6 @@ impl FactoryComponent for DeviceOptionItem {
                     #[watch]
                     set_visible: self.is_active,
                 },
-            },
-
-            connect_activate[sender, index] => move |_| {
-                let _ = sender.output(DeviceOptionOutput::Selected(index.current_index()));
             },
         }
     }

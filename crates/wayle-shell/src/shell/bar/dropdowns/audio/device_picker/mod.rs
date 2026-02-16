@@ -5,7 +5,7 @@ use gtk::prelude::*;
 use relm4::{factory::FactoryVecDeque, gtk, prelude::*};
 use wayle_widgets::prelude::GhostIconButton;
 
-use self::device_item::{DeviceOptionItem, DeviceOptionOutput};
+use self::device_item::DeviceOptionItem;
 pub(super) use self::messages::*;
 
 pub(crate) struct DevicePicker {
@@ -49,6 +49,7 @@ impl SimpleComponent for DevicePicker {
                 #[local_ref]
                 device_list -> gtk::ListBox {
                     add_css_class: "audio-device-list",
+                    set_activate_on_single_click: true,
                     set_selection_mode: gtk::SelectionMode::None,
                 },
             },
@@ -60,11 +61,15 @@ impl SimpleComponent for DevicePicker {
         _root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let devices = FactoryVecDeque::builder()
-            .launch(gtk::ListBox::new())
-            .forward(sender.input_sender(), |output| match output {
-                DeviceOptionOutput::Selected(index) => DevicePickerInput::DeviceSelected(index),
-            });
+        let device_list = gtk::ListBox::new();
+        let picker_sender = sender.input_sender().clone();
+        device_list.connect_row_activated(move |_list_box, row| {
+            if let Ok(index) = usize::try_from(row.index()) {
+                picker_sender.emit(DevicePickerInput::DeviceSelected(index));
+            }
+        });
+
+        let devices = FactoryVecDeque::builder().launch(device_list).detach();
 
         let model = Self {
             title: init.title,
