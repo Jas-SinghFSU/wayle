@@ -1,0 +1,26 @@
+.device-trigger {
+    padding: var(--space-xs) 0;
+    color: var(--fg-muted);
+    transition: color var(--duration-fast);
+
+    .device-trigger-icon {
+        -gtk-icon-size: var(--icon-md);
+        color: var(--fg-subtle);
+    }
+
+    .device-trigger-name {
+        font-size: var(--text-base);
+        font-weight: var(--weight-semibold);
+        margin-left: var(--space-xs);
+        margin-right: var(--space-xs);
+    }
+
+    .device-trigger-chevron {
+        -gtk-icon-size: var(--icon-md);
+        color: var(--fg-subtle);
+    }
+
+    &:hover {
+        color: var(--fg-default);
+    }
+}

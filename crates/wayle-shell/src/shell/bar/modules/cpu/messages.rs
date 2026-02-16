@@ -1,13 +1,16 @@
-use std::sync::Arc;
+use std::{rc::Rc, sync::Arc};
 
 use wayle_config::ConfigService;
 use wayle_sysinfo::SysinfoService;
 use wayle_widgets::prelude::BarSettings;
 
+use crate::shell::bar::dropdowns::DropdownRegistry;
+
 pub(crate) struct CpuInit {
     pub settings: BarSettings,
     pub sysinfo: Arc<SysinfoService>,
     pub config: Arc<ConfigService>,
+    pub dropdowns: Rc<DropdownRegistry>,
 }
 
 #[derive(Debug)]

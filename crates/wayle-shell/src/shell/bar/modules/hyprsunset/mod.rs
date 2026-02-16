@@ -3,12 +3,12 @@ mod helpers;
 mod messages;
 mod watchers;
 
-use std::sync::Arc;
+use std::{rc::Rc, sync::Arc};
 
 use gtk::prelude::*;
 use relm4::prelude::*;
 use tracing::debug;
-use wayle_common::{ConfigProperty, process};
+use wayle_common::{ConfigProperty, process::ClickAction};
 use wayle_config::{ConfigService, schemas::styling::CssToken};
 use wayle_widgets::prelude::{
     BarButton, BarButtonBehavior, BarButtonColors, BarButtonInit, BarButtonInput, BarButtonOutput,
@@ -19,6 +19,7 @@ pub(crate) use self::{
     factory::Factory,
     messages::{HyprsunsetCmd, HyprsunsetInit, HyprsunsetMsg},
 };
+use crate::shell::bar::dropdowns::{self, DropdownRegistry};
 
 pub(crate) struct HyprsunsetModule {
     bar_button: Controller<BarButton>,
@@ -26,6 +27,7 @@ pub(crate) struct HyprsunsetModule {
     enabled: bool,
     current_temp: u32,
     current_gamma: u32,
+    dropdowns: Rc<DropdownRegistry>,
 }
 
 #[relm4::component(pub(crate))]
@@ -91,6 +93,7 @@ impl Component for HyprsunsetModule {
             enabled: false,
             current_temp: config.temperature.get(),
             current_gamma: config.gamma.get(),
+            dropdowns: init.dropdowns,
         };
         let bar_button = model.bar_button.widget();
         let widgets = view_output!();
@@ -101,20 +104,22 @@ impl Component for HyprsunsetModule {
     fn update(&mut self, msg: Self::Input, sender: ComponentSender<Self>, _root: &Self::Root) {
         let config = &self.config.config().modules.hyprsunset;
 
-        match msg {
+        let action = match msg {
             HyprsunsetMsg::LeftClick => {
                 let action = config.left_click.get();
-                if action == ":toggle" {
+                if matches!(&action, ClickAction::Shell(s) if s == ":toggle") {
                     self.toggle_filter(&sender, config);
-                } else {
-                    process::run_if_set(&action);
+                    return;
                 }
+                action
             }
-            HyprsunsetMsg::RightClick => process::run_if_set(&config.right_click.get()),
-            HyprsunsetMsg::MiddleClick => process::run_if_set(&config.middle_click.get()),
-            HyprsunsetMsg::ScrollUp => process::run_if_set(&config.scroll_up.get()),
-            HyprsunsetMsg::ScrollDown => process::run_if_set(&config.scroll_down.get()),
-        }
+            HyprsunsetMsg::RightClick => config.right_click.get(),
+            HyprsunsetMsg::MiddleClick => config.middle_click.get(),
+            HyprsunsetMsg::ScrollUp => config.scroll_up.get(),
+            HyprsunsetMsg::ScrollDown => config.scroll_down.get(),
+        };
+
+        dropdowns::dispatch_click(&action, &self.dropdowns, &self.bar_button);
     }
 
     fn update_cmd(

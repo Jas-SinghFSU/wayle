@@ -52,7 +52,7 @@ pub use ram::RamConfig;
 pub use separator::SeparatorConfig;
 pub use storage::StorageConfig;
 pub use systray::{SystrayConfig, TrayItemOverride};
-pub use volume::VolumeConfig;
+pub use volume::{AppIconSource, VolumeConfig};
 use wayle_common::ConfigProperty;
 use wayle_derive::wayle_config;
 pub use weather::{TemperatureUnit, WeatherConfig, WeatherProvider};

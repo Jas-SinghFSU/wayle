@@ -18,33 +18,38 @@ const READY_TIMEOUT: Duration = Duration::from_secs(5);
 /// installed. Polls until the daemon is accepting commands, then signals
 /// readiness via [`super::DAEMON_READY`].
 pub fn spawn_daemon_if_needed() {
-    thread::spawn(|| {
-        let daemon = super::daemon_binary();
+    thread::spawn(ensure_daemon_ready);
+}
 
-        match is_daemon_running() {
-            Ok(true) => {
-                debug!("{daemon} already running");
-                super::DAEMON_READY.notify_one();
-                return;
-            }
-            Ok(false) => {
-                info!("Starting {daemon}");
-                if let Err(e) = start_daemon() {
-                    warn!(error = %e, "cannot start {daemon}");
-                    super::DAEMON_READY.notify_one();
-                    return;
-                }
-            }
-            Err(e) => {
-                warn!(error = %e, "cannot check {daemon} status");
-                super::DAEMON_READY.notify_one();
-                return;
-            }
-        }
+fn ensure_daemon_ready() {
+    let daemon = super::daemon_binary();
 
+    if should_wait_for_ready(daemon) {
         wait_until_ready(daemon);
-        super::DAEMON_READY.notify_one();
-    });
+    }
+
+    super::DAEMON_READY.notify_one();
+}
+
+fn should_wait_for_ready(daemon: &str) -> bool {
+    match is_daemon_running() {
+        Ok(true) => {
+            debug!("{daemon} already running");
+            false
+        }
+        Ok(false) => {
+            info!("Starting {daemon}");
+            if let Err(error) = start_daemon() {
+                warn!(error = %error, "cannot start {daemon}");
+                return false;
+            }
+            true
+        }
+        Err(error) => {
+            warn!(error = %error, "cannot check {daemon} status");
+            false
+        }
+    }
 }
 
 fn wait_until_ready(daemon: &str) {
@@ -53,12 +58,9 @@ fn wait_until_ready(daemon: &str) {
     while start.elapsed() < READY_TIMEOUT {
         thread::sleep(READY_POLL_INTERVAL);
 
-        match is_daemon_running() {
-            Ok(true) => {
-                debug!(elapsed_ms = start.elapsed().as_millis(), "{daemon} ready");
-                return;
-            }
-            Ok(false) | Err(_) => {}
+        if let Ok(true) = is_daemon_running() {
+            debug!(elapsed_ms = start.elapsed().as_millis(), "{daemon} ready");
+            return;
         }
     }
 

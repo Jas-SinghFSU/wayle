@@ -1,12 +1,17 @@
 //! Bar item factory for creating modules and groups.
 
+use std::rc::Rc;
+
 use gtk::prelude::*;
 use relm4::prelude::*;
 use wayle_config::schemas::bar::BarItem;
 use wayle_widgets::prelude::BarSettings;
 
 use crate::shell::{
-    bar::modules::{ModuleInstance, create_module},
+    bar::{
+        dropdowns::DropdownRegistry,
+        modules::{ModuleInstance, create_module},
+    },
     services::ShellServices,
 };
 
@@ -14,6 +19,7 @@ pub(crate) struct BarItemFactoryInit {
     pub(crate) item: BarItem,
     pub(crate) settings: BarSettings,
     pub(crate) services: ShellServices,
+    pub(crate) dropdowns: Rc<DropdownRegistry>,
 }
 
 pub(crate) struct BarItemFactory {
@@ -21,6 +27,8 @@ pub(crate) struct BarItemFactory {
     settings: BarSettings,
     #[allow(dead_code)]
     services: ShellServices,
+    #[allow(dead_code)]
+    dropdowns: Rc<DropdownRegistry>,
     modules: Vec<ModuleInstance>,
 }
 
@@ -41,13 +49,15 @@ impl FactoryComponent for BarItemFactory {
 
     fn init_model(init: Self::Init, _index: &DynamicIndex, _sender: FactorySender<Self>) -> Self {
         let modules = match &init.item {
-            BarItem::Module(module) => create_module(module, &init.settings, &init.services)
-                .into_iter()
-                .collect(),
+            BarItem::Module(module) => {
+                create_module(module, &init.settings, &init.services, &init.dropdowns)
+                    .into_iter()
+                    .collect()
+            }
             BarItem::Group(group) => group
                 .modules
                 .iter()
-                .filter_map(|m| create_module(m, &init.settings, &init.services))
+                .filter_map(|m| create_module(m, &init.settings, &init.services, &init.dropdowns))
                 .collect(),
         };
 
@@ -55,6 +65,7 @@ impl FactoryComponent for BarItemFactory {
             item: init.item,
             settings: init.settings,
             services: init.services,
+            dropdowns: init.dropdowns,
             modules,
         }
     }

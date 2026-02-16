@@ -1,11 +1,11 @@
 mod watchers;
 
-use std::sync::Arc;
+use std::{rc::Rc, sync::Arc};
 
 use gtk::prelude::*;
 use relm4::prelude::*;
 use tracing::warn;
-use wayle_common::{ConfigProperty, process};
+use wayle_common::ConfigProperty;
 use wayle_config::{ConfigService, schemas::styling::CssToken};
 use wayle_hyprland::HyprlandService;
 use wayle_widgets::{
@@ -20,11 +20,13 @@ use super::{
     helpers,
     messages::{KeyboardInputCmd, KeyboardInputInit, KeyboardInputMsg},
 };
+use crate::shell::bar::dropdowns::{self, DropdownRegistry};
 
 pub(crate) struct HyprlandKeyboardInput {
     bar_button: Controller<BarButton>,
     config: Arc<ConfigService>,
     current_layout: String,
+    dropdowns: Rc<DropdownRegistry>,
 }
 
 #[relm4::component(pub(crate))]
@@ -90,6 +92,7 @@ impl Component for HyprlandKeyboardInput {
             bar_button,
             config: init.config,
             current_layout: initial_layout,
+            dropdowns: init.dropdowns,
         };
         let bar_button = model.bar_button.widget();
         let widgets = view_output!();
@@ -100,7 +103,7 @@ impl Component for HyprlandKeyboardInput {
     fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, _root: &Self::Root) {
         let keyboard_input = &self.config.config().modules.keyboard_input;
 
-        let cmd = match msg {
+        let action = match msg {
             KeyboardInputMsg::LeftClick => keyboard_input.left_click.get(),
             KeyboardInputMsg::RightClick => keyboard_input.right_click.get(),
             KeyboardInputMsg::MiddleClick => keyboard_input.middle_click.get(),
@@ -108,7 +111,7 @@ impl Component for HyprlandKeyboardInput {
             KeyboardInputMsg::ScrollDown => keyboard_input.scroll_down.get(),
         };
 
-        process::run_if_set(&cmd);
+        dropdowns::dispatch_click(&action, &self.dropdowns, &self.bar_button);
     }
 
     fn update_cmd(

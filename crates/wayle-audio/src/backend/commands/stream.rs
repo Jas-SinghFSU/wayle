@@ -121,7 +121,7 @@ pub(crate) fn set_stream_volume(
     };
 
     if let Some(info) = stream_info {
-        match info.stream_type() {
+        match info.stream_type {
             StreamType::Playback => {
                 introspect.set_sink_input_volume(stream_key.index, &volume, None);
             }
@@ -150,7 +150,7 @@ pub(crate) fn set_stream_mute(
     };
 
     if let Some(info) = stream_info {
-        match info.stream_type() {
+        match info.stream_type {
             StreamType::Playback => {
                 introspect.set_sink_input_mute(stream_key.index, muted, None);
             }
@@ -179,7 +179,7 @@ pub(crate) fn move_stream(
     };
 
     if let Some(info) = stream_info {
-        match info.stream_type() {
+        match info.stream_type {
             StreamType::Playback => {
                 introspect.move_sink_input_by_index(stream_key.index, device_key.index, None);
             }

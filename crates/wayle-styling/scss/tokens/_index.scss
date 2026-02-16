@@ -177,10 +177,18 @@ $base-btn-gap: 0.5rem;
     --bar-btn-border: none;
 
     // Bar button sizing (bar-scale * individual fine-tuning)
-    --bar-btn-icon-size: calc(#{$base-btn-icon-size} * var(--bar-scale) * var(--bar-btn-icon-scale));
-    --bar-btn-icon-padding: calc(#{$base-btn-padding} * var(--bar-scale) * var(--bar-btn-icon-padding-scale));
-    --bar-btn-label-size: calc(#{$base-btn-label-size} * var(--bar-scale) * var(--bar-btn-label-scale));
-    --bar-btn-label-padding: calc(#{$base-btn-padding} * var(--bar-scale) * var(--bar-btn-label-padding-scale));
+    --bar-btn-icon-size: calc(
+        #{$base-btn-icon-size} * var(--bar-scale) * var(--bar-btn-icon-scale)
+    );
+    --bar-btn-icon-padding: calc(
+        #{$base-btn-padding} * var(--bar-scale) * var(--bar-btn-icon-padding-scale)
+    );
+    --bar-btn-label-size: calc(
+        #{$base-btn-label-size} * var(--bar-scale) * var(--bar-btn-label-scale)
+    );
+    --bar-btn-label-padding: calc(
+        #{$base-btn-padding} * var(--bar-scale) * var(--bar-btn-label-padding-scale)
+    );
     --bar-btn-gap: calc(#{$base-btn-gap} * var(--bar-scale) * var(--bar-btn-gap-scale));
 
     // Bar-specific spacing (bar scale)

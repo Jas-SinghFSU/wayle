@@ -241,13 +241,9 @@ mod tests {
     fn create_test_stream(index: u32, stream_type: StreamType) -> Arc<AudioStream> {
         let (command_tx, _): (CommandSender, _) = mpsc::unbounded_channel();
 
-        let mut properties = HashMap::new();
-        if stream_type == StreamType::Record {
-            properties.insert(String::from("media.role"), String::from("source-output"));
-        }
-
         let stream_info = StreamInfo {
             index,
+            stream_type,
             name: format!("test-stream-{}", index),
             application_name: None,
             binary: None,
@@ -270,7 +266,7 @@ mod tests {
                 channels: 2,
                 positions: vec![],
             },
-            properties,
+            properties: HashMap::new(),
             media: MediaInfo {
                 title: None,
                 artist: None,

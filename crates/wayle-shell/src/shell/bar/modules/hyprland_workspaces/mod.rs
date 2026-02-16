@@ -2,7 +2,6 @@ mod button;
 mod factory;
 mod filtering;
 mod helpers;
-mod icons;
 mod messages;
 mod styling;
 mod watchers;

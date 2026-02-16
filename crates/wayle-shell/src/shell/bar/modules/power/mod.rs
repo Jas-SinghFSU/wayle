@@ -2,11 +2,11 @@ mod factory;
 mod messages;
 mod watchers;
 
-use std::sync::Arc;
+use std::{rc::Rc, sync::Arc};
 
 use gtk::prelude::*;
 use relm4::prelude::*;
-use wayle_common::{ConfigProperty, process};
+use wayle_common::ConfigProperty;
 use wayle_config::{ConfigService, schemas::styling::CssToken};
 use wayle_widgets::prelude::{
     BarButton, BarButtonBehavior, BarButtonColors, BarButtonInit, BarButtonInput, BarButtonOutput,
@@ -17,10 +17,12 @@ pub(crate) use self::{
     factory::Factory,
     messages::{PowerCmd, PowerInit, PowerMsg},
 };
+use crate::shell::bar::dropdowns::{self, DropdownRegistry};
 
 pub(crate) struct PowerModule {
     bar_button: Controller<BarButton>,
     config: Arc<ConfigService>,
+    dropdowns: Rc<DropdownRegistry>,
 }
 
 #[relm4::component(pub(crate))]
@@ -84,6 +86,7 @@ impl Component for PowerModule {
         let model = Self {
             bar_button,
             config: init.config,
+            dropdowns: init.dropdowns,
         };
         let bar_button = model.bar_button.widget();
         let widgets = view_output!();
@@ -94,15 +97,15 @@ impl Component for PowerModule {
     fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, _root: &Self::Root) {
         let power = &self.config.config().modules.power;
 
-        let cmd = match msg {
-            PowerMsg::LeftClick => String::new(),
+        let action = match msg {
+            PowerMsg::LeftClick => power.left_click.get(),
             PowerMsg::RightClick => power.right_click.get(),
             PowerMsg::MiddleClick => power.middle_click.get(),
             PowerMsg::ScrollUp => power.scroll_up.get(),
             PowerMsg::ScrollDown => power.scroll_down.get(),
         };
 
-        process::run_if_set(&cmd);
+        dropdowns::dispatch_click(&action, &self.dropdowns, &self.bar_button);
     }
 
     fn update_cmd(&mut self, msg: PowerCmd, _sender: ComponentSender<Self>, _root: &Self::Root) {

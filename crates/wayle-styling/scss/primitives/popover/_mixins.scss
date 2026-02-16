@@ -34,12 +34,12 @@
     margin-left: calc(var(--space-sm) + var(--space-xs));
     margin-right: var(--space-sm);
     background: var(--accent-subtle);
-    padding: var(--space-sm);
     border-radius: var(--rounding-element);
 
     image {
         -gtk-icon-size: var(--icon-md);
         color: var(--accent);
+        margin: var(--space-sm);
     }
 }
 

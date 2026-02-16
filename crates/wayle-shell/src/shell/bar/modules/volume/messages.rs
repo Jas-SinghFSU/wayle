@@ -1,13 +1,16 @@
-use std::sync::Arc;
+use std::{rc::Rc, sync::Arc};
 
 use wayle_audio::{AudioService, core::device::output::OutputDevice};
 use wayle_config::ConfigService;
 use wayle_widgets::prelude::BarSettings;
 
+use crate::shell::bar::dropdowns::DropdownRegistry;
+
 pub(crate) struct VolumeInit {
     pub settings: BarSettings,
     pub audio: Arc<AudioService>,
     pub config: Arc<ConfigService>,
+    pub dropdowns: Rc<DropdownRegistry>,
 }
 
 #[derive(Debug)]

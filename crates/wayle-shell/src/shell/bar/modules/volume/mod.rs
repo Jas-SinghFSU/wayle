@@ -3,12 +3,12 @@ mod helpers;
 mod messages;
 mod watchers;
 
-use std::sync::Arc;
+use std::{rc::Rc, sync::Arc};
 
 use gtk::prelude::*;
 use relm4::prelude::*;
 use wayle_audio::{AudioService, core::device::output::OutputDevice};
-use wayle_common::{ConfigProperty, WatcherToken, process};
+use wayle_common::{ConfigProperty, WatcherToken};
 use wayle_config::{
     ConfigService,
     schemas::{modules::VolumeConfig, styling::CssToken},
@@ -22,12 +22,14 @@ pub(crate) use self::{
     factory::Factory,
     messages::{VolumeCmd, VolumeInit, VolumeMsg},
 };
+use crate::shell::bar::dropdowns::{self, DropdownRegistry};
 
 pub(crate) struct VolumeModule {
     bar_button: Controller<BarButton>,
     config: Arc<ConfigService>,
     active_device_watcher_token: WatcherToken,
     audio: Arc<AudioService>,
+    dropdowns: Rc<DropdownRegistry>,
 }
 
 #[relm4::component(pub(crate))]
@@ -97,6 +99,7 @@ impl Component for VolumeModule {
             config: init.config,
             active_device_watcher_token: WatcherToken::new(),
             audio: init.audio,
+            dropdowns: init.dropdowns,
         };
         let bar_button = model.bar_button.widget();
         let widgets = view_output!();
@@ -107,7 +110,7 @@ impl Component for VolumeModule {
     fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, _root: &Self::Root) {
         let volume_config = &self.config.config().modules.volume;
 
-        let cmd = match msg {
+        let action = match msg {
             VolumeMsg::LeftClick => volume_config.left_click.get(),
             VolumeMsg::RightClick => volume_config.right_click.get(),
             VolumeMsg::MiddleClick => volume_config.middle_click.get(),
@@ -115,7 +118,7 @@ impl Component for VolumeModule {
             VolumeMsg::ScrollDown => volume_config.scroll_down.get(),
         };
 
-        process::run_if_set(&cmd);
+        dropdowns::dispatch_click(&action, &self.dropdowns, &self.bar_button);
     }
 
     fn update_cmd(&mut self, msg: VolumeCmd, sender: ComponentSender<Self>, _root: &Self::Root) {

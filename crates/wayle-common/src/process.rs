@@ -83,15 +83,75 @@ pub fn spawn_shell_sync_quiet(cmd: &str) -> io::Result<StdChild> {
         .spawn()
 }
 
-/// Runs a config-defined shell command if non-empty.
-///
-/// Logs an error if spawning fails. Does nothing if `cmd` is empty.
+/// Runs a shell command if non-empty, logging failures.
 pub fn run_if_set(cmd: &str) {
     if cmd.is_empty() {
         return;
     }
 
     if let Err(e) = spawn_shell_quiet(cmd) {
-        tracing::error!(error = %e, cmd = %cmd, "failed to spawn command");
+        tracing::error!(error = %e, cmd = %cmd, "cannot spawn command");
+    }
+}
+
+/// Action to perform on a bar module click or scroll event.
+///
+/// Serializes to/from a string for TOML config compatibility:
+/// - `""` -> `None`
+/// - `"dropdown:audio"` -> `Dropdown("audio")`
+/// - `"pavucontrol"` -> `Shell("pavucontrol")`
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ClickAction {
+    /// Open a named dropdown panel.
+    Dropdown(String),
+    /// Execute a shell command.
+    Shell(String),
+    /// No action configured.
+    None,
+}
+
+impl Default for ClickAction {
+    fn default() -> Self {
+        Self::None
+    }
+}
+
+impl ClickAction {
+    fn from_str(s: &str) -> Self {
+        if s.is_empty() {
+            return Self::None;
+        }
+        match s.strip_prefix("dropdown:") {
+            Some(name) => Self::Dropdown(name.to_owned()),
+            None => Self::Shell(s.to_owned()),
+        }
+    }
+}
+
+impl serde::Serialize for ClickAction {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        match self {
+            Self::Dropdown(name) => serializer.serialize_str(&format!("dropdown:{name}")),
+            Self::Shell(cmd) => serializer.serialize_str(cmd),
+            Self::None => serializer.serialize_str(""),
+        }
+    }
+}
+
+impl<'de> serde::Deserialize<'de> for ClickAction {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let s = String::deserialize(deserializer)?;
+        Ok(Self::from_str(&s))
+    }
+}
+
+#[cfg(feature = "schema")]
+impl schemars::JsonSchema for ClickAction {
+    fn schema_name() -> std::borrow::Cow<'static, str> {
+        std::borrow::Cow::Borrowed("ClickAction")
+    }
+
+    fn json_schema(generator: &mut schemars::SchemaGenerator) -> schemars::Schema {
+        String::json_schema(generator)
     }
 }

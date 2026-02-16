@@ -1,9 +1,14 @@
+use std::rc::Rc;
+
 use relm4::prelude::*;
 use wayle_widgets::prelude::BarSettings;
 
 use super::{SystrayInit, SystrayModule};
 use crate::shell::{
-    bar::modules::registry::{ModuleFactory, ModuleInstance, dynamic_controller, require_service},
+    bar::{
+        dropdowns::DropdownRegistry,
+        modules::registry::{ModuleFactory, ModuleInstance, dynamic_controller, require_service},
+    },
     services::ShellServices,
 };
 
@@ -13,6 +18,7 @@ impl ModuleFactory for Factory {
     fn create(
         settings: &BarSettings,
         services: &ShellServices,
+        _dropdowns: &Rc<DropdownRegistry>,
         class: Option<String>,
     ) -> Option<ModuleInstance> {
         let systray = require_service("systray", "systray", services.systray.clone())?;

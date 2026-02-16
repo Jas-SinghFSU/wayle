@@ -27,12 +27,14 @@ mod weather;
 mod window_title;
 mod world_clock;
 
+use std::rc::Rc;
+
 use tracing::warn;
 use wayle_config::schemas::bar::{BarModule, ModuleRef};
 use wayle_widgets::prelude::BarSettings;
 
 pub(crate) use self::registry::{ModuleFactory, ModuleInstance};
-use crate::shell::services::ShellServices;
+use crate::shell::{bar::dropdowns::DropdownRegistry, services::ShellServices};
 
 macro_rules! register_modules {
     ($($variant:ident => $factory:ty),+ $(,)?) => {
@@ -40,10 +42,11 @@ macro_rules! register_modules {
             module: BarModule,
             settings: &BarSettings,
             services: &ShellServices,
+            dropdowns: &Rc<DropdownRegistry>,
             class: Option<String>,
         ) -> Option<ModuleInstance> {
             match module {
-                $(BarModule::$variant => <$factory as ModuleFactory>::create(settings, services, class),)+
+                $(BarModule::$variant => <$factory as ModuleFactory>::create(settings, services, dropdowns, class),)+
                 _ => {
                     warn!(?module, "module not implemented");
                     None
@@ -85,13 +88,14 @@ pub(crate) fn create_module(
     module_ref: &ModuleRef,
     settings: &BarSettings,
     services: &ShellServices,
+    dropdowns: &Rc<DropdownRegistry>,
 ) -> Option<ModuleInstance> {
     let module = module_ref.module();
     let class = module_ref.class().map(String::from);
 
     if let Some(id) = module.custom_id() {
-        return custom::Factory::create_for_id(id, settings, services, class);
+        return custom::Factory::create_for_id(id, settings, services, dropdowns, class);
     }
 
-    create_from_variant(module.clone(), settings, services, class)
+    create_from_variant(module.clone(), settings, services, dropdowns, class)
 }

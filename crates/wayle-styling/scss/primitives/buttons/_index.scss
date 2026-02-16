@@ -5,26 +5,32 @@ button {
 
     &.primary {
         @include button-primary;
+        @include button-child-margins;
     }
 
     &.secondary {
         @include button-secondary;
+        @include button-child-margins;
     }
 
     &.icon {
         @include button-icon;
+        @include button-child-margins;
     }
 
     &.danger {
         @include button-danger;
+        @include button-child-margins;
     }
 
     &.ghost {
         @include button-ghost;
+        @include button-child-margins;
     }
 
     &.ghost-icon {
         @include button-ghost-icon;
+        @include button-child-margins;
     }
 
     &.link {

@@ -16,21 +16,24 @@ fn map_to_extractor(provider: ThemeProvider) -> ColorExtractor {
 }
 
 pub(crate) fn spawn(services: &ShellServices) {
-    let Some(wallpaper) = services.wallpaper.clone() else {
+    let Some(wallpaper_service) = services.wallpaper.clone() else {
         return;
     };
 
     let styling = &services.config.config().styling;
 
+    let extractor_wallpaper_service = wallpaper_service.clone();
     let theme_provider = styling.theme_provider.clone();
     tokio::spawn(async move {
         let mut stream = theme_provider.watch();
         while let Some(provider) = stream.next().await {
-            wallpaper.color_extractor.set(map_to_extractor(provider));
+            extractor_wallpaper_service
+                .color_extractor
+                .set(map_to_extractor(provider));
         }
     });
 
-    let wallpaper = services.wallpaper.clone().unwrap();
+    let monitor_wallpaper_service = wallpaper_service;
     let theming_monitor = styling.theming_monitor.clone();
     tokio::spawn(async move {
         let mut stream = theming_monitor.watch();
@@ -40,7 +43,7 @@ pub(crate) fn spawn(services: &ShellServices) {
             } else {
                 Some(monitor)
             };
-            wallpaper.set_theming_monitor(opt);
+            monitor_wallpaper_service.set_theming_monitor(opt);
         }
     });
 }

@@ -66,6 +66,18 @@ use crate::schemas::general::GeneralConfig;
 /// from TOML files. All fields have sensible defaults.
 #[wayle_config]
 pub struct Config {
+    /// TOML files to import and merge before this config.
+    ///
+    /// Paths are relative to the config file and prefixed with `@`.
+    /// Imported values are overridden by values in this file.
+    ///
+    /// ```toml
+    /// imports = ["@themes.toml", "@modules/clock.toml"]
+    /// ```
+    #[wayle(skip)]
+    #[serde(default)]
+    pub imports: Vec<String>,
+
     /// General Wayle settings.
     pub general: GeneralConfig,
 

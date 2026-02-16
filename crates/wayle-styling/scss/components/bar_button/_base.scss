@@ -21,10 +21,6 @@ menubutton.bar-button {
         filter: brightness(1.15);
     }
 
-    &:active > button.toggle {
-        filter: brightness(0.92);
-    }
-
     &:checked > button.toggle {
         filter: brightness(0.95);
     }

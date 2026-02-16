@@ -42,9 +42,10 @@ impl ConfigService {
         let config = Config::default();
         let config_path = ConfigPaths::main_config();
 
-        let config_result = tokio::task::spawn_blocking(move || Self::load_toml_file(&config_path))
-            .await
-            .map_err(|source| Error::TaskJoin { source })?;
+        let config_result =
+            tokio::task::spawn_blocking(move || Config::load_toml_with_imports(&config_path))
+                .await
+                .map_err(|source| Error::TaskJoin { source })?;
 
         match config_result {
             Ok(config_toml) => config.apply_config_layer(&config_toml, ""),

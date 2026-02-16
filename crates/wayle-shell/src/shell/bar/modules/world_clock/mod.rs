@@ -3,11 +3,11 @@ mod helpers;
 mod messages;
 mod watchers;
 
-use std::sync::Arc;
+use std::{rc::Rc, sync::Arc};
 
 use gtk::prelude::*;
 use relm4::prelude::*;
-use wayle_common::{ConfigProperty, process};
+use wayle_common::ConfigProperty;
 use wayle_config::{ConfigService, schemas::styling::CssToken};
 use wayle_widgets::{
     prelude::{
@@ -21,10 +21,12 @@ pub(crate) use self::{
     factory::Factory,
     messages::{WorldClockCmd, WorldClockInit, WorldClockMsg},
 };
+use crate::shell::bar::dropdowns::{self, DropdownRegistry};
 
 pub(crate) struct WorldClockModule {
     bar_button: Controller<BarButton>,
     config: Arc<ConfigService>,
+    dropdowns: Rc<DropdownRegistry>,
 }
 
 #[relm4::component(pub(crate))]
@@ -87,6 +89,7 @@ impl Component for WorldClockModule {
         let model = Self {
             bar_button,
             config: init.config,
+            dropdowns: init.dropdowns,
         };
         let bar_button = model.bar_button.widget();
         let widgets = view_output!();
@@ -97,7 +100,7 @@ impl Component for WorldClockModule {
     fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, _root: &Self::Root) {
         let world_clock = &self.config.config().modules.world_clock;
 
-        let cmd = match msg {
+        let action = match msg {
             WorldClockMsg::LeftClick => world_clock.left_click.get(),
             WorldClockMsg::RightClick => world_clock.right_click.get(),
             WorldClockMsg::MiddleClick => world_clock.middle_click.get(),
@@ -105,7 +108,7 @@ impl Component for WorldClockModule {
             WorldClockMsg::ScrollDown => world_clock.scroll_down.get(),
         };
 
-        process::run_if_set(&cmd);
+        dropdowns::dispatch_click(&action, &self.dropdowns, &self.bar_button);
     }
 
     fn update_cmd(

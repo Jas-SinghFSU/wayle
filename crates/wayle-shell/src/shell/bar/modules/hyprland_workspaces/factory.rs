@@ -1,9 +1,14 @@
+use std::rc::Rc;
+
 use relm4::prelude::*;
 use wayle_widgets::prelude::BarSettings;
 
 use super::{HyprlandWorkspaces, WorkspacesInit};
 use crate::shell::{
-    bar::modules::registry::{ModuleFactory, ModuleInstance, dynamic_controller, require_hyprland},
+    bar::{
+        dropdowns::DropdownRegistry,
+        modules::registry::{ModuleFactory, ModuleInstance, dynamic_controller, require_hyprland},
+    },
     services::ShellServices,
 };
 
@@ -13,6 +18,7 @@ impl ModuleFactory for Factory {
     fn create(
         settings: &BarSettings,
         services: &ShellServices,
+        _dropdowns: &Rc<DropdownRegistry>,
         class: Option<String>,
     ) -> Option<ModuleInstance> {
         if !require_hyprland("hyprland-workspaces") {

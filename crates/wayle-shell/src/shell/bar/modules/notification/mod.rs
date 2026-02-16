@@ -3,11 +3,11 @@ mod helpers;
 mod messages;
 mod watchers;
 
-use std::sync::Arc;
+use std::{rc::Rc, sync::Arc};
 
 use gtk::prelude::*;
 use relm4::prelude::*;
-use wayle_common::{ConfigProperty, process};
+use wayle_common::ConfigProperty;
 use wayle_config::{
     ConfigService,
     schemas::{modules::NotificationConfig, styling::CssToken},
@@ -21,12 +21,14 @@ pub(crate) use self::{
     factory::Factory,
     messages::{NotificationCmd, NotificationInit, NotificationMsg},
 };
+use crate::shell::bar::dropdowns::{self, DropdownRegistry};
 
 pub(crate) struct NotificationModule {
     bar_button: Controller<BarButton>,
     config: Arc<ConfigService>,
     count: usize,
     dnd: bool,
+    dropdowns: Rc<DropdownRegistry>,
 }
 
 #[relm4::component(pub(crate))]
@@ -103,6 +105,7 @@ impl Component for NotificationModule {
             config: init.config,
             count: initial_count,
             dnd: initial_dnd,
+            dropdowns: init.dropdowns,
         };
         let bar_button = model.bar_button.widget();
         let widgets = view_output!();
@@ -113,13 +116,15 @@ impl Component for NotificationModule {
     fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, _root: &Self::Root) {
         let config = &self.config.config().modules.notification;
 
-        match msg {
-            NotificationMsg::LeftClick => {}
-            NotificationMsg::RightClick => process::run_if_set(&config.right_click.get()),
-            NotificationMsg::MiddleClick => process::run_if_set(&config.middle_click.get()),
-            NotificationMsg::ScrollUp => process::run_if_set(&config.scroll_up.get()),
-            NotificationMsg::ScrollDown => process::run_if_set(&config.scroll_down.get()),
-        }
+        let action = match msg {
+            NotificationMsg::LeftClick => config.left_click.get(),
+            NotificationMsg::RightClick => config.right_click.get(),
+            NotificationMsg::MiddleClick => config.middle_click.get(),
+            NotificationMsg::ScrollUp => config.scroll_up.get(),
+            NotificationMsg::ScrollDown => config.scroll_down.get(),
+        };
+
+        dropdowns::dispatch_click(&action, &self.dropdowns, &self.bar_button);
     }
 
     fn update_cmd(

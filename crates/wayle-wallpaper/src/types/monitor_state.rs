@@ -5,7 +5,7 @@ use crate::types::FitMode;
 /// Per-monitor wallpaper state.
 ///
 /// Tracks wallpaper path, scaling mode, and cycling position for one monitor.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Default)]
 pub struct MonitorState {
     /// Current wallpaper displayed on this monitor.
     pub wallpaper: Option<PathBuf>,
@@ -13,16 +13,6 @@ pub struct MonitorState {
     pub fit_mode: FitMode,
     /// Position in the cycling image list (only used when cycling is active).
     pub cycle_index: usize,
-}
-
-impl Default for MonitorState {
-    fn default() -> Self {
-        Self {
-            wallpaper: None,
-            fit_mode: FitMode::default(),
-            cycle_index: 0,
-        }
-    }
 }
 
 impl MonitorState {

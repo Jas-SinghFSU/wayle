@@ -1,7 +1,9 @@
-//! Window class icon mappings for workspace application icons.
+//! Application icon mappings shared across bar components.
 //!
-//! Patterns use glob syntax and match against window class names.
+//! Patterns use glob syntax and match case-insensitively.
 //! Order matters - first match wins.
+
+use glob::Pattern;
 
 pub(crate) const DEFAULT_APP_ICON_MAP: &[(&str, &str)] = &[
     // Browsers
@@ -218,3 +220,26 @@ pub(crate) const DEFAULT_APP_ICON_MAP: &[(&str, &str)] = &[
     ("*waydroid*", "si-android-symbolic"),
     ("*wireshark*", "si-wireshark-symbolic"),
 ];
+
+/// Matches text against a glob pattern (case-insensitive).
+pub(crate) fn matches_glob(text: &str, pattern: &str) -> bool {
+    let text_lower = text.to_lowercase();
+
+    if text_lower == pattern {
+        return true;
+    }
+
+    Pattern::new(pattern)
+        .map(|p| p.matches(&text_lower))
+        .unwrap_or(false)
+}
+
+/// Looks up an icon from the default app icon map by matching against the given name.
+pub(crate) fn lookup_app_icon(name: &str) -> Option<&'static str> {
+    for (pattern, icon) in DEFAULT_APP_ICON_MAP {
+        if matches_glob(name, &pattern.to_lowercase()) {
+            return Some(icon);
+        }
+    }
+    None
+}

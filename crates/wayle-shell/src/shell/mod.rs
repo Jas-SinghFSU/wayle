@@ -49,6 +49,7 @@ pub(crate) enum ShellInput {
 #[derive(Debug)]
 pub(crate) enum ShellCmd {
     CssRecompiled(String),
+    LocationChanged,
     SyncMonitors { expected_count: u32, attempt: u32 },
 }
 
@@ -131,6 +132,9 @@ impl Component for Shell {
             ShellCmd::CssRecompiled(css) => {
                 sender.input(ShellInput::ReloadCss(css));
             }
+            ShellCmd::LocationChanged => {
+                self.recreate_bars();
+            }
             ShellCmd::SyncMonitors {
                 expected_count,
                 attempt,
@@ -142,6 +146,15 @@ impl Component for Shell {
 }
 
 impl Shell {
+    fn recreate_bars(&mut self) {
+        for controller in self.bars.values() {
+            controller.widget().destroy();
+        }
+        self.bars.clear();
+        self.bars = helpers::create_bars(&self.services);
+        info!("Bars recreated for location change");
+    }
+
     #[allow(clippy::expect_used)]
     fn sync_monitors(&mut self, expected_count: u32, attempt: u32, sender: &ComponentSender<Self>) {
         let monitors = helpers::get_current_monitors();

@@ -1,13 +1,16 @@
-use std::sync::Arc;
+use std::{rc::Rc, sync::Arc};
 
 use wayle_bluetooth::BluetoothService;
 use wayle_config::ConfigService;
 use wayle_widgets::prelude::BarSettings;
 
+use crate::shell::bar::dropdowns::DropdownRegistry;
+
 pub(crate) struct BluetoothInit {
     pub settings: BarSettings,
     pub bluetooth: Arc<BluetoothService>,
     pub config: Arc<ConfigService>,
+    pub dropdowns: Rc<DropdownRegistry>,
 }
 
 #[derive(Debug)]

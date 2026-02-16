@@ -14,7 +14,7 @@ use crate::{
     types::{
         device::{DeviceInfo, DevicePort, DeviceState, SinkInfo, SourceInfo},
         format::{AudioFormat, ChannelMap, ChannelPosition, SampleFormat, SampleSpec},
-        stream::{MediaInfo, StreamInfo, StreamState},
+        stream::{MediaInfo, StreamInfo, StreamState, StreamType},
     },
     volume::types::Volume,
 };
@@ -287,6 +287,7 @@ pub(crate) fn create_stream_info_from_sink_input(sink_input_info: &SinkInputInfo
 
     StreamInfo {
         index: sink_input_info.index,
+        stream_type: StreamType::Playback,
         name,
         application_name,
         binary,
@@ -363,6 +364,7 @@ pub(crate) fn create_stream_info_from_source_output(
 
     StreamInfo {
         index: source_output_info.index,
+        stream_type: StreamType::Record,
         name,
         application_name,
         binary,

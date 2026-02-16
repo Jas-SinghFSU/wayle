@@ -1,5 +1,5 @@
 use schemars::schema_for;
-use wayle_common::ConfigProperty;
+use wayle_common::{ConfigProperty, process::ClickAction};
 use wayle_derive::wayle_config;
 
 use crate::{
@@ -79,30 +79,30 @@ pub struct KeybindModeConfig {
     #[default(ColorValue::Token(CssToken::BgSurfaceElevated))]
     pub button_bg_color: ConfigProperty<ColorValue>,
 
-    /// Shell command on left click.
+    /// Action on left click.
     #[serde(rename = "left-click")]
-    #[default(String::default())]
-    pub left_click: ConfigProperty<String>,
+    #[default(ClickAction::None)]
+    pub left_click: ConfigProperty<ClickAction>,
 
-    /// Shell command on right click.
+    /// Action on right click.
     #[serde(rename = "right-click")]
-    #[default(String::default())]
-    pub right_click: ConfigProperty<String>,
+    #[default(ClickAction::None)]
+    pub right_click: ConfigProperty<ClickAction>,
 
-    /// Shell command on middle click.
+    /// Action on middle click.
     #[serde(rename = "middle-click")]
-    #[default(String::default())]
-    pub middle_click: ConfigProperty<String>,
+    #[default(ClickAction::None)]
+    pub middle_click: ConfigProperty<ClickAction>,
 
-    /// Shell command on scroll up.
+    /// Action on scroll up.
     #[serde(rename = "scroll-up")]
-    #[default(String::default())]
-    pub scroll_up: ConfigProperty<String>,
+    #[default(ClickAction::None)]
+    pub scroll_up: ConfigProperty<ClickAction>,
 
-    /// Shell command on scroll down.
+    /// Action on scroll down.
     #[serde(rename = "scroll-down")]
-    #[default(String::default())]
-    pub scroll_down: ConfigProperty<String>,
+    #[default(ClickAction::None)]
+    pub scroll_down: ConfigProperty<ClickAction>,
 }
 
 impl ModuleInfoProvider for KeybindModeConfig {

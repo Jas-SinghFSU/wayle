@@ -1,11 +1,23 @@
-use schemars::schema_for;
-use wayle_common::ConfigProperty;
+use schemars::{JsonSchema, schema_for};
+use serde::{Deserialize, Serialize};
+use wayle_common::{ConfigProperty, process::ClickAction};
 use wayle_derive::wayle_config;
 
 use crate::{
     docs::{ModuleInfo, ModuleInfoProvider},
     schemas::styling::{ColorValue, CssToken},
 };
+
+/// Icon source for app volume entries in the dropdown.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
+pub enum AppIconSource {
+    /// Wayle's curated symbolic icons matched by app name.
+    #[default]
+    Mapped,
+    /// Native application icons reported by PulseAudio.
+    Native,
+}
 
 /// Volume module configuration.
 #[wayle_config(bar_button)]
@@ -72,30 +84,35 @@ pub struct VolumeConfig {
     #[default(ColorValue::Token(CssToken::BgSurfaceElevated))]
     pub button_bg_color: ConfigProperty<ColorValue>,
 
-    /// Reserved for dropdown. Not user-configurable.
-    #[serde(rename = "left-click", skip)]
-    #[default(String::default())]
-    pub left_click: ConfigProperty<String>,
+    /// Action on left click. Default opens the audio dropdown.
+    #[serde(rename = "left-click")]
+    #[default(ClickAction::Dropdown(String::from("audio")))]
+    pub left_click: ConfigProperty<ClickAction>,
 
-    /// Shell command on right click.
+    /// Action on right click.
     #[serde(rename = "right-click")]
-    #[default(String::default())]
-    pub right_click: ConfigProperty<String>,
+    #[default(ClickAction::None)]
+    pub right_click: ConfigProperty<ClickAction>,
 
-    /// Shell command on middle click. Default toggles mute.
+    /// Action on middle click. Default toggles mute.
     #[serde(rename = "middle-click")]
-    #[default(String::from("wayle audio output-mute"))]
-    pub middle_click: ConfigProperty<String>,
+    #[default(ClickAction::Shell(String::from("wayle audio output-mute")))]
+    pub middle_click: ConfigProperty<ClickAction>,
 
-    /// Shell command on scroll up. Default increases volume.
+    /// Action on scroll up. Default increases volume.
     #[serde(rename = "scroll-up")]
-    #[default(String::from("wayle audio output-volume +5"))]
-    pub scroll_up: ConfigProperty<String>,
+    #[default(ClickAction::Shell(String::from("wayle audio output-volume +5")))]
+    pub scroll_up: ConfigProperty<ClickAction>,
 
-    /// Shell command on scroll down. Default decreases volume.
+    /// Action on scroll down. Default decreases volume.
     #[serde(rename = "scroll-down")]
-    #[default(String::from("wayle audio output-volume -5"))]
-    pub scroll_down: ConfigProperty<String>,
+    #[default(ClickAction::Shell(String::from("wayle audio output-volume -5")))]
+    pub scroll_down: ConfigProperty<ClickAction>,
+
+    /// Icon source for app volume entries in the audio dropdown.
+    #[serde(rename = "dropdown-app-icons")]
+    #[default(AppIconSource::Mapped)]
+    pub dropdown_app_icons: ConfigProperty<AppIconSource>,
 }
 
 impl ModuleInfoProvider for VolumeConfig {

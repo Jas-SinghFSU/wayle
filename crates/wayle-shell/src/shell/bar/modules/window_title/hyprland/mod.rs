@@ -1,12 +1,12 @@
 mod watchers;
 
-use std::sync::Arc;
+use std::{rc::Rc, sync::Arc};
 
 use gtk::prelude::*;
 use relm4::prelude::*;
 use tokio::runtime::Handle;
 use tracing::warn;
-use wayle_common::{ConfigProperty, process};
+use wayle_common::ConfigProperty;
 use wayle_config::{ConfigService, schemas::styling::CssToken};
 use wayle_hyprland::HyprlandService;
 use wayle_widgets::{
@@ -21,13 +21,17 @@ use super::{
     helpers::{self, IconContext},
     messages::{WindowTitleCmd, WindowTitleInit, WindowTitleMsg},
 };
-use crate::i18n::t;
+use crate::{
+    i18n::t,
+    shell::bar::dropdowns::{self, DropdownRegistry},
+};
 
 pub(crate) struct HyprlandWindowTitle {
     bar_button: Controller<BarButton>,
     config: Arc<ConfigService>,
     current_title: String,
     current_class: String,
+    dropdowns: Rc<DropdownRegistry>,
 }
 
 #[relm4::component(pub(crate))]
@@ -101,6 +105,7 @@ impl Component for HyprlandWindowTitle {
             config: init.config,
             current_title: initial_title,
             current_class: initial_class,
+            dropdowns: init.dropdowns,
         };
         let bar_button = model.bar_button.widget();
         let widgets = view_output!();
@@ -111,7 +116,7 @@ impl Component for HyprlandWindowTitle {
     fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, _root: &Self::Root) {
         let window_title = &self.config.config().modules.window_title;
 
-        let cmd = match msg {
+        let action = match msg {
             WindowTitleMsg::LeftClick => window_title.left_click.get(),
             WindowTitleMsg::RightClick => window_title.right_click.get(),
             WindowTitleMsg::MiddleClick => window_title.middle_click.get(),
@@ -119,7 +124,7 @@ impl Component for HyprlandWindowTitle {
             WindowTitleMsg::ScrollDown => window_title.scroll_down.get(),
         };
 
-        process::run_if_set(&cmd);
+        dropdowns::dispatch_click(&action, &self.dropdowns, &self.bar_button);
     }
 
     fn update_cmd(

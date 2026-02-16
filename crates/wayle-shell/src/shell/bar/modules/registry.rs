@@ -1,9 +1,11 @@
+use std::rc::Rc;
+
 use relm4::prelude::*;
 use tracing::warn;
 use wayle_widgets::prelude::BarSettings;
 
 use super::compositor::Compositor;
-use crate::shell::services::ShellServices;
+use crate::shell::{bar::dropdowns::DropdownRegistry, services::ShellServices};
 
 pub(crate) struct ModuleInstance {
     pub(crate) controller: Box<dyn ModuleController>,
@@ -14,6 +16,7 @@ pub(crate) trait ModuleFactory {
     fn create(
         settings: &BarSettings,
         services: &ShellServices,
+        dropdowns: &Rc<DropdownRegistry>,
         class: Option<String>,
     ) -> Option<ModuleInstance>;
 }

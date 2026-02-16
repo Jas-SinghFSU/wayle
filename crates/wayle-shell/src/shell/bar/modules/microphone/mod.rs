@@ -3,12 +3,12 @@ mod helpers;
 mod messages;
 mod watchers;
 
-use std::sync::Arc;
+use std::{rc::Rc, sync::Arc};
 
 use gtk::prelude::*;
 use relm4::prelude::*;
 use wayle_audio::{AudioService, core::device::input::InputDevice};
-use wayle_common::{ConfigProperty, WatcherToken, process};
+use wayle_common::{ConfigProperty, WatcherToken};
 use wayle_config::{
     ConfigService,
     schemas::{modules::MicrophoneConfig, styling::CssToken},
@@ -17,17 +17,19 @@ use wayle_widgets::prelude::{
     BarButton, BarButtonBehavior, BarButtonColors, BarButtonInit, BarButtonInput, BarButtonOutput,
 };
 
-use self::helpers::{IconContext, select_icon};
+use self::helpers::{IconContext, format_label, select_icon};
 pub(crate) use self::{
     factory::Factory,
     messages::{MicrophoneCmd, MicrophoneInit, MicrophoneMsg},
 };
+use crate::shell::bar::dropdowns::{self, DropdownRegistry};
 
 pub(crate) struct MicrophoneModule {
     bar_button: Controller<BarButton>,
     config: Arc<ConfigService>,
     active_device_watcher_token: WatcherToken,
     audio: Arc<AudioService>,
+    dropdowns: Rc<DropdownRegistry>,
 }
 
 #[relm4::component(pub(crate))]
@@ -93,6 +95,7 @@ impl Component for MicrophoneModule {
             config: init.config,
             active_device_watcher_token: WatcherToken::new(),
             audio: init.audio,
+            dropdowns: init.dropdowns,
         };
         let bar_button = model.bar_button.widget();
         let widgets = view_output!();
@@ -103,7 +106,7 @@ impl Component for MicrophoneModule {
     fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, _root: &Self::Root) {
         let config = &self.config.config().modules.microphone;
 
-        let cmd = match msg {
+        let action = match msg {
             MicrophoneMsg::LeftClick => config.left_click.get(),
             MicrophoneMsg::RightClick => config.right_click.get(),
             MicrophoneMsg::MiddleClick => config.middle_click.get(),
@@ -111,7 +114,7 @@ impl Component for MicrophoneModule {
             MicrophoneMsg::ScrollDown => config.scroll_down.get(),
         };
 
-        process::run_if_set(&cmd);
+        dropdowns::dispatch_click(&action, &self.dropdowns, &self.bar_button);
     }
 
     fn update_cmd(
@@ -145,7 +148,7 @@ impl MicrophoneModule {
         let muted = device.muted.get();
         let percentage = device.volume.get().average_percentage().round() as u16;
 
-        let label = format!("{percentage}%");
+        let label = format_label(percentage);
         self.bar_button.emit(BarButtonInput::SetLabel(label));
 
         let icon_active = config.icon_active.get();

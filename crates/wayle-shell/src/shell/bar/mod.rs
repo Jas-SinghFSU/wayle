@@ -1,26 +1,33 @@
+mod dropdowns;
 mod factory;
+pub(crate) mod icons;
 mod layout;
 mod modules;
 mod styling;
 mod watchers;
 
-use std::cell::Cell;
-use std::rc::Rc;
+use std::{cell::Cell, rc::Rc};
 
 use factory::*;
 use gtk::prelude::*;
 use gtk4_layer_shell::{Layer, LayerShell};
-use relm4::{factory::FactoryVecDeque, gtk, gtk::gdk, gtk::glib, prelude::*};
+use relm4::{
+    factory::FactoryVecDeque,
+    gtk,
+    gtk::{gdk, glib},
+    prelude::*,
+};
 use wayle_common::ConfigProperty;
-use wayle_config::schemas::bar::{BarItem, BarLayout, Location};
+use wayle_config::schemas::bar::{BarItem, BarLayout};
 use wayle_widgets::{prelude::BarSettings, styling::InlineStyling};
 
+use self::dropdowns::DropdownRegistry;
 use crate::shell::services::ShellServices;
 
 pub(crate) struct Bar {
-    location: Location,
     settings: BarSettings,
     services: ShellServices,
+    dropdowns: Rc<DropdownRegistry>,
     layout: BarLayout,
     css_provider: gtk::CssProvider,
     last_css: String,
@@ -39,7 +46,6 @@ pub(crate) struct BarInit {
 pub(crate) enum BarCmd {
     LayoutLoaded(BarLayout),
     StyleChanged,
-    LocationChanged(Location),
 }
 
 #[relm4::component(pub(crate))]
@@ -137,12 +143,13 @@ impl Component for Bar {
             .add_provider(&css_provider, gtk::STYLE_PROVIDER_PRIORITY_USER);
 
         watchers::layout::spawn(&sender, &init.monitor, &init.services.config);
-        watchers::location::spawn(&sender, &init.services.config);
+
+        let dropdowns = Rc::new(DropdownRegistry::new(&init.services));
 
         let mut model = Self {
-            location,
             settings,
             services: init.services,
+            dropdowns,
             layout: BarLayout {
                 monitor: String::new(),
                 extends: None,
@@ -184,7 +191,7 @@ impl Component for Bar {
         ComponentParts { model, widgets }
     }
 
-    fn update_cmd(&mut self, msg: BarCmd, _sender: ComponentSender<Self>, root: &Self::Root) {
+    fn update_cmd(&mut self, msg: BarCmd, _sender: ComponentSender<Self>, _root: &Self::Root) {
         match msg {
             BarCmd::LayoutLoaded(layout) => {
                 self.apply_layout(layout);
@@ -195,9 +202,6 @@ impl Component for Bar {
                     self.css_provider.load_from_string(&new_css);
                     self.last_css = new_css;
                 }
-            }
-            BarCmd::LocationChanged(location) => {
-                self.apply_location_change(root, location);
             }
         }
     }
@@ -231,15 +235,34 @@ impl Bar {
 
         let settings = &self.settings;
         let services = &self.services;
+        let dropdowns = &self.dropdowns;
 
         if self.layout.left != new_layout.left {
-            Self::rebuild_section(&mut self.left, &new_layout.left, settings, services);
+            Self::rebuild_section(
+                &mut self.left,
+                &new_layout.left,
+                settings,
+                services,
+                dropdowns,
+            );
         }
         if self.layout.center != new_layout.center {
-            Self::rebuild_section(&mut self.center, &new_layout.center, settings, services);
+            Self::rebuild_section(
+                &mut self.center,
+                &new_layout.center,
+                settings,
+                services,
+                dropdowns,
+            );
         }
         if self.layout.right != new_layout.right {
-            Self::rebuild_section(&mut self.right, &new_layout.right, settings, services);
+            Self::rebuild_section(
+                &mut self.right,
+                &new_layout.right,
+                settings,
+                services,
+                dropdowns,
+            );
         }
 
         self.layout = new_layout;
@@ -250,6 +273,7 @@ impl Bar {
         items: &[BarItem],
         settings: &BarSettings,
         services: &ShellServices,
+        dropdowns: &Rc<DropdownRegistry>,
     ) {
         let mut guard = factory.guard();
         guard.clear();
@@ -259,17 +283,8 @@ impl Bar {
                 item: item.clone(),
                 settings: settings.clone(),
                 services: services.clone(),
+                dropdowns: dropdowns.clone(),
             });
         }
-    }
-
-    pub(super) fn rebuild_all_sections(&mut self) {
-        let settings = &self.settings;
-        let services = &self.services;
-        let layout = self.layout.clone();
-
-        Self::rebuild_section(&mut self.left, &layout.left, settings, services);
-        Self::rebuild_section(&mut self.center, &layout.center, settings, services);
-        Self::rebuild_section(&mut self.right, &layout.right, settings, services);
     }
 }

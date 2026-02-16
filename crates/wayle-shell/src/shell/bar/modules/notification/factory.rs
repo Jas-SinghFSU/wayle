@@ -1,9 +1,14 @@
+use std::rc::Rc;
+
 use relm4::prelude::*;
 use wayle_widgets::prelude::BarSettings;
 
 use super::{NotificationInit, NotificationModule};
 use crate::shell::{
-    bar::modules::registry::{ModuleFactory, ModuleInstance, dynamic_controller, require_service},
+    bar::{
+        dropdowns::DropdownRegistry,
+        modules::registry::{ModuleFactory, ModuleInstance, dynamic_controller, require_service},
+    },
     services::ShellServices,
 };
 
@@ -13,6 +18,7 @@ impl ModuleFactory for Factory {
     fn create(
         settings: &BarSettings,
         services: &ShellServices,
+        dropdowns: &Rc<DropdownRegistry>,
         class: Option<String>,
     ) -> Option<ModuleInstance> {
         let notification = require_service(
@@ -25,6 +31,7 @@ impl ModuleFactory for Factory {
             settings: settings.clone(),
             notification,
             config: services.config.clone(),
+            dropdowns: dropdowns.clone(),
         };
         let controller = dynamic_controller(NotificationModule::builder().launch(init).detach());
         Some(ModuleInstance { controller, class })

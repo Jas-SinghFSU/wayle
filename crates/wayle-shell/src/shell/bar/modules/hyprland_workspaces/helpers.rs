@@ -8,7 +8,8 @@ use glob::Pattern;
 use wayle_config::schemas::modules::{DisplayMode, Numbering};
 use wayle_hyprland::{Client, WorkspaceId};
 
-use super::{filtering::relative_workspace_number, icons::DEFAULT_APP_ICON_MAP};
+use super::filtering::relative_workspace_number;
+use crate::shell::bar::icons::{DEFAULT_APP_ICON_MAP, matches_glob};
 
 pub(crate) struct IconContext<'a> {
     pub user_map: &'a HashMap<String, String>,
@@ -33,18 +34,6 @@ fn parse_pattern(pattern: &str) -> MatchTarget {
     } else {
         MatchTarget::Class(pattern.to_lowercase())
     }
-}
-
-fn matches_glob(text: &str, pattern: &str) -> bool {
-    let text_lower = text.to_lowercase();
-
-    if text_lower == pattern {
-        return true;
-    }
-
-    Pattern::new(pattern)
-        .map(|p| p.matches(&text_lower))
-        .unwrap_or(false)
 }
 
 fn workspace_class_key(class: &str) -> String {

@@ -71,15 +71,15 @@ experience. A successor to HyprPanel without the pain or dependency on Hyprland.
 
 ### Dropdown Interfaces
 
-- [ ] **Audio Panel (WIP)**
-- [ ] **Battery Panel**
+- [x] **Audio Panel**
+- [ ] **Network Panel (WIP)**
 - [ ] **Bluetooth Panel**
-- [ ] **Calendar Panel**
-- [ ] **Dashboard**
+- [ ] **Battery Panel**
 - [ ] **Media Panel**
-- [ ] **Network Panel**
-- [ ] **Notifications Panel**
+- [ ] **Dashboard**
 - [ ] **Weather Panel**
+- [ ] **Calendar Panel**
+- [ ] **Notifications Panel**
 
 ### Additional Features
 

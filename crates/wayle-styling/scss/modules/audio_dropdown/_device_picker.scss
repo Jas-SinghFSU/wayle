@@ -1,0 +1,88 @@
+.picker-header {
+    padding: var(--space-sm);
+    border-bottom: 1px solid var(--border-default);
+}
+
+button.picker-back {
+    padding: var(--space-sm);
+    border-radius: var(--rounding-element);
+
+    image {
+        -gtk-icon-size: var(--icon-md);
+        color: var(--fg-default);
+    }
+}
+
+.picker-title {
+    font-size: var(--text-md);
+    font-weight: var(--weight-semibold);
+    color: var(--fg-default);
+    margin-left: var(--space-sm);
+}
+
+.picker-body {
+    background: transparent;
+}
+
+.audio-device-list {
+    background: transparent;
+    padding: var(--space-sm);
+
+    .audio-device-option {
+        border-radius: var(--rounding-element);
+        transition: background var(--duration-fast);
+
+        &:hover {
+            background: var(--bg-overlay);
+        }
+
+        &:focus-visible {
+            background: var(--bg-overlay);
+            outline: var(--focus-ring-width) solid var(--accent);
+            outline-offset: calc(-0.125rem * var(--global-scale));
+        }
+
+        .audio-device-option-content {
+            padding: var(--space-xs) var(--space-sm);
+            min-height: calc(2.5rem * var(--global-scale));
+            border-spacing: var(--space-md);
+        }
+
+        .audio-device-option-icon {
+            min-width: var(--icon-2xl);
+            min-height: var(--icon-2xl);
+            border-radius: var(--rounding-element);
+            background: var(--bg-overlay);
+
+            image {
+                -gtk-icon-size: var(--icon-lg);
+                color: var(--fg-muted);
+            }
+        }
+
+        &.selected .audio-device-option-icon {
+            background: var(--accent-subtle);
+
+            image {
+                color: var(--accent);
+            }
+        }
+
+        .audio-device-option-name {
+            font-size: var(--text-md);
+            font-weight: var(--weight-medium);
+            color: var(--fg-default);
+        }
+
+        .audio-device-option-subtitle {
+            font-size: var(--text-md);
+            color: var(--fg-subtle);
+        }
+
+        .audio-device-option-check {
+            -gtk-icon-size: var(--icon-md);
+            color: var(--accent);
+            margin-left: var(--space-sm);
+        }
+    }
+}

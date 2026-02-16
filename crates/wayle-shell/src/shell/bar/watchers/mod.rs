@@ -1,4 +1,3 @@
-//! Config watchers for bar layout and location changes.
+//! Config watchers for bar layout changes.
 
 pub(crate) mod layout;
-pub(crate) mod location;

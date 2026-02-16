@@ -3,6 +3,8 @@ mod helpers;
 mod messages;
 mod watchers;
 
+use std::rc::Rc;
+
 use gtk::prelude::*;
 use relm4::prelude::*;
 use tracing::debug;
@@ -23,10 +25,13 @@ pub(crate) use self::{
     factory::Factory,
     messages::{CustomCmd, CustomInit, CustomMsg},
 };
+use crate::shell::bar::dropdowns::DropdownRegistry;
 
 pub(crate) struct CustomModule {
     bar_button: Controller<BarButton>,
     definition: CustomModuleDefinition,
+    #[allow(dead_code)]
+    dropdowns: Rc<DropdownRegistry>,
     poller_token: WatcherToken,
     watcher_token: WatcherToken,
     command_token: WatcherToken,
@@ -123,6 +128,7 @@ impl Component for CustomModule {
         let model = Self {
             bar_button,
             definition,
+            dropdowns: init.dropdowns,
             poller_token,
             watcher_token,
             command_token: WatcherToken::new(),

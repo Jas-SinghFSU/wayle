@@ -61,6 +61,7 @@ pub struct MediaInfo {
 #[derive(Debug, Clone, PartialEq)]
 pub(crate) struct StreamInfo {
     pub index: u32,
+    pub stream_type: StreamType,
     pub name: String,
     pub application_name: Option<String>,
     pub binary: Option<String>,
@@ -89,15 +90,7 @@ impl StreamInfo {
     pub(crate) fn key(&self) -> StreamKey {
         StreamKey {
             index: self.index,
-            stream_type: self.stream_type(),
-        }
-    }
-
-    pub(crate) fn stream_type(&self) -> StreamType {
-        if self.properties.get("media.role") == Some(&String::from("source-output")) {
-            StreamType::Record
-        } else {
-            StreamType::Playback
+            stream_type: self.stream_type,
         }
     }
 }
@@ -106,7 +99,10 @@ impl StreamInfo {
 mod tests {
     use super::*;
 
-    fn create_test_stream_info(properties: HashMap<String, String>) -> StreamInfo {
+    fn create_test_stream_info(
+        stream_type: StreamType,
+        properties: HashMap<String, String>,
+    ) -> StreamInfo {
         use crate::{
             types::format::{ChannelMap, SampleFormat, SampleSpec},
             volume::types::Volume,
@@ -114,6 +110,7 @@ mod tests {
 
         StreamInfo {
             index: 0,
+            stream_type,
             name: String::from("test"),
             application_name: None,
             binary: None,
@@ -152,36 +149,8 @@ mod tests {
     }
 
     #[test]
-    fn stream_type_returns_record_when_media_role_is_source_output() {
-        let mut props = HashMap::new();
-        props.insert(String::from("media.role"), String::from("source-output"));
-        let info = create_test_stream_info(props);
-
-        assert_eq!(info.stream_type(), StreamType::Record);
-    }
-
-    #[test]
-    fn stream_type_returns_playback_when_media_role_is_not_source_output() {
-        let mut props = HashMap::new();
-        props.insert(String::from("media.role"), String::from("sink-input"));
-        let info = create_test_stream_info(props);
-
-        assert_eq!(info.stream_type(), StreamType::Playback);
-    }
-
-    #[test]
-    fn stream_type_returns_playback_when_media_role_missing() {
-        let props = HashMap::new();
-        let info = create_test_stream_info(props);
-
-        assert_eq!(info.stream_type(), StreamType::Playback);
-    }
-
-    #[test]
     fn key_returns_correct_stream_key_for_record_stream() {
-        let mut props = HashMap::new();
-        props.insert(String::from("media.role"), String::from("source-output"));
-        let mut info = create_test_stream_info(props);
+        let mut info = create_test_stream_info(StreamType::Record, HashMap::new());
         info.index = 42;
 
         let key = info.key();
@@ -192,8 +161,7 @@ mod tests {
 
     #[test]
     fn key_returns_correct_stream_key_for_playback_stream() {
-        let props = HashMap::new();
-        let mut info = create_test_stream_info(props);
+        let mut info = create_test_stream_info(StreamType::Playback, HashMap::new());
         info.index = 123;
 
         let key = info.key();

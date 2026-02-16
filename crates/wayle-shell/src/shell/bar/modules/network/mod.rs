@@ -3,11 +3,11 @@ mod helpers;
 mod messages;
 mod watchers;
 
-use std::sync::Arc;
+use std::{rc::Rc, sync::Arc};
 
 use gtk::prelude::*;
 use relm4::prelude::*;
-use wayle_common::{ConfigProperty, WatcherToken, process};
+use wayle_common::{ConfigProperty, WatcherToken};
 use wayle_config::{
     ConfigService,
     schemas::{modules::NetworkConfig, styling::CssToken},
@@ -22,7 +22,10 @@ pub(crate) use self::{
     factory::Factory,
     messages::{NetworkCmd, NetworkInit, NetworkMsg},
 };
-use crate::i18n::t;
+use crate::{
+    i18n::t,
+    shell::bar::dropdowns::{self, DropdownRegistry},
+};
 
 pub(crate) struct NetworkModule {
     bar_button: Controller<BarButton>,
@@ -30,6 +33,7 @@ pub(crate) struct NetworkModule {
     wifi_watcher: WatcherToken,
     wired_watcher: WatcherToken,
     network: Arc<NetworkService>,
+    dropdowns: Rc<DropdownRegistry>,
 }
 
 #[relm4::component(pub(crate))]
@@ -102,6 +106,7 @@ impl Component for NetworkModule {
             wifi_watcher,
             wired_watcher,
             network: init.network,
+            dropdowns: init.dropdowns,
         };
         let bar_button = model.bar_button.widget();
         let widgets = view_output!();
@@ -112,7 +117,7 @@ impl Component for NetworkModule {
     fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, _root: &Self::Root) {
         let config = &self.config.config().modules.network;
 
-        let cmd = match msg {
+        let action = match msg {
             NetworkMsg::LeftClick => config.left_click.get(),
             NetworkMsg::RightClick => config.right_click.get(),
             NetworkMsg::MiddleClick => config.middle_click.get(),
@@ -120,7 +125,7 @@ impl Component for NetworkModule {
             NetworkMsg::ScrollDown => config.scroll_down.get(),
         };
 
-        process::run_if_set(&cmd);
+        dropdowns::dispatch_click(&action, &self.dropdowns, &self.bar_button);
     }
 
     fn update_cmd(&mut self, msg: NetworkCmd, sender: ComponentSender<Self>, _root: &Self::Root) {

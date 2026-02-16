@@ -44,6 +44,33 @@ impl WallpaperServiceBuilder {
         Self::default()
     }
 
+    /// Builds and initializes the WallpaperService.
+    ///
+    /// # Errors
+    ///
+    /// Returns error if D-Bus connection fails or service registration fails.
+    pub async fn build(self) -> Result<Arc<WallpaperService>, Error> {
+        let start = Instant::now();
+        self.spawn_daemon_if_enabled();
+
+        let connection = Self::connect_session_bus().await?;
+        debug!(elapsed_ms = start.elapsed().as_millis(), "D-Bus connected");
+
+        let service = self.create_service(&connection);
+        Self::register_dbus(&connection, Arc::clone(&service)).await?;
+        debug!(elapsed_ms = start.elapsed().as_millis(), "D-Bus registered");
+
+        Self::start_background_tasks(&service).await?;
+        debug!(
+            elapsed_ms = start.elapsed().as_millis(),
+            "Monitoring started"
+        );
+
+        info!("Wallpaper service registered at {SERVICE_NAME}");
+
+        Ok(service)
+    }
+
     /// Sets the color extraction tool.
     pub fn color_extractor(mut self, extractor: ColorExtractor) -> Self {
         self.color_extractor = extractor;
@@ -74,26 +101,23 @@ impl WallpaperServiceBuilder {
         self
     }
 
-    /// Builds and initializes the WallpaperService.
-    ///
-    /// # Errors
-    ///
-    /// Returns error if D-Bus connection fails or service registration fails.
-    pub async fn build(self) -> Result<Arc<WallpaperService>, Error> {
-        let t = Instant::now();
+    fn spawn_daemon_if_enabled(&self) {
         if self.engine_active {
             spawn_daemon_if_needed();
         }
+    }
 
-        let connection = Connection::session().await.map_err(|err| {
-            Error::ServiceInitializationFailed(format!("D-Bus connection failed: {err}"))
-        })?;
-        debug!(elapsed_ms = t.elapsed().as_millis(), "D-Bus connected");
+    async fn connect_session_bus() -> Result<Connection, Error> {
+        Connection::session().await.map_err(|error| {
+            Error::ServiceInitializationFailed(format!("D-Bus connection failed: {error}"))
+        })
+    }
 
+    fn create_service(self, connection: &Connection) -> Arc<WallpaperService> {
         let cancellation_token = CancellationToken::new();
         let (extraction_complete, _) = broadcast::channel(16);
 
-        let service = Arc::new(WallpaperService {
+        Arc::new(WallpaperService {
             cancellation_token,
             _connection: connection.clone(),
             last_extracted_wallpaper: Property::new(None),
@@ -105,38 +129,41 @@ impl WallpaperServiceBuilder {
             transition: Property::new(self.transition),
             shared_cycle: Property::new(self.shared_cycle),
             engine_active: Property::new(self.engine_active),
-        });
+        })
+    }
 
-        let daemon = WallpaperDaemon {
-            service: Arc::clone(&service),
-        };
+    async fn register_dbus(
+        connection: &Connection,
+        service: Arc<WallpaperService>,
+    ) -> Result<(), Error> {
+        let daemon = WallpaperDaemon { service };
 
         connection
             .object_server()
             .at(SERVICE_PATH, daemon)
             .await
-            .map_err(|err| {
+            .map_err(|error| {
                 Error::ServiceInitializationFailed(format!(
-                    "cannot register D-Bus object at '{SERVICE_PATH}': {err}"
+                    "cannot register D-Bus object at '{SERVICE_PATH}': {error}"
                 ))
             })?;
 
-        connection.request_name(SERVICE_NAME).await.map_err(|err| {
-            Error::ServiceInitializationFailed(format!(
-                "cannot acquire D-Bus name '{SERVICE_NAME}': {err}"
-            ))
-        })?;
+        connection
+            .request_name(SERVICE_NAME)
+            .await
+            .map_err(|error| {
+                Error::ServiceInitializationFailed(format!(
+                    "cannot acquire D-Bus name '{SERVICE_NAME}': {error}"
+                ))
+            })?;
 
-        debug!(elapsed_ms = t.elapsed().as_millis(), "D-Bus registered");
+        Ok(())
+    }
 
+    async fn start_background_tasks(service: &Arc<WallpaperService>) -> Result<(), Error> {
         service.start_monitoring().await?;
-        debug!(elapsed_ms = t.elapsed().as_millis(), "Monitoring started");
-
-        spawn_output_watcher(Arc::clone(&service));
-        spawn_color_extractor(Arc::clone(&service));
-
-        info!("Wallpaper service registered at {SERVICE_NAME}");
-
-        Ok(service)
+        spawn_output_watcher(Arc::clone(service));
+        spawn_color_extractor(Arc::clone(service));
+        Ok(())
     }
 }

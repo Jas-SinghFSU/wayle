@@ -1,13 +1,16 @@
 .alert {
     all: unset;
-    padding: var(--space-md);
     border-radius: var(--rounding-container);
     background: var(--bg-overlay);
 
     .alert-icon {
-        margin-right: var(--space-sm);
+        margin: var(--space-md) var(--space-sm) var(--space-md) var(--space-md);
         color: var(--fg-subtle);
         -gtk-icon-size: var(--icon-lg);
+    }
+
+    .alert-content {
+        margin: var(--space-md) var(--space-md) var(--space-md) 0;
     }
 
     .alert-title {

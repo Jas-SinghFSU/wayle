@@ -12,7 +12,7 @@ use std::{
 
 use commands::Command;
 use conversion::convert_volume_to_pulse;
-use dispatcher::{VolumeRateLimiter, handle_external_command, handle_internal_command};
+use dispatcher::{handle_external_command, handle_internal_command};
 use libpulse_binding::context::{Context, FlagSet as ContextFlags};
 use tokio::{
     runtime::Handle,
@@ -300,8 +300,6 @@ impl PulseBackend {
         let command_handle =
             self.spawn_command_processor(command_rx, external_tx, command_token.clone());
 
-        let rate_limiter = VolumeRateLimiter::new();
-
         loop {
             tokio::select! {
                 biased;
@@ -336,7 +334,6 @@ impl PulseBackend {
                         cmd,
                         &self.state.devices,
                         &self.state.streams,
-                        &rate_limiter,
                     );
                 }
             }

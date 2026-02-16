@@ -3,7 +3,7 @@
 
     trough {
         background: var(--bg-active);
-        border-radius: var(--rounding-element);
+        border-radius: calc(0.25rem * var(--global-scale));
         min-height: calc(0.5rem * var(--global-scale));
         min-width: calc(10rem * var(--global-scale));
         border: none;
@@ -11,12 +11,12 @@
         highlight {
             border: none;
             background: var(--accent);
-            border-radius: var(--rounding-element);
+            border-radius: calc(0.25rem * var(--global-scale));
         }
 
         slider {
             background: var(--fg-default);
-            border-radius: var(--rounding-element);
+            border-radius: var(--radius-full);
             min-width: calc(1rem * var(--global-scale));
             min-height: calc(1rem * var(--global-scale));
             margin: calc(-0.3125rem * var(--global-scale));

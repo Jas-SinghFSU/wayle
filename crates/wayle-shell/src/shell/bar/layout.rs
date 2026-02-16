@@ -4,7 +4,6 @@ use gtk::prelude::*;
 use gtk4_layer_shell::{Edge, LayerShell};
 use relm4::{gtk, gtk::gdk};
 use wayle_config::schemas::bar::Location;
-use wayle_widgets::styling::InlineStyling;
 
 use super::Bar;
 
@@ -77,50 +76,5 @@ impl Bar {
         left_box.set_hexpand(false);
         middle_box.set_hexpand(false);
         right_box.set_hexpand(false);
-    }
-
-    pub(super) fn apply_location_change(&mut self, root: &gtk::Window, location: Location) {
-        if self.location == location {
-            return;
-        }
-
-        root.remove_css_class(self.location.css_class());
-        root.add_css_class(location.css_class());
-
-        Self::apply_anchors(root, location);
-
-        let is_vert = location.is_vertical();
-        self.settings.is_vertical.set(is_vert);
-        self.location = location;
-
-        if let Some(center_box) = root
-            .child()
-            .and_then(|c| c.downcast::<gtk::CenterBox>().ok())
-            && let (Some(left_box), Some(middle_box), Some(right_box)) = (
-                center_box
-                    .start_widget()
-                    .and_then(|w| w.downcast::<gtk::Box>().ok()),
-                center_box
-                    .center_widget()
-                    .and_then(|w| w.downcast::<gtk::Box>().ok()),
-                center_box
-                    .end_widget()
-                    .and_then(|w| w.downcast::<gtk::Box>().ok()),
-            )
-        {
-            Self::apply_orientations(
-                &center_box,
-                &left_box,
-                &middle_box,
-                &right_box,
-                self.left.widget(),
-                self.center.widget(),
-                self.right.widget(),
-                is_vert,
-            );
-        }
-
-        self.rebuild_all_sections();
-        self.reload_css();
     }
 }

@@ -1,6 +1,5 @@
 @mixin button-base {
     all: unset;
-    padding: var(--space-sm) var(--space-md);
     border-radius: var(--rounding-element);
     font-size: var(--text-md);
     font-weight: var(--weight-medium);
@@ -11,6 +10,20 @@
 
     &:hover {
         transition: background var(--duration-fast);
+    }
+}
+
+@mixin button-child-margins($vertical: var(--space-sm), $horizontal: var(--space-md)) {
+    > image {
+        margin: $vertical $horizontal;
+    }
+
+    > box {
+        margin: $vertical $horizontal;
+    }
+
+    > label {
+        margin: $vertical $horizontal;
     }
 }
 
@@ -129,7 +142,7 @@
     background: none;
     color: var(--accent);
     text-decoration: none;
-    padding: var(--space-xs) var(--space-sm);
+    @include button-child-margins(var(--space-xs), var(--space-sm));
 
     &:hover label {
         text-decoration: underline;
@@ -182,7 +195,10 @@
     > button.toggle {
         all: unset;
         min-width: calc(10rem * var(--global-scale));
-        padding: var(--space-sm) var(--space-sm);
+
+        > * {
+            margin: var(--space-sm);
+        }
 
         font-size: var(--text-md);
         font-weight: var(--weight-semibold);

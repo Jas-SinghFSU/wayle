@@ -1,10 +1,10 @@
 mod watchers;
 
-use std::sync::Arc;
+use std::{rc::Rc, sync::Arc};
 
 use relm4::{gtk::prelude::*, prelude::*};
 use tracing::warn;
-use wayle_common::{ConfigProperty, process};
+use wayle_common::ConfigProperty;
 use wayle_config::{ConfigService, schemas::styling::CssToken};
 use wayle_hyprland::HyprlandService;
 use wayle_widgets::{
@@ -19,12 +19,16 @@ use super::{
     helpers,
     messages::{KeybindModeCmd, KeybindModeInit, KeybindModeMsg},
 };
-use crate::i18n::t;
+use crate::{
+    i18n::t,
+    shell::bar::dropdowns::{self, DropdownRegistry},
+};
 
 pub(crate) struct HyprlandKeybindMode {
     bar_button: Controller<BarButton>,
     config: Arc<ConfigService>,
     current_mode: String,
+    dropdowns: Rc<DropdownRegistry>,
 }
 
 #[relm4::component(pub(crate))]
@@ -89,6 +93,7 @@ impl Component for HyprlandKeybindMode {
             bar_button,
             config: init.config,
             current_mode: initial_mode,
+            dropdowns: init.dropdowns,
         };
         let bar_button = model.bar_button.widget();
         let widgets = view_output!();
@@ -99,7 +104,7 @@ impl Component for HyprlandKeybindMode {
     fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, _root: &Self::Root) {
         let mode_config = &self.config.config().modules.keybind_mode;
 
-        let cmd = match msg {
+        let action = match msg {
             KeybindModeMsg::LeftClick => mode_config.left_click.get(),
             KeybindModeMsg::RightClick => mode_config.right_click.get(),
             KeybindModeMsg::MiddleClick => mode_config.middle_click.get(),
@@ -107,7 +112,7 @@ impl Component for HyprlandKeybindMode {
             KeybindModeMsg::ScrollDown => mode_config.scroll_down.get(),
         };
 
-        process::run_if_set(&cmd);
+        dropdowns::dispatch_click(&action, &self.dropdowns, &self.bar_button);
     }
 
     fn update_cmd(

@@ -3,11 +3,11 @@ mod helpers;
 mod messages;
 mod watchers;
 
-use std::sync::Arc;
+use std::{rc::Rc, sync::Arc};
 
 use relm4::{gtk::prelude::*, prelude::*};
 use tracing::warn;
-use wayle_common::{ConfigProperty, process};
+use wayle_common::ConfigProperty;
 use wayle_config::{ConfigService, schemas::styling::CssToken};
 use wayle_idle_inhibit::IdleInhibitor;
 use wayle_widgets::prelude::{
@@ -19,13 +19,17 @@ pub(crate) use self::{
     factory::Factory,
     messages::{IdleInhibitCmd, IdleInhibitInit, IdleInhibitMsg},
 };
-use crate::services::idle_inhibit::IdleInhibitState;
+use crate::{
+    services::idle_inhibit::IdleInhibitState,
+    shell::bar::dropdowns::{self, DropdownRegistry},
+};
 
 pub(crate) struct IdleInhibitModule {
     bar_button: Controller<BarButton>,
     config: Arc<ConfigService>,
     state: IdleInhibitState,
     inhibitor: Option<IdleInhibitor>,
+    dropdowns: Rc<DropdownRegistry>,
 }
 
 #[relm4::component(pub(crate))]
@@ -91,6 +95,7 @@ impl Component for IdleInhibitModule {
             config: init.config,
             state,
             inhibitor: None,
+            dropdowns: init.dropdowns,
         };
         let bar_button = model.bar_button.widget();
         let widgets = view_output!();
@@ -101,13 +106,15 @@ impl Component for IdleInhibitModule {
     fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, _root: &Self::Root) {
         let config = &self.config.config().modules.idle_inhibit;
 
-        match msg {
-            IdleInhibitMsg::LeftClick => process::run_if_set(&config.left_click.get()),
-            IdleInhibitMsg::RightClick => process::run_if_set(&config.right_click.get()),
-            IdleInhibitMsg::MiddleClick => process::run_if_set(&config.middle_click.get()),
-            IdleInhibitMsg::ScrollUp => process::run_if_set(&config.scroll_up.get()),
-            IdleInhibitMsg::ScrollDown => process::run_if_set(&config.scroll_down.get()),
-        }
+        let action = match msg {
+            IdleInhibitMsg::LeftClick => config.left_click.get(),
+            IdleInhibitMsg::RightClick => config.right_click.get(),
+            IdleInhibitMsg::MiddleClick => config.middle_click.get(),
+            IdleInhibitMsg::ScrollUp => config.scroll_up.get(),
+            IdleInhibitMsg::ScrollDown => config.scroll_down.get(),
+        };
+
+        dropdowns::dispatch_click(&action, &self.dropdowns, &self.bar_button);
     }
 
     fn update_cmd(

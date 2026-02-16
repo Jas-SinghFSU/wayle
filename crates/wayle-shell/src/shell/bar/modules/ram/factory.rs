@@ -1,9 +1,14 @@
+use std::rc::Rc;
+
 use relm4::prelude::*;
 use wayle_widgets::prelude::BarSettings;
 
 use super::{RamInit, RamModule};
 use crate::shell::{
-    bar::modules::registry::{ModuleFactory, ModuleInstance, dynamic_controller},
+    bar::{
+        dropdowns::DropdownRegistry,
+        modules::registry::{ModuleFactory, ModuleInstance, dynamic_controller},
+    },
     services::ShellServices,
 };
 
@@ -13,12 +18,14 @@ impl ModuleFactory for Factory {
     fn create(
         settings: &BarSettings,
         services: &ShellServices,
+        dropdowns: &Rc<DropdownRegistry>,
         class: Option<String>,
     ) -> Option<ModuleInstance> {
         let init = RamInit {
             settings: settings.clone(),
             sysinfo: services.sysinfo.clone(),
             config: services.config.clone(),
+            dropdowns: dropdowns.clone(),
         };
         let controller = dynamic_controller(RamModule::builder().launch(init).detach());
         Some(ModuleInstance { controller, class })

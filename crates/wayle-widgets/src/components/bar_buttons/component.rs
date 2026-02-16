@@ -45,6 +45,10 @@ pub enum BarButtonInput {
     SetLabel(String),
     /// Update the tooltip.
     SetTooltip(Option<String>),
+    /// Lock label width to prevent resize while a popover is open.
+    FreezeSize,
+    /// Unlock label width, restoring normal sizing.
+    ThawSize,
     /// Config property changed.
     ConfigChanged,
 }
@@ -63,6 +67,8 @@ pub struct BarButton {
     icon: String,
     label: String,
     tooltip: Option<String>,
+    size_frozen: bool,
+    pending_label: Option<String>,
     pub(super) variant: BarButtonVariant,
     pub(super) colors: BarButtonColors,
     pub(super) behavior: BarButtonBehavior,
@@ -171,6 +177,8 @@ impl Component for BarButton {
             icon: init.icon,
             label: init.label,
             tooltip: init.tooltip,
+            size_frozen: false,
+            pending_label: None,
             variant: init.settings.variant.get(),
             colors: init.colors,
             behavior: init.behavior,
@@ -202,8 +210,23 @@ impl Component for BarButton {
     fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, _root: &Self::Root) {
         match msg {
             BarButtonInput::SetIcon(icon) => self.icon = icon,
-            BarButtonInput::SetLabel(label) => self.label = label,
+            BarButtonInput::SetLabel(label) => {
+                if self.size_frozen {
+                    self.pending_label = Some(label);
+                } else {
+                    self.label = label;
+                }
+            }
             BarButtonInput::SetTooltip(tooltip) => self.tooltip = tooltip,
+            BarButtonInput::FreezeSize => {
+                self.size_frozen = true;
+            }
+            BarButtonInput::ThawSize => {
+                self.size_frozen = false;
+                if let Some(label) = self.pending_label.take() {
+                    self.label = label;
+                }
+            }
             BarButtonInput::ConfigChanged => {}
         }
     }
