@@ -514,38 +514,47 @@ impl AudioDropdown {
     }
 
     fn sync_app_volumes(&mut self) {
-        let mut guard = self.app_volumes.guard();
-        guard.clear();
-
         let icon_source = self.config.config().modules.volume.dropdown_app_icons.get();
         let mut seen_pids: HashSet<u32> = HashSet::new();
 
-        for stream in &self.playback_streams {
-            let props = stream.properties.get();
+        let mut items: Vec<AppVolumeInit> = self
+            .playback_streams
+            .iter()
+            .filter_map(|stream| {
+                let props = stream.properties.get();
 
-            if helpers::is_event_stream(&props) {
-                continue;
-            }
+                if helpers::is_event_stream(&props) {
+                    return None;
+                }
 
-            if let Some(pid) = stream.pid.get()
-                && !seen_pids.insert(pid)
-            {
-                continue;
-            }
+                if let Some(pid) = stream.pid.get()
+                    && !seen_pids.insert(pid)
+                {
+                    return None;
+                }
 
-            let name =
-                helpers::app_display_name(&stream.application_name.get(), &stream.name.get());
-            let icon = Self::resolve_stream_icon(&props, icon_source);
-            let volume = stream.volume.get().average_percentage();
-            let muted = stream.muted.get();
+                let name =
+                    helpers::app_display_name(&stream.application_name.get(), &stream.name.get());
+                let icon = Self::resolve_stream_icon(&props, icon_source);
+                let volume = stream.volume.get().average_percentage();
+                let muted = stream.muted.get();
 
-            guard.push_back(AppVolumeInit {
-                name,
-                icon,
-                volume,
-                muted,
-                stream_index: stream.key.index,
-            });
+                Some(AppVolumeInit {
+                    name,
+                    icon,
+                    volume,
+                    muted,
+                    stream_index: stream.key.index,
+                })
+            })
+            .collect();
+
+        items.sort_by(|a, b| a.name.cmp(&b.name));
+
+        let mut guard = self.app_volumes.guard();
+        guard.clear();
+        for init in items {
+            guard.push_back(init);
         }
     }
 

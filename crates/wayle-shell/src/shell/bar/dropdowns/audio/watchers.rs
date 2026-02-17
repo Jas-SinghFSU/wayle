@@ -1,10 +1,12 @@
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 
 use relm4::ComponentSender;
 use tokio_util::sync::CancellationToken;
 use wayle_audio::AudioService;
-use wayle_common::{watch, watch_cancellable};
+use wayle_common::{watch, watch_cancellable_throttled};
 use wayle_config::ConfigService;
+
+const VOLUME_THROTTLE: Duration = Duration::from_millis(30);
 
 use super::{AudioDropdown, messages::AudioDropdownCmd};
 
@@ -57,9 +59,15 @@ pub(super) fn spawn_output_device(
 ) {
     let volume = device.volume.clone();
     let muted = device.muted.clone();
-    watch_cancellable!(sender, token, [volume.watch(), muted.watch()], |out| {
-        let _ = out.send(AudioDropdownCmd::OutputVolumeOrMuteChanged);
-    });
+    watch_cancellable_throttled!(
+        sender,
+        token,
+        VOLUME_THROTTLE,
+        [volume.watch(), muted.watch()],
+        |out| {
+            let _ = out.send(AudioDropdownCmd::OutputVolumeOrMuteChanged);
+        }
+    );
 }
 
 pub(super) fn spawn_input_device(
@@ -69,9 +77,15 @@ pub(super) fn spawn_input_device(
 ) {
     let volume = device.volume.clone();
     let muted = device.muted.clone();
-    watch_cancellable!(sender, token, [volume.watch(), muted.watch()], |out| {
-        let _ = out.send(AudioDropdownCmd::InputVolumeOrMuteChanged);
-    });
+    watch_cancellable_throttled!(
+        sender,
+        token,
+        VOLUME_THROTTLE,
+        [volume.watch(), muted.watch()],
+        |out| {
+            let _ = out.send(AudioDropdownCmd::InputVolumeOrMuteChanged);
+        }
+    );
 }
 
 pub(super) fn spawn_playback_streams(
@@ -83,9 +97,10 @@ pub(super) fn spawn_playback_streams(
         let stream_index = stream.key.index;
         let volume = stream.volume.clone();
         let muted = stream.muted.clone();
-        watch_cancellable!(
+        watch_cancellable_throttled!(
             sender,
             token.clone(),
+            VOLUME_THROTTLE,
             [volume.watch(), muted.watch()],
             |out| {
                 let _ = out.send(AudioDropdownCmd::AppStreamPropertyChanged(stream_index));

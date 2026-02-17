@@ -1,10 +1,12 @@
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 
 use relm4::ComponentSender;
 use tokio_util::sync::CancellationToken;
 use wayle_audio::{AudioService, core::device::output::OutputDevice};
-use wayle_common::{watch, watch_cancellable};
+use wayle_common::{watch, watch_cancellable_throttled};
 use wayle_config::schemas::modules::VolumeConfig;
+
+const VOLUME_THROTTLE: Duration = Duration::from_millis(30);
 
 use super::{VolumeModule, messages::VolumeCmd};
 
@@ -32,7 +34,13 @@ pub(super) fn spawn_device_watchers(
 ) {
     let volume = device.volume.clone();
     let muted = device.muted.clone();
-    watch_cancellable!(sender, token, [volume.watch(), muted.watch()], |out| {
-        let _ = out.send(VolumeCmd::VolumeOrMuteChanged);
-    });
+    watch_cancellable_throttled!(
+        sender,
+        token,
+        VOLUME_THROTTLE,
+        [volume.watch(), muted.watch()],
+        |out| {
+            let _ = out.send(VolumeCmd::VolumeOrMuteChanged);
+        }
+    );
 }

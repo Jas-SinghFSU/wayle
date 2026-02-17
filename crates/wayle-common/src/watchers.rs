@@ -246,6 +246,59 @@ macro_rules! watch_cancellable {
     }};
 }
 
+/// Throttled variant of [`watch_cancellable!`] with leading-edge behavior.
+///
+/// Forwards the first event immediately, then enforces a
+/// minimum interval between subsequent handler invocations. Events arriving
+/// during the cooldown are absorbed — the next handler call after the cooldown
+/// reads the latest value from the underlying `tokio::sync::watch` channel.
+///
+///
+/// # Example
+///
+/// ```ignore
+/// use std::time::Duration;
+///
+/// watch_cancellable_throttled!(
+///     sender, token, Duration::from_millis(30),
+///     [device.volume.watch(), device.muted.watch()],
+///     |out| {
+///         let _ = out.send(Cmd::VolumeOrMuteChanged);
+///     }
+/// );
+/// ```
+#[macro_export]
+macro_rules! watch_cancellable_throttled {
+    ($sender:expr, $token:expr, $cooldown:expr, [$($stream:expr),* $(,)?], |$out:ident| $body:expr) => {{
+        use ::futures::stream::StreamExt;
+        use ::futures::stream::select_all;
+
+        let streams: Vec<$crate::watchers::BoxedStream> = vec![
+            $(
+                Box::pin(StreamExt::map($stream, |_| ()))
+                    as $crate::watchers::BoxedStream,
+            )*
+        ];
+
+        let token = $token;
+        let cooldown = $cooldown;
+        $sender.command(move |$out, shutdown| async move {
+            let mut merged = select_all(streams);
+
+            ::tokio::select! {
+                () = shutdown.wait() => {}
+                () = token.cancelled() => {}
+                () = async {
+                    while merged.next().await.is_some() {
+                        (|| { $body })();
+                        ::tokio::time::sleep(cooldown).await;
+                    }
+                } => {}
+            }
+        });
+    }};
+}
+
 /// Watches streams with an async handler.
 ///
 /// Like [`watch!`], but the handler is async, allowing `.await` inside the

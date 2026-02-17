@@ -1,6 +1,6 @@
-use gtk::{gdk, glib, pango, prelude::*};
+use gtk::{glib, pango, prelude::*};
 use relm4::{gtk, prelude::*};
-use wayle_widgets::prelude::{GhostIconButton, Slider};
+use wayle_widgets::prelude::{DebouncedSlider, GhostIconButton};
 
 use super::helpers;
 
@@ -15,18 +15,15 @@ pub(super) struct AppVolumeInit {
 pub(super) struct AppVolumeItem {
     pub name: String,
     pub icon: Option<String>,
-    pub volume: f64,
     pub muted: bool,
     pub stream_index: u32,
-    pub dragging: bool,
+    slider: DebouncedSlider,
 }
 
 #[derive(Debug)]
 pub(super) enum AppVolumeItemMsg {
     SetBackendState { volume: f64, muted: bool },
-    SliderMoved(f64),
-    DragStarted,
-    DragEnded,
+    VolumeCommitted(f64),
     ToggleMute,
 }
 
@@ -79,30 +76,12 @@ impl FactoryComponent for AppVolumeItem {
                 GhostIconButton {
                     add_css_class: "audio-app-mute",
                     #[watch]
-                    set_icon_name: helpers::volume_icon(self.volume, self.muted),
+                    set_icon_name: helpers::volume_icon(self.slider.value(), self.muted),
                     connect_clicked => AppVolumeItemMsg::ToggleMute,
                 },
 
-                #[template]
-                #[name = "volume_slider"]
-                Slider {
-                    add_css_class: "audio-app-slider",
-                    set_hexpand: true,
-                    set_range: (0.0, 100.0),
-                    #[watch]
-                    #[block_signal(vol_handler)]
-                    set_value: self.volume,
-                    connect_value_changed[sender] => move |scale| {
-                        sender.input(AppVolumeItemMsg::SliderMoved(scale.value()));
-                    } @vol_handler,
-                },
-                gtk::Label {
-                    add_css_class: "audio-app-value",
-                    set_width_chars: 4,
-                    set_xalign: 1.0,
-                    #[watch]
-                    set_label: &helpers::format_volume(self.volume),
-                },
+                #[local_ref]
+                slider_widget -> gtk::Box {},
             },
         }
     }
@@ -111,10 +90,9 @@ impl FactoryComponent for AppVolumeItem {
         Self {
             name: init.name,
             icon: init.icon,
-            volume: init.volume,
             muted: init.muted,
             stream_index: init.stream_index,
-            dragging: false,
+            slider: DebouncedSlider::with_label(init.volume),
         }
     }
 
@@ -125,51 +103,38 @@ impl FactoryComponent for AppVolumeItem {
         _returned_widget: &<Self::ParentWidget as relm4::factory::FactoryView>::ReturnedWidget,
         sender: FactorySender<Self>,
     ) -> Self::Widgets {
+        if let Some(scale) = self.slider.scale() {
+            scale.add_css_class("audio-app-slider");
+        }
+        if let Some(label) = self.slider.label_widget() {
+            label.add_css_class("audio-app-value");
+        }
+
+        let commit_sender = sender.input_sender().clone();
+        self.slider.connect_closure(
+            "committed",
+            false,
+            glib::closure_local!(move |_widget: DebouncedSlider, value: f64| {
+                commit_sender.emit(AppVolumeItemMsg::VolumeCommitted(value));
+            }),
+        );
+
+        let slider_widget = self.slider.upcast_ref::<gtk::Box>();
         let widgets = view_output!();
-
-        let slider_ref = widgets.volume_slider.clone();
-        let drag_sender = sender.clone();
-        let controller = gtk::EventControllerLegacy::new();
-        controller.connect_event(move |_, event| {
-            match event.event_type() {
-                gdk::EventType::ButtonPress | gdk::EventType::TouchBegin => {
-                    drag_sender.input(AppVolumeItemMsg::DragStarted);
-                }
-                gdk::EventType::ButtonRelease
-                | gdk::EventType::TouchEnd
-                | gdk::EventType::TouchCancel => {
-                    drag_sender.input(AppVolumeItemMsg::SliderMoved(slider_ref.value()));
-                    drag_sender.input(AppVolumeItemMsg::DragEnded);
-                }
-                _ => {}
-            }
-            glib::Propagation::Proceed
-        });
-        widgets.volume_slider.add_controller(controller);
-
         widgets
     }
 
     fn update(&mut self, msg: Self::Input, sender: FactorySender<Self>) {
         match msg {
             AppVolumeItemMsg::SetBackendState { volume, muted } => {
-                if !self.dragging {
-                    self.volume = volume;
-                    self.muted = muted;
-                }
+                self.slider.set_value(volume);
+                self.muted = muted;
             }
-            AppVolumeItemMsg::SliderMoved(volume) => {
-                self.volume = volume;
+            AppVolumeItemMsg::VolumeCommitted(volume) => {
                 let _ = sender.output(AppVolumeItemOutput::VolumeChanged(
                     self.stream_index,
                     volume,
                 ));
-            }
-            AppVolumeItemMsg::DragStarted => {
-                self.dragging = true;
-            }
-            AppVolumeItemMsg::DragEnded => {
-                self.dragging = false;
             }
             AppVolumeItemMsg::ToggleMute => {
                 let _ = sender.output(AppVolumeItemOutput::ToggleMute(self.stream_index));

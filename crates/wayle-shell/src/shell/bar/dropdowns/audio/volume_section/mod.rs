@@ -1,8 +1,8 @@
 mod messages;
 
-use gtk::{gdk, glib, pango, prelude::*};
+use gtk::{glib, prelude::*};
 use relm4::{gtk, prelude::*};
-use wayle_widgets::prelude::GhostIconButton;
+use wayle_widgets::prelude::{DebouncedSlider, GhostIconButton};
 
 pub(super) use self::messages::*;
 use super::helpers;
@@ -13,16 +13,15 @@ pub(crate) struct VolumeSection {
     title: String,
     device_name: String,
     device_icon: &'static str,
-    volume: f64,
     muted: bool,
     has_device: bool,
-    dragging: bool,
+    slider: DebouncedSlider,
 }
 
 impl VolumeSection {
     fn mute_icon(&self) -> &'static str {
         match self.kind {
-            VolumeSectionKind::Output => helpers::volume_icon(self.volume, self.muted),
+            VolumeSectionKind::Output => helpers::volume_icon(self.slider.value(), self.muted),
             VolumeSectionKind::Input => helpers::input_icon(self.muted),
         }
     }
@@ -66,7 +65,7 @@ impl SimpleComponent for VolumeSection {
                         },
                         gtk::Label {
                             add_css_class: "device-trigger-name",
-                            set_ellipsize: pango::EllipsizeMode::End,
+                            set_ellipsize: gtk::pango::EllipsizeMode::End,
                             set_max_width_chars: 20,
                             #[watch]
                             set_label: &model.device_name,
@@ -92,29 +91,8 @@ impl SimpleComponent for VolumeSection {
                     connect_clicked => VolumeSectionInput::MuteClicked,
                 },
 
-                #[name = "slider"]
-                gtk::Scale {
-                    add_css_class: "audio-volume-slider",
-                    set_draw_value: false,
-                    set_cursor_from_name: Some("pointer"),
-                    set_has_origin: true,
-                    set_hexpand: true,
-                    set_range: (0.0, 100.0),
-                    #[watch]
-                    #[block_signal(vol_handler)]
-                    set_value: model.volume,
-                    connect_value_changed[sender] => move |scale| {
-                        sender.input(VolumeSectionInput::SliderMoved(scale.value()));
-                    } @vol_handler,
-                },
-
-                gtk::Label {
-                    add_css_class: "audio-slider-value",
-                    set_width_chars: 4,
-                    set_xalign: 1.0,
-                    #[watch]
-                    set_label: &helpers::format_volume(model.volume),
-                },
+                #[local_ref]
+                slider_widget -> gtk::Box {},
             },
 
             gtk::Box {
@@ -142,53 +120,44 @@ impl SimpleComponent for VolumeSection {
         _root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
+        let slider = DebouncedSlider::with_label(init.volume);
+
+        if let Some(scale) = slider.scale() {
+            scale.add_css_class("audio-volume-slider");
+        }
+        if let Some(label) = slider.label_widget() {
+            label.add_css_class("audio-slider-value");
+        }
+
+        let commit_sender = sender.input_sender().clone();
+        slider.connect_closure(
+            "committed",
+            false,
+            glib::closure_local!(move |_widget: DebouncedSlider, value: f64| {
+                commit_sender.emit(VolumeSectionInput::VolumeCommitted(value));
+            }),
+        );
+
         let model = VolumeSection {
             kind: init.kind,
             title: init.title,
             device_name: init.device_name,
             device_icon: init.device_icon,
-            volume: init.volume,
             muted: init.muted,
             has_device: init.has_device,
-            dragging: false,
+            slider,
         };
 
+        let slider_widget = model.slider.upcast_ref::<gtk::Box>();
         let widgets = view_output!();
-
-        let slider_ref = widgets.slider.clone();
-        let drag_sender = sender.input_sender().clone();
-        let controller = gtk::EventControllerLegacy::new();
-        controller.connect_event(move |_, event| {
-            match event.event_type() {
-                gdk::EventType::ButtonPress | gdk::EventType::TouchBegin => {
-                    drag_sender.emit(VolumeSectionInput::DragStarted);
-                }
-                gdk::EventType::ButtonRelease
-                | gdk::EventType::TouchEnd
-                | gdk::EventType::TouchCancel => {
-                    drag_sender.emit(VolumeSectionInput::SliderMoved(slider_ref.value()));
-                    drag_sender.emit(VolumeSectionInput::DragEnded);
-                }
-                _ => {}
-            }
-            glib::Propagation::Proceed
-        });
-        widgets.slider.add_controller(controller);
 
         ComponentParts { model, widgets }
     }
 
     fn update(&mut self, msg: Self::Input, sender: ComponentSender<Self>) {
         match msg {
-            VolumeSectionInput::SliderMoved(volume) => {
-                self.volume = volume;
+            VolumeSectionInput::VolumeCommitted(volume) => {
                 let _ = sender.output(VolumeSectionOutput::VolumeChanged(volume));
-            }
-            VolumeSectionInput::DragStarted => {
-                self.dragging = true;
-            }
-            VolumeSectionInput::DragEnded => {
-                self.dragging = false;
             }
             VolumeSectionInput::MuteClicked => {
                 let _ = sender.output(VolumeSectionOutput::ToggleMute);
@@ -204,20 +173,14 @@ impl SimpleComponent for VolumeSection {
             } => {
                 self.device_name = name;
                 self.device_icon = icon;
+                self.slider.set_value(volume);
                 self.muted = muted;
-                if !self.dragging {
-                    self.volume = volume;
-                }
             }
             VolumeSectionInput::SetVolume(volume) => {
-                if !self.dragging {
-                    self.volume = volume;
-                }
+                self.slider.set_value(volume);
             }
             VolumeSectionInput::SetMuted(muted) => {
-                if !self.dragging {
-                    self.muted = muted;
-                }
+                self.muted = muted;
             }
             VolumeSectionInput::SetHasDevice(has_device) => {
                 self.has_device = has_device;

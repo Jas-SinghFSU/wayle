@@ -25,9 +25,7 @@ pub(crate) enum VolumeSectionInput {
     SetVolume(f64),
     SetMuted(bool),
     SetHasDevice(bool),
-    SliderMoved(f64),
-    DragStarted,
-    DragEnded,
+    VolumeCommitted(f64),
     MuteClicked,
     ShowDevicesClicked,
 }

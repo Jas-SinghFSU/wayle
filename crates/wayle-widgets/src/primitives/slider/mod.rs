@@ -1,8 +1,10 @@
-//! Slider widgets: continuous template and stepped component.
+//! Slider widgets: continuous template, stepped component, and debounced slider.
 #![allow(missing_docs)]
 
+pub mod debounced;
 mod stepped;
 
+pub use debounced::DebouncedSlider;
 use gtk4::prelude::*;
 use relm4::{WidgetTemplate, gtk};
 pub use stepped::{

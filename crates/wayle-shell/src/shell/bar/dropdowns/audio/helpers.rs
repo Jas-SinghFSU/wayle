@@ -52,10 +52,6 @@ pub(super) fn stream_icon(
     }
 }
 
-pub(super) fn format_volume(percentage: f64) -> String {
-    format!("{:.0}%", percentage)
-}
-
 pub(super) fn volume_icon(percentage: f64, muted: bool) -> &'static str {
     if muted || percentage <= 0.0 {
         "ld-volume-x-symbolic"
@@ -203,13 +199,6 @@ pub(super) fn active_port_description(
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn format_volume_rounds_to_integer() {
-        assert_eq!(format_volume(45.7), "46%");
-        assert_eq!(format_volume(0.0), "0%");
-        assert_eq!(format_volume(100.0), "100%");
-    }
 
     #[test]
     fn volume_icon_muted() {
