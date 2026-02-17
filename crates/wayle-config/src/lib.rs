@@ -68,11 +68,11 @@ use crate::schemas::general::GeneralConfig;
 pub struct Config {
     /// TOML files to import and merge before this config.
     ///
-    /// Paths are relative to the config file and prefixed with `@`.
+    /// Paths are relative to the config file.
     /// Imported values are overridden by values in this file.
     ///
     /// ```toml
-    /// imports = ["@themes.toml", "@modules/clock.toml"]
+    /// imports = ["themes.toml", "modules/clock.toml"]
     /// ```
     #[wayle(skip)]
     #[serde(default)]

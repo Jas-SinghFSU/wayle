@@ -138,8 +138,7 @@ impl Config {
                 imports
                     .iter()
                     .filter_map(|v| v.as_str())
-                    .filter(|s| s.starts_with('@'))
-                    .map(|s| s.strip_prefix('@').unwrap_or(s).to_owned())
+                    .map(|s| s.to_owned())
                     .collect::<Vec<String>>()
             } else {
                 Vec::new()

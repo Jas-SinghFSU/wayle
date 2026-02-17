@@ -122,7 +122,7 @@ Config files can be split and imported for better organization:
 
 ```toml
 # config.toml
-imports = ["@colors.toml", "@modules/bar.toml"]
+imports = ["colors.toml", "modules/bar.toml"]
 
 [bar]
 location = "top"
