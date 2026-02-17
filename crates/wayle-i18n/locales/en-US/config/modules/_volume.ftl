@@ -42,7 +42,7 @@ settings-modules-volume-middle-click = Middle Click
     .description = Shell command on middle click
 
 settings-modules-volume-scroll-up = Scroll Up
-    .description = Shell command on scroll up
+    .description = Action on scroll up
 
 settings-modules-volume-scroll-down = Scroll Down
-    .description = Shell command on scroll down
+    .description = Action on scroll down

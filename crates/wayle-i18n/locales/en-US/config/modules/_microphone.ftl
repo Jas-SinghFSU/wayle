@@ -45,7 +45,7 @@ settings-modules-microphone-middle-click = Middle Click
     .description = Shell command on middle click
 
 settings-modules-microphone-scroll-up = Scroll Up
-    .description = Shell command on scroll up
+    .description = Action on scroll up
 
 settings-modules-microphone-scroll-down = Scroll Down
-    .description = Shell command on scroll down
+    .description = Action on scroll down

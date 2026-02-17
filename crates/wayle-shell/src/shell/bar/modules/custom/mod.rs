@@ -31,6 +31,7 @@ use crate::shell::bar::dropdowns::DropdownRegistry;
 pub(crate) struct CustomModule {
     bar_button: Controller<BarButton>,
     definition: CustomModuleDefinition,
+    definition_present: bool,
     #[allow(dead_code)]
     dropdowns: Rc<DropdownRegistry>,
     poller_token: WatcherToken,
@@ -117,10 +118,12 @@ impl Component for CustomModule {
         let custom_modules = &init.config.config().modules.custom;
         let mut poller_token = WatcherToken::new();
         let mut watcher_token = WatcherToken::new();
+        let mut command_token = WatcherToken::new();
 
         match definition.mode {
             ExecutionMode::Poll => {
                 watchers::spawn_command_poller(&sender, &definition, poller_token.reset());
+                watchers::run_definition_command(&sender, &definition, command_token.reset());
             }
             ExecutionMode::Watch => {
                 watchers::spawn_command_watcher(&sender, &definition, watcher_token.reset());
@@ -131,10 +134,11 @@ impl Component for CustomModule {
         let model = Self {
             bar_button,
             definition,
+            definition_present: true,
             dropdowns: init.dropdowns,
             poller_token,
             watcher_token,
-            command_token: WatcherToken::new(),
+            command_token,
             scroll_debounce_token: WatcherToken::new(),
             show_icon,
             show_label,
@@ -223,16 +227,19 @@ impl Component for CustomModule {
 
 impl CustomModule {
     fn handle_definition_removed(&mut self, root: &gtk::Box) {
+        if !self.definition_present {
+            return;
+        }
+
         debug!(
             module_id = %self.definition.id,
             "custom module definition was removed; hiding module"
         );
 
+        self.definition_present = false;
         self.stop_execution_watchers();
         self.cancel_inflight_commands();
-        if let Some(parent) = root.parent() {
-            parent.set_visible(false);
-        }
+        root.set_visible(false);
         force_window_resize(root);
     }
 
@@ -242,16 +249,19 @@ impl CustomModule {
         root: &gtk::Box,
         new_definition: CustomModuleDefinition,
     ) {
-        if self.definition == new_definition {
+        let was_removed = !self.definition_present;
+        if !was_removed && self.definition == new_definition {
             return;
         }
 
-        let needs_restart = Self::execution_settings_changed(&self.definition, &new_definition);
+        let needs_restart =
+            was_removed || Self::execution_settings_changed(&self.definition, &new_definition);
 
         self.cancel_inflight_commands();
 
         self.apply_visual_properties(&new_definition);
         self.definition = new_definition;
+        self.definition_present = true;
 
         if needs_restart {
             self.restart_execution_watchers(sender);
@@ -266,6 +276,8 @@ impl CustomModule {
     ) -> bool {
         current.mode != next.mode
             || current.interval_ms != next.interval_ms
+            || current.restart_policy != next.restart_policy
+            || current.restart_interval_ms != next.restart_interval_ms
             || current.command != next.command
     }
 
@@ -291,6 +303,11 @@ impl CustomModule {
             ExecutionMode::Poll => {
                 self.watcher_token.reset();
                 watchers::spawn_command_poller(sender, &self.definition, self.poller_token.reset());
+                watchers::run_definition_command(
+                    sender,
+                    &self.definition,
+                    self.command_token.reset(),
+                );
             }
             ExecutionMode::Watch => {
                 self.poller_token.reset();
@@ -327,9 +344,7 @@ impl CustomModule {
         self.bar_button.emit(BarButtonInput::SetLabel(label));
         self.bar_button.emit(BarButtonInput::SetIcon(icon));
         self.bar_button.emit(BarButtonInput::SetTooltip(tooltip));
-        if let Some(parent) = root.parent() {
-            parent.set_visible(is_visible);
-        }
+        root.set_visible(is_visible);
 
         for old_class in &self.dynamic_classes {
             if !new_classes.contains(old_class) {

@@ -80,14 +80,14 @@ pub struct MicrophoneConfig {
     #[default(ClickAction::Shell(String::from("wayle audio input-mute")))]
     pub middle_click: ConfigProperty<ClickAction>,
 
-    /// Action on scroll up. Default increases input volume.
+    /// Action on scroll up.
     #[serde(rename = "scroll-up")]
-    #[default(ClickAction::Shell(String::from("wayle audio input-volume +5")))]
+    #[default(ClickAction::None)]
     pub scroll_up: ConfigProperty<ClickAction>,
 
-    /// Action on scroll down. Default decreases input volume.
+    /// Action on scroll down.
     #[serde(rename = "scroll-down")]
-    #[default(ClickAction::Shell(String::from("wayle audio input-volume -5")))]
+    #[default(ClickAction::None)]
     pub scroll_down: ConfigProperty<ClickAction>,
 }
 

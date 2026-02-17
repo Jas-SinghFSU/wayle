@@ -1,28 +1,12 @@
+mod types;
+
 use std::collections::HashMap;
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+pub use self::types::{ExecutionMode, RestartDelay, RestartPolicy};
 use crate::schemas::styling::{ColorValue, CssToken};
-
-/// Execution mode for custom module commands.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "kebab-case")]
-pub enum ExecutionMode {
-    /// Run command at regular intervals defined by `interval-ms`.
-    ///
-    /// Best for commands that complete quickly and return current state
-    /// (e.g., reading a file, querying system status).
-    #[default]
-    Poll,
-
-    /// Spawn long-running process and update display on each stdout line.
-    ///
-    /// Best for event-driven updates without polling overhead
-    /// (e.g., `pactl subscribe`, `inotifywait`, `tail -f`).
-    /// The process is automatically restarted if it exits.
-    Watch,
-}
 
 /// Custom module definition for user-defined bar modules.
 ///
@@ -37,7 +21,7 @@ pub enum ExecutionMode {
 /// - **Plain text**: Use `{{ output }}` in format strings
 /// - **JSON**: Auto-detected when output starts with `{` or `[`.
 ///   Access fields directly (`{{ field }}`), use dot notation (`{{ nested.value }}`),
-///   or use the `jsonpath` filter (`{{ data | jsonpath('$.path') }}`).
+///   or use array indices (`{{ items.0 }}`).
 ///
 /// # JSON Reserved Fields
 ///
@@ -51,7 +35,7 @@ pub enum ExecutionMode {
 /// | `tooltip` | string | Overrides `tooltip-format` result |
 /// | `class` | string or array | CSS classes added to the module |
 ///
-/// Any other fields are accessible via JSONPath in format strings.
+/// Any other fields are accessible in format strings via dot notation.
 ///
 /// # Icon Resolution Priority
 ///
@@ -169,7 +153,8 @@ pub struct CustomModuleDefinition {
     /// ## Behavior by Mode
     ///
     /// - **poll**: Executed every `interval-ms` milliseconds
-    /// - **watch**: Spawned once, each stdout line triggers a display update
+    /// - **watch**: Spawned once, each stdout line triggers a display update.
+    ///   Restarts are controlled by `restart-policy`.
     #[serde(default)]
     pub command: Option<String>,
 
@@ -188,8 +173,32 @@ pub struct CustomModuleDefinition {
     /// Polling interval in milliseconds.
     ///
     /// Only applies to `poll` mode. Ignored in `watch` mode.
+    ///
+    /// Set to `0` for manual polling mode: no timer is started. In manual
+    /// mode, the command still runs once at startup.
     #[serde(rename = "interval-ms", default = "default_interval")]
     pub interval_ms: u64,
+
+    /// Restart policy for watch mode.
+    ///
+    /// Only applies to `watch` mode. Ignored in `poll` mode.
+    ///
+    /// | Policy | Behavior |
+    /// |--------|----------|
+    /// | `never` | Do not restart after exit |
+    /// | `on-exit` | Restart after any exit |
+    /// | `on-failure` | Restart only after non-zero/signal exit |
+    #[serde(rename = "restart-policy", default)]
+    pub restart_policy: RestartPolicy,
+
+    /// Base restart delay in milliseconds for watch mode.
+    ///
+    /// Only applies to `watch` mode. Ignored in `poll` mode.
+    ///
+    /// Used when `restart-policy` is `on-exit` or `on-failure`.
+    /// Delay increases exponentially on rapid failures, capped at 30 seconds.
+    #[serde(rename = "restart-interval-ms", default)]
+    pub restart_interval_ms: RestartDelay,
 
     /// Format string for the label using Jinja2 template syntax.
     ///

@@ -365,13 +365,18 @@ mod tests {
     }
 
     fn default_definition() -> CustomModuleDefinition {
-        use wayle_config::schemas::{modules::ExecutionMode, styling::ColorValue};
+        use wayle_config::schemas::{
+            modules::{ExecutionMode, RestartDelay, RestartPolicy},
+            styling::ColorValue,
+        };
 
         CustomModuleDefinition {
             id: String::new(),
             command: None,
             mode: ExecutionMode::Poll,
             interval_ms: 5000,
+            restart_policy: RestartPolicy::default(),
+            restart_interval_ms: RestartDelay::default(),
             format: "{{ output }}".to_string(),
             tooltip_format: None,
             hide_if_empty: false,
