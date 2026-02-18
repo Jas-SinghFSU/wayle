@@ -1,7 +1,7 @@
 use gtk::{pango, prelude::*};
 use relm4::{gtk, prelude::*};
 
-use super::messages::DeviceInfo;
+use crate::shell::bar::dropdowns::audio::device_picker::messages::DeviceInfo;
 
 pub(super) struct DeviceOptionItem {
     description: String,

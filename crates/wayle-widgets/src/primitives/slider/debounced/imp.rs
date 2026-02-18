@@ -129,10 +129,10 @@ impl DebouncedSliderImp {
     }
 
     fn format_value(&self, value: f64) -> String {
-        if let Ok(guard) = self.formatter.try_borrow() {
-            if let Some(ref fmt) = *guard {
-                return fmt(value);
-            }
+        if let Ok(guard) = self.formatter.try_borrow()
+            && let Some(ref fmt) = *guard
+        {
+            return fmt(value);
         }
         format!("{:.0}%", value)
     }
@@ -227,7 +227,7 @@ impl DebouncedSliderImp {
         let can_emit = self
             .last_committed_at
             .get()
-            .map_or(true, |t| now.duration_since(t) >= THROTTLE_INTERVAL);
+            .is_none_or(|t| now.duration_since(t) >= THROTTLE_INTERVAL);
 
         if can_emit {
             self.cancel_trailing();

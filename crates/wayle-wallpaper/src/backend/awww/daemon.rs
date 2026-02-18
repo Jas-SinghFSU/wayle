@@ -31,6 +31,7 @@ fn ensure_daemon_ready() {
     super::DAEMON_READY.notify_one();
 }
 
+#[allow(clippy::cognitive_complexity)]
 fn should_wait_for_ready(daemon: &str) -> bool {
     match is_daemon_running() {
         Ok(true) => {

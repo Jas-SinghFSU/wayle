@@ -1,23 +1,33 @@
 mod device_item;
 mod messages;
+mod methods;
+mod watchers;
+
+use std::sync::Arc;
 
 use gtk::prelude::*;
 use relm4::{factory::FactoryVecDeque, gtk, prelude::*};
-use wayle_widgets::prelude::GhostIconButton;
+use wayle_audio::AudioService;
 
 use self::device_item::DeviceOptionItem;
 pub(super) use self::messages::*;
+use crate::shell::bar::dropdowns::audio::VolumeSectionKind;
 
 pub(crate) struct DevicePicker {
+    audio: Arc<AudioService>,
+    kind: VolumeSectionKind,
     title: String,
     devices: FactoryVecDeque<DeviceOptionItem>,
+    cached_output_devices: Vec<Arc<wayle_audio::core::device::output::OutputDevice>>,
+    cached_input_devices: Vec<Arc<wayle_audio::core::device::input::InputDevice>>,
 }
 
 #[relm4::component(pub(crate))]
-impl SimpleComponent for DevicePicker {
+impl Component for DevicePicker {
     type Init = DevicePickerInit;
     type Input = DevicePickerInput;
     type Output = DevicePickerOutput;
+    type CommandOutput = DevicePickerCmd;
 
     view! {
         #[root]
@@ -28,7 +38,7 @@ impl SimpleComponent for DevicePicker {
                 add_css_class: "picker-header",
 
                 #[template]
-                GhostIconButton {
+                wayle_widgets::prelude::GhostIconButton {
                     add_css_class: "picker-back",
                     set_icon_name: "ld-arrow-left-symbolic",
                     connect_clicked => DevicePickerInput::BackClicked,
@@ -71,30 +81,58 @@ impl SimpleComponent for DevicePicker {
 
         let devices = FactoryVecDeque::builder().launch(device_list).detach();
 
-        let model = Self {
+        watchers::spawn(&sender, &init.audio, init.kind);
+
+        let initial_list = Self::build_device_list(&init.audio, init.kind);
+        let (cached_output, cached_input) = match init.kind {
+            VolumeSectionKind::Output => (init.audio.output_devices.get(), Vec::new()),
+            VolumeSectionKind::Input => (Vec::new(), init.audio.input_devices.get()),
+        };
+
+        let mut model = Self {
+            audio: init.audio,
+            kind: init.kind,
             title: init.title,
             devices,
+            cached_output_devices: cached_output,
+            cached_input_devices: cached_input,
         };
+
+        model.apply_device_list(initial_list);
 
         let device_list = model.devices.widget();
         let widgets = view_output!();
         ComponentParts { model, widgets }
     }
 
-    fn update(&mut self, msg: Self::Input, sender: ComponentSender<Self>) {
+    fn update(&mut self, msg: Self::Input, sender: ComponentSender<Self>, _root: &Self::Root) {
         match msg {
-            DevicePickerInput::SetDevices(devices) => {
-                let mut guard = self.devices.guard();
-                guard.clear();
-                for device in devices {
-                    guard.push_back(device);
-                }
-            }
             DevicePickerInput::DeviceSelected(index) => {
-                let _ = sender.output(DevicePickerOutput::DeviceSelected(index));
+                self.select_device(index, &sender);
             }
             DevicePickerInput::BackClicked => {
                 let _ = sender.output(DevicePickerOutput::NavigateBack);
+            }
+        }
+    }
+
+    fn update_cmd(
+        &mut self,
+        msg: Self::CommandOutput,
+        _sender: ComponentSender<Self>,
+        _root: &Self::Root,
+    ) {
+        match msg {
+            DevicePickerCmd::DevicesChanged(list) => {
+                match self.kind {
+                    VolumeSectionKind::Output => {
+                        self.cached_output_devices = self.audio.output_devices.get();
+                    }
+                    VolumeSectionKind::Input => {
+                        self.cached_input_devices = self.audio.input_devices.get();
+                    }
+                }
+                self.apply_device_list(list);
             }
         }
     }

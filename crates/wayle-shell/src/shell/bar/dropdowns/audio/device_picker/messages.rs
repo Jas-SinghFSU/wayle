@@ -1,3 +1,9 @@
+use std::sync::Arc;
+
+use wayle_audio::AudioService;
+
+use crate::shell::bar::dropdowns::audio::VolumeSectionKind;
+
 #[derive(Debug)]
 pub(crate) struct DeviceInfo {
     pub description: String,
@@ -7,18 +13,23 @@ pub(crate) struct DeviceInfo {
 }
 
 pub(crate) struct DevicePickerInit {
+    pub audio: Arc<AudioService>,
+    pub kind: VolumeSectionKind,
     pub title: String,
 }
 
 #[derive(Debug)]
 pub(crate) enum DevicePickerInput {
-    SetDevices(Vec<DeviceInfo>),
     DeviceSelected(usize),
     BackClicked,
 }
 
 #[derive(Debug)]
+pub(crate) enum DevicePickerCmd {
+    DevicesChanged(Vec<DeviceInfo>),
+}
+
+#[derive(Debug)]
 pub(crate) enum DevicePickerOutput {
-    DeviceSelected(usize),
     NavigateBack,
 }

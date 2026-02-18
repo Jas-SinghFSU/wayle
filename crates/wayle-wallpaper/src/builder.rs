@@ -49,6 +49,7 @@ impl WallpaperServiceBuilder {
     /// # Errors
     ///
     /// Returns error if D-Bus connection fails or service registration fails.
+    #[allow(clippy::cognitive_complexity)]
     pub async fn build(self) -> Result<Arc<WallpaperService>, Error> {
         let start = Instant::now();
         self.spawn_daemon_if_enabled();

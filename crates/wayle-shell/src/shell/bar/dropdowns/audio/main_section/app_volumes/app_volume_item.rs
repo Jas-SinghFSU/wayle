@@ -2,7 +2,7 @@ use gtk::{glib, pango, prelude::*};
 use relm4::{gtk, prelude::*};
 use wayle_widgets::prelude::{DebouncedSlider, GhostIconButton};
 
-use super::helpers;
+use crate::shell::bar::dropdowns::audio::helpers;
 
 pub(super) struct AppVolumeInit {
     pub name: String,
@@ -114,8 +114,8 @@ impl FactoryComponent for AppVolumeItem {
         self.slider.connect_closure(
             "committed",
             false,
-            glib::closure_local!(move |_widget: DebouncedSlider, value: f64| {
-                commit_sender.emit(AppVolumeItemMsg::VolumeCommitted(value));
+            glib::closure_local!(move |_slider: DebouncedSlider, percentage: f64| {
+                commit_sender.emit(AppVolumeItemMsg::VolumeCommitted(percentage));
             }),
         );
 

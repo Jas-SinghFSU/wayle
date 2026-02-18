@@ -100,20 +100,15 @@ pub fn run_if_set(cmd: &str) {
 /// - `""` -> `None`
 /// - `"dropdown:audio"` -> `Dropdown("audio")`
 /// - `"pavucontrol"` -> `Shell("pavucontrol")`
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub enum ClickAction {
     /// Open a named dropdown panel.
     Dropdown(String),
     /// Execute a shell command.
     Shell(String),
+    #[default]
     /// No action configured.
     None,
-}
-
-impl Default for ClickAction {
-    fn default() -> Self {
-        Self::None
-    }
 }
 
 impl ClickAction {

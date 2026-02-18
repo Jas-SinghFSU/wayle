@@ -90,6 +90,7 @@ enum RunOutcome {
     Exited(ExitStatus),
 }
 
+#[allow(clippy::cognitive_complexity)]
 async fn run_child(
     command: &str,
     out: &relm4::Sender<CustomCmd>,

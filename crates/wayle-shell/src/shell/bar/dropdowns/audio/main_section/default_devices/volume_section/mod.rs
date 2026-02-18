@@ -1,37 +1,38 @@
 mod messages;
+mod methods;
+mod watchers;
+
+use std::sync::Arc;
 
 use gtk::{glib, prelude::*};
 use relm4::{gtk, prelude::*};
+use tracing::warn;
+use wayle_audio::{AudioService, volume::types::Volume};
+use wayle_common::WatcherToken;
 use wayle_widgets::prelude::{DebouncedSlider, GhostIconButton};
 
-pub(super) use self::messages::*;
-use super::helpers;
+pub(crate) use self::messages::*;
 use crate::i18n::t;
 
 pub(crate) struct VolumeSection {
+    audio: Arc<AudioService>,
     kind: VolumeSectionKind,
     title: String,
+    device: Option<ActiveDevice>,
     device_name: String,
     device_icon: &'static str,
     muted: bool,
     has_device: bool,
     slider: DebouncedSlider,
-}
-
-impl VolumeSection {
-    fn mute_icon(&self) -> &'static str {
-        match self.kind {
-            VolumeSectionKind::Output => helpers::volume_icon(self.slider.value(), self.muted),
-            VolumeSectionKind::Input => helpers::input_icon(self.muted),
-        }
-    }
+    device_watcher: WatcherToken,
 }
 
 #[relm4::component(pub(crate))]
-impl SimpleComponent for VolumeSection {
+impl Component for VolumeSection {
     type Init = VolumeSectionInit;
     type Input = VolumeSectionInput;
     type Output = VolumeSectionOutput;
+    type CommandOutput = VolumeSectionCmd;
 
     view! {
         #[root]
@@ -120,8 +121,39 @@ impl SimpleComponent for VolumeSection {
         _root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let slider = DebouncedSlider::with_label(init.volume);
+        let default_device = match init.kind {
+            VolumeSectionKind::Output => init.audio.default_output.get().map(ActiveDevice::Output),
+            VolumeSectionKind::Input => init
+                .audio
+                .default_input
+                .get()
+                .filter(|device| !device.is_monitor.get())
+                .map(ActiveDevice::Input),
+        };
 
+        let (device_name, device_icon, volume, muted) = default_device
+            .as_ref()
+            .map(|device| {
+                (
+                    device.description(),
+                    device.trigger_icon(),
+                    device.volume_percentage(),
+                    device.muted(),
+                )
+            })
+            .unwrap_or_default();
+
+        let has_device = match init.kind {
+            VolumeSectionKind::Output => !init.audio.output_devices.get().is_empty(),
+            VolumeSectionKind::Input => init
+                .audio
+                .input_devices
+                .get()
+                .iter()
+                .any(|device| !device.is_monitor.get()),
+        };
+
+        let slider = DebouncedSlider::with_label(volume);
         if let Some(scale) = slider.scale() {
             scale.add_css_class("audio-volume-slider");
         }
@@ -133,20 +165,29 @@ impl SimpleComponent for VolumeSection {
         slider.connect_closure(
             "committed",
             false,
-            glib::closure_local!(move |_widget: DebouncedSlider, value: f64| {
-                commit_sender.emit(VolumeSectionInput::VolumeCommitted(value));
+            glib::closure_local!(move |_slider: DebouncedSlider, percentage: f64| {
+                commit_sender.emit(VolumeSectionInput::VolumeCommitted(percentage));
             }),
         );
 
-        let model = VolumeSection {
+        watchers::spawn_default_device(&sender, &init.audio, init.kind);
+
+        let mut model = Self {
+            audio: init.audio,
             kind: init.kind,
             title: init.title,
-            device_name: init.device_name,
-            device_icon: init.device_icon,
-            muted: init.muted,
-            has_device: init.has_device,
+            device: default_device,
+            device_name,
+            device_icon,
+            muted,
+            has_device,
             slider,
+            device_watcher: WatcherToken::new(),
         };
+
+        model.resume_device_watcher(&sender);
+
+        let _ = sender.output(VolumeSectionOutput::HasDeviceChanged(has_device));
 
         let slider_widget = model.slider.upcast_ref::<gtk::Box>();
         let widgets = view_output!();
@@ -154,36 +195,67 @@ impl SimpleComponent for VolumeSection {
         ComponentParts { model, widgets }
     }
 
-    fn update(&mut self, msg: Self::Input, sender: ComponentSender<Self>) {
+    fn update(&mut self, msg: Self::Input, sender: ComponentSender<Self>, _root: &Self::Root) {
         match msg {
-            VolumeSectionInput::VolumeCommitted(volume) => {
-                let _ = sender.output(VolumeSectionOutput::VolumeChanged(volume));
+            VolumeSectionInput::VolumeCommitted(percentage) => {
+                if let Some(ref device) = self.device {
+                    let channels = device.channels();
+                    let volume = Volume::from_percentage(percentage, channels);
+                    let device = device.clone();
+                    sender.command(|_out, _shutdown| async move {
+                        if let Err(err) = device.set_volume(volume).await {
+                            warn!(error = %err, "failed to set volume");
+                        }
+                    });
+                }
             }
             VolumeSectionInput::MuteClicked => {
-                let _ = sender.output(VolumeSectionOutput::ToggleMute);
+                if let Some(ref device) = self.device {
+                    let new_muted = !device.muted();
+                    let device = device.clone();
+                    sender.oneshot_command(async move {
+                        if let Err(err) = device.set_mute(new_muted).await {
+                            warn!(error = %err, "failed to toggle mute");
+                        }
+                        VolumeSectionCmd::VolumeOrMuteChanged
+                    });
+                }
             }
             VolumeSectionInput::ShowDevicesClicked => {
                 let _ = sender.output(VolumeSectionOutput::ShowDevices);
             }
-            VolumeSectionInput::SetDevice {
-                name,
-                icon,
-                volume,
-                muted,
-            } => {
-                self.device_name = name;
-                self.device_icon = icon;
-                self.slider.set_value(volume);
-                self.muted = muted;
+        }
+    }
+
+    fn update_cmd(
+        &mut self,
+        msg: Self::CommandOutput,
+        sender: ComponentSender<Self>,
+        _root: &Self::Root,
+    ) {
+        match msg {
+            VolumeSectionCmd::DeviceChanged(device) => {
+                let device = device.or_else(|| self.current_default());
+
+                let had_device = self.has_device;
+                self.has_device = self.check_has_device();
+
+                if let Some(ref device) = device {
+                    self.sync_from_device(device);
+                }
+                self.device = device;
+
+                self.resume_device_watcher(&sender);
+
+                if self.has_device != had_device {
+                    let _ = sender.output(VolumeSectionOutput::HasDeviceChanged(self.has_device));
+                }
             }
-            VolumeSectionInput::SetVolume(volume) => {
-                self.slider.set_value(volume);
-            }
-            VolumeSectionInput::SetMuted(muted) => {
-                self.muted = muted;
-            }
-            VolumeSectionInput::SetHasDevice(has_device) => {
-                self.has_device = has_device;
+            VolumeSectionCmd::VolumeOrMuteChanged => {
+                if let Some(ref device) = self.device {
+                    self.slider.set_value(device.volume_percentage());
+                    self.muted = device.muted();
+                }
             }
         }
     }

@@ -1,6 +1,5 @@
-use std::{collections::HashMap, sync::Arc};
+use std::collections::HashMap;
 
-use wayle_audio::core::device::{input::InputDevice, output::OutputDevice};
 use wayle_config::schemas::modules::AppIconSource;
 
 use crate::shell::bar::icons::lookup_app_icon;
@@ -11,13 +10,13 @@ const PA_PROP_APP_ICON_NAME: &str = "application.icon_name";
 const PA_PROP_APP_NAME: &str = "application.name";
 const PA_PROP_APP_PROCESS_BINARY: &str = "application.process.binary";
 
-pub(super) fn is_event_stream(props: &HashMap<String, String>) -> bool {
+pub(crate) fn is_event_stream(props: &HashMap<String, String>) -> bool {
     props
         .get(PA_PROP_STREAM_RESTORE_ID)
         .is_some_and(|id| id == PA_ROLE_EVENT)
 }
 
-pub(super) fn stream_icon(
+pub(crate) fn stream_icon(
     props: &HashMap<String, String>,
     icon_source: AppIconSource,
 ) -> Option<String> {
@@ -52,7 +51,7 @@ pub(super) fn stream_icon(
     }
 }
 
-pub(super) fn volume_icon(percentage: f64, muted: bool) -> &'static str {
+pub(crate) fn volume_icon(percentage: f64, muted: bool) -> &'static str {
     if muted || percentage <= 0.0 {
         "ld-volume-x-symbolic"
     } else if percentage < 34.0 {
@@ -64,7 +63,7 @@ pub(super) fn volume_icon(percentage: f64, muted: bool) -> &'static str {
     }
 }
 
-pub(super) fn input_icon(muted: bool) -> &'static str {
+pub(crate) fn input_icon(muted: bool) -> &'static str {
     if muted {
         "ld-mic-off-symbolic"
     } else {
@@ -72,7 +71,7 @@ pub(super) fn input_icon(muted: bool) -> &'static str {
     }
 }
 
-pub(super) fn app_display_name(application_name: &Option<String>, stream_name: &str) -> String {
+pub(crate) fn app_display_name(application_name: &Option<String>, stream_name: &str) -> String {
     let name = application_name
         .as_deref()
         .filter(|name| !name.is_empty())
@@ -89,7 +88,7 @@ const PA_FORM_FACTOR: &str = "device.form_factor";
 const DEFAULT_OUTPUT_ICON: &str = "tb-device-speaker-symbolic";
 const DEFAULT_INPUT_ICON: &str = "tb-microphone-symbolic";
 
-pub(super) fn output_device_icon(
+pub(crate) fn output_device_icon(
     name: &str,
     description: &str,
     properties: &HashMap<String, String>,
@@ -98,39 +97,13 @@ pub(super) fn output_device_icon(
         .unwrap_or_else(|| output_icon_from_name(name, description))
 }
 
-pub(super) fn input_device_icon(
+pub(crate) fn input_device_icon(
     name: &str,
     description: &str,
     properties: &HashMap<String, String>,
 ) -> &'static str {
     input_icon_from_form_factor(properties)
         .unwrap_or_else(|| input_icon_from_name(name, description))
-}
-
-pub(super) fn output_trigger_icon(device: &Option<Arc<OutputDevice>>) -> &'static str {
-    device
-        .as_ref()
-        .map(|output_device| {
-            output_device_icon(
-                &output_device.name.get(),
-                &output_device.description.get(),
-                &output_device.properties.get(),
-            )
-        })
-        .unwrap_or(DEFAULT_OUTPUT_ICON)
-}
-
-pub(super) fn input_trigger_icon(device: &Option<Arc<InputDevice>>) -> &'static str {
-    device
-        .as_ref()
-        .map(|input_device| {
-            input_device_icon(
-                &input_device.name.get(),
-                &input_device.description.get(),
-                &input_device.properties.get(),
-            )
-        })
-        .unwrap_or(DEFAULT_INPUT_ICON)
 }
 
 fn output_icon_from_form_factor(properties: &HashMap<String, String>) -> Option<&'static str> {
@@ -185,7 +158,7 @@ fn input_icon_from_name(name: &str, description: &str) -> &'static str {
     }
 }
 
-pub(super) fn active_port_description(
+pub(crate) fn active_port_description(
     active_port: &Option<String>,
     ports: &[wayle_audio::types::device::DevicePort],
 ) -> Option<String> {
