@@ -1,7 +1,7 @@
 use std::{collections::HashMap, ops::Deref};
 
 use schemars::{JsonSchema, schema_for};
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use wayle_common::ConfigProperty;
 use wayle_derive::wayle_config;
 
@@ -71,8 +71,7 @@ pub struct WorkspaceStyle {
 ///
 /// TOML table keys are always strings, so this type handles parsing
 /// string keys like "1" into i32 workspace IDs.
-#[derive(Debug, Clone, Default, PartialEq, Serialize, JsonSchema)]
-#[serde(transparent)]
+#[derive(Debug, Clone, Default, PartialEq, JsonSchema)]
 #[schemars(transparent)]
 pub struct WorkspaceMap(HashMap<i32, WorkspaceStyle>);
 
@@ -90,6 +89,20 @@ impl<'a> IntoIterator for &'a WorkspaceMap {
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.iter()
+    }
+}
+
+impl Serialize for WorkspaceMap {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let string_map: HashMap<String, &WorkspaceStyle> = self
+            .0
+            .iter()
+            .map(|(key, val)| (key.to_string(), val))
+            .collect();
+        string_map.serialize(serializer)
     }
 }
 
