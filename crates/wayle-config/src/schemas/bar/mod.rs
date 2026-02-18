@@ -212,7 +212,7 @@ pub struct BarConfig {
     //
     /// Enable dropdown panel shadow.
     #[serde(rename = "dropdown-shadow")]
-    #[default(false)]
+    #[default(true)]
     pub dropdown_shadow: ConfigProperty<bool>,
 
     /// Dropdown panel opacity (0-100).
