@@ -10,3 +10,29 @@ window {
     color: var(--fg-default);
     font-family: var(--font-sans);
 }
+
+scrollbar {
+    all: unset;
+
+    range trough {
+        background: var(--bg-active);
+        border-radius: var(--radius-full);
+        min-width: calc(0.375rem * var(--global-scale));
+        min-height: calc(0.375rem * var(--global-scale));
+
+        slider {
+            background: var(--fg-subtle);
+            border-radius: var(--radius-full);
+            min-width: calc(0.375rem * var(--global-scale));
+            min-height: calc(0.375rem * var(--global-scale));
+
+            &:hover {
+                background: var(--fg-muted);
+            }
+
+            &:active {
+                background: var(--fg-default);
+            }
+        }
+    }
+}
