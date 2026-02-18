@@ -5,6 +5,7 @@ use std::fs;
 use serde::Deserialize;
 use wayle_config::infrastructure::{paths::ConfigPaths, themes::Palette};
 
+use super::color;
 use crate::{Error, palette_provider::PaletteProvider};
 
 pub(crate) struct PywalProvider;
@@ -43,21 +44,21 @@ struct SpecialColors {
 
 #[derive(Deserialize)]
 struct TerminalColors {
-    color0: String,
     color1: String,
     color2: String,
     color3: String,
     color4: String,
     color7: String,
-    color8: String,
 }
 
 impl PywalOutput {
     fn into_palette(self) -> Palette {
+        let bg = &self.special.background;
+
         Palette {
-            bg: self.special.background,
-            surface: self.colors.color0,
-            elevated: self.colors.color8,
+            bg: bg.clone(),
+            surface: color::lighten(bg, 0.03),
+            elevated: color::lighten(bg, 0.06),
             fg: self.special.foreground,
             fg_muted: self.colors.color7,
             primary: self.colors.color4.clone(),

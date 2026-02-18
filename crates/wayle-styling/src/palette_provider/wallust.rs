@@ -5,6 +5,7 @@ use std::fs;
 use serde::Deserialize;
 use wayle_config::infrastructure::{paths::ConfigPaths, themes::Palette};
 
+use super::color;
 use crate::{Error, palette_provider::PaletteProvider};
 
 pub(crate) struct WallustProvider;
@@ -38,30 +39,16 @@ struct WallustOutput {
     color5: String,
     color6: String,
     color7: String,
-    color8: String,
-}
-
-fn darken_hex(hex: &str, factor: f32) -> String {
-    let hex = hex.trim_start_matches('#');
-    let r = u8::from_str_radix(&hex[0..2], 16).unwrap_or(0);
-    let g = u8::from_str_radix(&hex[2..4], 16).unwrap_or(0);
-    let b = u8::from_str_radix(&hex[4..6], 16).unwrap_or(0);
-
-    let r = (f32::from(r) * factor).round() as u8;
-    let g = (f32::from(g) * factor).round() as u8;
-    let b = (f32::from(b) * factor).round() as u8;
-
-    format!("#{r:02X}{g:02X}{b:02X}")
 }
 
 impl WallustOutput {
     fn into_palette(self) -> Palette {
-        let bg = darken_hex(&self.background, 0.6);
+        let bg = &self.background;
 
         Palette {
-            bg,
-            surface: self.background,
-            elevated: self.color8,
+            bg: bg.clone(),
+            surface: color::lighten(bg, 0.03),
+            elevated: color::lighten(bg, 0.06),
             fg: self.foreground,
             fg_muted: self.color7,
             primary: self.color6.clone(),
