@@ -47,7 +47,14 @@ struct MaterialColors {
 
 #[derive(Deserialize)]
 struct ColorVariants {
-    dark: String,
+    dark: ColorValue,
+}
+
+#[derive(Deserialize)]
+#[serde(untagged)]
+enum ColorValue {
+    Plain(String),
+    Nested { color: String },
 }
 
 impl MatugenOutput {
@@ -55,16 +62,73 @@ impl MatugenOutput {
         let colors = self.colors;
 
         Palette {
-            bg: colors.background.dark,
-            surface: colors.surface.dark,
-            elevated: colors.surface_variant.dark,
-            fg: colors.on_background.dark,
-            fg_muted: colors.on_surface_variant.dark,
-            primary: colors.primary.dark.clone(),
-            red: colors.error.dark,
-            yellow: colors.tertiary.dark,
-            green: colors.secondary.dark,
-            blue: colors.primary.dark,
+            bg: colors.background.dark.as_color(),
+            surface: colors.surface.dark.as_color(),
+            elevated: colors.surface_variant.dark.as_color(),
+            fg: colors.on_background.dark.as_color(),
+            fg_muted: colors.on_surface_variant.dark.as_color(),
+            primary: colors.primary.dark.as_color(),
+            red: colors.error.dark.as_color(),
+            yellow: colors.tertiary.dark.as_color(),
+            green: colors.secondary.dark.as_color(),
+            blue: colors.primary.dark.as_color(),
         }
+    }
+}
+
+impl ColorValue {
+    fn as_color(&self) -> String {
+        match self {
+            Self::Plain(color) | Self::Nested { color } => color.clone(),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::MatugenOutput;
+
+    const OLD_JSON: &str = r##"{
+        "colors": {
+            "background": { "dark": "#101112" },
+            "surface": { "dark": "#202122" },
+            "surface_variant": { "dark": "#303132" },
+            "on_background": { "dark": "#f0f1f2" },
+            "on_surface_variant": { "dark": "#a0a1a2" },
+            "primary": { "dark": "#4090ff" },
+            "secondary": { "dark": "#40ff90" },
+            "tertiary": { "dark": "#ffcf40" },
+            "error": { "dark": "#ff4040" }
+        }
+    }"##;
+
+    const NEW_JSON: &str = r##"{
+        "colors": {
+            "background": { "dark": { "color": "#101112" } },
+            "surface": { "dark": { "color": "#202122" } },
+            "surface_variant": { "dark": { "color": "#303132" } },
+            "on_background": { "dark": { "color": "#f0f1f2" } },
+            "on_surface_variant": { "dark": { "color": "#a0a1a2" } },
+            "primary": { "dark": { "color": "#4090ff" } },
+            "secondary": { "dark": { "color": "#40ff90" } },
+            "tertiary": { "dark": { "color": "#ffcf40" } },
+            "error": { "dark": { "color": "#ff4040" } }
+        }
+    }"##;
+
+    #[test]
+    fn parses_old_matugen_shape() {
+        let output: MatugenOutput = serde_json::from_str(OLD_JSON).unwrap();
+        let palette = output.into_palette();
+        assert_eq!(palette.bg, "#101112");
+        assert_eq!(palette.primary, "#4090ff");
+    }
+
+    #[test]
+    fn parses_new_matugen_shape() {
+        let output: MatugenOutput = serde_json::from_str(NEW_JSON).unwrap();
+        let palette = output.into_palette();
+        assert_eq!(palette.bg, "#101112");
+        assert_eq!(palette.primary, "#4090ff");
     }
 }

@@ -16,6 +16,8 @@ pub enum Arg<'a> {
     Image(&'a Path),
     /// `--json <format>` - Output JSON in specified format.
     Json(&'static str),
+    /// `--source-color-index <index>` - Avoid interactive source-color prompts.
+    SourceColorIndex(u8),
 }
 
 impl Arg<'_> {
@@ -26,6 +28,9 @@ impl Arg<'_> {
             }
             Self::Json(format) => {
                 cmd.args(["--json", format]);
+            }
+            Self::SourceColorIndex(index) => {
+                cmd.args(["--source-color-index", &index.to_string()]);
             }
         }
     }
@@ -52,7 +57,12 @@ async fn run(args: &[Arg<'_>]) -> Result<Vec<u8>, Error> {
 /// Returns error if matugen command fails.
 pub async fn extract(image_path: &str) -> Result<(), Error> {
     let path = Path::new(image_path);
-    let stdout = run(&[Arg::Image(path), Arg::Json("hex")]).await?;
+    let stdout = run(&[
+        Arg::Image(path),
+        Arg::Json("hex"),
+        Arg::SourceColorIndex(0),
+    ])
+    .await?;
     save_output(&stdout).await;
     Ok(())
 }
