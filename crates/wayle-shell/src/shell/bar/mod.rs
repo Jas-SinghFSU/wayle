@@ -118,6 +118,7 @@ impl Component for Bar {
         Self::apply_anchors(&root, location);
         Self::apply_css_classes(&root, &init.monitor, location, is_floating);
         Self::start_exclusive_zone_tracker(&root);
+        Self::suppress_alt_focus(&root);
 
         let window = root.clone();
         init.monitor.connect_invalidate(move |_| {
@@ -225,6 +226,20 @@ impl Bar {
                 window.set_exclusive_zone(thickness);
             }
             glib::ControlFlow::Continue
+        });
+    }
+
+    fn suppress_alt_focus(window: &gtk::Window) {
+        use gtk::prelude::GtkWindowExt;
+        window.connect_focus_visible_notify(|window| {
+            if window.gets_focus_visible() {
+                window.set_focus_visible(false);
+            }
+        });
+        window.connect_mnemonics_visible_notify(|window| {
+            if window.is_mnemonics_visible() {
+                window.set_mnemonics_visible(false);
+            }
         });
     }
 

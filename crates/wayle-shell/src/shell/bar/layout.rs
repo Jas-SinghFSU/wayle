@@ -35,6 +35,7 @@ impl Bar {
     ) {
         if let Some(connector) = monitor.connector() {
             window.add_css_class(&connector);
+            window.set_namespace(Some(&format!("wayle-bar-{connector}")));
         }
 
         window.add_css_class(location.css_class());
