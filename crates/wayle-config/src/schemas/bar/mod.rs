@@ -210,13 +210,13 @@ pub struct BarConfig {
     // ===        DROPDOWN SETTINGS        ===
     // === === === === === === === === === ===
     //
-    /// Dropdown panel size.
-    #[serde(rename = "dropdown-size")]
-    #[default(ScaleFactor::new(1.0))]
-    pub dropdown_size: ConfigProperty<ScaleFactor>,
-
-    /// Whether or not to enable the shadow for the dropdown menus
-    #[serde(rename = "dropdown-shadow-enabled")]
+    /// Enable dropdown panel shadow.
+    #[serde(rename = "dropdown-shadow")]
     #[default(false)]
-    pub dropdown_shadow_enabled: ConfigProperty<bool>,
+    pub dropdown_shadow: ConfigProperty<bool>,
+
+    /// Dropdown panel opacity (0-100).
+    #[serde(rename = "dropdown-opacity")]
+    #[default(Percentage::new(100))]
+    pub dropdown_opacity: ConfigProperty<Percentage>,
 }

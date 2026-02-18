@@ -8,6 +8,7 @@ use std::{
 use gtk::prelude::*;
 use relm4::{gtk, prelude::*};
 use wayle_common::process::{self, ClickAction};
+use wayle_config::schemas::bar::Location;
 use wayle_widgets::prelude::{BarButton, BarButtonInput};
 
 use crate::shell::services::ShellServices;
@@ -46,8 +47,9 @@ impl DropdownInstance {
     /// Toggles popover visibility for the given bar button.
     ///
     /// If the popover is already open for this button, it closes; otherwise it
-    /// opens anchored to the current button.
-    pub(crate) fn toggle_for(&self, bar_button: &Controller<BarButton>) {
+    /// opens anchored to the current button. Margins are applied from the
+    /// registry so individual dropdowns never handle positioning.
+    fn toggle_for(&self, bar_button: &Controller<BarButton>, style: DropdownStyle) {
         let widget = bar_button.widget();
         let widget_ref = widget.upcast_ref::<gtk::Widget>();
 
@@ -55,20 +57,20 @@ impl DropdownInstance {
             if self.popover.parent().as_ref() == Some(widget_ref) {
                 self.popover.popdown();
             } else {
-                self.reparent_and_show(bar_button);
+                self.reparent_and_show(bar_button, style);
             }
         } else {
             self.ensure_parent(widget_ref);
-            self.freeze_and_show(bar_button);
+            self.freeze_and_show(bar_button, style);
         }
     }
 
-    fn reparent_and_show(&self, bar_button: &Controller<BarButton>) {
+    fn reparent_and_show(&self, bar_button: &Controller<BarButton>, style: DropdownStyle) {
         if let Some(sender) = self.thaw_target.take() {
             sender.emit(BarButtonInput::ThawSize);
         }
         self.popover.unparent();
-        self.freeze_and_show(bar_button);
+        self.freeze_and_show(bar_button, style);
     }
 
     fn ensure_parent(&self, target: &gtk::Widget) {
@@ -81,7 +83,7 @@ impl DropdownInstance {
         self.popover.set_parent(target);
     }
 
-    fn freeze_and_show(&self, bar_button: &Controller<BarButton>) {
+    fn freeze_and_show(&self, bar_button: &Controller<BarButton>, style: DropdownStyle) {
         let widget = bar_button.widget();
         if self.popover.parent().is_none() {
             self.popover.set_parent(widget);
@@ -91,16 +93,54 @@ impl DropdownInstance {
         bar_button.emit(BarButtonInput::FreezeSize);
 
         self.apply_position();
+        self.apply_margins(style.margins);
+        self.apply_style(&style);
         self.lock_parent_size();
         self.popover.popup();
+    }
+
+    fn apply_style(&self, style: &DropdownStyle) {
+        self.popover.set_opacity(style.opacity);
+        if style.shadow_enabled {
+            self.popover.add_css_class("shadow");
+        } else {
+            self.popover.remove_css_class("shadow");
+        }
     }
 
     fn apply_position(&self) {
         let Some(parent) = self.popover.parent() else {
             return;
         };
-        self.popover
-            .set_position(Self::detect_popover_position(&parent));
+        let position = Self::detect_popover_position(&parent);
+        self.popover.set_position(position);
+
+        for class in &[
+            "position-top",
+            "position-bottom",
+            "position-left",
+            "position-right",
+        ] {
+            self.popover.remove_css_class(class);
+        }
+        let class = match position {
+            gtk::PositionType::Top => "position-top",
+            gtk::PositionType::Bottom => "position-bottom",
+            gtk::PositionType::Left => "position-left",
+            gtk::PositionType::Right => "position-right",
+            _ => "position-bottom",
+        };
+        self.popover.add_css_class(class);
+    }
+
+    fn apply_margins(&self, margins: DropdownMargins) {
+        let Some(child) = self.popover.child() else {
+            return;
+        };
+        child.set_margin_top(margins.top);
+        child.set_margin_bottom(margins.bottom);
+        child.set_margin_start(margins.start);
+        child.set_margin_end(margins.end);
     }
 
     fn lock_parent_size(&self) {
@@ -133,28 +173,60 @@ impl Drop for DropdownInstance {
     }
 }
 
+struct DropdownStyle {
+    margins: DropdownMargins,
+    opacity: f64,
+    shadow_enabled: bool,
+}
+
 const REM_PX: f32 = 16.0;
 
 /// Pixel margins applied to dropdown containers.
 ///
 /// Values are rounded to whole pixels so popover content stays visually crisp.
+/// The bar-facing edge gets a smaller gap; the opposite edge and sides get
+/// standard content padding.
 #[derive(Debug, Clone, Copy)]
-pub(crate) struct DropdownMargins {
-    pub top: i32,
-    pub side: i32,
-    pub bottom: i32,
+struct DropdownMargins {
+    top: i32,
+    bottom: i32,
+    start: i32,
+    end: i32,
 }
 
 impl DropdownMargins {
-    const TOP_REM: f32 = 0.5;
-    const SIDE_REM: f32 = 1.0;
-    const BOTTOM_REM: f32 = 1.0;
+    const GAP_REM: f32 = 0.275;
+    const CONTENT_REM: f32 = 1.0;
 
-    pub(crate) fn from_scale(scale: f32) -> Self {
-        Self {
-            top: Self::round(Self::TOP_REM, scale),
-            side: Self::round(Self::SIDE_REM, scale),
-            bottom: Self::round(Self::BOTTOM_REM, scale),
+    fn new(scale: f32, location: Location) -> Self {
+        let gap = Self::round(Self::GAP_REM, scale);
+        let content = Self::round(Self::CONTENT_REM, scale);
+
+        match location {
+            Location::Top => Self {
+                top: gap,
+                bottom: content,
+                start: content,
+                end: content,
+            },
+            Location::Bottom => Self {
+                top: content,
+                bottom: gap,
+                start: content,
+                end: content,
+            },
+            Location::Left => Self {
+                top: content,
+                bottom: content,
+                start: gap,
+                end: content,
+            },
+            Location::Right => Self {
+                top: content,
+                bottom: content,
+                start: content,
+                end: gap,
+            },
         }
     }
 
@@ -207,7 +279,15 @@ pub(crate) fn dispatch_click(
     match action {
         ClickAction::Dropdown(name) => {
             if let Some(dropdown) = registry.get_or_create(name) {
-                dropdown.toggle_for(bar_button);
+                let config = registry.services.config.config();
+                let bar = &config.bar;
+                let scale = bar.scale.get().value();
+                let style = DropdownStyle {
+                    margins: DropdownMargins::new(scale, bar.location.get()),
+                    opacity: f64::from(bar.dropdown_opacity.get().value()) / 100.0,
+                    shadow_enabled: bar.dropdown_shadow.get(),
+                };
+                dropdown.toggle_for(bar_button, style);
             }
         }
         ClickAction::Shell(cmd) => process::run_if_set(cmd),

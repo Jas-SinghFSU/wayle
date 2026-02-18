@@ -16,7 +16,7 @@ use self::{
     main_section::{MainSection, MainSectionInit, MainSectionOutput},
     messages::{AudioDropdownCmd, AudioDropdownInit, AudioDropdownMsg},
 };
-use crate::{i18n::t, shell::bar::dropdowns::DropdownMargins};
+use crate::{i18n::t, shell::bar::dropdowns::scaled_dimension};
 
 const BASE_WIDTH: f32 = 382.0;
 const BASE_HEIGHT: f32 = 512.0;
@@ -38,14 +38,9 @@ impl AudioPage {
     }
 }
 
-fn scaled_dimension(base: f32, scale: f32) -> i32 {
-    (base * scale).round() as i32
-}
-
 pub(crate) struct AudioDropdown {
     scaled_width: i32,
     scaled_height: i32,
-    margins: DropdownMargins,
     active_page: AudioPage,
     main_section: Controller<MainSection>,
     output_picker: Controller<DevicePicker>,
@@ -72,14 +67,6 @@ impl Component for AudioDropdown {
 
             #[template]
             Dropdown {
-                #[watch]
-                set_margin_top: model.margins.top,
-                #[watch]
-                set_margin_start: model.margins.side,
-                #[watch]
-                set_margin_end: model.margins.side,
-                #[watch]
-                set_margin_bottom: model.margins.bottom,
 
                 #[template]
                 DropdownHeader {
@@ -150,7 +137,6 @@ impl Component for AudioDropdown {
         let model = Self {
             scaled_width: scaled_dimension(BASE_WIDTH, scale),
             scaled_height: scaled_dimension(BASE_HEIGHT, scale),
-            margins: DropdownMargins::from_scale(scale),
             active_page: AudioPage::Main,
             main_section,
             output_picker,
@@ -192,7 +178,6 @@ impl Component for AudioDropdown {
             AudioDropdownCmd::ScaleChanged(scale) => {
                 self.scaled_width = scaled_dimension(BASE_WIDTH, scale);
                 self.scaled_height = scaled_dimension(BASE_HEIGHT, scale);
-                self.margins = DropdownMargins::from_scale(scale);
             }
         }
     }

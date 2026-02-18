@@ -2,9 +2,13 @@ mod audio;
 mod registry;
 
 pub(crate) use self::registry::{
-    DropdownFactory, DropdownInstance, DropdownMargins, DropdownRegistry, dispatch_click,
+    DropdownFactory, DropdownInstance, DropdownRegistry, dispatch_click,
 };
 use crate::shell::services::ShellServices;
+
+pub(crate) fn scaled_dimension(base: f32, scale: f32) -> i32 {
+    (base * scale).round() as i32
+}
 
 macro_rules! register_dropdowns {
     ($($name:literal => $factory:ty),+ $(,)?) => {

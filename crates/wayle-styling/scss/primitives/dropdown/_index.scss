@@ -3,8 +3,35 @@
     background: var(--bg-surface);
     border-radius: var(--rounding-container);
     border: 1px solid var(--border-default);
-    box-shadow: 0 0 12px rgba(0, 0, 0, 0.6);
     min-width: calc(28rem * var(--global-scale));
+}
+
+popover.shadow > contents .dropdown {
+    box-shadow:
+        0 0px 5px rgba(0, 0, 0, 0.3),
+        0 4px 10px rgba(0, 0, 0, 0.3),
+        0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+popover.shadow.position-top > contents .dropdown {
+    box-shadow:
+        0 0px 5px rgba(0, 0, 0, 0.3),
+        0 -4px 10px rgba(0, 0, 0, 0.3),
+        0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+popover.shadow.position-left > contents .dropdown {
+    box-shadow:
+        0px 0 5px rgba(0, 0, 0, 0.3),
+        -4px 0 10px rgba(0, 0, 0, 0.3),
+        0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+popover.shadow.position-right > contents .dropdown {
+    box-shadow:
+        0px 0 5px rgba(0, 0, 0, 0.3),
+        4px 0 10px rgba(0, 0, 0, 0.3),
+        0 0 0 1px rgba(255, 255, 255, 0.04);
 }
 
 popover.dropdown {
@@ -27,7 +54,7 @@ popover.dropdown {
 }
 
 .dropdown-header {
-    padding: calc(var(--space-sm) + var(--space-xs)) var(--space-md);
+    padding: calc(var(--space-sm)) var(--space-md);
 
     border-bottom: 1px solid var(--border-default);
     border-top-left-radius: var(--rounding-container);
@@ -41,7 +68,7 @@ popover.dropdown {
         color: var(--fg-default);
 
         image {
-            -gtk-icon-size: var(--icon-lg);
+            -gtk-icon-size: var(--icon-md);
             color: var(--accent);
             margin-right: calc(var(--space-sm) + var(--space-xs));
         }

@@ -110,5 +110,8 @@ settings-bar-button-group-border-color = Group Border Color
 settings-bar-dropdown-size = Dropdown Size
     .description = Size multiplier for dropdown panels
 
-settings-bar-dropdown-shadow-enabled = Dropdown Shadow
+settings-bar-dropdown-shadow = Dropdown Shadow
     .description = Enable drop shadow on dropdown menus
+
+settings-bar-dropdown-opacity = Dropdown Opacity
+    .description = Transparency for dropdown panels (0-100%)
