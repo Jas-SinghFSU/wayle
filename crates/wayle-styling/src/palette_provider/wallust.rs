@@ -46,9 +46,9 @@ impl WallustOutput {
         let bg = &self.background;
 
         Palette {
-            bg: bg.clone(),
-            surface: color::lighten(bg, 0.03),
-            elevated: color::lighten(bg, 0.06),
+            bg: color::lighten(bg, -0.04),
+            surface: bg.clone(),
+            elevated: color::lighten(bg, 0.04),
             fg: self.foreground,
             fg_muted: self.color7,
             primary: self.color6.clone(),

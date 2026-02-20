@@ -57,12 +57,7 @@ async fn run(args: &[Arg<'_>]) -> Result<Vec<u8>, Error> {
 /// Returns error if matugen command fails.
 pub async fn extract(image_path: &str) -> Result<(), Error> {
     let path = Path::new(image_path);
-    let stdout = run(&[
-        Arg::Image(path),
-        Arg::Json("hex"),
-        Arg::SourceColorIndex(0),
-    ])
-    .await?;
+    let stdout = run(&[Arg::Image(path), Arg::Json("hex"), Arg::SourceColorIndex(0)]).await?;
     save_output(&stdout).await;
     Ok(())
 }

@@ -56,9 +56,9 @@ impl PywalOutput {
         let bg = &self.special.background;
 
         Palette {
-            bg: bg.clone(),
-            surface: color::lighten(bg, 0.03),
-            elevated: color::lighten(bg, 0.06),
+            bg: color::lighten(bg, -0.04),
+            surface: bg.clone(),
+            elevated: color::lighten(bg, 0.04),
             fg: self.special.foreground,
             fg_muted: self.colors.color7,
             primary: self.colors.color4.clone(),

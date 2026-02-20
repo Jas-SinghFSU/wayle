@@ -3,6 +3,7 @@ use std::fs;
 use serde::Deserialize;
 use wayle_config::infrastructure::{paths::ConfigPaths, themes::Palette};
 
+use super::color;
 use crate::{Error, palette_provider::PaletteProvider};
 
 pub(crate) struct MatugenProvider;
@@ -35,8 +36,6 @@ struct MatugenOutput {
 #[derive(Deserialize)]
 struct MaterialColors {
     background: ColorVariants,
-    surface: ColorVariants,
-    surface_variant: ColorVariants,
     on_background: ColorVariants,
     on_surface_variant: ColorVariants,
     primary: ColorVariants,
@@ -60,11 +59,12 @@ enum ColorValue {
 impl MatugenOutput {
     fn into_palette(self) -> Palette {
         let colors = self.colors;
+        let bg = colors.background.dark.as_color();
 
         Palette {
-            bg: colors.background.dark.as_color(),
-            surface: colors.surface.dark.as_color(),
-            elevated: colors.surface_variant.dark.as_color(),
+            bg: color::lighten(&bg, -0.04),
+            surface: bg,
+            elevated: color::lighten(&colors.background.dark.as_color(), 0.04),
             fg: colors.on_background.dark.as_color(),
             fg_muted: colors.on_surface_variant.dark.as_color(),
             primary: colors.primary.dark.as_color(),
@@ -120,7 +120,7 @@ mod tests {
     fn parses_old_matugen_shape() {
         let output: MatugenOutput = serde_json::from_str(OLD_JSON).unwrap();
         let palette = output.into_palette();
-        assert_eq!(palette.bg, "#101112");
+        assert_eq!(palette.surface, "#101112");
         assert_eq!(palette.primary, "#4090ff");
     }
 
@@ -128,7 +128,7 @@ mod tests {
     fn parses_new_matugen_shape() {
         let output: MatugenOutput = serde_json::from_str(NEW_JSON).unwrap();
         let palette = output.into_palette();
-        assert_eq!(palette.bg, "#101112");
+        assert_eq!(palette.surface, "#101112");
         assert_eq!(palette.primary, "#4090ff");
     }
 }
