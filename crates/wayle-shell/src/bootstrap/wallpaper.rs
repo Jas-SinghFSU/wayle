@@ -8,8 +8,8 @@ use std::{
 use tracing::{debug, warn};
 use wayle_config::schemas::wallpaper::MonitorWallpaperConfig;
 use wayle_wallpaper::{
-    MonitorState, TransitionConfig, TransitionDuration, TransitionFps, WallpaperService,
-    types::ColorExtractor,
+    ColorExtractorConfig, MonitorState, TransitionConfig, TransitionDuration, TransitionFps,
+    WallpaperService,
 };
 
 use crate::wallpaper_map;
@@ -17,7 +17,7 @@ use crate::wallpaper_map;
 pub(super) async fn build_wallpaper_service(
     cfg: &wayle_config::schemas::wallpaper::WallpaperConfig,
     theming_monitor: Option<String>,
-    color_extractor: ColorExtractor,
+    color_extractor: ColorExtractorConfig,
 ) -> Result<Arc<WallpaperService>, wayle_wallpaper::Error> {
     let transition = TransitionConfig {
         transition_type: wallpaper_map::transition_type(cfg.transition_type.get()),

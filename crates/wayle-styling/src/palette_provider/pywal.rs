@@ -6,12 +6,12 @@ use serde::Deserialize;
 use wayle_config::infrastructure::{paths::ConfigPaths, themes::Palette};
 
 use super::color;
-use crate::{Error, palette_provider::PaletteProvider};
+use crate::Error;
 
 pub(crate) struct PywalProvider;
 
-impl PaletteProvider for PywalProvider {
-    fn load() -> Result<Palette, Error> {
+impl PywalProvider {
+    pub(crate) fn load(is_light: bool) -> Result<Palette, Error> {
         let path = ConfigPaths::pywal_colors().map_err(|_| {
             Error::Io(std::io::Error::new(
                 std::io::ErrorKind::NotFound,
@@ -26,7 +26,7 @@ impl PaletteProvider for PywalProvider {
         let content = fs::read_to_string(&path)?;
         let output: PywalOutput = serde_json::from_str(&content)?;
 
-        Ok(output.into_palette())
+        Ok(output.into_palette(is_light))
     }
 }
 
@@ -52,13 +52,13 @@ struct TerminalColors {
 }
 
 impl PywalOutput {
-    fn into_palette(self) -> Palette {
-        let bg = &self.special.background;
+    fn into_palette(self, is_light: bool) -> Palette {
+        let layers = color::derive_layers(&self.special.background, is_light);
 
         Palette {
-            bg: color::lighten(bg, -0.04),
-            surface: bg.clone(),
-            elevated: color::lighten(bg, 0.04),
+            bg: layers.bg,
+            surface: layers.surface,
+            elevated: layers.elevated,
             fg: self.special.foreground,
             fg_muted: self.colors.color7,
             primary: self.colors.color4.clone(),

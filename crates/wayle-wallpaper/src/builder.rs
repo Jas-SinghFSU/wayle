@@ -13,13 +13,13 @@ use crate::{
     error::Error,
     service::WallpaperService,
     tasks::{spawn_color_extractor, spawn_output_watcher},
-    types::ColorExtractor,
+    types::ColorExtractorConfig,
 };
 
 /// Builder for configuring a WallpaperService.
 #[derive(Debug)]
 pub struct WallpaperServiceBuilder {
-    color_extractor: ColorExtractor,
+    color_extractor: ColorExtractorConfig,
     transition: TransitionConfig,
     theming_monitor: Option<String>,
     shared_cycle: bool,
@@ -29,7 +29,7 @@ pub struct WallpaperServiceBuilder {
 impl Default for WallpaperServiceBuilder {
     fn default() -> Self {
         Self {
-            color_extractor: ColorExtractor::default(),
+            color_extractor: ColorExtractorConfig::default(),
             transition: TransitionConfig::default(),
             theming_monitor: None,
             shared_cycle: false,
@@ -72,9 +72,9 @@ impl WallpaperServiceBuilder {
         Ok(service)
     }
 
-    /// Sets the color extraction tool.
-    pub fn color_extractor(mut self, extractor: ColorExtractor) -> Self {
-        self.color_extractor = extractor;
+    /// Sets the color extraction configuration.
+    pub fn color_extractor(mut self, config: ColorExtractorConfig) -> Self {
+        self.color_extractor = config;
         self
     }
 

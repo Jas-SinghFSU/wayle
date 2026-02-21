@@ -1,8 +1,8 @@
 //! Wallust color extraction.
 //!
-//! Runs wallust with user's config, then generates colors.json using wayle's template.
+//! Generates a wallust config from wayle's settings and runs a single extraction.
 
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use tokio::{fs, process::Command};
 use tracing::debug;
@@ -35,74 +35,46 @@ const COLORS_TEMPLATE: &str = r#"{
 }
 "#;
 
-/// Wallust CLI arguments.
-#[derive(Debug)]
-pub enum Arg<'a> {
-    /// `run <image>` - Run color extraction on the specified image.
-    Run(&'a Path),
-    /// `-C <path>` - Use specified config file.
-    ConfigFile(&'a Path),
-    /// `--templates-dir <path>` - Use specified templates directory.
-    TemplatesDir(&'a Path),
-}
-
-impl Arg<'_> {
-    fn apply(&self, cmd: &mut Command) {
-        match self {
-            Self::Run(path) => {
-                cmd.args(["run", &path.to_string_lossy()]);
-            }
-            Self::ConfigFile(path) => {
-                cmd.args(["-C", &path.to_string_lossy()]);
-            }
-            Self::TemplatesDir(path) => {
-                cmd.args(["--templates-dir", &path.to_string_lossy()]);
-            }
-        }
-    }
-}
-
-async fn run(tool: Tool, args: &[Arg<'_>]) -> Result<(), Error> {
-    let mut cmd = Command::new("wallust");
-
-    for arg in args {
-        arg.apply(&mut cmd);
-    }
-
-    let output = tool.run(cmd).await?;
-    tool.check_success(&output)
-}
-
 /// Runs wallust color extraction on the given image.
-///
-/// Executes wallust twice:
-/// 1. With user's config (their templates like kitty run)
-/// 2. With wayle's config (generates colors.json for wayle, uses cached colors)
 ///
 /// # Errors
 ///
-/// Returns error if wallust command fails.
-pub async fn extract(image_path: &str) -> Result<(), Error> {
-    let path = Path::new(image_path);
+/// Returns error if wallust command fails or config paths are unavailable.
+pub async fn extract(
+    image_path: &str,
+    palette: &str,
+    saturation: u8,
+    check_contrast: bool,
+    backend: &str,
+    colorspace: &str,
+    apply_globally: bool,
+) -> Result<(), Error> {
+    let (config_path, templates_dir) =
+        write_config(palette, saturation, check_contrast, backend, colorspace).await?;
 
-    run(Tool::Wallust, &[Arg::Run(path)]).await?;
+    let mut cmd = Command::new("wallust");
+    cmd.args(["run", image_path]);
+    cmd.args(["-C", &config_path.to_string_lossy()]);
+    cmd.args(["--templates-dir", &templates_dir.to_string_lossy()]);
 
-    let (config, templates_dir) = ensure_wayle_config().await?;
-    run(
-        Tool::WallustTemplates,
-        &[
-            Arg::Run(path),
-            Arg::ConfigFile(&config),
-            Arg::TemplatesDir(&templates_dir),
-        ],
-    )
-    .await?;
+    if !apply_globally {
+        cmd.arg("-s");
+    }
+
+    let output = Tool::Wallust.run(cmd).await?;
+    Tool::Wallust.check_success(&output)?;
 
     debug!(image = %image_path, "Wallust color extraction complete");
     Ok(())
 }
 
-async fn ensure_wayle_config() -> Result<(PathBuf, PathBuf), Error> {
+async fn write_config(
+    palette: &str,
+    saturation: u8,
+    check_contrast: bool,
+    backend: &str,
+    colorspace: &str,
+) -> Result<(PathBuf, PathBuf), Error> {
     let data_dir = ConfigPaths::data_dir().map_err(|source| Error::ConfigPathError {
         context: "wayle data directory",
         source,
@@ -125,12 +97,19 @@ async fn ensure_wayle_config() -> Result<(PathBuf, PathBuf), Error> {
         source,
     })?;
 
-    let config_content = format!(
-        r#"
-palette = "dark"
-check_contrast = true
-dynamic_threshold = true
+    let saturation_line = if saturation > 0 {
+        format!("saturation = {saturation}\n")
+    } else {
+        String::new()
+    };
 
+    let config_content = format!(
+        r#"palette = "{palette}"
+backend = "{backend}"
+color_space = "{colorspace}"
+check_contrast = {check_contrast}
+dynamic_threshold = true
+{saturation_line}
 [templates]
 colors = {{ template = "colors.json", target = "{}" }}
 "#,

@@ -1,5 +1,29 @@
 use palette::{FromColor, Hsl, IntoColor, Srgb};
 
+pub(crate) struct Layers {
+    pub(crate) bg: String,
+    pub(crate) surface: String,
+    pub(crate) elevated: String,
+}
+
+const OFFSET: f32 = 0.04;
+
+pub(crate) fn derive_layers(background: &str, is_light: bool) -> Layers {
+    if is_light {
+        Layers {
+            bg: lighten(background, OFFSET),
+            surface: background.to_owned(),
+            elevated: lighten(background, -OFFSET),
+        }
+    } else {
+        Layers {
+            bg: lighten(background, -OFFSET),
+            surface: background.to_owned(),
+            elevated: lighten(background, OFFSET),
+        }
+    }
+}
+
 fn parse(hex: &str) -> Srgb<f32> {
     let hex = hex.trim_start_matches('#');
     let r = u8::from_str_radix(&hex[0..2], 16).unwrap_or(0);
@@ -13,8 +37,7 @@ fn format(color: Srgb<f32>) -> String {
     format!("#{:02x}{:02x}{:02x}", rgb.red, rgb.green, rgb.blue)
 }
 
-/// Shifts lightness by an absolute amount in HSL space.
-pub(crate) fn lighten(hex: &str, amount: f32) -> String {
+fn lighten(hex: &str, amount: f32) -> String {
     let rgb = parse(hex);
     let mut hsl = Hsl::from_color(rgb);
     hsl.lightness = (hsl.lightness + amount).clamp(0.0, 1.0);
@@ -63,5 +86,29 @@ mod tests {
 
         assert!(l_surface > l_bg);
         assert!(l_elevated > l_surface);
+    }
+
+    #[test]
+    fn derive_layers_dark_bg_darkens_base() {
+        let layers = derive_layers("#11111b", false);
+
+        let l_bg = Hsl::from_color(parse(&layers.bg)).lightness;
+        let l_surface = Hsl::from_color(parse(&layers.surface)).lightness;
+        let l_elevated = Hsl::from_color(parse(&layers.elevated)).lightness;
+
+        assert!(l_bg < l_surface);
+        assert!(l_surface < l_elevated);
+    }
+
+    #[test]
+    fn derive_layers_light_bg_lightens_base() {
+        let layers = derive_layers("#e0e0e0", true);
+
+        let l_bg = Hsl::from_color(parse(&layers.bg)).lightness;
+        let l_surface = Hsl::from_color(parse(&layers.surface)).lightness;
+        let l_elevated = Hsl::from_color(parse(&layers.elevated)).lightness;
+
+        assert!(l_bg > l_surface);
+        assert!(l_surface > l_elevated);
     }
 }

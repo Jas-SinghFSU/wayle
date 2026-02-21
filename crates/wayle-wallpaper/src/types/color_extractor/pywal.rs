@@ -9,7 +9,6 @@ use crate::error::Error;
 
 /// Pywal CLI arguments.
 #[derive(Debug)]
-#[allow(dead_code)]
 pub enum Arg<'a> {
     /// `-i <path>` - Image file to extract colors from.
     Image(&'a Path),
@@ -21,10 +20,12 @@ pub enum Arg<'a> {
     SkipTty,
     /// `-e` - Skip reloading gtk/xrdb/i3/sway/polybar.
     SkipReload,
-    /// `--saturate <value>` - Set color saturation (-1.0 to 1.0).
-    Saturate(f32),
+    /// `--saturate <value>` - Set color saturation (0.0 to 1.0).
+    Saturate(f64),
     /// `--contrast <value>` - Minimum contrast ratio (1.0 to 21.0).
-    Contrast(f32),
+    Contrast(f64),
+    /// `-l` - Use light mode.
+    Light,
 }
 
 impl Arg<'_> {
@@ -51,6 +52,9 @@ impl Arg<'_> {
             Self::Contrast(value) => {
                 cmd.args(["--contrast", &value.to_string()]);
             }
+            Self::Light => {
+                cmd.arg("-l");
+            }
         }
     }
 }
@@ -71,13 +75,27 @@ async fn run(args: &[Arg<'_>]) -> Result<(), Error> {
 /// # Errors
 ///
 /// Returns error if pywal command fails.
-pub async fn extract(image_path: &str) -> Result<(), Error> {
+pub async fn extract(
+    image_path: &str,
+    saturation: f64,
+    contrast: f64,
+    light: bool,
+    apply_globally: bool,
+) -> Result<(), Error> {
     let path = Path::new(image_path);
-    run(&[
+    let mut args = vec![
         Arg::Image(path),
         Arg::NoWallpaper,
-        Arg::Saturate(0.05),
-        Arg::Contrast(3.0),
-    ])
-    .await
+        Arg::Saturate(saturation),
+        Arg::Contrast(contrast),
+    ];
+    if light {
+        args.push(Arg::Light);
+    }
+    if !apply_globally {
+        args.push(Arg::SkipTerminal);
+        args.push(Arg::SkipTty);
+        args.push(Arg::SkipReload);
+    }
+    run(&args).await
 }

@@ -18,6 +18,12 @@ pub enum Arg<'a> {
     Json(&'static str),
     /// `--source-color-index <index>` - Avoid interactive source-color prompts.
     SourceColorIndex(u8),
+    /// `--type <scheme>` - Color scheme type.
+    Type(&'a str),
+    /// `--contrast <value>` - Contrast level (-1.0 to 1.0).
+    Contrast(f64),
+    /// `-m <mode>` - Color mode (dark, light, amoled).
+    Mode(&'a str),
 }
 
 impl Arg<'_> {
@@ -31,6 +37,15 @@ impl Arg<'_> {
             }
             Self::SourceColorIndex(index) => {
                 cmd.args(["--source-color-index", &index.to_string()]);
+            }
+            Self::Type(scheme) => {
+                cmd.args(["--type", scheme]);
+            }
+            Self::Contrast(value) => {
+                cmd.args(["--contrast", &value.to_string()]);
+            }
+            Self::Mode(mode) => {
+                cmd.args(["-m", mode]);
             }
         }
     }
@@ -55,9 +70,23 @@ async fn run(args: &[Arg<'_>]) -> Result<Vec<u8>, Error> {
 /// # Errors
 ///
 /// Returns error if matugen command fails.
-pub async fn extract(image_path: &str) -> Result<(), Error> {
+pub async fn extract(
+    image_path: &str,
+    scheme: &str,
+    contrast: f64,
+    source_color: u8,
+    mode: &str,
+) -> Result<(), Error> {
     let path = Path::new(image_path);
-    let stdout = run(&[Arg::Image(path), Arg::Json("hex"), Arg::SourceColorIndex(0)]).await?;
+    let stdout = run(&[
+        Arg::Image(path),
+        Arg::Json("hex"),
+        Arg::SourceColorIndex(source_color),
+        Arg::Type(scheme),
+        Arg::Contrast(contrast),
+        Arg::Mode(mode),
+    ])
+    .await?;
     save_output(&stdout).await;
     Ok(())
 }

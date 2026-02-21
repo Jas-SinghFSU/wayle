@@ -49,7 +49,7 @@
 //! | Method | Effect |
 //! |--------|--------|
 //! | `transition(TransitionConfig)` | Animation when changing wallpapers |
-//! | `color_extractor(ColorExtractor)` | Tool for extracting dominant colors |
+//! | `color_extractor(ColorExtractorConfig)` | Tool and parameters for extracting dominant colors |
 //! | `theming_monitor(Option<String>)` | Which monitor drives color extraction |
 //! | `shared_cycle(bool)` | Sync cycling across monitors in shuffle mode |
 //! | `engine_active(bool)` | Toggle awww rendering (state tracking continues) |
@@ -118,4 +118,6 @@ pub use builder::WallpaperServiceBuilder;
 pub use dbus::{SERVICE_NAME, SERVICE_PATH, WallpaperProxy};
 pub use error::Error;
 pub use service::WallpaperService;
-pub use types::{ColorExtractor, CyclingConfig, CyclingMode, FitMode, MonitorState};
+pub use types::{
+    ColorExtractor, ColorExtractorConfig, CyclingConfig, CyclingMode, FitMode, MonitorState,
+};

@@ -38,8 +38,7 @@ pub fn theme_css(
     bar: &BarConfig,
     styling: &StylingConfig,
 ) -> String {
-    let theme_provider = styling.theme_provider.get();
-    let resolved = resolve_palette(palette, &theme_provider);
+    let resolved = resolve_palette(palette, styling);
 
     let global_rounding = styling.rounding.get();
     let bar_rounding = bar.rounding.get();
@@ -127,24 +126,29 @@ pub fn compile_dev() -> Result<String, Error> {
     grass::from_string(&main_content, &options).map_err(Error::Compilation)
 }
 
-fn resolve_palette(fallback: &Palette, theme_provider: &ThemeProvider) -> Palette {
-    use palette_provider::PaletteProvider;
+fn resolve_palette(fallback: &Palette, styling: &StylingConfig) -> Palette {
+    use palette_provider::{matugen, pywal, wallust};
 
-    match theme_provider {
+    match styling.theme_provider.get() {
         ThemeProvider::Wayle => fallback.clone(),
-        ThemeProvider::Matugen => palette_provider::matugen::MatugenProvider::load()
-            .unwrap_or_else(|e| {
-                error!(error = %e, "matugen palette load failed");
+        ThemeProvider::Matugen => {
+            let is_light = styling.matugen_light.get();
+            matugen::MatugenProvider::load(is_light).unwrap_or_else(|err| {
+                error!(error = %err, "matugen palette load failed");
                 fallback.clone()
-            }),
-        ThemeProvider::Wallust => palette_provider::wallust::WallustProvider::load()
-            .unwrap_or_else(|e| {
-                error!(error = %e, "wallust palette load failed");
+            })
+        }
+        ThemeProvider::Wallust => {
+            let is_light = styling.wallust_palette.get().is_light();
+            wallust::WallustProvider::load(is_light).unwrap_or_else(|err| {
+                error!(error = %err, "wallust palette load failed");
                 fallback.clone()
-            }),
+            })
+        }
         ThemeProvider::Pywal => {
-            palette_provider::pywal::PywalProvider::load().unwrap_or_else(|e| {
-                error!(error = %e, "pywal palette load failed");
+            let is_light = styling.pywal_light.get();
+            pywal::PywalProvider::load(is_light).unwrap_or_else(|err| {
+                error!(error = %err, "pywal palette load failed");
                 fallback.clone()
             })
         }

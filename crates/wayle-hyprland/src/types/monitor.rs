@@ -142,8 +142,9 @@ pub(crate) fn deserialize_solitary_blocker<'de, D>(
 where
     D: Deserializer<'de>,
 {
-    let arr: Vec<String> = Deserialize::deserialize(deserializer)?;
+    let arr: Option<Vec<String>> = Deserialize::deserialize(deserializer)?;
     Ok(arr
+        .unwrap_or_default()
         .iter()
         .map(|s| s.parse().unwrap_or(SolitaryBlocker::Unknown))
         .collect())
@@ -190,8 +191,9 @@ pub(crate) fn deserialize_tearing_blocker<'de, D>(
 where
     D: Deserializer<'de>,
 {
-    let arr: Vec<String> = Deserialize::deserialize(deserializer)?;
+    let arr: Option<Vec<String>> = Deserialize::deserialize(deserializer)?;
     Ok(arr
+        .unwrap_or_default()
         .iter()
         .map(|s| s.parse().unwrap_or(TearingBlocker::Unknown))
         .collect())
@@ -259,8 +261,9 @@ pub(crate) fn deserialize_direct_scanout_blocker<'de, D>(
 where
     D: Deserializer<'de>,
 {
-    let arr: Vec<String> = Deserialize::deserialize(deserializer)?;
+    let arr: Option<Vec<String>> = Deserialize::deserialize(deserializer)?;
     Ok(arr
+        .unwrap_or_default()
         .iter()
         .map(|s| s.parse().unwrap_or(DirectScanoutBlocker::Unknown))
         .collect())

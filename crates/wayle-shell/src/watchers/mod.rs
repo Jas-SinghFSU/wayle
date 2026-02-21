@@ -9,6 +9,7 @@ mod weather;
 
 use std::env;
 
+pub(crate) use color_extractor::build_extractor_config;
 use relm4::ComponentSender;
 
 use crate::shell::{Shell, ShellServices};

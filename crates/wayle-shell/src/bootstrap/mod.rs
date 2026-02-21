@@ -10,17 +10,20 @@ use wayle_audio::AudioService;
 use wayle_battery::BatteryService;
 use wayle_bluetooth::BluetoothService;
 use wayle_common::shell::APP_ID;
-use wayle_config::{ConfigService, infrastructure::schema, schemas::styling::ThemeProvider};
+use wayle_config::{ConfigService, infrastructure::schema};
 use wayle_hyprland::HyprlandService;
 use wayle_media::MediaService;
 use wayle_network::NetworkService;
 use wayle_notification::NotificationService;
 use wayle_sysinfo::SysinfoService;
 use wayle_systray::{SystemTrayService, types::TrayMode};
-use wayle_wallpaper::{WallpaperService, types::ColorExtractor};
+use wayle_wallpaper::WallpaperService;
 use zbus::{Connection, fdo::DBusProxy};
 
-use crate::{services::IdleInhibitService, shell::ShellServices, startup::StartupTimer};
+use crate::{
+    services::IdleInhibitService, shell::ShellServices, startup::StartupTimer,
+    watchers::build_extractor_config,
+};
 
 macro_rules! try_service {
     ($timer:expr, $name:literal, $future:expr) => {
@@ -139,12 +142,7 @@ async fn init_core_services(
     } else {
         Some(theming_monitor)
     };
-    let color_extractor = match config.styling.theme_provider.get() {
-        ThemeProvider::Wayle => ColorExtractor::None,
-        ThemeProvider::Matugen => ColorExtractor::Matugen,
-        ThemeProvider::Pywal => ColorExtractor::Pywal,
-        ThemeProvider::Wallust => ColorExtractor::Wallust,
-    };
+    let color_extractor = build_extractor_config(&config.styling);
     let wallpaper = try_service!(
         timer,
         "Wallpaper",

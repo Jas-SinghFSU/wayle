@@ -16,7 +16,7 @@ use crate::{
     backend::{AwwwBackend, TransitionConfig, wait_for_daemon},
     builder::WallpaperServiceBuilder,
     error::Error,
-    types::{ColorExtractor, CyclingConfig, CyclingMode, FitMode, MonitorState},
+    types::{ColorExtractorConfig, CyclingConfig, CyclingMode, FitMode, MonitorState},
 };
 
 /// Desktop wallpaper manager. See [crate-level docs](crate) for usage.
@@ -38,7 +38,7 @@ pub struct WallpaperService {
     /// Per-monitor wallpaper state (path, fit mode, cycle index).
     pub monitors: Property<HashMap<String, MonitorState>>,
     /// Tool for extracting color palettes from wallpapers.
-    pub color_extractor: Property<ColorExtractor>,
+    pub color_extractor: Property<ColorExtractorConfig>,
     /// Animation settings for wallpaper transitions.
     pub transition: Property<TransitionConfig>,
     /// Synchronize cycling across all monitors in shuffle mode.
@@ -297,8 +297,8 @@ impl WallpaperService {
             return Ok(());
         };
 
-        let extractor = self.color_extractor.get();
-        let result = extractor.extract(&path).await;
+        let config = self.color_extractor.get();
+        let result = config.extract(&path).await;
 
         let _ = self.extraction_complete.send(());
 
