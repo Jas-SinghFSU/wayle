@@ -1,6 +1,6 @@
-//! Shell startup: CSS, icons, actions, and bar initialization.
+//! Shell startup: CSS, icons, and actions.
 
-use std::{collections::HashMap, sync::Arc};
+use std::sync::Arc;
 
 use gdk4::Display;
 use gtk4::{
@@ -8,21 +8,13 @@ use gtk4::{
     style_context_add_provider_for_display,
 };
 use relm4::{
-    Controller,
     actions::{RelmAction, RelmActionGroup},
     main_application,
-    prelude::*,
 };
 use tracing::{info, warn};
 use wayle_config::ConfigService;
 use wayle_icons::IconRegistry;
 use wayle_styling::{STATIC_CSS, theme_css};
-
-use super::get_current_monitors;
-use crate::shell::{
-    bar::{Bar, BarInit},
-    services::ShellServices,
-};
 
 relm4::new_action_group!(AppActionGroup, "app");
 relm4::new_stateless_action!(QuitAction, AppActionGroup, "quit");
@@ -70,20 +62,4 @@ pub(crate) fn register_app_actions() {
     actions.add_action(quit_action);
     actions.add_action(inspector_action);
     actions.register_for_main_application();
-}
-
-pub(crate) fn create_bars(services: &ShellServices) -> HashMap<String, Controller<Bar>> {
-    let mut bars = HashMap::new();
-
-    for (connector, monitor) in get_current_monitors() {
-        let bar = Bar::builder()
-            .launch(BarInit {
-                monitor,
-                services: services.clone(),
-            })
-            .detach();
-        bars.insert(connector, bar);
-    }
-
-    bars
 }
