@@ -24,7 +24,7 @@ pub struct BarConfig {
     pub layout: ConfigProperty<Vec<BarLayout>>,
 
     /// Bar-specific scale multiplier for spacing, radius, and other bar elements.
-    #[default(ScaleFactor::new(1.0))]
+    #[default(ScaleFactor::new(1.01))]
     pub scale: ConfigProperty<ScaleFactor>,
 
     /// Gap between bar and its attached screen edge.

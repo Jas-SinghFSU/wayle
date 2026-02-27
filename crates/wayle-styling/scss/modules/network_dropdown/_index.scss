@@ -5,6 +5,7 @@
 button.network-scan-btn {
     margin-right: var(--space-sm);
     image {
+        -gtk-icon-size: var(--icon-md);
         color: var(--fg-muted);
     }
 

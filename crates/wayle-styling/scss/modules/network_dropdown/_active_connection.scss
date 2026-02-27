@@ -25,6 +25,7 @@
         background: var(--status-info-subtle);
 
         image {
+            -gtk-icon-size: var(--icon-md);
             color: var(--status-info);
         }
     }
@@ -33,6 +34,7 @@
         background: var(--status-success-subtle);
 
         image {
+            -gtk-icon-size: var(--icon-md);
             color: var(--status-success);
         }
     }
