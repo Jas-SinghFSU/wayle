@@ -1,0 +1,27 @@
+@import "active_connection";
+@import "network_list";
+@import "password_form";
+
+button.network-scan-btn {
+    margin-right: var(--space-sm);
+    image {
+        color: var(--fg-muted);
+    }
+
+    &:hover image {
+        color: var(--fg-default);
+    }
+
+    &.scanning image {
+        animation: network-scan-spin 1s steps(20) infinite;
+    }
+}
+
+@keyframes network-scan-spin {
+    from {
+        -gtk-icon-transform: rotate(0deg);
+    }
+    to {
+        -gtk-icon-transform: rotate(360deg);
+    }
+}

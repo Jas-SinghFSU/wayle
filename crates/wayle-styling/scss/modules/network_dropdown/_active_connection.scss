@@ -1,0 +1,95 @@
+.network-connections-group {
+    border-radius: var(--rounding-element);
+    padding: 0;
+
+    .network-connection-card + .network-connection-card {
+        border-top: 1px solid var(--border-subtle);
+    }
+}
+
+.network-connection-card {
+    padding: var(--space-sm);
+}
+
+.network-connection-icon {
+    min-width: calc(2.75rem * var(--global-scale));
+    min-height: calc(2.75rem * var(--global-scale));
+    border-radius: var(--rounding-element);
+    margin-right: var(--space-sm);
+
+    image {
+        -gtk-icon-size: var(--icon-sm);
+    }
+
+    &.ethernet {
+        background: var(--status-info-subtle);
+
+        image {
+            color: var(--status-info);
+        }
+    }
+
+    &.wifi {
+        background: var(--status-success-subtle);
+
+        image {
+            color: var(--status-success);
+        }
+    }
+}
+
+.network-connection-name {
+    font-size: var(--text-md);
+    font-weight: var(--weight-bold);
+    color: var(--fg-default);
+}
+
+.network-connection-detail {
+    font-size: var(--text-md);
+    font-weight: var(--weight-medium);
+    color: var(--fg-subtle);
+}
+
+.network-connection-icon.error {
+    background: var(--status-error-subtle);
+
+    image {
+        color: var(--status-error);
+    }
+}
+
+.network-connection-status.error {
+    color: var(--status-error);
+    background: var(--status-error-subtle);
+}
+
+button.network-disconnect {
+    border-radius: var(--rounding-element);
+    margin-left: var(--space-xs);
+
+    image {
+        -gtk-icon-size: var(--icon-sm);
+        color: var(--fg-subtle);
+    }
+
+    &:hover image {
+        color: var(--fg-default);
+    }
+}
+
+.network-connection-actions {
+    margin-left: var(--space-xs);
+
+    button {
+        font-size: var(--text-sm);
+        font-weight: var(--weight-bold);
+
+        > box {
+            margin: var(--space-xs) var(--space-sm);
+        }
+    }
+}
+
+button.network-action-forget:hover {
+    color: var(--status-error);
+}

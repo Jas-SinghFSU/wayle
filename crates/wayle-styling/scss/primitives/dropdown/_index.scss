@@ -50,11 +50,16 @@ popover.dropdown {
     > contents {
         all: unset;
         background: transparent;
+
+        > .dropdown {
+            min-width: 0;
+        }
     }
 }
 
 .dropdown-header {
     padding: calc(var(--space-sm)) var(--space-md);
+    margin-bottom: 2px;
 
     border-bottom: 1px solid var(--border-default);
     border-top-left-radius: var(--rounding-container);
@@ -68,7 +73,7 @@ popover.dropdown {
         color: var(--fg-default);
 
         image {
-            -gtk-icon-size: var(--icon-md);
+            -gtk-icon-size: calc(var(--icon-xs) * 2);
             color: var(--accent);
             margin-right: calc(var(--space-sm) + var(--space-xs));
         }
@@ -76,13 +81,32 @@ popover.dropdown {
 
     .dropdown-actions {
         margin-left: var(--space-sm);
+
+        button + switch,
+        switch + button,
+        button + button {
+            margin-left: var(--space-sm);
+        }
     }
 }
 
 .dropdown-content {
-    padding: calc(var(--space-sm) + var(--space-xs));
+    padding: calc(#{$base-space-sm + $base-space-xs} * var(--global-scale));
     font-size: var(--text-lg);
     color: var(--fg-muted);
+
+    .section-label {
+        font-size: var(--text-base);
+        font-weight: var(--weight-bold);
+        color: var(--fg-subtle);
+        text-transform: uppercase;
+        margin-top: var(--space-lg);
+        margin-bottom: var(--space-sm);
+    }
+
+    > :first-child .section-label:first-child {
+        margin-top: 0;
+    }
 }
 
 .dropdown-footer {

@@ -8,6 +8,7 @@ pub mod checkbox;
 pub mod confirm_modal;
 pub mod dropdown;
 pub mod empty_state;
+pub mod password_input;
 pub mod popover;
 pub mod progress_bar;
 pub mod progress_ring;

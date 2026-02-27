@@ -1,13 +1,13 @@
 use std::collections::HashMap;
 
-use tracing::instrument;
+use tracing::{debug, instrument};
 use zbus::{
     Connection,
     zvariant::{OwnedObjectPath, OwnedValue, Value},
 };
 
 use crate::{
-    core::access_point::types::Ssid,
+    core::{access_point::types::Ssid, settings::Settings},
     error::Error,
     proxy::{access_point::AccessPointProxy, devices::DeviceProxy, manager::NetworkManagerProxy},
 };
@@ -86,7 +86,7 @@ impl WifiControls {
     }
 
     #[instrument(
-        skip(connection, password),
+        skip(connection, password, settings),
         fields(device = %device_path, ap = %ap_path),
         err
     )]
@@ -95,22 +95,56 @@ impl WifiControls {
         device_path: &str,
         ap_path: OwnedObjectPath,
         password: Option<String>,
-    ) -> Result<(), Error> {
+        settings: &Settings,
+    ) -> Result<OwnedObjectPath, Error> {
         let proxy = NetworkManagerProxy::new(connection).await?;
 
         let ap_proxy = AccessPointProxy::new(connection, ap_path.clone())
             .await
-            .map_err(|e| Error::OperationFailed {
+            .map_err(|err| Error::OperationFailed {
                 operation: "create access point proxy",
-                source: e.into(),
+                source: err.into(),
             })?;
 
-        let ssid_bytes = ap_proxy.ssid().await.map_err(|e| Error::OperationFailed {
-            operation: "get ssid",
-            source: e.into(),
-        })?;
+        let ssid_bytes = ap_proxy
+            .ssid()
+            .await
+            .map_err(|err| Error::OperationFailed {
+                operation: "get ssid",
+                source: err.into(),
+            })?;
 
-        let ssid_string = Ssid::new(ssid_bytes.clone()).as_str();
+        let ssid = Ssid::new(ssid_bytes.clone());
+        let ssid_string = ssid.to_string_lossy();
+
+        let device_path =
+            OwnedObjectPath::try_from(device_path).map_err(|err| Error::DbusError(err.into()))?;
+
+        let existing_profiles = settings.connections_for_ssid(&ssid).await;
+
+        if let Some(profile) = existing_profiles.first() {
+            debug!(
+                profile = %profile.object_path,
+                ssid = %ssid_string,
+                "reusing saved connection profile"
+            );
+
+            if let Some(pwd) = password {
+                Self::update_profile_password(profile, pwd).await?;
+            }
+
+            let active_connection_path = proxy
+                .activate_connection(&profile.object_path, &device_path, &ap_path)
+                .await
+                .map_err(|err| Error::OperationFailed {
+                    operation: "activate existing connection",
+                    source: err.into(),
+                })?;
+
+            return Ok(active_connection_path);
+        }
+
+        debug!(ssid = %ssid_string, "no saved profile found, creating new connection");
 
         let bssid = if Self::is_manufacturer_default(&ssid_string) {
             ap_proxy.hw_address().await.ok()
@@ -121,16 +155,38 @@ impl WifiControls {
         let connection_settings =
             Self::build_connection_settings(ssid_string, ssid_bytes, bssid, password)?;
 
-        let device_path =
-            OwnedObjectPath::try_from(device_path).map_err(|e| Error::DbusError(e.into()))?;
-
-        proxy
+        let (_settings_path, active_connection_path) = proxy
             .add_and_activate_connection(connection_settings, &device_path, &ap_path)
             .await
-            .map_err(|e| Error::OperationFailed {
+            .map_err(|err| Error::OperationFailed {
                 operation: "add and activate connection",
-                source: e.into(),
+                source: err.into(),
             })?;
+
+        Ok(active_connection_path)
+    }
+
+    async fn update_profile_password(
+        profile: &crate::core::settings_connection::ConnectionSettings,
+        password: String,
+    ) -> Result<(), Error> {
+        let mut current_settings = profile.get_settings().await?;
+
+        let security = current_settings
+            .entry(String::from("802-11-wireless-security"))
+            .or_default();
+
+        let to_owned = |value: Value| {
+            value.try_to_owned().map_err(|err| Error::OperationFailed {
+                operation: "convert to owned value",
+                source: err.into(),
+            })
+        };
+
+        security.insert(String::from("key-mgmt"), to_owned(Value::from("wpa-psk"))?);
+        security.insert(String::from("psk"), to_owned(Value::from(password))?);
+
+        profile.update(current_settings).await?;
 
         Ok(())
     }

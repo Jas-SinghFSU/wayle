@@ -69,7 +69,7 @@ impl DropdownInstance {
         if let Some(sender) = self.thaw_target.take() {
             sender.emit(BarButtonInput::ThawSize);
         }
-        self.popover.unparent();
+        self.ensure_parent(bar_button.widget().upcast_ref());
         self.freeze_and_show(bar_button, style);
     }
 
@@ -81,14 +81,19 @@ impl DropdownInstance {
             self.popover.unparent();
         }
         self.popover.set_parent(target);
+
+        let popover = self.popover.downgrade();
+        target.connect_destroy(move |destroyed| {
+            let Some(popover) = popover.upgrade() else {
+                return;
+            };
+            if popover.parent().as_ref() == Some(destroyed) {
+                popover.unparent();
+            }
+        });
     }
 
     fn freeze_and_show(&self, bar_button: &Controller<BarButton>, style: DropdownStyle) {
-        let widget = bar_button.widget();
-        if self.popover.parent().is_none() {
-            self.popover.set_parent(widget);
-        }
-
         self.thaw_target.set(Some(bar_button.sender().clone()));
         bar_button.emit(BarButtonInput::FreezeSize);
 
@@ -101,6 +106,7 @@ impl DropdownInstance {
 
     fn apply_style(&self, style: &DropdownStyle) {
         self.popover.set_opacity(style.opacity);
+        self.popover.set_autohide(style.autohide);
         if style.shadow_enabled {
             self.popover.add_css_class("shadow");
         } else {
@@ -169,7 +175,9 @@ impl DropdownInstance {
 
 impl Drop for DropdownInstance {
     fn drop(&mut self) {
-        self.popover.unparent();
+        if self.popover.parent().is_some() {
+            self.popover.unparent();
+        }
     }
 }
 
@@ -177,6 +185,7 @@ struct DropdownStyle {
     margins: DropdownMargins,
     opacity: f64,
     shadow_enabled: bool,
+    autohide: bool,
 }
 
 const REM_PX: f32 = 16.0;
@@ -258,6 +267,13 @@ impl DropdownRegistry {
         }
     }
 
+    /// Updates autohide on all cached dropdown popovers.
+    pub(crate) fn set_all_autohide(&self, autohide: bool) {
+        for instance in self.cache.borrow().values() {
+            instance.popover.set_autohide(autohide);
+        }
+    }
+
     fn get_or_create(&self, name: &str) -> Option<Rc<DropdownInstance>> {
         let mut cache = self.cache.borrow_mut();
         if let Some(instance) = cache.get(name) {
@@ -286,6 +302,7 @@ pub(crate) fn dispatch_click(
                     margins: DropdownMargins::new(scale, bar.location.get()),
                     opacity: f64::from(bar.dropdown_opacity.get().value()) / 100.0,
                     shadow_enabled: bar.dropdown_shadow.get(),
+                    autohide: bar.dropdown_autohide.get(),
                 };
                 dropdown.toggle_for(bar_button, style);
             }

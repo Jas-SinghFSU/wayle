@@ -29,8 +29,9 @@ pub mod prelude {
         components::{bar_buttons::*, bar_container::*},
         primitives::{
             alert::*, badge::*, buttons::*, card::*, checkbox::*, confirm_modal::*, dropdown::*,
-            empty_state::*, popover::*, progress_bar::*, progress_ring::*, radio_group::*,
-            separator::*, slider::*, spinner::*, status_dot::*, switch::*, text_input::*,
+            empty_state::*, password_input::*, popover::*, progress_bar::*, progress_ring::*,
+            radio_group::*, separator::*, slider::*, spinner::*, status_dot::*, switch::*,
+            text_input::*,
         },
         styling::{InlineStyling, resolve_color},
         utils::force_window_resize,

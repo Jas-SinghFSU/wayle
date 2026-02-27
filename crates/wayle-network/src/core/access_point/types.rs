@@ -41,8 +41,9 @@ impl NetworkIdentifier {
 
     /// Returns the identifier as a UTF-8 string.
     ///
-    /// Invalid UTF-8 sequences are replaced with �.
-    pub fn as_str(&self) -> String {
+    /// Invalid UTF-8 sequences are replaced with the Unicode
+    /// replacement character (U+FFFD).
+    pub fn to_string_lossy(&self) -> String {
         String::from_utf8_lossy(&self.0).to_string()
     }
 
@@ -59,7 +60,7 @@ impl NetworkIdentifier {
 
 impl Display for NetworkIdentifier {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.as_str())
+        write!(f, "{}", self.to_string_lossy())
     }
 }
 

@@ -219,4 +219,9 @@ pub struct BarConfig {
     #[serde(rename = "dropdown-opacity")]
     #[default(Percentage::new(100))]
     pub dropdown_opacity: ConfigProperty<Percentage>,
+
+    /// Close dropdown when clicking outside it.
+    #[serde(rename = "dropdown-autohide")]
+    #[default(true)]
+    pub dropdown_autohide: ConfigProperty<bool>,
 }

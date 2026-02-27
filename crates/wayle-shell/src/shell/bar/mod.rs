@@ -10,7 +10,7 @@ use std::{cell::Cell, rc::Rc};
 
 use factory::*;
 use gtk::prelude::*;
-use gtk4_layer_shell::{Layer, LayerShell};
+use gtk4_layer_shell::{KeyboardMode, Layer, LayerShell};
 use relm4::{
     factory::FactoryVecDeque,
     gtk,
@@ -46,6 +46,7 @@ pub(crate) struct BarInit {
 pub(crate) enum BarCmd {
     LayoutLoaded(BarLayout),
     StyleChanged,
+    DropdownAutohideChanged(bool),
 }
 
 #[relm4::component(pub(crate))]
@@ -114,6 +115,7 @@ impl Component for Bar {
 
         root.init_layer_shell();
         root.set_layer(Layer::Top);
+        root.set_keyboard_mode(KeyboardMode::OnDemand);
         root.set_monitor(Some(&init.monitor));
         Self::apply_anchors(&root, location);
         Self::apply_css_classes(&root, &init.monitor, location, is_floating);
@@ -144,6 +146,7 @@ impl Component for Bar {
             .add_provider(&css_provider, gtk::STYLE_PROVIDER_PRIORITY_USER);
 
         watchers::layout::spawn(&sender, &init.monitor, &init.services.config);
+        watchers::dropdowns::spawn(&sender, &init.services.config);
 
         let dropdowns = Rc::new(DropdownRegistry::new(&init.services));
 
@@ -203,6 +206,9 @@ impl Component for Bar {
                     self.css_provider.load_from_string(&new_css);
                     self.last_css = new_css;
                 }
+            }
+            BarCmd::DropdownAutohideChanged(autohide) => {
+                self.dropdowns.set_all_autohide(autohide);
             }
         }
     }

@@ -225,17 +225,23 @@ impl ConnectionSettings {
         .await
     }
 
-    pub(crate) async fn matches_ssid(&self, ssid: &Ssid) -> bool {
-        let Ok(settings) = self.get_settings().await else {
-            return false;
-        };
+    /// Extracts the WiFi SSID from this connection profile, if it is a wireless connection.
+    ///
+    /// # Errors
+    ///
+    /// Returns `None` if this is not a wireless connection, or if the
+    /// D-Bus settings cannot be read.
+    pub async fn wifi_ssid(&self) -> Option<Ssid> {
+        let settings = self.get_settings().await.ok()?;
+        let wireless = settings.get("802-11-wireless")?;
+        let ssid_value = wireless.get("ssid")?;
+        let arr = ssid_value.downcast_ref::<zvariant::Array>().ok()?;
+        let bytes: Vec<u8> = arr.try_into().ok()?;
+        Some(Ssid::new(bytes))
+    }
 
-        settings
-            .get("802-11-wireless")
-            .and_then(|wireless| wireless.get("ssid"))
-            .and_then(|ssid| ssid.downcast_ref::<zvariant::Array>().ok())
-            .and_then(|arr| TryInto::<Vec<u8>>::try_into(arr).ok())
-            .is_some_and(|bytes| bytes == ssid.as_bytes())
+    pub(crate) async fn matches_ssid(&self, ssid: &Ssid) -> bool {
+        self.wifi_ssid().await.is_some_and(|stored| stored == *ssid)
     }
 
     async fn from_path(

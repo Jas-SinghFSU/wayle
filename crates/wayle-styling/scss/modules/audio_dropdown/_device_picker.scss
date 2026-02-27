@@ -1,5 +1,6 @@
 .picker-header {
-    padding: var(--space-sm);
+    padding: 0;
+    padding-bottom: var(--space-sm);
     border-bottom: 1px solid var(--border-default);
 }
 
@@ -26,7 +27,7 @@ button.picker-back {
 
 .audio-device-list {
     background: transparent;
-    padding: var(--space-sm);
+    padding: var(--space-sm) 0;
 
     .audio-device-option {
         border-radius: var(--rounding-element);

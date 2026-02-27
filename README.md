@@ -34,7 +34,7 @@ experience. A successor to HyprPanel without the pain or dependency on Hyprland.
 ### UI Components
 
 - [x] **Component Library** - Base Relm4 widgets and containers
-- [x] **Bar Modules (WIP)**:
+- [x] **Bar Modules**:
     - [x] Battery
     - [x] Media
     - [x] Volume
@@ -72,8 +72,8 @@ experience. A successor to HyprPanel without the pain or dependency on Hyprland.
 ### Dropdown Interfaces
 
 - [x] **Audio Panel**
-- [ ] **Network Panel (WIP)**
-- [ ] **Bluetooth Panel**
+- [x] **Network Panel**
+- [ ] **Bluetooth Panel (WIP)**
 - [ ] **Battery Panel**
 - [ ] **Media Panel**
 - [ ] **Dashboard**
@@ -86,7 +86,6 @@ experience. A successor to HyprPanel without the pain or dependency on Hyprland.
 - [ ] **Settings Dialog**
 - [ ] **Notifications**
 - [ ] **OSD**
-- [ ] **Custom Modules**
 
 ## Configuration
 

@@ -59,7 +59,6 @@ impl Component for AudioDropdown {
         gtk::Popover {
             set_css_classes: &["dropdown", "audio-dropdown"],
             set_has_arrow: false,
-            set_autohide: true,
             #[watch]
             set_width_request: model.scaled_width,
             #[watch]
@@ -83,7 +82,7 @@ impl Component for AudioDropdown {
 
                 #[name = "stack"]
                 gtk::Stack {
-                    add_css_class: "audio-content",
+                    add_css_class: "dropdown-content",
                     set_vexpand: true,
                     set_transition_type: gtk::StackTransitionType::SlideLeftRight,
                     set_transition_duration: 200,

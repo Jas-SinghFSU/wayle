@@ -57,6 +57,14 @@ impl WatcherToken {
     }
 }
 
+impl Drop for WatcherToken {
+    fn drop(&mut self) {
+        if let Some(token) = self.0.take() {
+            token.cancel();
+        }
+    }
+}
+
 /// Converts a [`SubscribeChanges`] implementor into a stream.
 ///
 /// Bridges the channel-based `subscribe_changes` API with the stream-based

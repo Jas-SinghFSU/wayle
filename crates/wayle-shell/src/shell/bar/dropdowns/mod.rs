@@ -1,4 +1,5 @@
 mod audio;
+mod network;
 mod registry;
 
 pub(crate) use self::registry::{
@@ -29,4 +30,5 @@ macro_rules! register_dropdowns {
 
 register_dropdowns! {
     "audio" => audio::Factory,
+    "network" => network::Factory,
 }

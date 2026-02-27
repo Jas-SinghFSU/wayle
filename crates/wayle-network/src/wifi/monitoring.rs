@@ -14,6 +14,7 @@ use crate::{
             AccessPoint,
             types::{LiveAccessPointParams, Ssid},
         },
+        config::ip4_config::Ip4Config,
         device::wifi::DeviceWifi,
     },
     error::Error,
@@ -64,12 +65,14 @@ impl ModelMonitoring for Wifi {
         )
         .await
         .map_err(Error::DbusError)?;
+
         let device_proxy = DeviceProxy::new(
             &self.device.core.connection,
             self.device.core.object_path.clone(),
         )
         .await
         .map_err(Error::DbusError)?;
+
         let nm_proxy = NetworkManagerProxy::new(&self.device.core.connection)
             .await
             .map_err(Error::DbusError)?;
@@ -119,6 +122,7 @@ async fn populate_existing_access_points(
     }
 }
 
+#[allow(clippy::too_many_lines)]
 async fn monitor_wifi(
     weak_wifi: Weak<Wifi>,
     wireless_proxy: DeviceWirelessProxy<'static>,
@@ -130,21 +134,23 @@ async fn monitor_wifi(
         .receive_access_point_added()
         .await
         .map_err(Error::DbusError)?;
+
     let mut ap_removed = wireless_proxy
         .receive_access_point_removed()
         .await
         .map_err(Error::DbusError)?;
+
     let mut enabled_changed = nm_proxy.receive_wireless_enabled_changed().await;
     let mut access_point_changed = wireless_proxy.receive_active_access_point_changed().await;
     let mut connectivity_changed = device_proxy.receive_state_changed().await;
+    let mut ip4_config_changed = device_proxy.receive_ip4_config_changed().await;
 
     let ActiveAccessPointStreams {
         ssid: mut ap_ssid_stream,
         strength: mut ap_strength_stream,
     } = {
         let Some(wifi) = weak_wifi.upgrade() else {
-            error!("cannot upgrade weak wifi reference");
-            error!("access point monitoring may be degraded");
+            error!("cannot upgrade weak wifi reference, access point monitoring may be degraded");
             return Err(Error::OperationFailed {
                 operation: "monitor wifi",
                 source: "weak reference dropped".into(),
@@ -156,6 +162,7 @@ async fn monitor_wifi(
             wifi.device.active_access_point.get(),
             &wifi.ssid,
             &wifi.strength,
+            &wifi.frequency,
         )
         .await
     };
@@ -204,7 +211,8 @@ async fn monitor_wifi(
                         &wifi.device.core.connection,
                         new_ap_path,
                         &wifi.ssid,
-                        &wifi.strength
+                        &wifi.strength,
+                        &wifi.frequency,
                     ).await;
 
                     ap_ssid_stream = streams.ssid;
@@ -224,10 +232,11 @@ async fn monitor_wifi(
                 }
 
                 Some(change) = connectivity_changed.next() => {
-                    if let Ok(new_connectivity) = change.get().await {
-                        let device_state = NMDeviceState::from_u32(new_connectivity);
-                        wifi.connectivity.set(NetworkStatus::from_device_state(device_state));
-                    }
+                    handle_connectivity_changed(change, &wifi).await;
+                }
+
+                Some(change) = ip4_config_changed.next() => {
+                    handle_ip4_config_changed(change, &wifi).await;
                 }
 
                 else => {
@@ -238,6 +247,40 @@ async fn monitor_wifi(
     });
 
     Ok(())
+}
+
+async fn handle_connectivity_changed(change: zbus::proxy::PropertyChanged<'_, u32>, wifi: &Wifi) {
+    let Ok(new_connectivity) = change.get().await else {
+        return;
+    };
+
+    let device_state = NMDeviceState::from_u32(new_connectivity);
+    let status = NetworkStatus::from_device_state(device_state);
+
+    wifi.connectivity.set(status);
+
+    if status == NetworkStatus::Connected {
+        let ip = Ip4Config::resolve_address(
+            &wifi.device.core.connection,
+            wifi.device.core.ip4_config.get(),
+        )
+        .await;
+
+        wifi.ip4_address.set(ip);
+    }
+}
+
+async fn handle_ip4_config_changed(
+    change: zbus::proxy::PropertyChanged<'_, OwnedObjectPath>,
+    wifi: &Wifi,
+) {
+    let Ok(ip4_path) = change.get().await else {
+        return;
+    };
+
+    let ip = Ip4Config::resolve_address(&wifi.device.core.connection, ip4_path).await;
+
+    wifi.ip4_address.set(ip);
 }
 
 async fn handle_ap_added(
@@ -255,6 +298,7 @@ async fn handle_ap_added(
     {
         let mut aps = access_points.get();
         aps.push(new_ap);
+
         access_points.set(aps);
     }
 }
@@ -268,10 +312,13 @@ async fn handle_access_point_changed(
     new_ap_path: OwnedObjectPath,
     ssid_prop: &Property<Option<String>>,
     strength_prop: &Property<Option<u8>>,
+    frequency_prop: &Property<Option<u32>>,
 ) -> ActiveAccessPointStreams {
     if new_ap_path.is_empty() || new_ap_path == OwnedObjectPath::default() {
         ssid_prop.set(None);
         strength_prop.set(None);
+        frequency_prop.set(None);
+
         return ActiveAccessPointStreams {
             ssid: None,
             strength: None,
@@ -288,6 +335,10 @@ async fn handle_access_point_changed(
                 strength_prop.set(Some(strength));
             }
 
+            if let Ok(freq) = ap_proxy.frequency().await {
+                frequency_prop.set(Some(freq));
+            }
+
             ActiveAccessPointStreams {
                 ssid: Some(ap_proxy.receive_ssid_changed().await),
                 strength: Some(ap_proxy.receive_strength_changed().await),
@@ -296,6 +347,8 @@ async fn handle_access_point_changed(
         Err(_) => {
             ssid_prop.set(None);
             strength_prop.set(None);
+            frequency_prop.set(None);
+
             ActiveAccessPointStreams {
                 ssid: None,
                 strength: None,

@@ -8,7 +8,10 @@ use wayle_common::Property;
 use wayle_traits::{ModelMonitoring, Reactive};
 
 use super::{
-    core::device::wired::{DeviceWired, DeviceWiredParams, LiveDeviceWiredParams},
+    core::{
+        config::ip4_config::Ip4Config,
+        device::wired::{DeviceWired, DeviceWiredParams, LiveDeviceWiredParams},
+    },
     error::Error,
     types::states::NetworkStatus,
 };
@@ -20,6 +23,8 @@ pub struct Wired {
     pub device: DeviceWired,
     /// Current connectivity status.
     pub connectivity: Property<NetworkStatus>,
+    /// IPv4 address assigned to this device.
+    pub ip4_address: Property<Option<String>>,
 }
 
 impl PartialEq for Wired {
@@ -70,10 +75,13 @@ impl Wired {
     async fn from_device(device: DeviceWired) -> Result<Self, Error> {
         let device_state = &device.core.state.get();
         let connectivity = NetworkStatus::from_device_state(*device_state);
+        let ip4_address =
+            Ip4Config::resolve_address(&device.core.connection, device.core.ip4_config.get()).await;
 
         Ok(Self {
             device,
             connectivity: Property::new(connectivity),
+            ip4_address: Property::new(ip4_address),
         })
     }
 }

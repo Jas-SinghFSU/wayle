@@ -6,7 +6,7 @@ use wayle_common::{Property, unwrap_i32_or, unwrap_string, unwrap_u8, unwrap_u32
 use wayle_traits::{ModelMonitoring, Reactive};
 use zbus::{Connection, zvariant::OwnedObjectPath};
 
-use self::types::{AccessPointParams, Bssid, LiveAccessPointParams, SecurityType, Ssid};
+use self::types::{AccessPointParams, Bssid, LiveAccessPointParams};
 use crate::{
     error::Error,
     proxy::access_point::AccessPointProxy,
@@ -18,6 +18,8 @@ use crate::{
 
 pub(crate) mod monitoring;
 pub(crate) mod types;
+
+pub use self::types::{SecurityType, Ssid};
 
 /// WiFi access point representation.
 ///
@@ -125,6 +127,11 @@ impl PartialEq for AccessPoint {
 }
 
 impl AccessPoint {
+    /// Returns the D-Bus object path for this access point.
+    pub fn object_path(&self) -> &OwnedObjectPath {
+        &self.object_path
+    }
+
     async fn from_path(
         connection: &Connection,
         path: OwnedObjectPath,

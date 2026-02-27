@@ -7,6 +7,7 @@ use wayle_traits::ModelMonitoring;
 
 use super::Wired;
 use crate::{
+    core::config::ip4_config::Ip4Config,
     error::Error,
     proxy::devices::DeviceProxy,
     types::states::{NMDeviceState, NetworkStatus},
@@ -46,6 +47,7 @@ async fn monitor_wired_connectivity(
     cancellation_token: CancellationToken,
 ) -> Result<(), Error> {
     let mut connectivity_changed = proxy.receive_state_changed().await;
+    let mut ip4_config_changed = proxy.receive_ip4_config_changed().await;
 
     loop {
         let Some(wired) = weak_wired.upgrade() else {
@@ -60,7 +62,25 @@ async fn monitor_wired_connectivity(
             Some(change) = connectivity_changed.next() => {
                 if let Ok(new_connectivity) = change.get().await {
                     let device_state = NMDeviceState::from_u32(new_connectivity);
-                    wired.connectivity.set(NetworkStatus::from_device_state(device_state));
+                    let status = NetworkStatus::from_device_state(device_state);
+                    wired.connectivity.set(status);
+
+                    if status == NetworkStatus::Connected {
+                        let ip = Ip4Config::resolve_address(
+                            &wired.device.core.connection,
+                            wired.device.core.ip4_config.get(),
+                        ).await;
+                        wired.ip4_address.set(ip);
+                    }
+                }
+            }
+            Some(change) = ip4_config_changed.next() => {
+                if let Ok(ip4_path) = change.get().await {
+                    let ip = Ip4Config::resolve_address(
+                        &wired.device.core.connection,
+                        ip4_path,
+                    ).await;
+                    wired.ip4_address.set(ip);
                 }
             }
             else => {

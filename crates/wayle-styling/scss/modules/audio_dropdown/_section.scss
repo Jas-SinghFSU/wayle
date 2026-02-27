@@ -2,7 +2,10 @@
     background: var(--bg-elevated);
     border-radius: var(--rounding-element);
     padding: var(--space-sm);
-    margin-bottom: var(--space-sm);
+}
+
+.audio-section + .audio-section {
+    margin-top: var(--space-sm);
 }
 
 .audio-section-header {
@@ -13,8 +16,4 @@
         font-weight: var(--weight-bold);
         color: var(--fg-default);
     }
-}
-
-.audio-separator {
-    margin: var(--space-xs);
 }

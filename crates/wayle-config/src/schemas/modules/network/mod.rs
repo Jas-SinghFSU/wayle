@@ -105,7 +105,7 @@ pub struct NetworkConfig {
 
     /// Action on left click.
     #[serde(rename = "left-click")]
-    #[default(ClickAction::None)]
+    #[default(ClickAction::Dropdown(String::from("network")))]
     pub left_click: ConfigProperty<ClickAction>,
 
     /// Action on right click.

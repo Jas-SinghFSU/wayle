@@ -96,6 +96,7 @@ impl NetworkService {
                 connection: &connection,
                 device_path: path.clone(),
                 cancellation_token: &cancellation_token,
+                settings: settings.clone(),
             })
             .await
             {

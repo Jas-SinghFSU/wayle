@@ -4,25 +4,3 @@
 @import "device_picker";
 @import "app_volume";
 
-.audio-dropdown {
-    > contents > .dropdown {
-        min-width: 0;
-    }
-
-    .section-label {
-        font-size: var(--text-base);
-        font-weight: var(--weight-bold);
-        color: var(--fg-subtle);
-        text-transform: uppercase;
-        margin-top: var(--space-sm);
-        margin-bottom: var(--space-sm);
-    }
-}
-
-.audio-content {
-    padding: var(--space-xs);
-}
-
-.audio-fixed {
-    padding: var(--space-sm) var(--space-sm) 0;
-}

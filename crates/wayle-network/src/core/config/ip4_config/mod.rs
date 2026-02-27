@@ -2,7 +2,7 @@ mod types;
 
 use std::{collections::HashMap, net::Ipv4Addr};
 
-use tracing::debug;
+use tracing::{debug, warn};
 pub(crate) use types::Ip4ConfigParams;
 use wayle_common::{Property, unwrap_i32, unwrap_string, unwrap_vec};
 use wayle_traits::Static;
@@ -95,6 +95,31 @@ impl Static for Ip4Config {
 }
 
 impl Ip4Config {
+    pub(crate) async fn resolve_address(
+        connection: &Connection,
+        path: OwnedObjectPath,
+    ) -> Option<String> {
+        if path.as_str() == "/" {
+            return None;
+        }
+        match Self::get(Ip4ConfigParams {
+            connection,
+            path: path.clone(),
+        })
+        .await
+        {
+            Ok(config) => config
+                .address_data
+                .get()
+                .first()
+                .map(|addr| addr.address.to_string()),
+            Err(err) => {
+                warn!(error = %err, path = %path, "ip4 config fetch failed");
+                None
+            }
+        }
+    }
+
     async fn from_path(connection: &Connection, path: OwnedObjectPath) -> Result<Self, Error> {
         let properties = Self::fetch_properties(connection, &path).await?;
         Ok(Self::from_props(path, properties))
@@ -169,11 +194,11 @@ impl Ip4Config {
                 let address = address_str.parse::<Ipv4Addr>().ok()?;
 
                 let prefix_value = entry.get("prefix")?;
-                let prefix_ref = prefix_value.downcast_ref::<&u8>().ok()?;
+                let prefix_ref = prefix_value.downcast_ref::<&u32>().ok()?;
 
                 Some(Ipv4Address {
                     address,
-                    prefix: *prefix_ref,
+                    prefix: *prefix_ref as u8,
                 })
             })
             .collect()

@@ -38,26 +38,21 @@ impl SimpleComponent for MainSection {
 
                 #[local_ref]
                 default_devices_widget -> gtk::Box {},
-
-                #[template]
-                HorizontalSeparator {
-                    add_css_class: "audio-separator",
-                },
-
-                gtk::Label {
-                    add_css_class: "section-label",
-                    set_label: &t!("dropdown-audio-app-volume"),
-                    set_halign: gtk::Align::Start,
-                },
             },
 
-            gtk::Box {
+            gtk::Label {
+                add_css_class: "section-label",
+                set_label: &t!("dropdown-audio-app-volume"),
+                set_halign: gtk::Align::Start,
+                #[watch]
+                set_visible: model.has_any_device,
+            },
+
+            #[local_ref]
+            app_volumes_widget -> gtk::Box {
                 set_vexpand: true,
                 #[watch]
                 set_visible: model.has_any_device,
-
-                #[local_ref]
-                app_volumes_widget -> gtk::Box {},
             },
 
             gtk::Box {

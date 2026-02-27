@@ -8,6 +8,7 @@ use wayle_traits::{Reactive, ServiceMonitoring};
 use zbus::{Connection, zvariant::OwnedObjectPath};
 
 use super::{
+    core::settings::Settings,
     discovery::NetworkServiceDiscovery,
     error::Error,
     proxy::manager::NetworkManagerProxy,
@@ -34,6 +35,7 @@ impl ServiceMonitoring for NetworkService {
             self.zbus_connection.clone(),
             self.wifi.clone(),
             self.wired.clone(),
+            self.settings.clone(),
             self.cancellation_token.child_token(),
         )
         .await
@@ -80,6 +82,7 @@ async fn spawn_device_monitoring(
     connection: Connection,
     wifi: Property<Option<Arc<Wifi>>>,
     wired: Property<Option<Arc<Wired>>>,
+    settings: Arc<Settings>,
     cancellation_token: CancellationToken,
 ) -> Result<(), Error> {
     let nm_proxy = NetworkManagerProxy::new(&connection)
@@ -100,7 +103,7 @@ async fn spawn_device_monitoring(
                     let Ok(args) = signal.args() else { continue };
                     debug!(path = %args.device_path, "Network device added");
 
-                    try_initialize_wifi(&connection, &wifi, &cancellation_token).await;
+                    try_initialize_wifi(&connection, &wifi, &settings, &cancellation_token).await;
                     try_initialize_wired(&connection, &wired, &cancellation_token).await;
                 }
                 Some(signal) = device_removed.next() => {
@@ -120,6 +123,7 @@ async fn spawn_device_monitoring(
 async fn try_initialize_wifi(
     connection: &Connection,
     wifi: &Property<Option<Arc<Wifi>>>,
+    settings: &Arc<Settings>,
     cancellation_token: &CancellationToken,
 ) {
     if wifi.get().is_some() {
@@ -138,6 +142,7 @@ async fn try_initialize_wifi(
         connection,
         device_path: path.clone(),
         cancellation_token,
+        settings: settings.clone(),
     })
     .await
     {

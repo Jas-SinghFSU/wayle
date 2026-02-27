@@ -1,0 +1,10 @@
+@import "../text_input/mixins";
+
+entry.password {
+    @include entry-base;
+
+    > image {
+        color: var(--fg-subtle);
+        -gtk-icon-size: var(--icon-md);
+    }
+}
