@@ -354,6 +354,32 @@ impl BluetoothService {
     pub async fn provide_service_authorization(&self, authorization: bool) -> Result<(), Error> {
         providers::service_authorization(self, authorization).await
     }
+
+    /// Cancels any pending pairing request.
+    ///
+    /// For bool-based responders (confirmation, authorization, service authorization),
+    /// sends `false` to reject. For value-based responders (pin, passkey), drops the
+    /// sender which causes BlueZ to treat it as a rejection/timeout.
+    pub async fn cancel_pending_request(&self) {
+        let responder = self.pairing_responder.lock().await.take();
+
+        if let Some(responder) = responder {
+            match responder {
+                PairingResponder::Confirmation(sender) => {
+                    let _ = sender.send(false);
+                }
+                PairingResponder::Authorization(sender) => {
+                    let _ = sender.send(false);
+                }
+                PairingResponder::ServiceAuthorization(sender) => {
+                    let _ = sender.send(false);
+                }
+                PairingResponder::Pin(_) | PairingResponder::Passkey(_) => {}
+            }
+        }
+
+        self.pairing_request.set(None);
+    }
 }
 
 impl Drop for BluetoothService {

@@ -12,8 +12,6 @@
 }
 
 .network-connection-icon {
-    min-width: calc(2.75rem * var(--global-scale));
-    min-height: calc(2.75rem * var(--global-scale));
     border-radius: var(--rounding-element);
     margin-right: var(--space-sm);
 
@@ -25,6 +23,7 @@
         background: var(--status-info-subtle);
 
         image {
+            margin: calc(var(--space-sm) + var(--space-xs));
             -gtk-icon-size: var(--icon-md);
             color: var(--status-info);
         }
@@ -34,6 +33,7 @@
         background: var(--status-success-subtle);
 
         image {
+            margin: calc(var(--space-sm) + var(--space-xs));
             -gtk-icon-size: var(--icon-md);
             color: var(--status-success);
         }
@@ -79,8 +79,12 @@ button.network-disconnect {
     }
 }
 
-.network-connection-actions {
+.network-hover-stack {
     margin-left: var(--space-xs);
+}
+
+.network-connection-actions {
+    margin-left: 0;
 
     button {
         font-size: var(--text-sm);

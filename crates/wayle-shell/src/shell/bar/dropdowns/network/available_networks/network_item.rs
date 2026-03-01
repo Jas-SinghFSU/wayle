@@ -36,6 +36,7 @@ impl FactoryComponent for NetworkItem {
             add_css_class: "network-item",
             set_cursor_from_name: Some("pointer"),
 
+            #[name = "signal_icon"]
             gtk::Image {
                 add_css_class: "network-item-signal",
                 #[watch]
@@ -43,11 +44,13 @@ impl FactoryComponent for NetworkItem {
                 set_valign: gtk::Align::Center,
             },
 
+            #[name = "info_column"]
             gtk::Box {
                 add_css_class: "network-item-info",
                 set_orientation: gtk::Orientation::Vertical,
                 set_hexpand: true,
 
+                #[name = "ssid_label"]
                 gtk::Label {
                     add_css_class: "network-item-name",
                     set_halign: gtk::Align::Start,
@@ -56,6 +59,7 @@ impl FactoryComponent for NetworkItem {
                     set_label: &self.ssid,
                 },
 
+                #[name = "security_label"]
                 gtk::Label {
                     add_css_class: "network-item-security",
                     set_halign: gtk::Align::Start,
@@ -64,6 +68,7 @@ impl FactoryComponent for NetworkItem {
                 },
             },
 
+            #[name = "lock_icon"]
             gtk::Image {
                 add_css_class: "network-item-lock",
                 set_icon_name: Some("ld-lock-symbolic"),

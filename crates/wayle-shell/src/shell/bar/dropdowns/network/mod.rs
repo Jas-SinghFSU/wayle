@@ -60,6 +60,7 @@ impl Component for NetworkDropdown {
 
             #[template]
             Dropdown {
+                set_overflow: gtk::Overflow::Hidden,
 
                 #[template]
                 DropdownHeader {

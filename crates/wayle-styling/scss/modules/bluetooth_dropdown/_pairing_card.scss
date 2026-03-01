@@ -1,0 +1,152 @@
+.bluetooth-pairing-card {
+    background: var(--bg-elevated);
+    border-radius: var(--rounding-element);
+    padding: var(--space-md);
+    margin-bottom: var(--space-sm);
+}
+
+.bluetooth-pairing-header {
+    margin-bottom: var(--space-md);
+}
+
+button.bluetooth-pairing-close {
+    border-radius: var(--rounding-element);
+
+    image {
+        -gtk-icon-size: var(--icon-sm);
+        color: var(--fg-subtle);
+        margin: var(--space-sm);
+    }
+
+    &:hover image {
+        color: var(--fg-default);
+    }
+}
+
+.bluetooth-pin-display {
+    background: var(--bg-overlay);
+    border-radius: var(--rounding-element);
+    padding: var(--space-md);
+    margin-bottom: var(--space-sm);
+}
+
+.bluetooth-pin-label {
+    font-size: var(--text-md);
+    font-weight: var(--weight-medium);
+    color: var(--fg-subtle);
+    margin-bottom: var(--space-sm);
+}
+
+.bluetooth-pin-code {
+    font-size: var(--space-lg);
+    font-weight: var(--weight-bold);
+    color: var(--fg-default);
+    letter-spacing: var(--space-sm);
+    font-family: monospace;
+}
+
+.bluetooth-pairing-message {
+    font-size: var(--text-md);
+    font-weight: var(--weight-medium);
+    color: var(--fg-muted);
+    margin-bottom: var(--space-md);
+}
+
+.bluetooth-pin-input-row {
+    margin-bottom: var(--space-sm);
+}
+
+entry.bluetooth-pin-digit {
+    all: unset;
+    min-width: var(--space-xl);
+    min-height: calc(2.5rem * var(--global-scale));
+    background: var(--bg-overlay);
+    border: 1px solid var(--bg-hover);
+    border-radius: var(--rounding-element);
+    font-size: var(--space-lg);
+    font-weight: var(--weight-semibold);
+    color: var(--fg-default);
+    font-family: monospace;
+    margin-right: var(--space-sm);
+
+    &:focus {
+        border-color: var(--accent);
+    }
+
+    &:last-child {
+        margin-right: 0;
+    }
+}
+
+.bluetooth-progress-dots {
+    margin-top: var(--space-sm);
+}
+
+.bluetooth-service-info {
+    background: var(--bg-overlay);
+    border-radius: var(--rounding-element);
+    padding: var(--space-md);
+    margin-bottom: var(--space-md);
+}
+
+.bluetooth-service-name {
+    font-size: var(--text-md);
+    font-weight: var(--weight-semibold);
+    color: var(--fg-default);
+}
+
+.bluetooth-legacy-pin-input {
+    all: unset;
+    > text {
+        padding: var(--space-sm) 0;
+    }
+
+    min-height: calc(2rem * var(--global-scale));
+    padding: 0 var(--space-md);
+    font-size: var(--text-lg);
+    font-weight: var(--weight-semibold);
+    font-family: monospace;
+    background: var(--bg-overlay);
+    border: 1px solid var(--bg-hover);
+    border-radius: var(--rounding-element);
+    color: var(--fg-default);
+    margin-bottom: var(--space-xs);
+
+    &:focus {
+        border-color: var(--accent);
+    }
+}
+
+.bluetooth-pin-hint {
+    font-size: var(--text-md);
+    font-weight: var(--weight-medium);
+    color: var(--fg-subtle);
+    margin-top: var(--space-sm);
+    margin-bottom: var(--space-xs);
+}
+
+.bluetooth-pairing-error {
+    padding: var(--space-sm);
+    background: var(--status-error-subtle);
+    border-radius: var(--rounding-element);
+    margin-bottom: var(--space-md);
+
+    image.bluetooth-pairing-error-icon {
+        -gtk-icon-size: var(--icon-md);
+        color: var(--status-error);
+        margin-right: var(--space-sm);
+    }
+}
+
+.bluetooth-pairing-error-text {
+    font-size: var(--text-xs);
+    color: var(--status-error);
+}
+
+.bluetooth-pairing-actions {
+    margin-top: var(--space-sm);
+
+    button + button {
+        margin-left: var(--space-sm);
+    }
+}

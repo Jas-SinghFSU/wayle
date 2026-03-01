@@ -63,6 +63,7 @@ impl Component for AvailableNetworks {
         gtk::Box {
             set_orientation: gtk::Orientation::Vertical,
 
+            #[name = "section_label"]
             gtk::Label {
                 add_css_class: "section-label",
                 set_halign: gtk::Align::Start,
@@ -78,17 +79,18 @@ impl Component for AvailableNetworks {
                     && model.state == ListState::PasswordEntry,
             },
 
+            #[name = "network_list_card"]
             #[template]
             Card {
                 add_css_class: "network-list",
                 set_overflow: gtk::Overflow::Hidden,
-                set_vexpand: true,
                 #[watch]
                 set_visible: model.wifi_available && !model.ap_cache.is_empty(),
 
+                #[name = "network_list_scroll"]
                 gtk::ScrolledWindow {
                     add_css_class: "network-list-scroll",
-                    set_vexpand: true,
+                    set_propagate_natural_height: true,
                     set_hscrollbar_policy: gtk::PolicyType::Never,
 
                     #[local_ref]
@@ -98,12 +100,11 @@ impl Component for AvailableNetworks {
                 },
             },
 
+            #[name = "empty_no_networks"]
             gtk::Box {
                 #[watch]
                 set_visible: model.wifi_available
                     && model.ap_cache.is_empty(),
-                set_vexpand: true,
-                set_valign: gtk::Align::Center,
 
                 #[template]
                 EmptyState {
@@ -123,11 +124,10 @@ impl Component for AvailableNetworks {
                 },
             },
 
+            #[name = "empty_no_adapter"]
             gtk::Box {
                 #[watch]
                 set_visible: !model.wifi_available,
-                set_vexpand: true,
-                set_valign: gtk::Align::Center,
 
                 #[template]
                 EmptyState {

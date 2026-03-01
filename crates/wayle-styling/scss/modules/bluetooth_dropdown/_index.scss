@@ -1,0 +1,50 @@
+@import "device_list";
+@import "pairing_card";
+
+.bluetooth-scroll {
+    background: transparent;
+
+    scrollbar range trough {
+        background: transparent;
+    }
+}
+
+.bluetooth-content .section-label {
+    margin-top: 0;
+}
+
+.bluetooth-content .card + .section-label {
+    margin-top: var(--space-lg);
+}
+
+button.bluetooth-scan-btn {
+    margin-right: var(--space-sm);
+    image {
+        -gtk-icon-size: var(--icon-md);
+        color: var(--fg-muted);
+    }
+
+    &:hover image {
+        color: var(--fg-default);
+    }
+
+    &.scanning image {
+        animation: bt-scan-spin 1s steps(20) infinite;
+    }
+}
+
+.bluetooth-no-new-devices {
+    font-size: var(--text-md);
+    font-weight: var(--weight-medium);
+    color: var(--fg-subtle);
+    padding: var(--space-sm) var(--space-xs);
+}
+
+@keyframes bt-scan-spin {
+    from {
+        -gtk-icon-transform: rotate(0deg);
+    }
+    to {
+        -gtk-icon-transform: rotate(360deg);
+    }
+}

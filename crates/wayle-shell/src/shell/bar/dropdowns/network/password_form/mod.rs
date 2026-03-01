@@ -34,25 +34,31 @@ impl SimpleComponent for PasswordForm {
             #[watch]
             set_visible: model.visible,
 
+            #[name = "header"]
             gtk::Box {
                 add_css_class: "network-password-header",
 
+                #[name = "header_icon_container"]
                 gtk::Box {
                     add_css_class: "network-connection-icon",
                     add_css_class: "wifi",
                     set_hexpand: false,
+                    #[name = "header_icon"]
                     gtk::Image {
                         #[watch]
                         set_icon_name: Some(model.signal_icon),
-                        set_hexpand: true,
+                        set_halign: gtk::Align::Center,
+                        set_valign: gtk::Align::Center,
                     },
                 },
 
+                #[name = "header_info"]
                 gtk::Box {
                     add_css_class: "network-password-info",
                     set_orientation: gtk::Orientation::Vertical,
                     set_hexpand: true,
 
+                    #[name = "header_ssid"]
                     gtk::Label {
                         add_css_class: "network-password-name",
                         set_halign: gtk::Align::Start,
@@ -61,6 +67,7 @@ impl SimpleComponent for PasswordForm {
                         set_label: &model.ssid,
                     },
 
+                    #[name = "header_security"]
                     gtk::Label {
                         add_css_class: "network-password-security",
                         set_halign: gtk::Align::Start,
@@ -88,6 +95,7 @@ impl SimpleComponent for PasswordForm {
                 connect_activate => PasswordFormInput::ConnectClicked,
             },
 
+            #[name = "error_label"]
             gtk::Label {
                 add_css_class: "network-password-error",
                 set_halign: gtk::Align::Start,
@@ -97,6 +105,7 @@ impl SimpleComponent for PasswordForm {
                 set_label: model.error_message.as_deref().unwrap_or(""),
             },
 
+            #[name = "action_buttons"]
             gtk::Box {
                 add_css_class: "network-password-actions",
                 set_halign: gtk::Align::End,

@@ -18,6 +18,14 @@ mod watchers;
 use shell::{Shell, ShellInit};
 
 fn main() -> Result<(), Box<dyn Error>> {
+    if std::env::var_os("GSK_RENDERER").is_none() {
+        #[allow(unsafe_code)]
+        // SAFETY: single-threaded, called before any runtime or GTK init
+        unsafe {
+            std::env::set_var("GSK_RENDERER", "gl");
+        }
+    }
+
     tracing_init::init()?;
 
     let runtime = Runtime::new()?;
