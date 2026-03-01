@@ -15,8 +15,11 @@ use super::{
     },
     error::Error,
     service::BluetoothService,
-    types::{ADAPTER_INTERFACE, BLUEZ_SERVICE, DEVICE_INTERFACE, ServiceNotification},
+    types::{
+        ADAPTER_INTERFACE, BATTERY_INTERFACE, BLUEZ_SERVICE, DEVICE_INTERFACE, ServiceNotification,
+    },
 };
+use crate::proxy::battery::Battery1Proxy;
 
 impl ServiceMonitoring for BluetoothService {
     type Error = Error;
@@ -93,29 +96,46 @@ async fn monitor_devices(
                     let Ok(args) = added.args() else {
                         continue;
                     };
-                    if !args.interfaces_and_properties.contains_key(DEVICE_INTERFACE) {
+                    let interfaces = &args.interfaces_and_properties;
+                    let device_added = interfaces.contains_key(DEVICE_INTERFACE);
+                    let battery_added = interfaces.contains_key(BATTERY_INTERFACE);
+                    if !device_added && !battery_added {
                         continue;
                     }
+
                     let object_path: OwnedObjectPath = args.object_path.into();
 
-                    handle_device_added(
-                        &connection,
-                        cancellation_token.child_token(),
-                        &devices_prop,
-                        object_path,
-                        &notifier_tx,
-                    )
-                    .await;
+                    if device_added {
+                        handle_device_added(
+                            &connection,
+                            cancellation_token.child_token(),
+                            &devices_prop,
+                            object_path.clone(),
+                            &notifier_tx,
+                        )
+                        .await;
+                    }
+                    if battery_added {
+                        handle_device_battery_added(&connection, &devices_prop, object_path).await;
+                    }
                 }
                 Some(removed) = interfaces_removed.next() => {
                     let Ok(args) = removed.args() else {
                         continue;
                     };
-                    if !args.interfaces.iter().any(|i| i.as_str() == DEVICE_INTERFACE) {
+                    let device_removed = args.interfaces.iter().any(|i| i.as_str() == DEVICE_INTERFACE);
+                    let battery_removed =
+                        args.interfaces.iter().any(|i| i.as_str() == BATTERY_INTERFACE);
+                    if !device_removed && !battery_removed {
                         continue;
                     }
                     let object_path: OwnedObjectPath = args.object_path.into();
-                    remove_and_cancel!(devices_prop, object_path);
+
+                    if device_removed {
+                        remove_and_cancel!(devices_prop, object_path);
+                    } else if battery_removed {
+                        handle_device_battery_removed(&devices_prop, object_path);
+                    }
                 }
             }
         }
@@ -362,6 +382,39 @@ async fn handle_device_added(
     {
         device_list.push(created_device);
         devices.set(device_list);
+    }
+}
+
+async fn handle_device_battery_added(
+    connection: &Connection,
+    devices: &Property<Vec<Arc<Device>>>,
+    object_path: OwnedObjectPath,
+) {
+    let Some(device) = devices
+        .get()
+        .into_iter()
+        .find(|device| device.object_path == object_path)
+    else {
+        return;
+    };
+
+    let Ok(proxy) = Battery1Proxy::new(connection, &object_path).await else {
+        return;
+    };
+
+    device.battery_percentage.set(proxy.percentage().await.ok());
+}
+
+fn handle_device_battery_removed(
+    devices: &Property<Vec<Arc<Device>>>,
+    object_path: OwnedObjectPath,
+) {
+    if let Some(device) = devices
+        .get()
+        .into_iter()
+        .find(|device| device.object_path == object_path)
+    {
+        device.battery_percentage.set(None);
     }
 }
 
