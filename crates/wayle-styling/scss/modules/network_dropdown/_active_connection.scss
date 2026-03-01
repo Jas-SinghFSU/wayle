@@ -60,9 +60,16 @@
     }
 }
 
-.network-connection-status.error {
-    color: var(--status-error);
-    background: var(--status-error-subtle);
+.network-connection-status {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-bold);
+    color: var(--fg-subtle);
+    margin-right: var(--space-sm);
+
+    &.error {
+        color: var(--status-error);
+        background: var(--status-error-subtle);
+    }
 }
 
 button.network-disconnect {
@@ -85,6 +92,7 @@ button.network-disconnect {
 
 .network-connection-actions {
     margin-left: 0;
+    margin-right: var(--space-sm);
 
     button {
         font-size: var(--text-sm);

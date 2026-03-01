@@ -167,8 +167,7 @@ impl FactoryComponent for DeviceItem {
                     set_halign: gtk::Align::End,
                     set_valign: gtk::Align::Center,
 
-                    #[template]
-                    SubtleBadge {
+                    gtk::Label {
                         add_css_class:
                             "bluetooth-device-status",
                         set_vexpand: false,
@@ -180,8 +179,7 @@ impl FactoryComponent for DeviceItem {
                         set_visible: self.connected,
                     },
 
-                    #[template]
-                    SubtleBadge {
+                    gtk::Label {
                         add_css_class:
                             "bluetooth-device-status",
                         set_vexpand: false,

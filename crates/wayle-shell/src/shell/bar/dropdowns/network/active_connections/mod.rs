@@ -102,8 +102,7 @@ impl Component for ActiveConnections {
                         },
                     },
 
-                    #[template]
-                    SubtleBadge {
+                    gtk::Label {
                         add_css_class: "network-connection-status",
                         set_label: &t!("dropdown-network-connected"),
                         set_vexpand: false,
@@ -183,6 +182,17 @@ impl Component for ActiveConnections {
                             set_halign: gtk::Align::End,
                             set_valign: gtk::Align::Center,
 
+                            gtk::Label {
+                                add_css_class: "network-connection-status",
+                                set_label: &t!("dropdown-network-connected"),
+                                set_vexpand: false,
+                                set_valign: gtk::Align::Center,
+                                #[watch]
+                                set_visible: model.wifi.connected
+                                    && !model.is_wifi_connecting()
+                                    && model.connection.error.is_none(),
+                            },
+
                             #[template]
                             SubtleBadge {
                                 #[watch]
@@ -193,6 +203,9 @@ impl Component for ActiveConnections {
                                     &model.status_label(),
                                 set_vexpand: false,
                                 set_valign: gtk::Align::Center,
+                                #[watch]
+                                set_visible: model.is_wifi_connecting()
+                                    || model.connection.error.is_some(),
                             },
                         },
 
