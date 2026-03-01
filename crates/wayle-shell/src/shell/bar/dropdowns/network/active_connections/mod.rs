@@ -103,7 +103,7 @@ impl Component for ActiveConnections {
                     },
 
                     #[template]
-                    SubtleSuccessBadge {
+                    SubtleBadge {
                         add_css_class: "network-connection-status",
                         set_label: &t!("dropdown-network-connected"),
                         set_vexpand: false,

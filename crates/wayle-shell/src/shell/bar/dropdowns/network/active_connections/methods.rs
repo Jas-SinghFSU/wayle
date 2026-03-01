@@ -108,7 +108,6 @@ impl ActiveConnections {
         if self.connection.error.is_some() {
             classes.push("error");
         } else if self.wifi.connected {
-            classes.push("success");
             classes.push("connected");
         } else if self.is_wifi_connecting() {
             classes.push("warning");

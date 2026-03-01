@@ -20,22 +20,22 @@
     }
 
     &.ethernet {
-        background: var(--status-info-subtle);
+        background: var(--accent-subtle);
 
         image {
             margin: calc(var(--space-sm) + var(--space-xs));
             -gtk-icon-size: var(--icon-md);
-            color: var(--status-info);
+            color: var(--accent);
         }
     }
 
     &.wifi {
-        background: var(--status-success-subtle);
+        background: var(--accent-subtle);
 
         image {
             margin: calc(var(--space-sm) + var(--space-xs));
             -gtk-icon-size: var(--icon-md);
-            color: var(--status-success);
+            color: var(--accent);
         }
     }
 }

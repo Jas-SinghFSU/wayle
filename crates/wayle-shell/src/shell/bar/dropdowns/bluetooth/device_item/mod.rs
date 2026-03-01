@@ -168,7 +168,7 @@ impl FactoryComponent for DeviceItem {
                     set_valign: gtk::Align::Center,
 
                     #[template]
-                    SubtleSuccessBadge {
+                    SubtleBadge {
                         add_css_class:
                             "bluetooth-device-status",
                         set_vexpand: false,
