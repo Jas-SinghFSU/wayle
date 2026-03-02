@@ -74,8 +74,8 @@ experience. A successor to HyprPanel without the pain or dependency on Hyprland.
 - [x] **Audio Panel**
 - [x] **Network Panel**
 - [x] **Bluetooth Panel**
-- [ ] **Battery Panel (WIP)**
-- [ ] **Media Panel**
+- [x] **Battery Panel**
+- [ ] **Media Panel (WIP)**
 - [ ] **Dashboard**
 - [ ] **Weather Panel**
 - [ ] **Calendar Panel**

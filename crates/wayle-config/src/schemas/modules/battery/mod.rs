@@ -84,7 +84,7 @@ pub struct BatteryConfig {
 
     /// Action on left click.
     #[serde(rename = "left-click")]
-    #[default(ClickAction::None)]
+    #[default(ClickAction::Dropdown(String::from("battery")))]
     pub left_click: ConfigProperty<ClickAction>,
 
     /// Action on right click.

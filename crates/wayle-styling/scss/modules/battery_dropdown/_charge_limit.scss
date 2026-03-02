@@ -1,0 +1,31 @@
+.charge-limit {
+    background: var(--bg-elevated);
+    border-radius: var(--rounding-element);
+    padding: var(--space-sm);
+    margin-bottom: var(--space-sm);
+    font-size: var(--text-md);
+    color: var(--fg-default);
+
+    label.charge-limit-title {
+        font-weight: var(--weight-semibold);
+    }
+
+    label.charge-limit-subtitle {
+        font-size: var(--text-base);
+        color: var(--fg-subtle);
+    }
+}
+
+.charge-limit-not-supported {
+    padding: var(--space-sm);
+    margin-bottom: var(--space-sm);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    color: var(--fg-subtle);
+
+    image.charge-limit-info-icon {
+        -gtk-icon-size: var(--icon-sm);
+        color: var(--fg-subtle);
+        margin-right: var(--space-sm);
+    }
+}

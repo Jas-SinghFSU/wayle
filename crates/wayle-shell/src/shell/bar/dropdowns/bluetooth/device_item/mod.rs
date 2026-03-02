@@ -42,6 +42,7 @@ impl FactoryComponent for DeviceItem {
     view! {
         gtk::Box {
             add_css_class: "bluetooth-device",
+            set_cursor_from_name: Some("pointer"),
             #[watch]
             set_css_classes: &self.root_css_classes(),
 

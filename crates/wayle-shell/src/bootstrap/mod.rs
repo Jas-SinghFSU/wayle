@@ -15,6 +15,7 @@ use wayle_hyprland::HyprlandService;
 use wayle_media::MediaService;
 use wayle_network::NetworkService;
 use wayle_notification::NotificationService;
+use wayle_power_profiles::PowerProfilesService;
 use wayle_sysinfo::SysinfoService;
 use wayle_systray::{SystemTrayService, types::TrayMode};
 use wayle_wallpaper::WallpaperService;
@@ -64,6 +65,7 @@ struct DaemonServices {
 struct OptionalServices {
     bluetooth: Option<Arc<BluetoothService>>,
     hyprland: Option<Arc<HyprlandService>>,
+    power_profiles: Option<Arc<PowerProfilesService>>,
 }
 
 pub async fn is_already_running() -> bool {
@@ -114,6 +116,7 @@ pub async fn init_services() -> Result<(StartupTimer, ShellServices), Box<dyn Er
         bluetooth: optional.bluetooth,
         config: config_service,
         hyprland: optional.hyprland,
+        power_profiles: optional.power_profiles,
         idle_inhibit: core.idle_inhibit,
         media: daemons.media,
         network: core.network,
@@ -184,10 +187,12 @@ async fn init_core_services(
 async fn init_optional_services(timer: &mut StartupTimer) -> OptionalServices {
     let bluetooth = try_service!(timer, "Bluetooth", BluetoothService::new());
     let hyprland = timer.time("Hyprland", HyprlandService::new()).await.ok();
+    let power_profiles = try_service!(timer, "PowerProfiles", PowerProfilesService::new(), no_wrap);
 
     OptionalServices {
         bluetooth,
         hyprland,
+        power_profiles,
     }
 }
 

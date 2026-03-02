@@ -1,0 +1,40 @@
+.battery-hero {
+    padding: var(--space-xs) 0 var(--space-sm);
+}
+
+label.battery-hero-pct {
+    font-size: calc(var(--text-2xl) * 2);
+    font-weight: var(--weight-normal);
+    color: var(--fg-default);
+    margin-right: var(--space-md);
+
+    &.warn {
+        color: var(--status-warning);
+    }
+    &.crit {
+        color: var(--status-error);
+    }
+}
+
+.battery-hero-meta {
+    margin-bottom: var(--space-sm);
+}
+
+label.battery-hero-state {
+    font-size: var(--text-md);
+    font-weight: var(--weight-bold);
+    color: var(--fg-muted);
+
+    &.good {
+        color: var(--status-success);
+    }
+    &.crit {
+        color: var(--status-error);
+    }
+}
+
+label.battery-hero-time {
+    font-size: var(--text-md);
+    font-weight: var(--weight-medium);
+    color: var(--fg-subtle);
+}
