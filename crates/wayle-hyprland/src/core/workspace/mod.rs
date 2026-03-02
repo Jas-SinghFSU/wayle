@@ -23,6 +23,8 @@ pub struct Workspace {
     pub last_window_title: Property<String>,
     /// Persistent workspace (survives having no windows).
     pub persistent: Property<bool>,
+    /// Layout used for tiled windows on this workspace.
+    pub tiled_layout: Property<String>,
 }
 
 impl PartialEq for Workspace {
@@ -43,6 +45,7 @@ impl Workspace {
             last_window: Property::new(workspace_data.last_window),
             last_window_title: Property::new(workspace_data.last_window_title),
             persistent: Property::new(workspace_data.persistent),
+            tiled_layout: Property::new(workspace_data.tiled_layout),
         }
     }
 
@@ -56,5 +59,6 @@ impl Workspace {
         self.last_window.set(workspace_data.last_window);
         self.last_window_title.set(workspace_data.last_window_title);
         self.persistent.set(workspace_data.persistent);
+        self.tiled_layout.set(workspace_data.tiled_layout);
     }
 }
