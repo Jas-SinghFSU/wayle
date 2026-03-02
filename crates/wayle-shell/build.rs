@@ -11,6 +11,7 @@ use std::{
 
 fn main() {
     println!("cargo:rerun-if-changed=build.rs");
+    println!("cargo:rerun-if-changed=locales");
 
     // wayle-idle-inhibit can pull in libwayland-client early due to linker behavior.
     // Which then prevents the gtk4 layer shell from interposing since it's gotta be
