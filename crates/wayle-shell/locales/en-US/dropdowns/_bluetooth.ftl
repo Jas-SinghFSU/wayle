@@ -21,6 +21,9 @@ dropdown-bluetooth-battery = { $percent }%
 dropdown-bluetooth-paired = Paired
 dropdown-bluetooth-not-connected = Not connected
 dropdown-bluetooth-new-device = New device
+dropdown-bluetooth-status-connecting = Connecting...
+dropdown-bluetooth-status-disconnecting = Disconnecting...
+dropdown-bluetooth-status-forgetting = Removing...
 
 ## Device Types - Computer
 dropdown-bluetooth-type-computer = Computer

@@ -25,6 +25,7 @@ use crate::{i18n::t, shell::bar::dropdowns::scaled_dimension};
 const BASE_WIDTH: f32 = 382.0;
 const BASE_HEIGHT: f32 = 512.0;
 const SCAN_DURATION: Duration = Duration::from_secs(30);
+const ACTION_TIMEOUT: Duration = Duration::from_secs(30);
 
 pub(crate) struct BluetoothDropdown {
     bluetooth: Arc<BluetoothService>,
@@ -196,9 +197,10 @@ impl Component for BluetoothDropdown {
                                 ),
                                 #[watch]
                                 set_visible: model.enabled
-                                    && !model
+                                    && (!model
                                         .available_devices
-                                        .is_empty(),
+                                        .is_empty()
+                                        || model.scanning),
                             },
 
                             #[name = "available_devices_card"]
@@ -241,6 +243,7 @@ impl Component for BluetoothDropdown {
                             EmptyState {
                                 #[watch]
                                 set_visible: model.enabled
+                                    && !model.scanning
                                     && model
                                         .my_devices
                                         .is_empty()

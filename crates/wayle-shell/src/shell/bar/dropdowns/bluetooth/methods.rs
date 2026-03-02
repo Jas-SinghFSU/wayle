@@ -4,7 +4,7 @@ use wayle_bluetooth::types::agent::PairingRequest;
 use zbus::zvariant::OwnedObjectPath;
 
 use super::{
-    BluetoothDropdown, SCAN_DURATION,
+    ACTION_TIMEOUT, BluetoothDropdown, SCAN_DURATION,
     device_item::{
         DeviceItem,
         messages::{DeviceItemInit, DeviceItemOutput},
@@ -107,15 +107,24 @@ impl BluetoothDropdown {
                 return;
             };
 
-            let result = match action {
-                DeviceActionMsg::Connect(_) => device.connect().await,
-                DeviceActionMsg::Disconnect(_) => device.disconnect().await,
-                DeviceActionMsg::Forget(_) => device.forget().await,
+            let action_fut = async {
+                match action {
+                    DeviceActionMsg::Connect(_) => device.connect().await,
+                    DeviceActionMsg::Disconnect(_) => device.disconnect().await,
+                    DeviceActionMsg::Forget(_) => device.forget().await,
+                }
             };
 
-            if let Err(err) = result {
-                warn!(error = %err, "bluetooth device action failed");
-                let _ = out.send(BluetoothDropdownCmd::DeviceActionFailed(path));
+            match tokio::time::timeout(ACTION_TIMEOUT, action_fut).await {
+                Ok(Ok(())) => {}
+                Ok(Err(err)) => {
+                    warn!(error = %err, "bluetooth device action failed");
+                    let _ = out.send(BluetoothDropdownCmd::DeviceActionFailed(path));
+                }
+                Err(_elapsed) => {
+                    warn!("bluetooth device action timed out");
+                    let _ = out.send(BluetoothDropdownCmd::DeviceActionFailed(path));
+                }
             }
         });
     }

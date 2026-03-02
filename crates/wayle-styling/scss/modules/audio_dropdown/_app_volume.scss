@@ -30,6 +30,9 @@
         color: var(--fg-default);
     }
 
+    .audio-app-controls {
+        margin-top: var(--space-sm);
+    }
     .audio-app-mute {
         border-radius: var(--rounding-element);
         color: var(--fg-muted);
@@ -38,7 +41,7 @@
         image {
             -gtk-icon-size: var(--icon-md);
             color: var(--fg-muted);
-            margin: var(--space-sm);
+            margin: var(--space-xs);
         }
 
         &:hover {

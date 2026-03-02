@@ -50,7 +50,7 @@ pub(crate) fn format_wired_speed(speed_mbps: u32) -> String {
 }
 
 pub(crate) fn requires_password(security: SecurityType) -> bool {
-    security != SecurityType::None
+    !matches!(security, SecurityType::None | SecurityType::Enterprise)
 }
 
 /// Deduplicates access points by SSID (keeping strongest signal),
@@ -66,6 +66,11 @@ pub(crate) fn sorted_unique_access_points(
     for ap in access_points {
         let ssid = ap.ssid.get();
         if ssid.is_empty() {
+            continue;
+        }
+
+        let security = ap.security.get();
+        if security == SecurityType::Enterprise {
             continue;
         }
 
@@ -85,7 +90,7 @@ pub(crate) fn sorted_unique_access_points(
                 AccessPointSnapshot {
                     ssid: ssid_str.clone(),
                     strength,
-                    security: ap.security.get(),
+                    security,
                     object_path: ap.object_path().clone(),
                     known: known_ssids.contains(&ssid_str),
                 },
@@ -189,6 +194,10 @@ mod tests {
         assert!(requires_password(SecurityType::Wpa));
         assert!(requires_password(SecurityType::Wpa2));
         assert!(requires_password(SecurityType::Wpa3));
-        assert!(requires_password(SecurityType::Enterprise));
+    }
+
+    #[test]
+    fn enterprise_needs_no_simple_password() {
+        assert!(!requires_password(SecurityType::Enterprise));
     }
 }

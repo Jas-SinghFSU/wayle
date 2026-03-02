@@ -59,13 +59,7 @@ impl Component for BatteryDropdown {
                     },
                     #[template_child]
                     actions {
-                        gtk::Button {
-                            add_css_class: "icon-btn",
-                            gtk::Image {
-                                add_css_class: "settings-icon",
-                                set_icon_name: Some("ld-settings-symbolic"),
-                            },
-                        },
+                        set_visible: false,
                     },
                 },
 

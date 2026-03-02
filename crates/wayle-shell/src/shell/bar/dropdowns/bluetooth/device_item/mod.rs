@@ -153,7 +153,8 @@ impl FactoryComponent for DeviceItem {
                 set_valign: gtk::Align::Center,
                 set_hexpand: false,
                 #[watch]
-                set_visible: self.is_my_device(),
+                set_visible: self.is_my_device()
+                    || self.pending.is_some(),
                 #[watch]
                 set_visible_child_name:
                     if self.hovered
@@ -169,28 +170,15 @@ impl FactoryComponent for DeviceItem {
                     set_valign: gtk::Align::Center,
 
                     gtk::Label {
-                        add_css_class:
-                            "bluetooth-device-status",
                         set_vexpand: false,
                         set_valign: gtk::Align::Center,
-                        set_label: &t!(
-                            "dropdown-bluetooth-connected"
-                        ),
                         #[watch]
-                        set_visible: self.connected,
-                    },
-
-                    gtk::Label {
-                        add_css_class:
-                            "bluetooth-device-status",
-                        set_vexpand: false,
-                        set_valign: gtk::Align::Center,
-                        set_label: &t!(
-                            "dropdown-bluetooth-paired"
-                        ),
+                        set_css_classes:
+                            &self.status_css_classes(),
                         #[watch]
-                        set_visible: self.paired
-                            && !self.connected,
+                        set_label: &self.status_label(),
+                        #[watch]
+                        set_visible: self.status_visible(),
                     },
                 },
 

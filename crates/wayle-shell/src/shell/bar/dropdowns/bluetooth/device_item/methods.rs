@@ -57,6 +57,40 @@ impl DeviceItem {
         )
     }
 
+    pub(super) fn status_label(&self) -> String {
+        if let Some(action) = &self.pending {
+            return match action {
+                PendingAction::Connecting => t!("dropdown-bluetooth-status-connecting"),
+                PendingAction::Disconnecting => t!("dropdown-bluetooth-status-disconnecting"),
+                PendingAction::Forgetting => t!("dropdown-bluetooth-status-forgetting"),
+            };
+        }
+
+        if self.connected {
+            return t!("dropdown-bluetooth-connected");
+        }
+
+        if self.paired {
+            return t!("dropdown-bluetooth-paired");
+        }
+
+        String::new()
+    }
+
+    pub(super) fn status_visible(&self) -> bool {
+        self.connected || self.paired || self.pending.is_some()
+    }
+
+    pub(super) fn status_css_classes(&self) -> Vec<&'static str> {
+        let mut classes = vec!["bluetooth-device-status"];
+
+        if self.pending.is_some() {
+            classes.push("pending");
+        }
+
+        classes
+    }
+
     pub(super) fn root_css_classes(&self) -> Vec<&'static str> {
         let mut classes = vec!["bluetooth-device"];
 

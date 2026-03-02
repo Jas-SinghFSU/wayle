@@ -50,12 +50,17 @@
     font-size: var(--text-md);
     font-weight: var(--weight-medium);
     color: var(--fg-subtle);
+
+    &.error {
+        color: var(--status-error);
+    }
 }
 
 .network-connection-icon.error {
     background: var(--status-error-subtle);
 
     image {
+        margin: calc(var(--space-sm) + var(--space-xs));
         color: var(--status-error);
     }
 }
@@ -69,20 +74,6 @@
     &.error {
         color: var(--status-error);
         background: var(--status-error-subtle);
-    }
-}
-
-button.network-disconnect {
-    border-radius: var(--rounding-element);
-    margin-left: var(--space-xs);
-
-    image {
-        -gtk-icon-size: var(--icon-sm);
-        color: var(--fg-subtle);
-    }
-
-    &:hover image {
-        color: var(--fg-default);
     }
 }
 

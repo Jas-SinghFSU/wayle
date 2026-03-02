@@ -93,6 +93,10 @@
     color: var(--fg-subtle);
     margin-left: 0;
     margin-right: var(--space-sm);
+
+    &.pending {
+        color: var(--fg-muted);
+    }
 }
 
 .bluetooth-device-actions {

@@ -41,8 +41,8 @@ impl ActiveConnections {
     }
 
     pub(super) fn status_label(&self) -> String {
-        if let Some(error) = &self.connection.error {
-            return error.clone();
+        if self.connection.error.is_some() {
+            return t!("dropdown-network-error");
         }
 
         if self.is_wifi_connecting() {
@@ -61,10 +61,17 @@ impl ActiveConnections {
     }
 
     pub(super) fn wifi_detail_visible(&self) -> bool {
-        self.connection.step.is_some() || self.wifi.frequency.is_some() || self.wifi.ip.is_some()
+        self.connection.error.is_some()
+            || self.connection.step.is_some()
+            || self.wifi.frequency.is_some()
+            || self.wifi.ip.is_some()
     }
 
     pub(super) fn wifi_detail(&self) -> String {
+        if let Some(error) = &self.connection.error {
+            return error.clone();
+        }
+
         if let Some(step) = &self.connection.step {
             return step.clone();
         }
@@ -76,6 +83,16 @@ impl ActiveConnections {
             (None, Some(band)) => band.to_string(),
             (None, None) => String::new(),
         }
+    }
+
+    pub(super) fn wifi_detail_classes(&self) -> Vec<&'static str> {
+        let mut classes = vec!["network-connection-detail"];
+
+        if self.has_wifi_error() {
+            classes.push("error");
+        }
+
+        classes
     }
 
     pub(super) fn wifi_icon_classes(&self) -> Vec<&'static str> {

@@ -117,7 +117,6 @@ impl Component for ActiveConnections {
                     set_visible: model.wifi.connected
                         || model.is_wifi_connecting()
                         || model.connection.error.is_some(),
-
                     #[name = "wifi_icon_container"]
                     gtk::Box {
                         add_css_class: "network-connection-icon",
@@ -143,20 +142,34 @@ impl Component for ActiveConnections {
                         #[name = "wifi_name"]
                         gtk::Label {
                             add_css_class: "network-connection-name",
-                            set_halign: gtk::Align::Start,
+                            set_xalign: 0.0,
                             set_ellipsize: gtk::pango::EllipsizeMode::End,
+                            set_max_width_chars: 1,
                             #[watch]
                             set_label: &model.display_wifi_name(),
                         },
 
-                        #[name = "wifi_detail"]
-                        gtk::Label {
-                            add_css_class: "network-connection-detail",
-                            set_halign: gtk::Align::Start,
-                            #[watch]
-                            set_label: &model.wifi_detail(),
+                        #[name = "wifi_detail_box"]
+                        gtk::Box {
                             #[watch]
                             set_visible: model.wifi_detail_visible(),
+                            #[watch]
+                            set_tooltip_text:
+                                model.connection.error.as_deref(),
+
+                            #[name = "wifi_detail"]
+                            gtk::Label {
+                                #[watch]
+                                set_css_classes:
+                                    &model.wifi_detail_classes(),
+                                set_hexpand: true,
+                                set_xalign: 0.0,
+                                set_ellipsize:
+                                    gtk::pango::EllipsizeMode::End,
+                                set_max_width_chars: 1,
+                                #[watch]
+                                set_label: &model.wifi_detail(),
+                            },
                         },
                     },
 
@@ -174,6 +187,10 @@ impl Component for ActiveConnections {
                                 && model.wifi.connected
                             {
                                 "actions"
+                            } else if model.wifi.hovered
+                                && model.has_wifi_error()
+                            {
+                                "error-actions"
                             } else {
                                 "status"
                             },
@@ -242,15 +259,27 @@ impl Component for ActiveConnections {
                                     ActiveConnectionsInput::ForgetWifi,
                             },
                         },
-                    },
 
-                    #[template]
-                    GhostIconButton {
-                        add_css_class: "network-disconnect",
-                        set_icon_name: "ld-x-symbolic",
-                        #[watch]
-                        set_visible: model.connection.error.is_some(),
-                        connect_clicked => ActiveConnectionsInput::DismissError,
+                        add_named[Some("error-actions")] = &gtk::Box {
+                            add_css_class:
+                                "network-connection-actions",
+                            set_halign: gtk::Align::End,
+                            set_valign: gtk::Align::Center,
+
+                            #[template]
+                            GhostButton {
+                                add_css_class:
+                                    "network-action-dismiss",
+                                #[template_child]
+                                label {
+                                    set_label: &t!(
+                                        "dropdown-network-dismiss"
+                                    ),
+                                },
+                                connect_clicked =>
+                                    ActiveConnectionsInput::DismissError,
+                            },
+                        },
                     },
                 },
             },
@@ -363,10 +392,8 @@ impl Component for ActiveConnections {
                 self.connection.step = None;
             }
             ActiveConnectionsInput::SetConnectionError(error) => {
-                self.connection = ConnectionProgress {
-                    error: Some(error),
-                    ..Default::default()
-                };
+                self.connection.error = Some(error);
+                self.connection.step = None;
             }
             ActiveConnectionsInput::ClearConnectionError => {
                 self.connection.error = None;

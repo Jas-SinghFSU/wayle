@@ -9,6 +9,8 @@ dropdown-network-connecting = Connecting
 dropdown-network-connect = Connect
 dropdown-network-disconnect = Disconnect
 dropdown-network-forget = Forget
+dropdown-network-dismiss = Dismiss
+dropdown-network-error = Error
 dropdown-network-cancel = Cancel
 dropdown-network-password-placeholder = Enter password
 dropdown-network-ethernet = Ethernet
@@ -38,7 +40,7 @@ dropdown-network-step-verifying = Verifying connection...
 
 ## Connection Errors
 
-dropdown-network-error-wrong-password = Incorrect password
+dropdown-network-error-wrong-password = Authentication failed
 dropdown-network-error-timeout = Connection timed out
 dropdown-network-error-ip-config = Failed to obtain IP address
 dropdown-network-error-not-found = Network not found

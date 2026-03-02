@@ -4,10 +4,6 @@
     all: unset;
     margin-top: var(--space-xs);
 
-    * {
-        all: unset;
-    }
-
     contents {
         @include popover-contents;
     }

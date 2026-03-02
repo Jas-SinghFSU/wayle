@@ -20,6 +20,7 @@
 button.bluetooth-scan-btn {
     margin-right: var(--space-sm);
     image {
+        margin: 0 var(--space-sm);
         -gtk-icon-size: var(--icon-md);
         color: var(--fg-muted);
     }
