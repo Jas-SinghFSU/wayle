@@ -245,14 +245,26 @@ pub enum HyprlandEvent {
         address: Address,
     },
 
-    /// Emitted when a screencopy state of a client changes.
+    /// Emitted when a screencopy state of a client changes (v1).
     ///
     /// Multiple separate clients may be screencasting simultaneously.
     Screencast {
         /// Whether screencasting is active.
         state: bool,
-        /// Whether it's a monitor or window share.
+        /// The share type.
         owner: ScreencastOwner,
+    },
+
+    /// Emitted when a screencopy state of a client changes (v2).
+    ///
+    /// Includes the name of the shared target (monitor name, window title, etc.).
+    ScreencastV2 {
+        /// Whether screencasting is active.
+        state: bool,
+        /// The share type.
+        owner: ScreencastOwner,
+        /// Name of the shared target.
+        name: String,
     },
 
     /// Emitted when a window title changes (v1).

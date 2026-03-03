@@ -22,8 +22,8 @@ use self::{
 use crate::{
     i18n::t,
     shell::bar::dropdowns::network::{
-        helpers::{self, AccessPointSnapshot},
-        password_form::{PasswordForm, PasswordFormInput, PasswordFormOutput},
+        helpers::AccessPointSnapshot,
+        password_form::{PasswordForm, PasswordFormInput},
     },
 };
 
@@ -202,119 +202,20 @@ impl Component for AvailableNetworks {
     fn update(&mut self, msg: Self::Input, sender: ComponentSender<Self>, _root: &Self::Root) {
         match msg {
             AvailableNetworksInput::WifiAvailabilityChanged(available) => {
-                self.wifi_available = available;
-
-                let token = self.ap_watcher.reset();
-
-                if let Some(wifi) = self.network.wifi.get() {
-                    watchers::spawn(&sender, &wifi, token);
-                }
-
-                if !available {
-                    let _ = self.connection_watcher.reset();
-                    let _ = self.scan_watcher.reset();
-
-                    if self.state == ListState::Scanning {
-                        let _ = sender.output(AvailableNetworksOutput::ScanComplete);
-                    }
-
-                    if self.state == ListState::Connecting {
-                        let _ = sender.output(AvailableNetworksOutput::ClearConnecting);
-                    }
-
-                    self.state = ListState::Normal;
-                    self.clear_selection();
-                }
-
-                self.rebuild_network_list(None);
+                self.handle_wifi_availability(available, &sender);
             }
             AvailableNetworksInput::WifiEnabledChanged(enabled) => {
-                if enabled {
-                    self.rebuild_network_list(None);
-                    return;
-                }
-
-                let _ = self.connection_watcher.reset();
-                let _ = self.scan_watcher.reset();
-
-                self.ap_cache.clear();
-
-                self.network_list.guard().clear();
-
-                if self.state == ListState::Scanning {
-                    let _ = sender.output(AvailableNetworksOutput::ScanComplete);
-                }
-
-                if self.state == ListState::Connecting {
-                    let _ = sender.output(AvailableNetworksOutput::ClearConnecting);
-                }
-
-                self.state = ListState::Normal;
-                self.clear_selection();
+                self.handle_wifi_enabled(enabled, &sender);
             }
             AvailableNetworksInput::ScanRequested => {
-                self.state = ListState::Scanning;
-
-                let _ = sender.output(AvailableNetworksOutput::ScanStarted);
-
-                let network = self.network.clone();
-                let token = self.scan_watcher.reset();
-
-                sender.command(move |out, shutdown| async move {
-                    if let Some(wifi) = network.wifi.get()
-                        && let Err(err) = wifi.device.request_scan().await
-                    {
-                        warn!(error = %err, "wifi scan failed");
-                        let _ = out.send(AvailableNetworksCmd::ScanComplete);
-                        return;
-                    }
-
-                    tokio::select! {
-                        () = shutdown.wait() => {}
-                        () = token.cancelled() => {}
-                        () = tokio::time::sleep(SCAN_TIMEOUT) => {
-                            let _ = out.send(AvailableNetworksCmd::ScanComplete);
-                        }
-                    }
-                });
+                self.start_scan(&sender);
             }
             AvailableNetworksInput::NetworkSelected(index) => {
-                let Some(ap) = self.ap_cache.get(index) else {
-                    return;
-                };
-
-                let security_label = methods::translate_security_type(ap.security);
-                let signal_icon = helpers::signal_strength_icon(ap.strength);
-
-                self.selection = Some(SelectedNetwork {
-                    ap_path: ap.object_path.clone(),
-                    ssid: ap.ssid.clone(),
-                    security_label: security_label.clone(),
-                    signal_icon,
-                });
-
-                if helpers::requires_password(ap.security) && !ap.known {
-                    self.state = ListState::PasswordEntry;
-
-                    self.password_form.emit(PasswordFormInput::Show {
-                        ssid: ap.ssid.clone(),
-                        security_label,
-                        signal_icon,
-                        error_message: None,
-                    });
-                } else {
-                    self.connect_to_selected(None, &sender);
-                }
+                self.select_network(index, &sender);
             }
-            AvailableNetworksInput::PasswordForm(form_output) => match form_output {
-                PasswordFormOutput::Connect { password } => {
-                    self.connect_to_selected(Some(password), &sender);
-                }
-                PasswordFormOutput::Cancel => {
-                    self.state = ListState::Normal;
-                    self.clear_selection();
-                }
-            },
+            AvailableNetworksInput::PasswordForm(form_output) => {
+                self.handle_password_form(form_output, &sender);
+            }
         }
     }
 

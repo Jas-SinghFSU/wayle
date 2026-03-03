@@ -1,4 +1,6 @@
 use relm4::ComponentSender;
+use tracing::warn;
+use wayle_network::core::access_point::Ssid;
 
 use super::ActiveConnections;
 use crate::{i18n::t, shell::bar::dropdowns::network::helpers};
@@ -113,6 +115,39 @@ impl ActiveConnections {
         }
 
         self.wifi.icon
+    }
+
+    pub(super) fn disconnect_wifi(&self, sender: &ComponentSender<Self>) {
+        let network = self.network.clone();
+        sender.command(|_out, _shutdown| async move {
+            if let Some(wifi) = network.wifi.get()
+                && let Err(err) = wifi.disconnect().await
+            {
+                warn!(error = %err, "wifi disconnect failed");
+            }
+        });
+    }
+
+    pub(super) fn forget_wifi(&self, sender: &ComponentSender<Self>) {
+        let network = self.network.clone();
+        let ssid = self.wifi.ssid.clone();
+        sender.command(|_out, _shutdown| async move {
+            let Some(ssid) = ssid.map(|s| Ssid::new(s.into_bytes())) else {
+                return;
+            };
+
+            for connection in network.settings.connections_for_ssid(&ssid).await {
+                if let Err(err) = connection.delete().await {
+                    warn!(error = %err, "failed to delete saved wifi profile");
+                }
+            }
+
+            if let Some(wifi) = network.wifi.get()
+                && let Err(err) = wifi.disconnect().await
+            {
+                warn!(error = %err, "wifi disconnect after forget failed");
+            }
+        });
     }
 
     pub(super) fn status_classes(&self) -> Vec<&'static str> {

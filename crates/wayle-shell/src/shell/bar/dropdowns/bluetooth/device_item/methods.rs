@@ -1,4 +1,9 @@
-use super::{DeviceItem, messages::PendingAction};
+use relm4::prelude::FactorySender;
+
+use super::{
+    DeviceItem,
+    messages::{DeviceItemOutput, PendingAction},
+};
 use crate::{
     i18n::{t, td},
     shell::bar::dropdowns::bluetooth::helpers::{
@@ -103,5 +108,35 @@ impl DeviceItem {
         }
 
         classes
+    }
+
+    pub(super) fn handle_click(&mut self, sender: &FactorySender<Self>) {
+        if self.pending.is_some() {
+            return;
+        }
+
+        let (output, action) = if self.connected {
+            (
+                DeviceItemOutput::Disconnect(self.device_path.clone()),
+                PendingAction::Disconnecting,
+            )
+        } else {
+            (
+                DeviceItemOutput::Connect(self.device_path.clone()),
+                PendingAction::Connecting,
+            )
+        };
+
+        self.pending = Some(action);
+        let _ = sender.output(output);
+    }
+
+    pub(super) fn handle_forget(&mut self, sender: &FactorySender<Self>) {
+        if self.pending.is_some() {
+            return;
+        }
+
+        self.pending = Some(PendingAction::Forgetting);
+        let _ = sender.output(DeviceItemOutput::Forget(self.device_path.clone()));
     }
 }

@@ -120,7 +120,7 @@ pub struct MediaConfig {
 
     /// Action on left click.
     #[serde(rename = "left-click")]
-    #[default(ClickAction::None)]
+    #[default(ClickAction::Dropdown(String::from("media")))]
     pub left_click: ConfigProperty<ClickAction>,
 
     /// Action on right click.

@@ -1,11 +1,11 @@
 mod messages;
 mod watchers;
 
+mod methods;
 use std::sync::Arc;
 
 use gtk::prelude::*;
 use relm4::{gtk, prelude::*};
-use tracing::warn;
 use wayle_power_profiles::{PowerProfilesService, types::profile::PowerProfile};
 
 pub(crate) use self::messages::PowerProfileInit;
@@ -209,18 +209,7 @@ impl Component for PowerProfileSection {
     fn update(&mut self, msg: Self::Input, sender: ComponentSender<Self>, _root: &Self::Root) {
         match msg {
             PowerProfileInput::ProfileSelected(profile) => {
-                let Some(service) = self.power_profiles.clone() else {
-                    return;
-                };
-
-                self.active_profile = profile;
-
-                sender.oneshot_command(async move {
-                    if let Err(err) = service.power_profiles.set_active_profile(profile).await {
-                        warn!(error = %err, "power profile switch failed");
-                    }
-                    PowerProfileCmd::ProfileChanged(profile)
-                });
+                self.select_profile(profile, &sender);
             }
         }
     }

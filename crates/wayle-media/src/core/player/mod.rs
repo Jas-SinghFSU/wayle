@@ -152,6 +152,7 @@ impl Reactive for Player {
         let metadata = TrackMetadata::get_live(LiveTrackMetadataParams {
             proxy: player_proxy.clone(),
             cancellation_token: params.cancellation_token,
+            art_resolver: params.art_resolver,
         })
         .await;
         let metadata = metadata.unwrap_or_else(|_| Arc::new(TrackMetadata::unknown()));

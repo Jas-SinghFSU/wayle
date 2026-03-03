@@ -6,9 +6,8 @@ use std::sync::Arc;
 
 use gtk::prelude::*;
 use relm4::{gtk, prelude::*};
-use tracing::warn;
 use wayle_common::WatcherToken;
-use wayle_network::{NetworkService, core::access_point::Ssid, types::states::NetworkStatus};
+use wayle_network::{NetworkService, types::states::NetworkStatus};
 use wayle_widgets::prelude::*;
 
 use self::messages::{ActiveConnectionsCmd, ConnectionProgress, WifiState, WiredState};
@@ -341,37 +340,8 @@ impl Component for ActiveConnections {
 
     fn update(&mut self, msg: Self::Input, sender: ComponentSender<Self>, _root: &Self::Root) {
         match msg {
-            ActiveConnectionsInput::DisconnectWifi => {
-                let network = self.network.clone();
-                sender.command(|_out, _shutdown| async move {
-                    if let Some(wifi) = network.wifi.get()
-                        && let Err(err) = wifi.disconnect().await
-                    {
-                        warn!(error = %err, "wifi disconnect failed");
-                    }
-                });
-            }
-            ActiveConnectionsInput::ForgetWifi => {
-                let network = self.network.clone();
-                let ssid = self.wifi.ssid.clone();
-                sender.command(|_out, _shutdown| async move {
-                    let Some(ssid) = ssid.map(|s| Ssid::new(s.into_bytes())) else {
-                        return;
-                    };
-
-                    for connection in network.settings.connections_for_ssid(&ssid).await {
-                        if let Err(err) = connection.delete().await {
-                            warn!(error = %err, "failed to delete saved wifi profile");
-                        }
-                    }
-
-                    if let Some(wifi) = network.wifi.get()
-                        && let Err(err) = wifi.disconnect().await
-                    {
-                        warn!(error = %err, "wifi disconnect after forget failed");
-                    }
-                });
-            }
+            ActiveConnectionsInput::DisconnectWifi => self.disconnect_wifi(&sender),
+            ActiveConnectionsInput::ForgetWifi => self.forget_wifi(&sender),
             ActiveConnectionsInput::DismissError => {
                 self.connection.error = None;
 

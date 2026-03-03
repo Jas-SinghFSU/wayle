@@ -6,8 +6,7 @@ use std::sync::Arc;
 
 use gtk::{glib, prelude::*};
 use relm4::{gtk, prelude::*};
-use tracing::warn;
-use wayle_audio::{AudioService, volume::types::Volume};
+use wayle_audio::AudioService;
 use wayle_common::WatcherToken;
 use wayle_widgets::prelude::{DebouncedSlider, GhostIconButton};
 
@@ -198,28 +197,10 @@ impl Component for VolumeSection {
     fn update(&mut self, msg: Self::Input, sender: ComponentSender<Self>, _root: &Self::Root) {
         match msg {
             VolumeSectionInput::VolumeCommitted(percentage) => {
-                if let Some(ref device) = self.device {
-                    let channels = device.channels();
-                    let volume = Volume::from_percentage(percentage, channels);
-                    let device = device.clone();
-                    sender.command(|_out, _shutdown| async move {
-                        if let Err(err) = device.set_volume(volume).await {
-                            warn!(error = %err, "failed to set volume");
-                        }
-                    });
-                }
+                self.commit_volume(percentage, &sender);
             }
             VolumeSectionInput::MuteClicked => {
-                if let Some(ref device) = self.device {
-                    let new_muted = !device.muted();
-                    let device = device.clone();
-                    sender.oneshot_command(async move {
-                        if let Err(err) = device.set_mute(new_muted).await {
-                            warn!(error = %err, "failed to toggle mute");
-                        }
-                        VolumeSectionCmd::VolumeOrMuteChanged
-                    });
-                }
+                self.toggle_mute(&sender);
             }
             VolumeSectionInput::ShowDevicesClicked => {
                 let _ = sender.output(VolumeSectionOutput::ShowDevices);

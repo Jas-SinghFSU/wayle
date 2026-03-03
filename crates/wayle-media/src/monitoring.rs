@@ -10,10 +10,21 @@ use zbus::{Connection, fdo::DBusProxy};
 
 use super::{core::player::Player, error::Error, types::PlayerId};
 use crate::{
-    core::player::LivePlayerParams,
+    core::{metadata::art::ArtResolver, player::LivePlayerParams},
     selection::{SelectionContext, select_best_player},
     service::MediaService,
 };
+
+struct MonitoringContext<'a> {
+    connection: &'a Connection,
+    players: &'a Arc<RwLock<HashMap<PlayerId, Arc<Player>>>>,
+    player_list: &'a Property<Vec<Arc<Player>>>,
+    active_player: &'a Property<Option<Arc<Player>>>,
+    ignored_patterns: &'a [String],
+    priority_patterns: &'a [String],
+    cancellation_token: &'a CancellationToken,
+    art_resolver: &'a Option<ArtResolver>,
+}
 
 const MPRIS_BUS_PREFIX: &str = "org.mpris.MediaPlayer2.";
 
@@ -22,16 +33,18 @@ impl ServiceMonitoring for MediaService {
 
     #[instrument(skip_all)]
     async fn start_monitoring(&self) -> Result<(), Self::Error> {
-        discover_existing_players(
-            &self.connection,
-            &self.players,
-            &self.player_list,
-            &self.active_player,
-            &self.ignored_patterns,
-            &self.priority_patterns,
-            &self.cancellation_token,
-        )
-        .await?;
+        let ctx = MonitoringContext {
+            connection: &self.connection,
+            players: &self.players,
+            player_list: &self.player_list,
+            active_player: &self.active_player,
+            ignored_patterns: &self.ignored_patterns,
+            priority_patterns: &self.priority_patterns,
+            cancellation_token: &self.cancellation_token,
+            art_resolver: &self.art_resolver,
+        };
+
+        discover_existing_players(&ctx).await?;
 
         if let Ok(Some(saved_player_id)) = RuntimeState::get_active_player().await {
             let players_map = self.players.read().await;
@@ -48,67 +61,41 @@ impl ServiceMonitoring for MediaService {
             }
         }
 
-        spawn_name_monitoring(
-            &self.connection,
-            Arc::clone(&self.players),
-            self.player_list.clone(),
-            self.active_player.clone(),
-            self.ignored_patterns.clone(),
-            self.priority_patterns.clone(),
-            self.cancellation_token.child_token(),
-        );
+        spawn_name_monitoring(&ctx);
 
         Ok(())
     }
 }
 
-async fn discover_existing_players(
-    connection: &Connection,
-    players: &Arc<RwLock<HashMap<PlayerId, Arc<Player>>>>,
-    player_list: &Property<Vec<Arc<Player>>>,
-    active_player: &Property<Option<Arc<Player>>>,
-    ignored_patterns: &[String],
-    priority_patterns: &[String],
-    cancellation_token: &CancellationToken,
-) -> Result<(), Error> {
-    let dbus_proxy = DBusProxy::new(connection)
+async fn discover_existing_players(ctx: &MonitoringContext<'_>) -> Result<(), Error> {
+    let dbus_proxy = DBusProxy::new(ctx.connection)
         .await
-        .map_err(|e| Error::Initialization(format!("d-bus proxy: {e}")))?;
+        .map_err(|err| Error::Initialization(format!("d-bus proxy: {err}")))?;
 
     let names = dbus_proxy
         .list_names()
         .await
-        .map_err(|e| Error::Dbus(e.into()))?;
+        .map_err(|err| Error::Dbus(err.into()))?;
 
     for name in names {
-        if name.starts_with(MPRIS_BUS_PREFIX) && !should_ignore(&name, ignored_patterns) {
+        if name.starts_with(MPRIS_BUS_PREFIX) && !should_ignore(&name, ctx.ignored_patterns) {
             let player_id = PlayerId::from_bus_name(&name);
-            handle_player_added(
-                connection,
-                players,
-                player_list,
-                active_player,
-                priority_patterns,
-                player_id,
-                cancellation_token.child_token(),
-            )
-            .await;
+            handle_player_added(ctx, player_id).await;
         }
     }
 
     Ok(())
 }
 
-fn spawn_name_monitoring(
-    connection: &Connection,
-    players: Arc<RwLock<HashMap<PlayerId, Arc<Player>>>>,
-    player_list: Property<Vec<Arc<Player>>>,
-    active_player: Property<Option<Arc<Player>>>,
-    ignored_patterns: Vec<String>,
-    priority_patterns: Vec<String>,
-    cancellation_token: CancellationToken,
-) {
-    let connection = connection.clone();
+fn spawn_name_monitoring(ctx: &MonitoringContext<'_>) {
+    let connection = ctx.connection.clone();
+    let players = Arc::clone(ctx.players);
+    let player_list = ctx.player_list.clone();
+    let active_player = ctx.active_player.clone();
+    let ignored_patterns = ctx.ignored_patterns.to_vec();
+    let priority_patterns = ctx.priority_patterns.to_vec();
+    let cancellation_token = ctx.cancellation_token.child_token();
+    let art_resolver = ctx.art_resolver.clone();
 
     tokio::spawn(async move {
         debug!("MprisMonitoring task spawned");
@@ -120,6 +107,17 @@ fn spawn_name_monitoring(
         let Ok(mut name_owner_changed) = dbus_proxy.receive_name_owner_changed().await else {
             warn!("cannot subscribe to NameOwnerChanged");
             return;
+        };
+
+        let task_ctx = MonitoringContext {
+            connection: &connection,
+            players: &players,
+            player_list: &player_list,
+            active_player: &active_player,
+            ignored_patterns: &ignored_patterns,
+            priority_patterns: &priority_patterns,
+            cancellation_token: &cancellation_token,
+            art_resolver: &art_resolver,
         };
 
         loop {
@@ -142,16 +140,7 @@ fn spawn_name_monitoring(
                     let is_owner_replaced = args.old_owner().is_some() && args.new_owner().is_some();
 
                     if is_player_added && !should_ignore(args.name(), &ignored_patterns) {
-                        handle_player_added(
-                            &connection,
-                            &players,
-                            &player_list,
-                            &active_player,
-                            &priority_patterns,
-                            player_id,
-                            cancellation_token.child_token(),
-                        )
-                        .await;
+                        handle_player_added(&task_ctx, player_id).await;
                     } else if is_player_removed {
                         handle_player_removed(
                             &players,
@@ -172,16 +161,7 @@ fn spawn_name_monitoring(
                         .await;
 
                         if !should_ignore(args.name(), &ignored_patterns) {
-                            handle_player_added(
-                                &connection,
-                                &players,
-                                &player_list,
-                                &active_player,
-                                &priority_patterns,
-                                player_id,
-                                cancellation_token.child_token(),
-                            )
-                            .await;
+                            handle_player_added(&task_ctx, player_id).await;
                         }
                     }
                 }
@@ -193,37 +173,32 @@ fn spawn_name_monitoring(
     });
 }
 
-async fn handle_player_added(
-    connection: &Connection,
-    players: &Arc<RwLock<HashMap<PlayerId, Arc<Player>>>>,
-    player_list: &Property<Vec<Arc<Player>>>,
-    active_player: &Property<Option<Arc<Player>>>,
-    priority_patterns: &[String],
-    player_id: PlayerId,
-    cancellation_token: CancellationToken,
-) {
+async fn handle_player_added(ctx: &MonitoringContext<'_>, player_id: PlayerId) {
+    let child_token = ctx.cancellation_token.child_token();
+
     let player = match Player::get_live(LivePlayerParams {
-        connection,
+        connection: ctx.connection,
         player_id: player_id.clone(),
-        cancellation_token: &cancellation_token,
+        cancellation_token: &child_token,
+        art_resolver: ctx.art_resolver.clone(),
     })
     .await
     {
         Ok(player) => player,
-        Err(e) => {
-            warn!(error = %e, player_id = %player_id, "cannot create player");
+        Err(err) => {
+            warn!(error = %err, player_id = %player_id, "cannot create player");
             return;
         }
     };
 
-    let mut players_map = players.write().await;
+    let mut players_map = ctx.players.write().await;
     if let Some(existing) = players_map.insert(player_id.clone(), Arc::clone(&player))
         && let Some(cancel_token) = existing.cancellation_token.as_ref()
     {
         cancel_token.cancel();
     }
 
-    let mut current_list = player_list.get();
+    let mut current_list = ctx.player_list.get();
     current_list.retain(|existing| {
         if existing.id != player_id {
             return true;
@@ -236,13 +211,13 @@ async fn handle_player_added(
         false
     });
     current_list.push(player.clone());
-    player_list.set(current_list.clone());
+    ctx.player_list.set(current_list.clone());
 
     let best = select_best_player(&SelectionContext {
         players: &current_list,
-        priority_patterns,
+        priority_patterns: ctx.priority_patterns,
     });
-    active_player.set(best);
+    ctx.active_player.set(best);
 
     debug!("Player {} added", player_id);
 }

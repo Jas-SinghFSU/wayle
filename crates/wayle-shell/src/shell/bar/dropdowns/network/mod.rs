@@ -11,7 +11,6 @@ use std::sync::Arc;
 
 use gtk::prelude::*;
 use relm4::{gtk, prelude::*};
-use tracing::warn;
 use wayle_common::WatcherToken;
 use wayle_network::NetworkService;
 use wayle_widgets::prelude::*;
@@ -179,17 +178,7 @@ impl Component for NetworkDropdown {
     fn update(&mut self, msg: Self::Input, sender: ComponentSender<Self>, _root: &Self::Root) {
         match msg {
             NetworkDropdownMsg::WifiToggled(active) => {
-                self.wifi_enabled = active;
-
-                let network = self.network.clone();
-
-                sender.command(move |_out, _shutdown| async move {
-                    if let Some(wifi) = network.wifi.get()
-                        && let Err(err) = wifi.set_enabled(active).await
-                    {
-                        warn!(error = %err, "wifi toggle failed");
-                    }
-                });
+                self.toggle_wifi(active, &sender);
             }
             NetworkDropdownMsg::ScanRequested => {
                 self.available_networks

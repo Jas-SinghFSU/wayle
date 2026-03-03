@@ -12,7 +12,9 @@ button.profile-seg-btn {
     font-size: var(--text-md);
     font-weight: var(--weight-semibold);
     color: var(--fg-muted);
-    transition: all var(--duration-fast);
+    transition:
+        background var(--duration-fast),
+        color var(--duration-fast);
 
     .profile-seg-btn-content {
         all: unset;

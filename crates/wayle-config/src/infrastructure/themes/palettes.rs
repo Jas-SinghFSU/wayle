@@ -1,24 +1,29 @@
 use super::Palette;
 use crate::schemas::styling::ThemeEntry;
 
-/// Catppuccin Mocha color constants.
+/// Wayle default theme color constants.
 #[allow(missing_docs)]
-pub mod catppuccin_mocha {
-    pub const BG: &str = "#11111b";
-    pub const SURFACE: &str = "#181825";
-    pub const ELEVATED: &str = "#1e1e2e";
-    pub const FG: &str = "#cdd6f4";
-    pub const FG_MUTED: &str = "#bac2de";
-    pub const PRIMARY: &str = "#b4befe";
-    pub const RED: &str = "#f38ba8";
-    pub const YELLOW: &str = "#f9e2af";
-    pub const GREEN: &str = "#a6e3a1";
-    pub const BLUE: &str = "#74c7ec";
+pub mod wayle_theme {
+    pub const BG: &str = "#141420";
+    pub const SURFACE: &str = "#1c1c2c";
+    pub const ELEVATED: &str = "#262638";
+    pub const FG: &str = "#d4d6e8";
+    pub const FG_MUTED: &str = "#8a8ca4";
+    pub const PRIMARY: &str = "#e0947a";
+    pub const RED: &str = "#e46870";
+    pub const YELLOW: &str = "#e0b870";
+    pub const GREEN: &str = "#68c898";
+    pub const BLUE: &str = "#78a0e0";
 }
 
 /// All built-in theme entries.
 pub fn builtins() -> Vec<ThemeEntry> {
     vec![
+        ThemeEntry {
+            name: String::from("wayle"),
+            palette: wayle(),
+            builtin: true,
+        },
         ThemeEntry {
             name: String::from("catppuccin"),
             palette: catppuccin(),
@@ -62,9 +67,9 @@ pub fn builtins() -> Vec<ThemeEntry> {
     ]
 }
 
-/// Default palette (Catppuccin Mocha).
-pub fn catppuccin() -> Palette {
-    use catppuccin_mocha::*;
+/// Default palette
+pub fn wayle() -> Palette {
+    use wayle_theme::*;
     Palette {
         bg: BG.to_owned(),
         surface: SURFACE.to_owned(),
@@ -76,6 +81,21 @@ pub fn catppuccin() -> Palette {
         yellow: YELLOW.to_owned(),
         green: GREEN.to_owned(),
         blue: BLUE.to_owned(),
+    }
+}
+
+fn catppuccin() -> Palette {
+    Palette {
+        bg: String::from("#11111b"),
+        surface: String::from("#181825"),
+        elevated: String::from("#1e1e2e"),
+        fg: String::from("#cdd6f4"),
+        fg_muted: String::from("#bac2de"),
+        primary: String::from("#b4befe"),
+        red: String::from("#f38ba8"),
+        yellow: String::from("#f9e2af"),
+        green: String::from("#a6e3a1"),
+        blue: String::from("#74c7ec"),
     }
 }
 

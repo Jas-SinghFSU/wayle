@@ -7,8 +7,7 @@ use std::sync::Arc;
 
 use gtk::prelude::*;
 use relm4::{factory::FactoryVecDeque, gtk, prelude::*};
-use tracing::warn;
-use wayle_audio::{core::stream::AudioStream, volume::types::Volume};
+use wayle_audio::core::stream::AudioStream;
 use wayle_common::WatcherToken;
 use wayle_config::ConfigService;
 use wayle_widgets::prelude::*;
@@ -117,29 +116,10 @@ impl Component for AppVolumes {
     fn update(&mut self, msg: Self::Input, sender: ComponentSender<Self>, _root: &Self::Root) {
         match msg {
             AppVolumesInput::AppVolumeChanged(stream_index, percentage) => {
-                let Some(stream) = self.find_stream(stream_index) else {
-                    return;
-                };
-                let channels = stream.volume.get().channels();
-                let volume = Volume::from_percentage(percentage, channels);
-                let stream = stream.clone();
-                sender.command(|_out, _shutdown| async move {
-                    if let Err(err) = stream.set_volume(volume).await {
-                        warn!(error = %err, "failed to set app volume");
-                    }
-                });
+                self.commit_app_volume(stream_index, percentage, &sender);
             }
             AppVolumesInput::ToggleAppMute(stream_index) => {
-                let Some(stream) = self.find_stream(stream_index) else {
-                    return;
-                };
-                let new_muted = !stream.muted.get();
-                let stream = stream.clone();
-                sender.command(move |_out, _shutdown| async move {
-                    if let Err(err) = stream.set_mute(new_muted).await {
-                        warn!(error = %err, "failed to toggle app mute");
-                    }
-                });
+                self.toggle_app_mute(stream_index, &sender);
             }
         }
     }

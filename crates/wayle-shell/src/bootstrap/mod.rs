@@ -231,6 +231,7 @@ async fn init_daemon_services(
     let media_task = tokio::spawn(
         MediaService::builder()
             .with_daemon()
+            .with_art_cache()
             .ignored_players(ignored)
             .priority_players(priority)
             .build(),

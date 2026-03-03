@@ -36,7 +36,9 @@
     .audio-app-mute {
         border-radius: var(--rounding-element);
         color: var(--fg-muted);
-        transition: all var(--duration-fast);
+        transition:
+            background var(--duration-fast),
+            color var(--duration-fast);
 
         image {
             -gtk-icon-size: var(--icon-md);

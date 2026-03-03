@@ -10,6 +10,7 @@ use wayle_traits::ServiceMonitoring;
 use zbus::Connection;
 
 use crate::{
+    core::metadata::art::ArtResolver,
     dbus::{MediaDaemon, SERVICE_NAME, SERVICE_PATH},
     error::Error,
     service::MediaService,
@@ -24,6 +25,7 @@ pub struct MediaServiceBuilder {
     ignored_players: Vec<String>,
     priority_players: Vec<String>,
     register_daemon: bool,
+    enable_art_cache: bool,
 }
 
 impl MediaServiceBuilder {
@@ -65,6 +67,17 @@ impl MediaServiceBuilder {
         self
     }
 
+    /// Enables album art downloading and disk caching.
+    ///
+    /// When enabled, HTTP(S) art URLs from MPRIS metadata are downloaded
+    /// and cached under `$XDG_CACHE_HOME/wayle/media-art/`. File URLs are
+    /// resolved directly. Resolved paths appear on
+    /// [`TrackMetadata::cover_art`](crate::core::metadata::TrackMetadata::cover_art).
+    pub fn with_art_cache(mut self) -> Self {
+        self.enable_art_cache = true;
+        self
+    }
+
     /// Builds and initializes the MediaService.
     ///
     /// This will establish a D-Bus session connection and start monitoring
@@ -82,6 +95,12 @@ impl MediaServiceBuilder {
 
         let cancellation_token = CancellationToken::new();
 
+        let art_resolver = if self.enable_art_cache {
+            ArtResolver::new().await.ok()
+        } else {
+            None
+        };
+
         let service = Arc::new(MediaService {
             connection: connection.clone(),
             players: Arc::new(RwLock::new(HashMap::new())),
@@ -90,6 +109,7 @@ impl MediaServiceBuilder {
             ignored_patterns: self.ignored_players,
             priority_patterns: self.priority_players,
             cancellation_token: cancellation_token.clone(),
+            art_resolver,
         });
 
         service.start_monitoring().await?;

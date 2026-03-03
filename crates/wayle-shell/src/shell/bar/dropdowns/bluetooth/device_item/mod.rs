@@ -258,24 +258,7 @@ impl FactoryComponent for DeviceItem {
     fn update(&mut self, msg: DeviceItemInput, sender: FactorySender<Self>) {
         match msg {
             DeviceItemInput::Clicked => {
-                if self.pending.is_some() {
-                    return;
-                }
-
-                let (output, action) = if self.connected {
-                    (
-                        DeviceItemOutput::Disconnect(self.device_path.clone()),
-                        PendingAction::Disconnecting,
-                    )
-                } else {
-                    (
-                        DeviceItemOutput::Connect(self.device_path.clone()),
-                        PendingAction::Connecting,
-                    )
-                };
-
-                self.pending = Some(action);
-                let _ = sender.output(output);
+                self.handle_click(&sender);
             }
 
             DeviceItemInput::Hovered(hovered) => {
@@ -283,12 +266,7 @@ impl FactoryComponent for DeviceItem {
             }
 
             DeviceItemInput::ForgetClicked => {
-                if self.pending.is_some() {
-                    return;
-                }
-
-                self.pending = Some(PendingAction::Forgetting);
-                let _ = sender.output(DeviceItemOutput::Forget(self.device_path.clone()));
+                self.handle_forget(&sender);
             }
         }
     }

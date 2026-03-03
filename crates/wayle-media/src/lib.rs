@@ -54,6 +54,7 @@
 //! | Method | Effect |
 //! |--------|--------|
 //! | `with_daemon()` | Control playback from scripts or other processes |
+//! | `with_art_cache()` | Download and cache HTTP album art to disk |
 //! | `ignore_player(pattern)` | Skip players matching the pattern |
 //!
 //! ```rust,no_run
@@ -62,6 +63,7 @@
 //! # async fn example() -> Result<(), wayle_media::Error> {
 //! let media = MediaService::builder()
 //!     .with_daemon()
+//!     .with_art_cache()
 //!     .ignore_player("chromium".to_string())
 //!     .ignore_player("firefox".to_string())
 //!     .build()

@@ -60,6 +60,7 @@ pub(crate) async fn dispatch(
         "changefloatingmode" => handle_change_floating_mode(event, data, event_tx),
         "urgent" => handle_urgent(data, event_tx),
         "screencast" => handle_screencast(event, data, event_tx),
+        "screencastv2" => handle_screencast_v2(event, data, event_tx),
         "windowtitle" => handle_window_title(data, event_tx),
         "windowtitlev2" => handle_window_title_v2(event, data, event_tx),
         "togglegroup" => handle_toggle_group(event, data, event_tx),
@@ -148,6 +149,48 @@ fn handle_screencast(event: &str, data: &str, hyprland_tx: Sender<HyprlandEvent>
     let owner = ScreencastOwner::try_from(owner)?;
 
     hyprland_tx.send(HyprlandEvent::Screencast { state, owner })?;
+
+    Ok(())
+}
+
+fn handle_screencast_v2(event: &str, data: &str, hyprland_tx: Sender<HyprlandEvent>) -> Result<()> {
+    let event_data = format!("{event}>>{data}");
+    let Some((state, rest)) = data.split_once(',') else {
+        return Err(Error::EventParseError {
+            event_data,
+            field: "screencast_data",
+            expected: "comma-separated state,owner,name",
+            value: data.to_string(),
+        });
+    };
+    let Some((owner, name)) = rest.split_once(',') else {
+        return Err(Error::EventParseError {
+            event_data,
+            field: "screencast_data",
+            expected: "comma-separated owner,name after state",
+            value: rest.to_string(),
+        });
+    };
+    let state = match state {
+        "0" => false,
+        "1" => true,
+        _ => {
+            return Err(Error::EventParseError {
+                event_data,
+                field: "state",
+                expected: "0 or 1",
+                value: state.to_string(),
+            });
+        }
+    };
+
+    let owner = ScreencastOwner::try_from(owner)?;
+
+    hyprland_tx.send(HyprlandEvent::ScreencastV2 {
+        state,
+        owner,
+        name: name.to_string(),
+    })?;
 
     Ok(())
 }
