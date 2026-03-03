@@ -24,6 +24,10 @@ pub(crate) fn spawn(
                     return;
                 }
                 _ = ticker.tick() => {
+                    if !memory.has_subscribers() {
+                        continue;
+                    }
+
                     system.refresh_memory();
 
                     let total = system.total_memory();

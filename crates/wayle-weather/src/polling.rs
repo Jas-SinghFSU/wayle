@@ -38,6 +38,10 @@ pub(crate) fn spawn(
                     return;
                 }
                 _ = ticker.tick() => {
+                    if !weather.has_subscribers() {
+                        continue;
+                    }
+
                     fetch_with_retry(&token, &weather, &config).await;
                 }
             }

@@ -28,6 +28,10 @@ pub(crate) fn spawn(
                     return;
                 }
                 _ = ticker.tick() => {
+                    if !network.has_subscribers() {
+                        continue;
+                    }
+
                     networks.refresh(true);
 
                     let data: Vec<NetworkData> = networks

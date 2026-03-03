@@ -24,6 +24,10 @@ pub(crate) fn spawn(
                     return;
                 }
                 _ = ticker.tick() => {
+                    if !disks.has_subscribers() {
+                        continue;
+                    }
+
                     sysinfo_disks.refresh(false);
 
                     let data: Vec<DiskData> = sysinfo_disks
