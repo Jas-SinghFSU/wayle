@@ -31,9 +31,15 @@
         rustc = toolchain;
       };
     in {
-      default = pkgs.callPackage ./nix/package.nix {
+      default = self.packages.${system}.wayle;
+      wayle = pkgs.callPackage ./nix/package.nix {
         inherit rustPlatform;
       };
     });
+
+    homeManagerModules = {
+      default = self.homeManagerModules.wayle;
+      wayle = import ./nix/modules/flake-home-manager.nix self;
+    };
   };
 }
