@@ -30,6 +30,7 @@ pub(crate) fn spawn(
 ) {
     tokio::spawn(async move {
         let mut ticker = interval(config.poll_interval);
+        let mut first_tick = true;
 
         loop {
             tokio::select! {
@@ -38,9 +39,10 @@ pub(crate) fn spawn(
                     return;
                 }
                 _ = ticker.tick() => {
-                    if !weather.has_subscribers() {
+                    if !first_tick && !weather.has_subscribers() {
                         continue;
                     }
+                    first_tick = false;
 
                     fetch_with_retry(&token, &weather, &config).await;
                 }
