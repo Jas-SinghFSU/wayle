@@ -75,10 +75,10 @@ experience. A successor to HyprPanel without the pain or dependency on Hyprland.
 - [x] **Network Panel**
 - [x] **Bluetooth Panel**
 - [x] **Battery Panel**
-- [ ] **Media Panel (WIP)**
-- [ ] **Dashboard**
-- [ ] **Weather Panel**
+- [x] **Media Panel**
+- [ ] **Weather Panel (WIP)**
 - [ ] **Calendar Panel**
+- [ ] **Dashboard**
 - [ ] **Notifications Panel**
 
 ### Additional Features
