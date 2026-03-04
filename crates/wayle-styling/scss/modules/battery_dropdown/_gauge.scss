@@ -1,0 +1,30 @@
+levelbar.battery-gauge {
+    all: unset;
+    min-height: var(--space-sm);
+    margin-bottom: var(--space-md);
+    border-radius: var(--rounding-element);
+    background: var(--bg-hover);
+
+    trough {
+        all: unset;
+        min-height: var(--space-sm);
+        border-radius: var(--rounding-element);
+        background: var(--bg-hover);
+    }
+
+    block.filled {
+        border-radius: var(--rounding-element);
+    }
+
+    &.good block.filled {
+        background: var(--status-success);
+    }
+
+    &.warn block.filled {
+        background: var(--status-warning);
+    }
+
+    &.crit block.filled {
+        background: var(--status-error);
+    }
+}

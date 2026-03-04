@@ -52,6 +52,7 @@ async fn monitor_properties(
     let mut can_go_previous_changes = proxy.receive_can_go_previous_changed().await;
     let mut can_play_changes = proxy.receive_can_play_changed().await;
     let mut can_seek_changes = proxy.receive_can_seek_changed().await;
+    let mut can_control_changes = proxy.receive_can_control_changed().await;
 
     loop {
         let Some(player) = weak_player.upgrade() else {
@@ -111,6 +112,12 @@ async fn monitor_properties(
             Some(change) = can_seek_changes.next() => {
                 if let Ok(can_seek) = change.get().await {
                     player.can_seek.set(can_seek);
+                }
+            }
+
+            Some(change) = can_control_changes.next() => {
+                if let Ok(can_control) = change.get().await {
+                    player.can_control.set(can_control);
                 }
             }
 

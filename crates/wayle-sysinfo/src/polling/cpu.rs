@@ -56,6 +56,10 @@ pub(crate) fn spawn(
                     return;
                 }
                 _ = ticker.tick() => {
+                    if !cpu.has_subscribers() {
+                        continue;
+                    }
+
                     system.refresh_cpu_all();
                     components.refresh(false);
 

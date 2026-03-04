@@ -1,0 +1,44 @@
+.battery-details {
+    padding: var(--space-sm) 0;
+    margin-bottom: var(--space-sm);
+    margin-left: var(--space-md);
+    margin-right: var(--space-md);
+}
+
+.battery-detail {
+    min-width: 0;
+}
+
+label.battery-detail-label {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+    color: var(--fg-subtle);
+    text-transform: uppercase;
+}
+
+label.battery-detail-value {
+    font-size: var(--text-md);
+    font-weight: var(--weight-bold);
+    color: var(--fg-default);
+}
+
+.health-dot {
+    all: unset;
+    min-width: var(--space-sm);
+    min-height: var(--space-sm);
+    border-radius: 9999px;
+    margin-right: var(--space-xs);
+
+    &.good {
+        background: var(--status-success);
+    }
+    &.fair {
+        background: var(--status-warning);
+    }
+    &.poor {
+        background: var(--status-error);
+    }
+    &.unknown {
+        background: var(--fg-subtle);
+    }
+}

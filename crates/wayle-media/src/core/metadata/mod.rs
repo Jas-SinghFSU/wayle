@@ -1,3 +1,4 @@
+pub(crate) mod art;
 pub(crate) mod monitoring;
 /// Track metadata types
 pub mod types;
@@ -12,6 +13,7 @@ use wayle_common::{Property, watch_all};
 use wayle_traits::{ModelMonitoring, Reactive};
 use zbus::zvariant::OwnedValue;
 
+use self::art::ArtResolver;
 use crate::{error::Error, proxy::MediaPlayer2PlayerProxy};
 
 pub(crate) const UNKNOWN_METADATA: &str = "Unknown";
@@ -26,6 +28,9 @@ pub struct TrackMetadata {
     pub(crate) proxy: Option<MediaPlayer2PlayerProxy<'static>>,
     #[debug(skip)]
     pub(crate) cancellation_token: Option<CancellationToken>,
+    #[debug(skip)]
+    pub(crate) art_resolver: Option<ArtResolver>,
+
     /// Track title.
     pub title: Property<String>,
     /// Artist name(s), comma-separated if multiple.
@@ -38,6 +43,9 @@ pub struct TrackMetadata {
     pub length: Property<Option<Duration>>,
     /// Album art URL (file:// or http://).
     pub art_url: Property<Option<String>>,
+    /// Local file path for album art.
+    /// Requires [`with_art_cache()`](crate::MediaServiceBuilder::with_art_cache).
+    pub cover_art: Property<Option<String>>,
     /// MPRIS track ID (D-Bus object path).
     pub track_id: Property<Option<String>>,
 }
@@ -62,6 +70,7 @@ impl Reactive for TrackMetadata {
         let mut metadata = Self::unknown();
         metadata.proxy = Some(params.proxy.clone());
         metadata.cancellation_token = Some(params.cancellation_token.child_token());
+        metadata.art_resolver = params.art_resolver;
         let metadata = Arc::new(metadata);
 
         if let Ok(metadata_map) = params.proxy.metadata().await {
@@ -79,12 +88,15 @@ impl TrackMetadata {
         Self {
             proxy: None,
             cancellation_token: None,
+            art_resolver: None,
+
             title: Property::new(String::from(UNKNOWN_METADATA)),
             artist: Property::new(String::from(UNKNOWN_METADATA)),
             album: Property::new(String::from(UNKNOWN_METADATA)),
             album_artist: Property::new(String::from(UNKNOWN_METADATA)),
             length: Property::new(None),
             art_url: Property::new(None),
+            cover_art: Property::new(None),
             track_id: Property::new(None),
         }
     }
@@ -116,6 +128,7 @@ impl TrackMetadata {
             album_artist,
             length,
             art_url,
+            cover_art,
             track_id
         )
     }

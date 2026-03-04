@@ -22,8 +22,6 @@ pub struct Client {
     pub workspace: Property<WorkspaceInfo>,
     /// Floating state.
     pub floating: Property<bool>,
-    /// Pseudo-tiled state.
-    pub pseudo: Property<bool>,
     /// Monitor ID the window is on.
     pub monitor: Property<MonitorId>,
     /// Window class (app identifier).
@@ -44,6 +42,8 @@ pub struct Client {
     pub fullscreen: Property<FullscreenMode>,
     /// Client-requested fullscreen state.
     pub fullscreen_client: Property<FullscreenMode>,
+    /// Window is rendering over a fullscreen window.
+    pub over_fullscreen: Property<bool>,
     /// Addresses of grouped windows.
     pub grouped: Property<Vec<Address>>,
     /// User-assigned tags.
@@ -58,6 +58,8 @@ pub struct Client {
     pub xdg_tag: Property<Option<String>>,
     /// XDG application description.
     pub xdg_description: Property<Option<String>>,
+    /// Stable window identifier that persists across restarts.
+    pub stable_id: Property<String>,
 }
 
 impl PartialEq for Client {
@@ -76,7 +78,6 @@ impl Client {
             size: Property::new(client_data.size),
             workspace: Property::new(client_data.workspace),
             floating: Property::new(client_data.floating),
-            pseudo: Property::new(client_data.pseudo),
             monitor: Property::new(client_data.monitor),
             class: Property::new(client_data.class),
             title: Property::new(client_data.title),
@@ -87,6 +88,7 @@ impl Client {
             pinned: Property::new(client_data.pinned),
             fullscreen: Property::new(client_data.fullscreen),
             fullscreen_client: Property::new(client_data.fullscreen_client),
+            over_fullscreen: Property::new(client_data.over_fullscreen),
             grouped: Property::new(client_data.grouped),
             tags: Property::new(client_data.tags),
             swallowing: Property::new(client_data.swallowing),
@@ -94,6 +96,7 @@ impl Client {
             inhibiting_idle: Property::new(client_data.inhibiting_idle),
             xdg_tag: Property::new(client_data.xdg_tag),
             xdg_description: Property::new(client_data.xdg_description),
+            stable_id: Property::new(client_data.stable_id),
         }
     }
 
@@ -105,7 +108,6 @@ impl Client {
         self.size.set(client_data.size);
         self.workspace.set(client_data.workspace);
         self.floating.set(client_data.floating);
-        self.pseudo.set(client_data.pseudo);
         self.monitor.set(client_data.monitor);
         self.class.set(client_data.class);
         self.title.set(client_data.title);
@@ -116,6 +118,7 @@ impl Client {
         self.pinned.set(client_data.pinned);
         self.fullscreen.set(client_data.fullscreen);
         self.fullscreen_client.set(client_data.fullscreen_client);
+        self.over_fullscreen.set(client_data.over_fullscreen);
         self.grouped.set(client_data.grouped);
         self.tags.set(client_data.tags);
         self.swallowing.set(client_data.swallowing);
@@ -123,5 +126,6 @@ impl Client {
         self.inhibiting_idle.set(client_data.inhibiting_idle);
         self.xdg_tag.set(client_data.xdg_tag);
         self.xdg_description.set(client_data.xdg_description);
+        self.stable_id.set(client_data.stable_id);
     }
 }

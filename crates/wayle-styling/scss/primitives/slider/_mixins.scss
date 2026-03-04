@@ -22,6 +22,8 @@
             margin: calc(-0.3125rem * var(--global-scale));
             border: none;
             box-shadow: var(--shadow-sm);
+            opacity: 0;
+            transition: opacity var(--duration-fast);
         }
     }
 
@@ -54,6 +56,7 @@
 
     &:hover trough slider {
         background: var(--fg-default);
+        opacity: 1;
     }
 
     &:disabled {

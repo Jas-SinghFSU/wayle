@@ -8,6 +8,7 @@ use wayle_hyprland::HyprlandService;
 use wayle_media::MediaService;
 use wayle_network::NetworkService;
 use wayle_notification::NotificationService;
+use wayle_power_profiles::PowerProfilesService;
 use wayle_sysinfo::SysinfoService;
 use wayle_systray::SystemTrayService;
 use wayle_wallpaper::WallpaperService;
@@ -32,6 +33,7 @@ pub(crate) struct ShellServices {
     pub media: Option<Arc<MediaService>>,
     pub network: Option<Arc<NetworkService>>,
     pub notification: Option<Arc<NotificationService>>,
+    pub power_profiles: Option<Arc<PowerProfilesService>>,
     pub sysinfo: Arc<SysinfoService>,
     pub systray: Option<Arc<SystemTrayService>>,
     pub wallpaper: Option<Arc<WallpaperService>>,

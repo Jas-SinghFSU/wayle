@@ -1,7 +1,7 @@
 use std::time::{Duration, Instant};
 
 use console::style;
-use indicatif::{ProgressBar, ProgressStyle};
+use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 
 const SLOW_THRESHOLD: Duration = Duration::from_millis(100);
 const MODERATE_THRESHOLD: Duration = Duration::from_millis(50);
@@ -10,6 +10,7 @@ pub(crate) struct StartupTimer {
     start: Instant,
     services_done: Instant,
     spinner_style: ProgressStyle,
+    multi: MultiProgress,
 }
 
 impl StartupTimer {
@@ -26,6 +27,7 @@ impl StartupTimer {
             start: now,
             services_done: now,
             spinner_style,
+            multi: MultiProgress::new(),
         }
     }
 
@@ -35,18 +37,18 @@ impl StartupTimer {
 
     pub(crate) fn print_gtk_overhead(&self) {
         let overhead = self.services_done.elapsed();
-        eprintln!(
+        let _ = self.multi.println(format!(
             "{} GTK init ({}ms)",
             style("✓").green().bold(),
             overhead.as_millis()
-        );
+        ));
     }
 
     pub(crate) async fn time<T, E, F>(&self, name: &'static str, fut: F) -> Result<T, E>
     where
         F: std::future::Future<Output = Result<T, E>>,
     {
-        let pb = ProgressBar::new_spinner();
+        let pb = self.multi.add(ProgressBar::new_spinner());
         pb.set_style(self.spinner_style.clone());
         pb.set_message(format!("Loading {name}..."));
         pb.enable_steady_tick(Duration::from_millis(80));
@@ -67,16 +69,18 @@ impl StartupTimer {
             } else {
                 (style("✓").green().bold(), style(duration_str).dim())
             };
-            eprintln!("{check} {name} {timing}");
+            let _ = self.multi.println(format!("{check} {name} {timing}"));
         } else {
-            eprintln!("{} {name}", style("✗").red().bold());
+            let _ = self
+                .multi
+                .println(format!("{} {name}", style("✗").red().bold()));
         }
 
         result
     }
 
     pub(crate) fn time_sync<T, F: FnOnce() -> T>(&self, name: &'static str, f: F) -> T {
-        let pb = ProgressBar::new_spinner();
+        let pb = self.multi.add(ProgressBar::new_spinner());
         pb.set_style(self.spinner_style.clone());
         pb.set_message(format!("Loading {name}..."));
         pb.enable_steady_tick(Duration::from_millis(80));
@@ -96,7 +100,7 @@ impl StartupTimer {
         } else {
             (style("✓").green().bold(), style(duration_str).dim())
         };
-        eprintln!("{check} {name} {timing}");
+        let _ = self.multi.println(format!("{check} {name} {timing}"));
 
         value
     }
@@ -108,10 +112,10 @@ impl StartupTimer {
         } else {
             format!("{total_ms}ms")
         };
-        eprintln!(
+        let _ = self.multi.println(format!(
             "\n{}\n",
             style(format!("Started in {time_str}")).green().bold()
-        );
+        ));
     }
 }
 

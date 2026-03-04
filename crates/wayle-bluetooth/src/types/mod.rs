@@ -7,6 +7,7 @@ pub mod device;
 
 pub(crate) const ADAPTER_INTERFACE: &str = "org.bluez.Adapter1";
 pub(crate) const DEVICE_INTERFACE: &str = "org.bluez.Device1";
+pub(crate) const BATTERY_INTERFACE: &str = "org.bluez.Battery1";
 pub(crate) const BLUEZ_SERVICE: &str = "org.bluez";
 
 /// Bluetooth UUID represented as a string.

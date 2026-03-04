@@ -1,4 +1,7 @@
 mod audio;
+mod battery;
+mod bluetooth;
+mod media;
 mod network;
 mod registry;
 
@@ -30,5 +33,8 @@ macro_rules! register_dropdowns {
 
 register_dropdowns! {
     "audio" => audio::Factory,
+    "battery" => battery::Factory,
+    "bluetooth" => bluetooth::Factory,
+    "media" => media::Factory,
     "network" => network::Factory,
 }

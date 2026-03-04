@@ -10,7 +10,10 @@ use wayle_traits::Reactive;
 use zbus::Connection;
 
 use super::{
-    core::player::{LivePlayerParams, Player, PlayerParams},
+    core::{
+        metadata::art::ArtResolver,
+        player::{LivePlayerParams, Player, PlayerParams},
+    },
     types::PlayerId,
 };
 use crate::{builder::MediaServiceBuilder, error::Error};
@@ -32,6 +35,8 @@ pub struct MediaService {
     pub ignored_patterns: Vec<String>,
     /// Priority order for player selection (glob patterns).
     pub priority_patterns: Vec<String>,
+    #[debug(skip)]
+    pub(crate) art_resolver: Option<ArtResolver>,
 }
 
 impl MediaService {
@@ -83,6 +88,7 @@ impl MediaService {
             connection: &self.connection,
             player_id: player_id.clone(),
             cancellation_token: &self.cancellation_token,
+            art_resolver: self.art_resolver.clone(),
         })
         .await
     }

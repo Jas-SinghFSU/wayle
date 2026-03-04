@@ -3,8 +3,9 @@
 mod wallpaper;
 mod weather;
 
-use std::{error::Error, sync::Arc, time::Duration};
+use std::{error::Error, fmt::Display, sync::Arc, time::Duration};
 
+use tokio::task::JoinHandle;
 use tracing::warn;
 use wayle_audio::AudioService;
 use wayle_battery::BatteryService;
@@ -15,6 +16,7 @@ use wayle_hyprland::HyprlandService;
 use wayle_media::MediaService;
 use wayle_network::NetworkService;
 use wayle_notification::NotificationService;
+use wayle_power_profiles::PowerProfilesService;
 use wayle_sysinfo::SysinfoService;
 use wayle_systray::{SystemTrayService, types::TrayMode};
 use wayle_wallpaper::WallpaperService;
@@ -24,6 +26,14 @@ use crate::{
     services::IdleInhibitService, shell::ShellServices, startup::StartupTimer,
     watchers::build_extractor_config,
 };
+
+async fn spawned<T, E: Display>(handle: JoinHandle<Result<T, E>>) -> Result<T, String> {
+    match handle.await {
+        Ok(Ok(val)) => Ok(val),
+        Ok(Err(err)) => Err(err.to_string()),
+        Err(join_err) => Err(join_err.to_string()),
+    }
+}
 
 macro_rules! try_service {
     ($timer:expr, $name:literal, $future:expr) => {
@@ -64,6 +74,7 @@ struct DaemonServices {
 struct OptionalServices {
     bluetooth: Option<Arc<BluetoothService>>,
     hyprland: Option<Arc<HyprlandService>>,
+    power_profiles: Option<Arc<PowerProfilesService>>,
 }
 
 pub async fn is_already_running() -> bool {
@@ -94,17 +105,20 @@ pub async fn init_services() -> Result<(StartupTimer, ShellServices), Box<dyn Er
 
     let config_service = timer.time("Config", ConfigService::load()).await?;
 
-    let (weather, core, daemons) = {
+    let (weather, core, daemons, optional) = {
         let config = config_service.config();
         let weather = timer.time_sync("Weather", || {
             weather::build_weather_service(&config.modules)
         });
-        let core = init_core_services(&mut timer, config).await?;
-        let daemons = init_daemon_services(&mut timer, &config.modules).await;
-        (weather, core, daemons)
-    };
 
-    let optional = init_optional_services(&mut timer).await;
+        let (core, daemons, optional) = tokio::join!(
+            init_core_services(&timer, config),
+            init_daemon_services(&timer, &config.modules),
+            init_optional_services(&timer),
+        );
+
+        (weather, core?, daemons, optional)
+    };
 
     timer.mark_services_done();
 
@@ -114,6 +128,7 @@ pub async fn init_services() -> Result<(StartupTimer, ShellServices), Box<dyn Er
         bluetooth: optional.bluetooth,
         config: config_service,
         hyprland: optional.hyprland,
+        power_profiles: optional.power_profiles,
         idle_inhibit: core.idle_inhibit,
         media: daemons.media,
         network: core.network,
@@ -127,15 +142,12 @@ pub async fn init_services() -> Result<(StartupTimer, ShellServices), Box<dyn Er
     Ok((timer, services))
 }
 
-#[allow(clippy::cognitive_complexity)]
 async fn init_core_services(
-    timer: &mut StartupTimer,
+    timer: &StartupTimer,
     config: &wayle_config::Config,
 ) -> Result<CoreServices, Box<dyn Error>> {
     let modules = &config.modules;
 
-    let battery = try_service!(timer, "Battery", BatteryService::new());
-    let network = try_service!(timer, "Network", NetworkService::new());
     let theming_monitor = config.styling.theming_monitor.get();
     let theming_monitor = if theming_monitor.is_empty() {
         None
@@ -143,12 +155,6 @@ async fn init_core_services(
         Some(theming_monitor)
     };
     let color_extractor = build_extractor_config(&config.styling);
-    let wallpaper = try_service!(
-        timer,
-        "Wallpaper",
-        wallpaper::build_wallpaper_service(&config.wallpaper, theming_monitor, color_extractor),
-        no_wrap
-    );
 
     let sysinfo = Arc::new(timer.time_sync("Sysinfo", || {
         SysinfoService::builder()
@@ -163,72 +169,86 @@ async fn init_core_services(
             .build()
     }));
 
-    let idle_inhibit = Arc::new(
-        timer
-            .time(
-                "IdleInhibit",
-                IdleInhibitService::new(modules.idle_inhibit.startup_duration.get()),
-            )
-            .await?,
+    let startup_duration = modules.idle_inhibit.startup_duration.get();
+
+    let battery_task = tokio::spawn(BatteryService::new());
+    let network_task = tokio::spawn(NetworkService::new());
+    let wallpaper_cfg = config.wallpaper.clone();
+    let wallpaper_task = tokio::spawn(async move {
+        wallpaper::build_wallpaper_service(&wallpaper_cfg, theming_monitor, color_extractor).await
+    });
+    let idle_inhibit_task = tokio::spawn(IdleInhibitService::new(startup_duration));
+
+    let (battery, network, wallpaper, idle_inhibit) = tokio::join!(
+        async { try_service!(timer, "Battery", spawned(battery_task)) },
+        async { try_service!(timer, "Network", spawned(network_task)) },
+        async { try_service!(timer, "Wallpaper", spawned(wallpaper_task), no_wrap) },
+        timer.time("IdleInhibit", spawned(idle_inhibit_task)),
     );
 
     Ok(CoreServices {
         battery,
-        idle_inhibit,
+        idle_inhibit: Arc::new(idle_inhibit?),
         network,
         sysinfo,
         wallpaper,
     })
 }
 
-async fn init_optional_services(timer: &mut StartupTimer) -> OptionalServices {
-    let bluetooth = try_service!(timer, "Bluetooth", BluetoothService::new());
-    let hyprland = timer.time("Hyprland", HyprlandService::new()).await.ok();
+async fn init_optional_services(timer: &StartupTimer) -> OptionalServices {
+    let bluetooth_task = tokio::spawn(BluetoothService::new());
+    let hyprland_task = tokio::spawn(HyprlandService::new());
+    let power_profiles_task = tokio::spawn(PowerProfilesService::new());
+
+    let (bluetooth, hyprland, power_profiles) = tokio::join!(
+        async { try_service!(timer, "Bluetooth", spawned(bluetooth_task)) },
+        async { timer.time("Hyprland", spawned(hyprland_task)).await.ok() },
+        async {
+            try_service!(
+                timer,
+                "PowerProfiles",
+                spawned(power_profiles_task),
+                no_wrap
+            )
+        },
+    );
 
     OptionalServices {
         bluetooth,
         hyprland,
+        power_profiles,
     }
 }
 
-#[allow(clippy::cognitive_complexity)]
 async fn init_daemon_services(
-    timer: &mut StartupTimer,
+    timer: &StartupTimer,
     modules: &wayle_config::schemas::modules::ModulesConfig,
 ) -> DaemonServices {
-    let audio = try_service!(
-        timer,
-        "Audio",
-        AudioService::builder().with_daemon().build(),
-        no_wrap
-    );
+    let ignored = modules.media.players_ignored.get().clone();
+    let priority = modules.media.player_priority.get().clone();
 
-    let media = try_service!(
-        timer,
-        "Media",
+    let audio_task = tokio::spawn(AudioService::builder().with_daemon().build());
+    let media_task = tokio::spawn(
         MediaService::builder()
             .with_daemon()
-            .ignored_players(modules.media.players_ignored.get().clone())
-            .priority_players(modules.media.player_priority.get().clone())
+            .with_art_cache()
+            .ignored_players(ignored)
+            .priority_players(priority)
             .build(),
-        no_wrap
     );
-
-    let notification = try_service!(
-        timer,
-        "Notification",
-        NotificationService::builder().with_daemon().build(),
-        no_wrap
-    );
-
-    let systray = try_service!(
-        timer,
-        "SystemTray",
+    let notification_task = tokio::spawn(NotificationService::builder().with_daemon().build());
+    let systray_task = tokio::spawn(
         SystemTrayService::builder()
             .with_daemon()
             .mode(TrayMode::Auto)
             .build(),
-        no_wrap
+    );
+
+    let (audio, media, notification, systray) = tokio::join!(
+        async { try_service!(timer, "Audio", spawned(audio_task), no_wrap) },
+        async { try_service!(timer, "Media", spawned(media_task), no_wrap) },
+        async { try_service!(timer, "Notification", spawned(notification_task), no_wrap) },
+        async { try_service!(timer, "SystemTray", spawned(systray_task), no_wrap) },
     );
 
     DaemonServices {

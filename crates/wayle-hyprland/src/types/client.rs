@@ -81,7 +81,6 @@ pub(crate) struct ClientData {
     pub size: ClientSize,
     pub workspace: WorkspaceInfo,
     pub floating: bool,
-    pub pseudo: bool,
     pub monitor: MonitorId,
     pub class: String,
     pub title: String,
@@ -92,6 +91,7 @@ pub(crate) struct ClientData {
     pub pinned: bool,
     pub fullscreen: FullscreenMode,
     pub fullscreen_client: FullscreenMode,
+    pub over_fullscreen: bool,
     pub grouped: Vec<Address>,
     pub tags: Vec<String>,
     #[serde(deserialize_with = "deserialize_optional_address")]
@@ -104,6 +104,7 @@ pub(crate) struct ClientData {
     #[serde(deserialize_with = "deserialize_optional_string")]
     pub xdg_description: Option<String>,
     pub content_type: String,
+    pub stable_id: String,
 }
 
 #[cfg(test)]

@@ -38,9 +38,9 @@ pub struct Device {
     #[debug(skip)]
     cancellation_token: Option<CancellationToken>,
     #[debug(skip)]
-    zbus_connection: Connection,
+    pub(crate) zbus_connection: Connection,
     #[debug(skip)]
-    device_path: OwnedObjectPath,
+    pub(crate) device_path: OwnedObjectPath,
 
     /// OS specific native path of the power source.
     pub native_path: Property<String>,

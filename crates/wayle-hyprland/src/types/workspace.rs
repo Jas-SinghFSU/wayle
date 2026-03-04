@@ -32,4 +32,5 @@ pub(crate) struct WorkspaceData {
     pub last_window_title: String,
     #[serde(rename = "ispersistent")]
     pub persistent: bool,
+    pub tiled_layout: String,
 }

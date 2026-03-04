@@ -7,9 +7,13 @@ use zbus::{
 };
 
 use crate::{
-    core::{access_point::types::Ssid, settings::Settings},
+    core::{
+        access_point::types::{SecurityType, Ssid},
+        settings::Settings,
+    },
     error::Error,
     proxy::{access_point::AccessPointProxy, devices::DeviceProxy, manager::NetworkManagerProxy},
+    types::flags::{NM80211ApFlags, NM80211ApSecurityFlags},
 };
 
 type ConnectionSettings = HashMap<String, HashMap<String, OwnedValue>>;
@@ -130,7 +134,8 @@ impl WifiControls {
             );
 
             if let Some(pwd) = password {
-                Self::update_profile_password(profile, pwd).await?;
+                let security_type = Self::detect_security_type(&ap_proxy).await;
+                Self::update_profile_password(profile, pwd, security_type).await?;
             }
 
             let active_connection_path = proxy
@@ -152,8 +157,15 @@ impl WifiControls {
             None
         };
 
-        let connection_settings =
-            Self::build_connection_settings(ssid_string, ssid_bytes, bssid, password)?;
+        let security_type = Self::detect_security_type(&ap_proxy).await;
+
+        let connection_settings = Self::build_connection_settings(
+            ssid_string,
+            ssid_bytes,
+            bssid,
+            password,
+            security_type,
+        )?;
 
         let (_settings_path, active_connection_path) = proxy
             .add_and_activate_connection(connection_settings, &device_path, &ap_path)
@@ -169,6 +181,7 @@ impl WifiControls {
     async fn update_profile_password(
         profile: &crate::core::settings_connection::ConnectionSettings,
         password: String,
+        security_type: SecurityType,
     ) -> Result<(), Error> {
         let mut current_settings = profile.get_settings().await?;
 
@@ -183,8 +196,17 @@ impl WifiControls {
             })
         };
 
-        security.insert(String::from("key-mgmt"), to_owned(Value::from("wpa-psk"))?);
-        security.insert(String::from("psk"), to_owned(Value::from(password))?);
+        let key_mgmt = Self::key_mgmt_for_security_type(security_type);
+        security.insert(String::from("key-mgmt"), to_owned(Value::from(key_mgmt))?);
+
+        match security_type {
+            SecurityType::Wep => {
+                security.insert(String::from("wep-key0"), to_owned(Value::from(password))?);
+            }
+            _ => {
+                security.insert(String::from("psk"), to_owned(Value::from(password))?);
+            }
+        }
 
         profile.update(current_settings).await?;
 
@@ -200,6 +222,7 @@ impl WifiControls {
         ssid_bytes: Vec<u8>,
         bssid: Option<String>,
         password: Option<String>,
+        security_type: SecurityType,
     ) -> Result<ConnectionSettings, Error> {
         let to_owned = |value: Value| {
             value.try_to_owned().map_err(|e| Error::OperationFailed {
@@ -236,11 +259,53 @@ impl WifiControls {
 
         if let Some(pwd) = password {
             let mut security = HashMap::new();
-            security.insert(String::from("key-mgmt"), to_owned(Value::from("wpa-psk"))?);
-            security.insert(String::from("psk"), to_owned(Value::from(pwd))?);
+            let key_mgmt = Self::key_mgmt_for_security_type(security_type);
+            security.insert(String::from("key-mgmt"), to_owned(Value::from(key_mgmt))?);
+
+            match security_type {
+                SecurityType::Wep => {
+                    security.insert(String::from("wep-key0"), to_owned(Value::from(pwd))?);
+                }
+                _ => {
+                    security.insert(String::from("psk"), to_owned(Value::from(pwd))?);
+                }
+            }
+
             settings.insert(String::from("802-11-wireless-security"), security);
         }
 
         Ok(settings)
+    }
+
+    async fn detect_security_type(ap_proxy: &AccessPointProxy<'_>) -> SecurityType {
+        let flags = ap_proxy
+            .flags()
+            .await
+            .map(NM80211ApFlags::from_bits_truncate)
+            .unwrap_or(NM80211ApFlags::NONE);
+
+        let wpa_flags = ap_proxy
+            .wpa_flags()
+            .await
+            .map(NM80211ApSecurityFlags::from_bits_truncate)
+            .unwrap_or(NM80211ApSecurityFlags::NONE);
+
+        let rsn_flags = ap_proxy
+            .rsn_flags()
+            .await
+            .map(NM80211ApSecurityFlags::from_bits_truncate)
+            .unwrap_or(NM80211ApSecurityFlags::NONE);
+
+        SecurityType::from_flags(flags, wpa_flags, rsn_flags)
+    }
+
+    fn key_mgmt_for_security_type(security_type: SecurityType) -> &'static str {
+        match security_type {
+            SecurityType::None => "none",
+            SecurityType::Wep => "none",
+            SecurityType::Wpa | SecurityType::Wpa2 => "wpa-psk",
+            SecurityType::Wpa3 => "sae",
+            SecurityType::Enterprise => "wpa-eap",
+        }
     }
 }

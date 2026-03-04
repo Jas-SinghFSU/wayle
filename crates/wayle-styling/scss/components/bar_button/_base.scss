@@ -36,7 +36,7 @@ menubutton.bar-button {
         font-weight: var(--bar-btn-label-weight);
     }
 
-    image {
+    > button.toggle image {
         all: unset;
         color: var(--bar-btn-icon-color);
         -gtk-icon-size: var(--bar-btn-icon-size);

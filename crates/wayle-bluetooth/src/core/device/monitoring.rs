@@ -9,7 +9,7 @@ use wayle_traits::ModelMonitoring;
 use super::Device;
 use crate::{
     Error,
-    proxy::device::Device1Proxy,
+    proxy::{battery::Battery1Proxy, device::Device1Proxy},
     types::{ServiceNotification, adapter::AddressType, device::PreferredBearer},
 };
 
@@ -17,7 +17,10 @@ impl ModelMonitoring for Device {
     type Error = Error;
 
     async fn start_monitoring(self: Arc<Self>) -> Result<(), Self::Error> {
-        let proxy = Device1Proxy::new(&self.zbus_connection, self.object_path.clone())
+        let device_proxy = Device1Proxy::new(&self.zbus_connection, self.object_path.clone())
+            .await
+            .map_err(Error::Dbus)?;
+        let battery_proxy = Battery1Proxy::new(&self.zbus_connection, self.object_path.clone())
             .await
             .map_err(Error::Dbus)?;
 
@@ -30,7 +33,14 @@ impl ModelMonitoring for Device {
         let weak_self = Arc::downgrade(&self);
 
         tokio::spawn(async move {
-            monitor(weak_self, proxy, cancel_token, notifier_tx).await;
+            monitor(
+                weak_self,
+                device_proxy,
+                battery_proxy,
+                cancel_token,
+                notifier_tx,
+            )
+            .await;
         });
 
         Ok(())
@@ -42,9 +52,12 @@ impl ModelMonitoring for Device {
 async fn monitor(
     weak_device: Weak<Device>,
     proxy: Device1Proxy<'static>,
+    battery_proxy: Battery1Proxy<'static>,
     cancellation_token: CancellationToken,
     notifier_tx: broadcast::Sender<ServiceNotification>,
 ) {
+    let mut battery_percentage_changed = battery_proxy.receive_percentage_changed().await;
+
     let mut address_changed = proxy.receive_address_changed().await;
     let mut address_type_changed = proxy.receive_address_type_changed().await;
     let mut name_changed = proxy.receive_name_changed().await;
@@ -70,6 +83,7 @@ async fn monitor(
     let mut advertising_flags_changed = proxy.receive_advertising_flags_changed().await;
     let mut advertising_data_changed = proxy.receive_advertising_data_changed().await;
     let mut preferred_bearer_changed = proxy.receive_preferred_bearer_changed().await;
+    let mut cable_pairing_changed = proxy.receive_cable_pairing_changed().await;
 
     loop {
         let Some(device) = weak_device.upgrade() else {
@@ -79,6 +93,9 @@ async fn monitor(
             _ = cancellation_token.cancelled() => {
                 debug!("Device monitoring cancelled for {}", device.object_path);
                 return;
+            }
+            Some(change) = battery_percentage_changed.next() => {
+                device.battery_percentage.set(change.get().await.ok());
             }
             Some(change) = address_changed.next() => {
                 if let Ok(value) = change.get().await {
@@ -204,6 +221,13 @@ async fn monitor(
                     }
                 }
             }
+
+            Some(change) = cable_pairing_changed.next() => {
+                if let Ok(value) = change.get().await {
+                    device.cable_pairing.set(value);
+                }
+            }
+
             else => {
                 debug!("All property streams ended for device {}", device.object_path);
                 break;

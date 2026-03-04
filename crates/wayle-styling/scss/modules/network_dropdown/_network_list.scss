@@ -22,14 +22,14 @@
     image.network-item-signal {
         -gtk-icon-size: var(--icon-lg);
         margin-right: var(--space-md);
-        margin-left: var(--space-xs);
+        margin-left: var(--space-sm);
         color: var(--fg-muted);
     }
 
     image.network-item-lock {
         -gtk-icon-size: var(--icon-md);
         color: var(--fg-subtle);
-        margin-right: var(--space-xs);
+        margin-right: var(--space-sm);
     }
 }
 

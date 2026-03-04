@@ -34,6 +34,8 @@ pub enum ScreencastOwner {
     Monitor,
     /// Window share.
     Window,
+    /// Region share.
+    Region,
 }
 
 impl TryFrom<&str> for ScreencastOwner {
@@ -41,8 +43,9 @@ impl TryFrom<&str> for ScreencastOwner {
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         match value {
-            "0" => Ok(Self::Monitor),
-            "1" => Ok(Self::Window),
+            "0" | "monitor" => Ok(Self::Monitor),
+            "1" | "window" => Ok(Self::Window),
+            "region" => Ok(Self::Region),
             _ => Err(Error::InvalidEnumValue {
                 type_name: "ScreencastOwner",
                 value: value.to_string(),

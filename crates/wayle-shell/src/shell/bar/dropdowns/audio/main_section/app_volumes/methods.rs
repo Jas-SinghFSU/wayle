@@ -5,7 +5,8 @@ use std::{
 
 use gtk::gdk;
 use relm4::{gtk, prelude::*};
-use wayle_audio::core::stream::AudioStream;
+use tracing::warn;
+use wayle_audio::{core::stream::AudioStream, volume::types::Volume};
 use wayle_config::schemas::modules::AppIconSource;
 
 use crate::shell::bar::dropdowns::audio::{
@@ -115,5 +116,37 @@ impl AppVolumes {
                 },
             );
         }
+    }
+
+    pub(super) fn commit_app_volume(
+        &self,
+        stream_index: u32,
+        percentage: f64,
+        sender: &ComponentSender<Self>,
+    ) {
+        let Some(stream) = self.find_stream(stream_index) else {
+            return;
+        };
+        let channels = stream.volume.get().channels();
+        let volume = Volume::from_percentage(percentage, channels);
+        let stream = stream.clone();
+        sender.command(|_out, _shutdown| async move {
+            if let Err(err) = stream.set_volume(volume).await {
+                warn!(error = %err, "failed to set app volume");
+            }
+        });
+    }
+
+    pub(super) fn toggle_app_mute(&self, stream_index: u32, sender: &ComponentSender<Self>) {
+        let Some(stream) = self.find_stream(stream_index) else {
+            return;
+        };
+        let new_muted = !stream.muted.get();
+        let stream = stream.clone();
+        sender.command(move |_out, _shutdown| async move {
+            if let Err(err) = stream.set_mute(new_muted).await {
+                warn!(error = %err, "failed to toggle app mute");
+            }
+        });
     }
 }

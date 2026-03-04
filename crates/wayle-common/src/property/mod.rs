@@ -52,6 +52,10 @@ mod traits;
 #[cfg(feature = "schema")]
 use std::borrow::Cow;
 use std::fmt::Debug;
+use std::pin::Pin;
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::Arc;
+use std::task::{Context, Poll};
 
 pub use config::{ConfigProperty, ValueSource};
 use futures::stream::{Stream, StreamExt};
@@ -89,6 +93,7 @@ pub type PropertyStream<T> = Box<dyn Stream<Item = T> + Send + Unpin>;
 pub struct Property<T: Clone + Send + Sync + 'static> {
     tx: watch::Sender<T>,
     rx: watch::Receiver<T>,
+    subscriber_count: Arc<AtomicUsize>,
 }
 
 impl<T: Clone + Send + Sync + 'static> Property<T> {
@@ -96,7 +101,11 @@ impl<T: Clone + Send + Sync + 'static> Property<T> {
     #[doc(hidden)]
     pub fn new(initial: T) -> Self {
         let (tx, rx) = watch::channel(initial);
-        Self { tx, rx }
+        Self {
+            tx,
+            rx,
+            subscriber_count: Arc::new(AtomicUsize::new(0)),
+        }
     }
 
     /// Sets the property value, notifying watchers if changed.
@@ -124,7 +133,44 @@ impl<T: Clone + Send + Sync + 'static> Property<T> {
     ///
     /// Yields the current value immediately, then on every change.
     pub fn watch(&self) -> impl Stream<Item = T> + Send + 'static {
-        WatchStream::new(self.rx.clone())
+        SubscribedStream::new(
+            WatchStream::new(self.rx.clone()),
+            Arc::clone(&self.subscriber_count),
+        )
+    }
+
+    /// Returns `true` if any [`watch`](Self::watch) streams are currently alive.
+    pub fn has_subscribers(&self) -> bool {
+        self.subscriber_count.load(Ordering::Relaxed) > 0
+    }
+}
+
+/// Stream wrapper that tracks subscriber lifetime via an atomic counter.
+///
+/// Increments the counter on creation, decrements on drop.
+struct SubscribedStream<T> {
+    inner: WatchStream<T>,
+    count: Arc<AtomicUsize>,
+}
+
+impl<T: Clone + Send + Sync + 'static> SubscribedStream<T> {
+    fn new(inner: WatchStream<T>, count: Arc<AtomicUsize>) -> Self {
+        count.fetch_add(1, Ordering::Relaxed);
+        Self { inner, count }
+    }
+}
+
+impl<T: Clone + Send + Sync + 'static> Stream for SubscribedStream<T> {
+    type Item = T;
+
+    fn poll_next(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
+        Pin::new(&mut self.get_mut().inner).poll_next(cx)
+    }
+}
+
+impl<T> Drop for SubscribedStream<T> {
+    fn drop(&mut self) {
+        self.count.fetch_sub(1, Ordering::Relaxed);
     }
 }
 
@@ -442,5 +488,70 @@ mod tests {
 
         assert_eq!(config.format.get(), "%H:%M:%S");
         assert!(config.show_seconds.get());
+    }
+
+    #[test]
+    fn has_subscribers_false_initially() {
+        let property = Property::new(0);
+
+        assert!(!property.has_subscribers());
+    }
+
+    #[test]
+    fn has_subscribers_true_while_stream_alive() {
+        let property = Property::new(0);
+
+        let _stream = property.watch();
+
+        assert!(property.has_subscribers());
+    }
+
+    #[test]
+    fn has_subscribers_false_after_stream_dropped() {
+        let property = Property::new(0);
+
+        let stream = property.watch();
+        assert!(property.has_subscribers());
+
+        drop(stream);
+        assert!(!property.has_subscribers());
+    }
+
+    #[test]
+    fn subscriber_count_tracks_multiple_streams() {
+        let property = Property::new(0);
+
+        let stream_a = property.watch();
+        let stream_b = property.watch();
+        let stream_c = property.watch();
+        assert!(property.has_subscribers());
+
+        drop(stream_a);
+        assert!(property.has_subscribers());
+
+        drop(stream_b);
+        assert!(property.has_subscribers());
+
+        drop(stream_c);
+        assert!(!property.has_subscribers());
+    }
+
+    #[test]
+    fn cloned_property_shares_subscriber_count() {
+        let property = Property::new(0);
+        let cloned = property.clone();
+
+        let _stream = cloned.watch();
+
+        assert!(property.has_subscribers());
+    }
+
+    #[test]
+    fn deserialized_property_starts_with_no_subscribers() {
+        let json = "42";
+
+        let property: Property<i32> = serde_json::from_str(json).unwrap();
+
+        assert!(!property.has_subscribers());
     }
 }

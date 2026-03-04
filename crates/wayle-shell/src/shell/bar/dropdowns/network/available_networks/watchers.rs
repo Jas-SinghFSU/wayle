@@ -112,6 +112,7 @@ async fn monitor_connection(
     }
 }
 
+#[allow(clippy::cognitive_complexity)]
 fn handle_device_state_change(
     event: &DeviceStateChangedEvent,
     out: &relm4::Sender<AvailableNetworksCmd>,

@@ -3,7 +3,7 @@ use std::{collections::HashMap, time::Duration};
 use tokio_util::sync::CancellationToken;
 use zbus::zvariant::OwnedValue;
 
-use crate::proxy::MediaPlayer2PlayerProxy;
+use crate::{core::metadata::art::ArtResolver, proxy::MediaPlayer2PlayerProxy};
 
 #[doc(hidden)]
 pub struct TrackMetadataParams<'a> {
@@ -14,6 +14,7 @@ pub struct TrackMetadataParams<'a> {
 pub struct LiveTrackMetadataParams<'a> {
     pub(crate) proxy: MediaPlayer2PlayerProxy<'static>,
     pub(crate) cancellation_token: &'a CancellationToken,
+    pub(crate) art_resolver: Option<ArtResolver>,
 }
 
 #[derive(Debug, Clone)]

@@ -1,0 +1,62 @@
+.profile-seg {
+    background: var(--bg-elevated);
+    border-radius: var(--rounding-element);
+    padding: var(--space-xs);
+    margin-bottom: var(--space-sm);
+}
+
+button.profile-seg-btn {
+    all: unset;
+    padding: calc(var(--space-sm) + var(--space-xs)) 0;
+    border-radius: var(--rounding-element);
+    font-size: var(--text-md);
+    font-weight: var(--weight-semibold);
+    color: var(--fg-muted);
+    transition:
+        background var(--duration-fast),
+        color var(--duration-fast);
+
+    .profile-seg-btn-content {
+        all: unset;
+    }
+
+    image.profile-seg-icon {
+        -gtk-icon-size: var(--icon-sm);
+        color: var(--fg-muted);
+        margin-right: var(--space-xs);
+    }
+
+    &:disabled {
+        opacity: 0.65;
+    }
+
+    &:hover:not(:disabled) {
+        background: var(--bg-hover);
+    }
+
+    &:checked {
+        background: var(--accent-subtle);
+        color: var(--accent);
+
+        image.profile-seg-icon {
+            color: var(--accent);
+        }
+    }
+}
+
+button.profile-seg-btn + button.profile-seg-btn {
+    margin-left: var(--space-xs);
+}
+
+.power-profile-not-available {
+    padding: var(--space-sm);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    color: var(--fg-subtle);
+
+    image.power-profile-info-icon {
+        -gtk-icon-size: var(--icon-sm);
+        color: var(--fg-subtle);
+        margin-right: var(--space-sm);
+    }
+}

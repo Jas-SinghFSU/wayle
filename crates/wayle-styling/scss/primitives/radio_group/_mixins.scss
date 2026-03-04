@@ -5,7 +5,10 @@
         min-height: calc(0.875rem * var(--global-scale));
         border: 2px solid var(--fg-muted);
         border-radius: var(--radius-full);
-        transition: all var(--duration-fast);
+        transition:
+            background var(--duration-fast),
+            border-color var(--duration-fast),
+            color var(--duration-fast);
 
         -gtk-icon-size: 0;
     }

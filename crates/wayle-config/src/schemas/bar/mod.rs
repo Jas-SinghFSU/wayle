@@ -102,7 +102,7 @@ pub struct BarConfig {
     //
     /// Visual style variant for bar buttons.
     #[serde(rename = "button-variant")]
-    #[default(BarButtonVariant::Basic)]
+    #[default(BarButtonVariant::BlockPrefix)]
     pub button_variant: ConfigProperty<BarButtonVariant>,
 
     /// Button opacity (0-100).

@@ -4,7 +4,9 @@
     .audio-slider-icon {
         border-radius: var(--rounding-element);
         color: var(--fg-muted);
-        transition: all var(--duration-fast);
+        transition:
+            background var(--duration-fast),
+            color var(--duration-fast);
         margin-right: var(--space-sm);
 
         image {

@@ -12,8 +12,6 @@
 }
 
 .network-connection-icon {
-    min-width: calc(2.75rem * var(--global-scale));
-    min-height: calc(2.75rem * var(--global-scale));
     border-radius: var(--rounding-element);
     margin-right: var(--space-sm);
 
@@ -22,20 +20,22 @@
     }
 
     &.ethernet {
-        background: var(--status-info-subtle);
+        background: var(--accent-subtle);
 
         image {
+            margin: calc(var(--space-sm) + var(--space-xs));
             -gtk-icon-size: var(--icon-md);
-            color: var(--status-info);
+            color: var(--accent);
         }
     }
 
     &.wifi {
-        background: var(--status-success-subtle);
+        background: var(--accent-subtle);
 
         image {
+            margin: calc(var(--space-sm) + var(--space-xs));
             -gtk-icon-size: var(--icon-md);
-            color: var(--status-success);
+            color: var(--accent);
         }
     }
 }
@@ -50,37 +50,40 @@
     font-size: var(--text-md);
     font-weight: var(--weight-medium);
     color: var(--fg-subtle);
+
+    &.error {
+        color: var(--status-error);
+    }
 }
 
 .network-connection-icon.error {
     background: var(--status-error-subtle);
 
     image {
+        margin: calc(var(--space-sm) + var(--space-xs));
         color: var(--status-error);
     }
 }
 
-.network-connection-status.error {
-    color: var(--status-error);
-    background: var(--status-error-subtle);
+.network-connection-status {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-bold);
+    color: var(--fg-subtle);
+    margin-right: var(--space-sm);
+
+    &.error {
+        color: var(--status-error);
+        background: var(--status-error-subtle);
+    }
 }
 
-button.network-disconnect {
-    border-radius: var(--rounding-element);
+.network-hover-stack {
     margin-left: var(--space-xs);
-
-    image {
-        -gtk-icon-size: var(--icon-sm);
-        color: var(--fg-subtle);
-    }
-
-    &:hover image {
-        color: var(--fg-default);
-    }
 }
 
 .network-connection-actions {
-    margin-left: var(--space-xs);
+    margin-left: 0;
+    margin-right: var(--space-sm);
 
     button {
         font-size: var(--text-sm);

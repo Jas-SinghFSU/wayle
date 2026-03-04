@@ -6,9 +6,8 @@ use std::sync::Arc;
 
 use gtk::prelude::*;
 use relm4::{gtk, prelude::*};
-use tracing::warn;
 use wayle_common::WatcherToken;
-use wayle_network::{NetworkService, core::access_point::Ssid, types::states::NetworkStatus};
+use wayle_network::{NetworkService, types::states::NetworkStatus};
 use wayle_widgets::prelude::*;
 
 use self::messages::{ActiveConnectionsCmd, ConnectionProgress, WifiState, WiredState};
@@ -41,6 +40,7 @@ impl Component for ActiveConnections {
                 || model.is_wifi_connecting()
                 || model.connection.error.is_some(),
 
+            #[name = "section_label"]
             gtk::Label {
                 add_css_class: "section-label",
                 set_halign: gtk::Align::Start,
@@ -57,33 +57,40 @@ impl Component for ActiveConnections {
                 add_css_class: "network-connections-group",
                 set_orientation: gtk::Orientation::Vertical,
 
+                #[name = "wired_card"]
                 gtk::Box {
                     add_css_class: "network-connection-card",
                     #[watch]
                     set_visible: model.wired.connected,
 
+                    #[name = "wired_icon_container"]
                     gtk::Box {
                         add_css_class: "network-connection-icon",
                         add_css_class: "ethernet",
                         set_hexpand: false,
 
+                        #[name = "wired_icon"]
                         gtk::Image {
                             set_icon_name: Some("cm-wired-symbolic"),
-                            set_hexpand: true,
+                            set_halign: gtk::Align::Center,
+                            set_valign: gtk::Align::Center,
                         },
                     },
 
+                    #[name = "wired_info"]
                     gtk::Box {
                         add_css_class: "network-connection-info",
                         set_orientation: gtk::Orientation::Vertical,
                         set_hexpand: true,
 
+                        #[name = "wired_name"]
                         gtk::Label {
                             add_css_class: "network-connection-name",
                             set_halign: gtk::Align::Start,
                             set_label: &t!("dropdown-network-ethernet"),
                         },
 
+                        #[name = "wired_detail"]
                         gtk::Label {
                             add_css_class: "network-connection-detail",
                             set_halign: gtk::Align::Start,
@@ -94,8 +101,7 @@ impl Component for ActiveConnections {
                         },
                     },
 
-                    #[template]
-                    SubtleSuccessBadge {
+                    gtk::Label {
                         add_css_class: "network-connection-status",
                         set_label: &t!("dropdown-network-connected"),
                         set_vexpand: false,
@@ -110,87 +116,169 @@ impl Component for ActiveConnections {
                     set_visible: model.wifi.connected
                         || model.is_wifi_connecting()
                         || model.connection.error.is_some(),
-
+                    #[name = "wifi_icon_container"]
                     gtk::Box {
                         add_css_class: "network-connection-icon",
                         #[watch]
                         set_css_classes: &model.wifi_icon_classes(),
                         set_hexpand: false,
 
+                        #[name = "wifi_icon"]
                         gtk::Image {
                             #[watch]
                             set_icon_name: Some(model.effective_wifi_icon()),
-                            set_hexpand: true,
+                            set_halign: gtk::Align::Center,
+                            set_valign: gtk::Align::Center,
                         },
                     },
 
+                    #[name = "wifi_info"]
                     gtk::Box {
                         add_css_class: "network-connection-info",
                         set_orientation: gtk::Orientation::Vertical,
                         set_hexpand: true,
 
+                        #[name = "wifi_name"]
                         gtk::Label {
                             add_css_class: "network-connection-name",
-                            set_halign: gtk::Align::Start,
+                            set_xalign: 0.0,
                             set_ellipsize: gtk::pango::EllipsizeMode::End,
+                            set_max_width_chars: 1,
                             #[watch]
                             set_label: &model.display_wifi_name(),
                         },
 
-                        gtk::Label {
-                            add_css_class: "network-connection-detail",
-                            set_halign: gtk::Align::Start,
-                            #[watch]
-                            set_label: &model.wifi_detail(),
+                        #[name = "wifi_detail_box"]
+                        gtk::Box {
                             #[watch]
                             set_visible: model.wifi_detail_visible(),
+                            #[watch]
+                            set_tooltip_text:
+                                model.connection.error.as_deref(),
+
+                            #[name = "wifi_detail"]
+                            gtk::Label {
+                                #[watch]
+                                set_css_classes:
+                                    &model.wifi_detail_classes(),
+                                set_hexpand: true,
+                                set_xalign: 0.0,
+                                set_ellipsize:
+                                    gtk::pango::EllipsizeMode::End,
+                                set_max_width_chars: 1,
+                                #[watch]
+                                set_label: &model.wifi_detail(),
+                            },
                         },
                     },
 
-                    #[template]
-                    SubtleBadge {
-                        #[watch]
-                        set_css_classes: &model.status_classes(),
-                        #[watch]
-                        set_label: &model.status_label(),
-                        set_vexpand: false,
+                    #[name = "wifi_hover_stack"]
+                    gtk::Stack {
+                        add_css_class: "network-hover-stack",
+                        set_transition_type:
+                            gtk::StackTransitionType::Crossfade,
+                        set_transition_duration: 150,
                         set_valign: gtk::Align::Center,
+                        set_hexpand: false,
                         #[watch]
-                        set_visible: !(model.wifi.hovered
-                            && model.wifi.connected),
-                    },
+                        set_visible_child_name:
+                            if model.wifi.hovered
+                                && model.wifi.connected
+                            {
+                                "actions"
+                            } else if model.wifi.hovered
+                                && model.has_wifi_error()
+                            {
+                                "error-actions"
+                            } else {
+                                "status"
+                            },
 
-                    gtk::Box {
-                        add_css_class: "network-connection-actions",
-                        set_valign: gtk::Align::Center,
-                        #[watch]
-                        set_visible: model.wifi.hovered
-                            && model.wifi.connected,
+                        add_named[Some("status")] = &gtk::Box {
+                            set_halign: gtk::Align::End,
+                            set_valign: gtk::Align::Center,
 
-                        #[template]
-                        GhostButton {
-                            add_css_class: "network-action-disconnect",
-                            #[template_child]
-                            label { set_label: &t!("dropdown-network-disconnect") },
-                            connect_clicked => ActiveConnectionsInput::DisconnectWifi,
+                            gtk::Label {
+                                add_css_class: "network-connection-status",
+                                set_label: &t!("dropdown-network-connected"),
+                                set_vexpand: false,
+                                set_valign: gtk::Align::Center,
+                                #[watch]
+                                set_visible: model.wifi.connected
+                                    && !model.is_wifi_connecting()
+                                    && model.connection.error.is_none(),
+                            },
+
+                            #[template]
+                            SubtleBadge {
+                                #[watch]
+                                set_css_classes:
+                                    &model.status_classes(),
+                                #[watch]
+                                set_label:
+                                    &model.status_label(),
+                                set_vexpand: false,
+                                set_valign: gtk::Align::Center,
+                                #[watch]
+                                set_visible: model.is_wifi_connecting()
+                                    || model.connection.error.is_some(),
+                            },
                         },
 
-                        #[template]
-                        GhostButton {
-                            add_css_class: "network-action-forget",
-                            #[template_child]
-                            label { set_label: &t!("dropdown-network-forget") },
-                            connect_clicked => ActiveConnectionsInput::ForgetWifi,
-                        },
-                    },
+                        add_named[Some("actions")] = &gtk::Box {
+                            add_css_class:
+                                "network-connection-actions",
+                            set_valign: gtk::Align::Center,
 
-                    #[template]
-                    GhostIconButton {
-                        add_css_class: "network-disconnect",
-                        set_icon_name: "ld-x-symbolic",
-                        #[watch]
-                        set_visible: model.connection.error.is_some(),
-                        connect_clicked => ActiveConnectionsInput::DismissError,
+                            #[template]
+                            GhostButton {
+                                add_css_class:
+                                    "network-action-disconnect",
+                                #[template_child]
+                                label {
+                                    set_label: &t!(
+                                        "dropdown-network-disconnect"
+                                    ),
+                                },
+                                connect_clicked =>
+                                    ActiveConnectionsInput::DisconnectWifi,
+                            },
+
+                            #[template]
+                            GhostButton {
+                                add_css_class:
+                                    "network-action-forget",
+                                #[template_child]
+                                label {
+                                    set_label: &t!(
+                                        "dropdown-network-forget"
+                                    ),
+                                },
+                                connect_clicked =>
+                                    ActiveConnectionsInput::ForgetWifi,
+                            },
+                        },
+
+                        add_named[Some("error-actions")] = &gtk::Box {
+                            add_css_class:
+                                "network-connection-actions",
+                            set_halign: gtk::Align::End,
+                            set_valign: gtk::Align::Center,
+
+                            #[template]
+                            GhostButton {
+                                add_css_class:
+                                    "network-action-dismiss",
+                                #[template_child]
+                                label {
+                                    set_label: &t!(
+                                        "dropdown-network-dismiss"
+                                    ),
+                                },
+                                connect_clicked =>
+                                    ActiveConnectionsInput::DismissError,
+                            },
+                        },
                     },
                 },
             },
@@ -252,37 +340,8 @@ impl Component for ActiveConnections {
 
     fn update(&mut self, msg: Self::Input, sender: ComponentSender<Self>, _root: &Self::Root) {
         match msg {
-            ActiveConnectionsInput::DisconnectWifi => {
-                let network = self.network.clone();
-                sender.command(|_out, _shutdown| async move {
-                    if let Some(wifi) = network.wifi.get()
-                        && let Err(err) = wifi.disconnect().await
-                    {
-                        warn!(error = %err, "wifi disconnect failed");
-                    }
-                });
-            }
-            ActiveConnectionsInput::ForgetWifi => {
-                let network = self.network.clone();
-                let ssid = self.wifi.ssid.clone();
-                sender.command(|_out, _shutdown| async move {
-                    let Some(ssid) = ssid.map(|s| Ssid::new(s.into_bytes())) else {
-                        return;
-                    };
-
-                    for connection in network.settings.connections_for_ssid(&ssid).await {
-                        if let Err(err) = connection.delete().await {
-                            warn!(error = %err, "failed to delete saved wifi profile");
-                        }
-                    }
-
-                    if let Some(wifi) = network.wifi.get()
-                        && let Err(err) = wifi.disconnect().await
-                    {
-                        warn!(error = %err, "wifi disconnect after forget failed");
-                    }
-                });
-            }
+            ActiveConnectionsInput::DisconnectWifi => self.disconnect_wifi(&sender),
+            ActiveConnectionsInput::ForgetWifi => self.forget_wifi(&sender),
             ActiveConnectionsInput::DismissError => {
                 self.connection.error = None;
 
@@ -303,10 +362,8 @@ impl Component for ActiveConnections {
                 self.connection.step = None;
             }
             ActiveConnectionsInput::SetConnectionError(error) => {
-                self.connection = ConnectionProgress {
-                    error: Some(error),
-                    ..Default::default()
-                };
+                self.connection.error = Some(error);
+                self.connection.step = None;
             }
             ActiveConnectionsInput::ClearConnectionError => {
                 self.connection.error = None;

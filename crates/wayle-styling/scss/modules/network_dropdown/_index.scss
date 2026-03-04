@@ -7,6 +7,7 @@ button.network-scan-btn {
     image {
         -gtk-icon-size: var(--icon-md);
         color: var(--fg-muted);
+        margin: 0 var(--space-sm);
     }
 
     &:hover image {

@@ -6,17 +6,12 @@ mod modules;
 mod styling;
 mod watchers;
 
-use std::{cell::Cell, rc::Rc};
+use std::rc::Rc;
 
 use factory::*;
 use gtk::prelude::*;
 use gtk4_layer_shell::{KeyboardMode, Layer, LayerShell};
-use relm4::{
-    factory::FactoryVecDeque,
-    gtk,
-    gtk::{gdk, glib},
-    prelude::*,
-};
+use relm4::{factory::FactoryVecDeque, gtk, gtk::gdk, prelude::*};
 use wayle_common::ConfigProperty;
 use wayle_config::schemas::bar::{BarItem, BarLayout};
 use wayle_widgets::{prelude::BarSettings, styling::InlineStyling};
@@ -116,10 +111,10 @@ impl Component for Bar {
         root.init_layer_shell();
         root.set_layer(Layer::Top);
         root.set_keyboard_mode(KeyboardMode::OnDemand);
+        root.auto_exclusive_zone_enable();
         root.set_monitor(Some(&init.monitor));
         Self::apply_anchors(&root, location);
         Self::apply_css_classes(&root, &init.monitor, location, is_floating);
-        Self::start_exclusive_zone_tracker(&root);
         Self::suppress_alt_focus(&root);
 
         let window = root.clone();
@@ -215,26 +210,6 @@ impl Component for Bar {
 }
 
 impl Bar {
-    /// Tracks the bar's thickness each frame and sets the exclusive zone
-    /// only when it actually changes. This decouples the exclusive zone from
-    /// transient `set_default_size` pokes, preventing compositor flicker.
-    fn start_exclusive_zone_tracker(window: &gtk::Window) {
-        let last = Rc::new(Cell::new(0i32));
-        window.add_tick_callback(move |window, _| {
-            let is_vert = window.has_css_class("left") || window.has_css_class("right");
-            let thickness = if is_vert {
-                window.width()
-            } else {
-                window.height()
-            };
-            if thickness > 1 && thickness != last.get() {
-                last.set(thickness);
-                window.set_exclusive_zone(thickness);
-            }
-            glib::ControlFlow::Continue
-        });
-    }
-
     fn suppress_alt_focus(window: &gtk::Window) {
         use gtk::prelude::GtkWindowExt;
         window.connect_focus_visible_notify(|window| {

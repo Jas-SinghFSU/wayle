@@ -11,7 +11,6 @@ use std::sync::Arc;
 
 use gtk::prelude::*;
 use relm4::{gtk, prelude::*};
-use tracing::warn;
 use wayle_common::WatcherToken;
 use wayle_network::NetworkService;
 use wayle_widgets::prelude::*;
@@ -60,6 +59,7 @@ impl Component for NetworkDropdown {
 
             #[template]
             Dropdown {
+                set_overflow: gtk::Overflow::Hidden,
 
                 #[template]
                 DropdownHeader {
@@ -115,12 +115,15 @@ impl Component for NetworkDropdown {
                 #[template]
                 DropdownContent {
                     add_css_class: "network-content",
+                    set_vexpand: true,
 
                     #[local_ref]
                     active_connections_widget -> gtk::Box {},
 
                     #[local_ref]
-                    available_networks_widget -> gtk::Box {},
+                    available_networks_widget -> gtk::Box {
+                        set_vexpand: true,
+                    },
                 },
             },
         }
@@ -143,9 +146,9 @@ impl Component for NetworkDropdown {
             })
             .forward(sender.input_sender(), NetworkDropdownMsg::AvailableNetworks);
 
-        let wifi_state = init.network.wifi.get();
-        let wifi_available = wifi_state.is_some();
-        let wifi_enabled = wifi_state.as_ref().is_some_and(|wifi| wifi.enabled.get());
+        let wifi = init.network.wifi.get();
+        let wifi_available = wifi.is_some();
+        let wifi_enabled = wifi.as_ref().is_some_and(|wifi| wifi.enabled.get());
 
         let scale = init.config.config().styling.scale.get().value();
 
@@ -175,17 +178,7 @@ impl Component for NetworkDropdown {
     fn update(&mut self, msg: Self::Input, sender: ComponentSender<Self>, _root: &Self::Root) {
         match msg {
             NetworkDropdownMsg::WifiToggled(active) => {
-                self.wifi_enabled = active;
-
-                let network = self.network.clone();
-
-                sender.command(move |_out, _shutdown| async move {
-                    if let Some(wifi) = network.wifi.get()
-                        && let Err(err) = wifi.set_enabled(active).await
-                    {
-                        warn!(error = %err, "wifi toggle failed");
-                    }
-                });
+                self.toggle_wifi(active, &sender);
             }
             NetworkDropdownMsg::ScanRequested => {
                 self.available_networks
@@ -201,9 +194,6 @@ impl Component for NetworkDropdown {
                 }
 
                 AvailableNetworksOutput::Connecting(ssid) => {
-                    self.active_connections
-                        .emit(ActiveConnectionsInput::ClearConnectionError);
-
                     self.active_connections
                         .emit(ActiveConnectionsInput::SetConnecting(ssid));
                 }
@@ -227,9 +217,6 @@ impl Component for NetworkDropdown {
                 }
 
                 AvailableNetworksOutput::ConnectionFailed(err) => {
-                    self.active_connections
-                        .emit(ActiveConnectionsInput::ClearConnecting);
-
                     self.active_connections
                         .emit(ActiveConnectionsInput::SetConnectionError(err));
                 }

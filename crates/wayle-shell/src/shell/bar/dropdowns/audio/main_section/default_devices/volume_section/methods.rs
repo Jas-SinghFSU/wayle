@@ -1,10 +1,12 @@
 use relm4::prelude::*;
+use tracing::warn;
+use wayle_audio::volume::types::Volume;
 
 use crate::shell::bar::dropdowns::audio::{
     helpers,
     main_section::default_devices::volume_section::{
         VolumeSection,
-        messages::{ActiveDevice, VolumeSectionKind},
+        messages::{ActiveDevice, VolumeSectionCmd, VolumeSectionKind},
     },
 };
 
@@ -52,6 +54,32 @@ impl VolumeSection {
                 .get()
                 .iter()
                 .any(|device| !device.is_monitor.get()),
+        }
+    }
+
+    pub(super) fn commit_volume(&self, percentage: f64, sender: &ComponentSender<Self>) {
+        if let Some(ref device) = self.device {
+            let channels = device.channels();
+            let volume = Volume::from_percentage(percentage, channels);
+            let device = device.clone();
+            sender.command(|_out, _shutdown| async move {
+                if let Err(err) = device.set_volume(volume).await {
+                    warn!(error = %err, "failed to set volume");
+                }
+            });
+        }
+    }
+
+    pub(super) fn toggle_mute(&self, sender: &ComponentSender<Self>) {
+        if let Some(ref device) = self.device {
+            let new_muted = !device.muted();
+            let device = device.clone();
+            sender.oneshot_command(async move {
+                if let Err(err) = device.set_mute(new_muted).await {
+                    warn!(error = %err, "failed to toggle mute");
+                }
+                VolumeSectionCmd::VolumeOrMuteChanged
+            });
         }
     }
 }

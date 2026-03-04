@@ -11,6 +11,7 @@ use std::{
 
 fn main() {
     println!("cargo:rerun-if-changed=build.rs");
+    println!("cargo:rerun-if-changed=locales");
 
     // wayle-idle-inhibit can pull in libwayland-client early due to linker behavior.
     // Which then prevents the gtk4 layer shell from interposing since it's gotta be
@@ -33,7 +34,10 @@ fn concatenate_partials(locale_dir: &Path) {
     let partials = collect_partials_recursive(locale_dir);
     let combined = merge_partials(&partials);
     let output = locale_dir.join("wayle-shell.ftl");
-    fs::write(&output, combined).expect("failed to write combined ftl");
+    let existing = fs::read_to_string(&output).unwrap_or_default();
+    if existing != combined {
+        fs::write(&output, combined).expect("failed to write combined ftl");
+    }
 }
 
 fn collect_partials_recursive(dir: &Path) -> Vec<PathBuf> {
