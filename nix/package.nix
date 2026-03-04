@@ -25,7 +25,7 @@ rustPlatform.buildRustPackage (finalAttrs: rec {
     owner = "Jas-SinghFSU";
     repo = "wayle";
     # tag = "v${finalAttrs.version}"; # Use this once the first tag is released.
-    rev = "c5d771dcc8cf17cbcc7a12fddb74dda94bcfef35"; # Once this ^, then delete this <.
+    rev = "4e5f29e3fd1dfa9951bcfa7b7fb03c2554789e77"; # Once this ^, then delete this <.
     hash = "sha256-Y/R8iI1sIHZxqxlPO1iTIqpLJGkCuTPAmh2OarvkoVA=";
     fetchSubmodules = true;
   };
@@ -62,6 +62,10 @@ rustPlatform.buildRustPackage (finalAttrs: rec {
   checkFlags = [
     # This test is broken because gtk fails to initialize in the nix sandbox.
     "--skip=css_loads_into_gtk4"
+
+    # This test is broken because wayle is not given access to hyprland in the
+    # nix sandbox.
+    "--skip=new_fails_when_hyprland_instance_signature_missing"
   ];
 
   preBuild = ''
