@@ -113,7 +113,12 @@ impl Component for CavaModule {
             }
         });
 
-        watchers::spawn_config_watchers(&sender, init.settings.is_vertical, &init.config);
+        watchers::spawn_config_watchers(
+            &sender,
+            init.settings.is_vertical,
+            &init.config,
+            &init.wallpaper,
+        );
 
         let model = Self {
             container,

@@ -5,10 +5,10 @@ use thiserror::Error;
 pub(crate) fn error_chain(e: &dyn StdError) -> String {
     let mut msg = e.to_string();
     let mut source = e.source();
-    while let Some(s) = source {
+    while let Some(cause) = source {
         msg.push_str(": ");
-        msg.push_str(&s.to_string());
-        source = s.source();
+        msg.push_str(&cause.to_string());
+        source = cause.source();
     }
     msg
 }

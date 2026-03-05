@@ -24,6 +24,7 @@ impl ModuleFactory for Factory {
         let init = CavaInit {
             settings: settings.clone(),
             config: services.config.clone(),
+            wallpaper: services.wallpaper.clone(),
         };
         let controller = dynamic_controller(CavaModule::builder().launch(init).detach());
         Some(ModuleInstance { controller, class })

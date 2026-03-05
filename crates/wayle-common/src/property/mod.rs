@@ -51,11 +51,15 @@ mod traits;
 
 #[cfg(feature = "schema")]
 use std::borrow::Cow;
-use std::fmt::Debug;
-use std::pin::Pin;
-use std::sync::atomic::{AtomicUsize, Ordering};
-use std::sync::Arc;
-use std::task::{Context, Poll};
+use std::{
+    fmt::Debug,
+    pin::Pin,
+    sync::{
+        Arc,
+        atomic::{AtomicUsize, Ordering},
+    },
+    task::{Context, Poll},
+};
 
 pub use config::{ConfigProperty, ValueSource};
 use futures::stream::{Stream, StreamExt};

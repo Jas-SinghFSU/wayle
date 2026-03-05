@@ -9,9 +9,61 @@ use wayle_common::Property;
 
 use crate::{
     builder::WeatherServiceBuilder,
+    error::Error,
     model::{LocationQuery, TemperatureUnit, Weather, WeatherProviderKind},
     polling::{self, PollingConfig},
 };
+
+/// Categorized error for UI display without implementation details.
+#[derive(Debug, Clone, PartialEq)]
+pub enum WeatherErrorKind {
+    /// Provider requires an API key that isn't configured.
+    ApiKeyMissing {
+        /// Display name of the provider (e.g. "Visual Crossing").
+        provider: String,
+    },
+    /// Geocoding could not resolve the requested location.
+    LocationNotFound {
+        /// The search query that failed to resolve.
+        query: String,
+    },
+    /// Network-level failure (DNS, timeout, connection refused).
+    Network,
+    /// Provider rate limit exceeded.
+    RateLimited,
+    /// Anything else (parse errors, unexpected status codes, etc.).
+    Other,
+}
+
+impl From<&Error> for WeatherErrorKind {
+    fn from(err: &Error) -> Self {
+        match err {
+            Error::ApiKeyMissing { provider } => Self::ApiKeyMissing {
+                provider: (*provider).to_owned(),
+            },
+            Error::LocationNotFound { query } => Self::LocationNotFound {
+                query: query.clone(),
+            },
+            Error::Http { .. } => Self::Network,
+            Error::RateLimited { .. } => Self::RateLimited,
+            Error::ProviderStatus { .. }
+            | Error::Parse { .. }
+            | Error::InvalidLocation { .. }
+            | Error::NotAvailable => Self::Other,
+        }
+    }
+}
+
+/// Fetch lifecycle state exposed to UI consumers.
+#[derive(Debug, Clone, PartialEq)]
+pub enum WeatherStatus {
+    /// Initial state or refresh in progress.
+    Loading,
+    /// At least one successful fetch has completed.
+    Loaded,
+    /// All retries exhausted or non-retryable error.
+    Error(WeatherErrorKind),
+}
 
 /// Weather service for fetching and caching weather data.
 ///
@@ -37,6 +89,9 @@ pub struct WeatherService {
 
     /// Current weather data. `None` until first successful fetch.
     pub weather: Property<Option<Arc<Weather>>>,
+
+    /// Current fetch lifecycle state.
+    pub status: Property<WeatherStatus>,
 }
 
 impl WeatherService {
@@ -103,34 +158,45 @@ impl WeatherService {
     }
 
     fn restart_polling(&self) {
+        self.status.set(WeatherStatus::Loading);
+
+        let Ok(location) = self.location.read().map(|guard| guard.clone()) else {
+            return;
+        };
+
         let config = PollingConfig {
             poll_interval: self
                 .poll_interval
                 .read()
-                .map(|interval| *interval)
-                .unwrap_or_default(),
-            location: self
-                .location
-                .read()
-                .map(|loc| loc.clone())
-                .unwrap_or_else(|_| LocationQuery::city("San Francisco")),
+                .map(|guard| *guard)
+                .unwrap_or(Duration::from_secs(600)),
+            location,
             kind: self
                 .provider_kind
                 .read()
-                .map(|provider| *provider)
+                .map(|guard| *guard)
                 .unwrap_or_default(),
             visual_crossing_key: self
                 .visual_crossing_key
                 .read()
                 .ok()
-                .and_then(|key| key.clone()),
-            weatherapi_key: self.weatherapi_key.read().ok().and_then(|key| key.clone()),
+                .and_then(|guard| guard.clone()),
+            weatherapi_key: self
+                .weatherapi_key
+                .read()
+                .ok()
+                .and_then(|guard| guard.clone()),
         };
 
         let new_token = self.cancellation_token.child_token();
         if let Ok(mut guard) = self.polling_token.write() {
             guard.cancel();
-            polling::spawn(new_token.clone(), self.weather.clone(), config);
+            polling::spawn(
+                new_token.clone(),
+                self.weather.clone(),
+                self.status.clone(),
+                config,
+            );
             *guard = new_token;
         }
     }

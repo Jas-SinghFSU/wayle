@@ -8,6 +8,7 @@ use wayle_config::{
         styling::{ColorValue, CssToken},
     },
 };
+use wayle_styling::resolve_palette;
 
 const REM_BASE: f32 = 16.0;
 
@@ -86,7 +87,8 @@ pub(super) fn calculate_widget_length(
 pub(super) fn resolve_rgba(color: &ColorValue, config: &ConfigService) -> Rgba {
     let hex = match color {
         ColorValue::Token(token) => {
-            let palette = config.config().styling.palette();
+            let raw_palette = config.config().styling.palette();
+            let palette = resolve_palette(&raw_palette, &config.config().styling);
             match token {
                 CssToken::BgBase => palette.bg.clone(),
                 CssToken::BgSurface | CssToken::BgSurfaceElevated => palette.surface.clone(),
@@ -137,7 +139,8 @@ pub(super) fn resolve_rgba(color: &ColorValue, config: &ConfigService) -> Rgba {
             };
         }
         ColorValue::Auto => {
-            let palette = config.config().styling.palette();
+            let raw_palette = config.config().styling.palette();
+            let palette = resolve_palette(&raw_palette, &config.config().styling);
             palette.primary.clone()
         }
     };

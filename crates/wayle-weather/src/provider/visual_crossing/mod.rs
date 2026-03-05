@@ -2,15 +2,14 @@ mod parse;
 mod types;
 
 use async_trait::async_trait;
-use chrono::{NaiveTime, Utc};
 use parse::PROVIDER;
 use serde::Serialize;
 use types::ApiResponse;
 
+use super::{WeatherProvider, build_weather};
 use crate::{
     error::{Error, Result},
-    model::{Astronomy, Location, LocationQuery, Weather, WeatherProviderKind},
-    provider::WeatherProvider,
+    model::{Location, LocationQuery, Weather, WeatherProviderKind},
 };
 
 const BASE_URL: &str =
@@ -46,27 +45,12 @@ impl VisualCrossing {
         match location {
             LocationQuery::Coordinates { lat, lon } => format!("{lat},{lon}"),
             LocationQuery::City { name, country } => {
-                if let Some(c) = country {
-                    format!("{name},{c}")
+                if let Some(country_code) = country {
+                    format!("{name},{country_code}")
                 } else {
                     name.clone()
                 }
             }
-        }
-    }
-
-    fn parse_location(data: &ApiResponse) -> Location {
-        let parts: Vec<&str> = data.resolved_address.split(',').collect();
-        let city = parts.first().map_or("", |part| part.trim()).to_string();
-        let region = parts.get(1).map(|part| part.trim().to_string());
-        let country = parts.last().map_or("", |part| part.trim()).to_string();
-
-        Location {
-            city,
-            region,
-            country,
-            lat: data.latitude,
-            lon: data.longitude,
         }
     }
 }
@@ -77,7 +61,7 @@ impl WeatherProvider for VisualCrossing {
         WeatherProviderKind::VisualCrossing
     }
 
-    async fn fetch(&self, location: &LocationQuery) -> Result<Weather> {
+    async fn fetch(&self, location: &LocationQuery, resolved: &Location) -> Result<Weather> {
         let location_path = Self::location_path(location);
         let url = format!("{BASE_URL}/{location_path}");
 
@@ -94,7 +78,7 @@ impl WeatherProvider for VisualCrossing {
             .query(&request)
             .send()
             .await
-            .map_err(|e| Error::http(PROVIDER, e))?;
+            .map_err(|err| Error::http(PROVIDER, err))?;
 
         if resp.status() == reqwest::StatusCode::UNAUTHORIZED
             || resp.status() == reqwest::StatusCode::FORBIDDEN
@@ -113,30 +97,12 @@ impl WeatherProvider for VisualCrossing {
         let data: ApiResponse = resp
             .json()
             .await
-            .map_err(|e| Error::parse(PROVIDER, e.to_string()))?;
+            .map_err(|err| Error::parse(PROVIDER, err.to_string()))?;
 
         let current = parse::build_current(&data)?;
         let hourly = parse::build_hourly(&data, 24)?;
         let daily = parse::build_daily(&data, 7)?;
 
-        let astronomy = daily.first().map_or_else(
-            || Astronomy {
-                sunrise: NaiveTime::from_hms_opt(6, 0, 0).unwrap_or_default(),
-                sunset: NaiveTime::from_hms_opt(18, 0, 0).unwrap_or_default(),
-            },
-            |first_day| Astronomy {
-                sunrise: first_day.sunrise,
-                sunset: first_day.sunset,
-            },
-        );
-
-        Ok(Weather {
-            current,
-            hourly,
-            daily,
-            location: Self::parse_location(&data),
-            astronomy,
-            updated_at: Utc::now(),
-        })
+        Ok(build_weather(current, hourly, daily, resolved.clone()))
     }
 }

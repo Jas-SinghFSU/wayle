@@ -23,7 +23,7 @@ mod separator;
 mod storage;
 mod systray;
 mod volume;
-mod weather;
+pub(crate) mod weather;
 mod window_title;
 mod world_clock;
 

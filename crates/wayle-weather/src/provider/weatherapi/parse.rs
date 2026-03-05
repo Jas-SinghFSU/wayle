@@ -1,4 +1,4 @@
-use chrono::{DateTime, NaiveDate, NaiveDateTime, NaiveTime, TimeZone, Utc};
+use chrono::{Local, NaiveDate, NaiveDateTime, NaiveTime};
 
 use super::types::{ApiResponse, ForecastDay, HourData};
 use crate::{
@@ -33,7 +33,7 @@ pub fn build_current(data: &ApiResponse) -> Result<CurrentWeather> {
 }
 
 pub fn build_hourly(data: &ApiResponse, count: usize) -> Result<Vec<HourlyForecast>> {
-    let now = Utc::now();
+    let now = Local::now().naive_local();
     let mut forecasts = Vec::with_capacity(count);
     let mut collected = 0;
 
@@ -60,7 +60,7 @@ pub fn build_hourly(data: &ApiResponse, count: usize) -> Result<Vec<HourlyForeca
     Ok(forecasts)
 }
 
-fn build_hourly_forecast(hour: &HourData, datetime: DateTime<Utc>) -> Result<HourlyForecast> {
+fn build_hourly_forecast(hour: &HourData, datetime: NaiveDateTime) -> Result<HourlyForecast> {
     Ok(HourlyForecast {
         time: datetime,
         temperature: temperature(hour.temp_c)?,
@@ -91,11 +91,11 @@ pub fn build_daily(data: &ApiResponse, count: usize) -> Result<Vec<DailyForecast
     Ok(forecasts)
 }
 
-fn build_daily_forecast(fd: &ForecastDay) -> Result<DailyForecast> {
-    let day_data = &fd.day;
-    let date = parse_date(&fd.date)?;
-    let sunrise = parse_12h_time(&fd.astro.sunrise)?;
-    let sunset = parse_12h_time(&fd.astro.sunset)?;
+fn build_daily_forecast(forecast_day: &ForecastDay) -> Result<DailyForecast> {
+    let day_data = &forecast_day.day;
+    let date = parse_date(&forecast_day.date)?;
+    let sunrise = parse_12h_time(&forecast_day.astro.sunrise)?;
+    let sunset = parse_12h_time(&forecast_day.astro.sunset)?;
 
     Ok(DailyForecast {
         date,
@@ -114,19 +114,18 @@ fn build_daily_forecast(fd: &ForecastDay) -> Result<DailyForecast> {
 }
 
 fn parse_date(s: &str) -> Result<NaiveDate> {
-    NaiveDate::parse_from_str(s, "%Y-%m-%d").map_err(|e| Error::parse(PROVIDER, e.to_string()))
+    NaiveDate::parse_from_str(s, "%Y-%m-%d").map_err(|err| Error::parse(PROVIDER, err.to_string()))
 }
 
-fn parse_datetime(s: &str) -> Result<DateTime<Utc>> {
-    let naive = NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M")
-        .map_err(|e| Error::parse(PROVIDER, e.to_string()))?;
-    Ok(Utc.from_utc_datetime(&naive))
+fn parse_datetime(s: &str) -> Result<NaiveDateTime> {
+    NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M")
+        .map_err(|err| Error::parse(PROVIDER, err.to_string()))
 }
 
 fn parse_12h_time(s: &str) -> Result<NaiveTime> {
     NaiveTime::parse_from_str(s.trim(), "%I:%M %p")
         .or_else(|_| NaiveTime::parse_from_str(s.trim(), "%I:%M %P"))
-        .map_err(|e| Error::parse(PROVIDER, e.to_string()))
+        .map_err(|err| Error::parse(PROVIDER, err.to_string()))
 }
 
 fn temperature(celsius: f64) -> Result<Temperature> {
@@ -168,16 +167,17 @@ fn condition_from_code(code: i32) -> WeatherCondition {
         1003 => WeatherCondition::PartlyCloudy,
         1006 => WeatherCondition::Cloudy,
         1009 => WeatherCondition::Overcast,
-        1030 | 1135 | 1147 => WeatherCondition::Mist,
-        1021 | 1024 | 1027 => WeatherCondition::Fog,
-        1051 | 1054 | 1057 | 1168 | 1171 => WeatherCondition::Drizzle,
-        1063 | 1150 | 1153 | 1180 | 1183 => WeatherCondition::LightRain,
-        1186 | 1189 | 1261 | 1264 => WeatherCondition::Rain,
-        1192 | 1195 | 1240 | 1243 | 1246 | 1267 | 1270 => WeatherCondition::HeavyRain,
+        1030 => WeatherCondition::Mist,
+        1135 | 1147 => WeatherCondition::Fog,
+        1150 | 1153 | 1168 | 1171 => WeatherCondition::Drizzle,
+        1063 | 1180 | 1183 | 1240 => WeatherCondition::LightRain,
+        1186 | 1189 | 1243 => WeatherCondition::Rain,
+        1192 | 1195 | 1246 => WeatherCondition::HeavyRain,
         1066 | 1210 | 1213 | 1255 => WeatherCondition::LightSnow,
-        1039 | 1216 | 1219 => WeatherCondition::Snow,
-        1114 | 1015 | 1042 | 1045 | 1048 | 1117 | 1222 | 1225 | 1258 => WeatherCondition::HeavySnow,
-        1069 | 1072 | 1198 | 1201 | 1204 | 1207 | 1237 | 1249 | 1252 => WeatherCondition::Sleet,
+        1216 | 1219 | 1258 => WeatherCondition::Snow,
+        1114 | 1117 | 1222 | 1225 => WeatherCondition::HeavySnow,
+        1069 | 1072 | 1198 | 1201 | 1204 | 1207 | 1249 | 1252 => WeatherCondition::Sleet,
+        1237 | 1261 | 1264 => WeatherCondition::Hail,
         1087 | 1273 | 1276 | 1279 | 1282 => WeatherCondition::Thunderstorm,
         _ => WeatherCondition::Unknown,
     }
@@ -226,10 +226,10 @@ mod tests {
     }
 
     #[test]
-    fn condition_code_mist_variants() {
+    fn condition_code_mist_and_fog() {
         assert_eq!(condition_from_code(1030), WeatherCondition::Mist);
-        assert_eq!(condition_from_code(1135), WeatherCondition::Mist);
-        assert_eq!(condition_from_code(1147), WeatherCondition::Mist);
+        assert_eq!(condition_from_code(1135), WeatherCondition::Fog);
+        assert_eq!(condition_from_code(1147), WeatherCondition::Fog);
     }
 
     #[test]
@@ -238,7 +238,13 @@ mod tests {
         assert_eq!(condition_from_code(1072), WeatherCondition::Sleet);
         assert_eq!(condition_from_code(1198), WeatherCondition::Sleet);
         assert_eq!(condition_from_code(1201), WeatherCondition::Sleet);
-        assert_eq!(condition_from_code(1237), WeatherCondition::Sleet);
+    }
+
+    #[test]
+    fn condition_code_hail_variants() {
+        assert_eq!(condition_from_code(1237), WeatherCondition::Hail);
+        assert_eq!(condition_from_code(1261), WeatherCondition::Hail);
+        assert_eq!(condition_from_code(1264), WeatherCondition::Hail);
     }
 
     #[test]
@@ -246,7 +252,6 @@ mod tests {
         assert_eq!(condition_from_code(1066), WeatherCondition::LightSnow);
         assert_eq!(condition_from_code(1210), WeatherCondition::LightSnow);
         assert_eq!(condition_from_code(1216), WeatherCondition::Snow);
-        assert_eq!(condition_from_code(1039), WeatherCondition::Snow);
         assert_eq!(condition_from_code(1114), WeatherCondition::HeavySnow);
         assert_eq!(condition_from_code(1117), WeatherCondition::HeavySnow);
         assert_eq!(condition_from_code(1225), WeatherCondition::HeavySnow);

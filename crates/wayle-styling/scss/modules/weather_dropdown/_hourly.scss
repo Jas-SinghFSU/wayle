@@ -1,0 +1,48 @@
+.weather-section {
+    margin-top: var(--space-md);
+}
+
+.hourly-forecast {
+    border-spacing: var(--space-sm);
+    padding: var(--space-xs) 0;
+}
+
+.hourly-item {
+    border-spacing: var(--space-sm);
+    padding: var(--space-sm);
+    background: var(--bg-elevated);
+    border-radius: var(--rounding-element);
+}
+
+label.hourly-time {
+    font-size: var(--text-md);
+    font-weight: var(--weight-semibold);
+    color: var(--fg-muted);
+}
+
+image.hourly-icon {
+    -gtk-icon-size: var(--icon-lg);
+    color: var(--fg-muted);
+
+    &.sunny {
+        color: var(--status-warning);
+    }
+    &.cloudy {
+        color: var(--fg-subtle);
+    }
+    &.rainy {
+        color: var(--status-info);
+    }
+    &.stormy {
+        color: var(--accent);
+    }
+    &.snowy {
+        color: var(--fg-default);
+    }
+}
+
+label.hourly-temp {
+    font-size: var(--text-md);
+    font-weight: var(--weight-semibold);
+    color: var(--fg-default);
+}

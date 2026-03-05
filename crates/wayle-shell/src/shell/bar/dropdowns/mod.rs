@@ -4,6 +4,7 @@ mod bluetooth;
 mod media;
 mod network;
 mod registry;
+mod weather;
 
 pub(crate) use self::registry::{
     DropdownFactory, DropdownInstance, DropdownRegistry, dispatch_click,
@@ -37,4 +38,5 @@ register_dropdowns! {
     "bluetooth" => bluetooth::Factory,
     "media" => media::Factory,
     "network" => network::Factory,
+    "weather" => weather::Factory,
 }

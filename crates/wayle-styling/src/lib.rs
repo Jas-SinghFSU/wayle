@@ -126,7 +126,16 @@ pub fn compile_dev() -> Result<String, Error> {
     grass::from_string(&main_content, &options).map_err(Error::Compilation)
 }
 
-fn resolve_palette(fallback: &Palette, styling: &StylingConfig) -> Palette {
+/// Resolves the active palette based on the current theme provider.
+///
+/// Reads colors from the configured provider (wallust, matugen, pywal) or
+/// falls back to the built-in palette. Used by components that need palette
+/// colors outside of CSS (e.g., cairo drawing).
+///
+/// # Errors
+///
+/// Never errors -- falls back to the built-in palette if provider loading fails.
+pub fn resolve_palette(fallback: &Palette, styling: &StylingConfig) -> Palette {
     use palette_provider::{matugen, pywal, wallust};
 
     match styling.theme_provider.get() {

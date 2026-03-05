@@ -93,6 +93,7 @@
 //! - `astronomy` - Sunrise/sunset times
 
 mod builder;
+pub(crate) mod geocoding;
 
 /// Weather service error types and result aliases.
 pub mod error;
@@ -117,7 +118,7 @@ pub use model::{
     TemperatureUnit, Weather, WeatherCondition, WeatherProviderKind,
 };
 pub use provider::{ProviderConfig, WeatherProvider, create_provider};
-pub use service::WeatherService;
+pub use service::{WeatherErrorKind, WeatherService, WeatherStatus};
 pub use types::{
     Distance, Percentage, Precipitation, Pressure, Speed, Temperature, UvIndex, WindDirection,
 };

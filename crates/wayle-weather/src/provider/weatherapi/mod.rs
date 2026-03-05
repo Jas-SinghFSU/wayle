@@ -2,15 +2,14 @@ mod parse;
 mod types;
 
 use async_trait::async_trait;
-use chrono::{NaiveTime, Utc};
 use parse::PROVIDER;
 use serde::Serialize;
 use types::ApiResponse;
 
+use super::{WeatherProvider, build_weather};
 use crate::{
     error::{Error, Result},
-    model::{Astronomy, Location, LocationQuery, Weather, WeatherProviderKind},
-    provider::WeatherProvider,
+    model::{Location, LocationQuery, Weather, WeatherProviderKind},
 };
 
 const BASE_URL: &str = "https://api.weatherapi.com/v1/forecast.json";
@@ -44,8 +43,8 @@ impl WeatherApi {
         match location {
             LocationQuery::Coordinates { lat, lon } => format!("{lat},{lon}"),
             LocationQuery::City { name, country } => {
-                if let Some(c) = country {
-                    format!("{name},{c}")
+                if let Some(country_code) = country {
+                    format!("{name},{country_code}")
                 } else {
                     name.clone()
                 }
@@ -60,7 +59,7 @@ impl WeatherProvider for WeatherApi {
         WeatherProviderKind::WeatherApi
     }
 
-    async fn fetch(&self, location: &LocationQuery) -> Result<Weather> {
+    async fn fetch(&self, location: &LocationQuery, resolved: &Location) -> Result<Weather> {
         let request = ForecastRequest {
             key: &self.api_key,
             q: Self::location_query(location),
@@ -75,7 +74,7 @@ impl WeatherProvider for WeatherApi {
             .query(&request)
             .send()
             .await
-            .map_err(|e| Error::http(PROVIDER, e))?;
+            .map_err(|err| Error::http(PROVIDER, err))?;
 
         if resp.status() == reqwest::StatusCode::UNAUTHORIZED
             || resp.status() == reqwest::StatusCode::FORBIDDEN
@@ -94,43 +93,12 @@ impl WeatherProvider for WeatherApi {
         let data: ApiResponse = resp
             .json()
             .await
-            .map_err(|e| Error::parse(PROVIDER, e.to_string()))?;
+            .map_err(|err| Error::parse(PROVIDER, err.to_string()))?;
 
         let current = parse::build_current(&data)?;
         let hourly = parse::build_hourly(&data, 24)?;
         let daily = parse::build_daily(&data, 7)?;
 
-        let astronomy = daily.first().map_or_else(
-            || Astronomy {
-                sunrise: NaiveTime::from_hms_opt(6, 0, 0).unwrap_or_default(),
-                sunset: NaiveTime::from_hms_opt(18, 0, 0).unwrap_or_default(),
-            },
-            |first_day| Astronomy {
-                sunrise: first_day.sunrise,
-                sunset: first_day.sunset,
-            },
-        );
-
-        let loc = &data.location;
-        let region = if loc.region.is_empty() {
-            None
-        } else {
-            Some(loc.region.clone())
-        };
-
-        Ok(Weather {
-            current,
-            hourly,
-            daily,
-            location: Location {
-                city: loc.name.clone(),
-                region,
-                country: loc.country.clone(),
-                lat: loc.lat,
-                lon: loc.lon,
-            },
-            astronomy,
-            updated_at: Utc::now(),
-        })
+        Ok(build_weather(current, hourly, daily, resolved.clone()))
     }
 }

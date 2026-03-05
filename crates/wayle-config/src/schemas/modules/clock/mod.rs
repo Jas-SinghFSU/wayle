@@ -91,7 +91,7 @@ pub struct ClockConfig {
 
     /// Action on right click.
     #[serde(rename = "right-click")]
-    #[default(ClickAction::None)]
+    #[default(ClickAction::Dropdown(String::from("weather")))]
     pub right_click: ConfigProperty<ClickAction>,
 
     /// Action on middle click.

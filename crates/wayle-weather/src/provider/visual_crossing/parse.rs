@@ -1,4 +1,4 @@
-use chrono::{DateTime, NaiveDate, NaiveTime, Utc};
+use chrono::{Local, NaiveDate, NaiveDateTime, NaiveTime};
 
 use super::types::{ApiResponse, DayData, HourData};
 use crate::{
@@ -33,7 +33,7 @@ pub fn build_current(data: &ApiResponse) -> Result<CurrentWeather> {
 }
 
 pub fn build_hourly(data: &ApiResponse, count: usize) -> Result<Vec<HourlyForecast>> {
-    let now = Utc::now();
+    let now = Local::now().naive_local();
     let mut forecasts = Vec::with_capacity(count);
     let mut collected = 0;
 
@@ -46,7 +46,7 @@ pub fn build_hourly(data: &ApiResponse, count: usize) -> Result<Vec<HourlyForeca
             }
 
             let time = parse_time(&hour.datetime)?;
-            let datetime = date.and_time(time).and_utc();
+            let datetime = date.and_time(time);
 
             if datetime < now {
                 continue;
@@ -71,7 +71,7 @@ pub fn build_hourly(data: &ApiResponse, count: usize) -> Result<Vec<HourlyForeca
 
 fn build_hourly_forecast(
     hour: &HourData,
-    datetime: DateTime<Utc>,
+    datetime: NaiveDateTime,
     sunrise: &str,
     sunset: &str,
 ) -> Result<HourlyForecast> {
@@ -132,13 +132,13 @@ fn build_daily_forecast(day_data: &DayData) -> Result<DailyForecast> {
 }
 
 fn parse_date(s: &str) -> Result<NaiveDate> {
-    NaiveDate::parse_from_str(s, "%Y-%m-%d").map_err(|e| Error::parse(PROVIDER, e.to_string()))
+    NaiveDate::parse_from_str(s, "%Y-%m-%d").map_err(|err| Error::parse(PROVIDER, err.to_string()))
 }
 
 fn parse_time(s: &str) -> Result<NaiveTime> {
     NaiveTime::parse_from_str(s, "%H:%M:%S")
         .or_else(|_| NaiveTime::parse_from_str(s, "%H:%M"))
-        .map_err(|e| Error::parse(PROVIDER, e.to_string()))
+        .map_err(|err| Error::parse(PROVIDER, err.to_string()))
 }
 
 fn temperature(celsius: f64) -> Result<Temperature> {

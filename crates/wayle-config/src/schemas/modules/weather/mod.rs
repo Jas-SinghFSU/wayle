@@ -5,7 +5,10 @@ use wayle_derive::wayle_config;
 
 use crate::{
     docs::{ModuleInfo, ModuleInfoProvider},
-    schemas::styling::{ColorValue, CssToken},
+    schemas::{
+        modules::TimeFormat,
+        styling::{ColorValue, CssToken},
+    },
 };
 
 /// Weather module configuration.
@@ -44,6 +47,11 @@ pub struct WeatherConfig {
     /// - `"{{ temp }}{{ temp_unit }} H:{{ high }} L:{{ low }}"` - "22°C H:25 L:18"
     #[default(String::from("{{ temp }}{{ temp_unit }}"))]
     pub format: ConfigProperty<String>,
+
+    /// Time display format for sunrise/sunset and hourly forecast.
+    #[serde(rename = "time-format")]
+    #[default(TimeFormat::default())]
+    pub time_format: ConfigProperty<TimeFormat>,
 
     /// Polling interval in seconds.
     #[serde(rename = "refresh-interval-seconds")]
@@ -114,7 +122,7 @@ pub struct WeatherConfig {
 
     /// Action on left click.
     #[serde(rename = "left-click")]
-    #[default(ClickAction::None)]
+    #[default(ClickAction::Dropdown(String::from("weather")))]
     pub left_click: ConfigProperty<ClickAction>,
 
     /// Action on right click.

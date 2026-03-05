@@ -7,8 +7,10 @@ use wayle_common::Property;
 
 use crate::{
     error::{Error, error_chain},
+    geocoding,
     model::{LocationQuery, Weather, WeatherProviderKind},
     provider::{ProviderConfig, create_provider},
+    service::{WeatherErrorKind, WeatherStatus},
 };
 
 const MAX_RETRIES: u32 = 3;
@@ -26,9 +28,11 @@ pub(crate) struct PollingConfig {
 pub(crate) fn spawn(
     token: CancellationToken,
     weather: Property<Option<Arc<Weather>>>,
+    status: Property<WeatherStatus>,
     config: PollingConfig,
 ) {
     tokio::spawn(async move {
+        let client = reqwest::Client::new();
         let mut ticker = interval(config.poll_interval);
         let mut first_tick = true;
 
@@ -44,7 +48,10 @@ pub(crate) fn spawn(
                     }
                     first_tick = false;
 
-                    fetch_with_retry(&token, &weather, &config).await;
+                    match fetch_with_retry(&client, &token, &weather, &config).await {
+                        Ok(()) => status.set(WeatherStatus::Loaded),
+                        Err(kind) => status.set(WeatherStatus::Error(kind)),
+                    }
                 }
             }
         }
@@ -52,39 +59,47 @@ pub(crate) fn spawn(
 }
 
 async fn fetch_with_retry(
+    client: &reqwest::Client,
     token: &CancellationToken,
     weather: &Property<Option<Arc<Weather>>>,
     config: &PollingConfig,
-) {
-    let provider = match create_provider(ProviderConfig {
+) -> Result<(), WeatherErrorKind> {
+    let resolved = geocoding::resolve(client, &config.location)
+        .await
+        .map_err(|err| {
+            warn!(error = %error_chain(&err), "cannot resolve location");
+            WeatherErrorKind::from(&err)
+        })?;
+
+    let provider = create_provider(ProviderConfig {
         kind: config.kind,
         visual_crossing_key: config.visual_crossing_key.as_deref(),
         weatherapi_key: config.weatherapi_key.as_deref(),
-    }) {
-        Ok(p) => p,
-        Err(err) => {
-            warn!(error = %error_chain(&err), "cannot create weather provider");
-            return;
-        }
-    };
+    })
+    .map_err(|err| {
+        warn!(error = %error_chain(&err), "cannot create weather provider");
+        WeatherErrorKind::from(&err)
+    })?;
 
     for attempt in 1..=MAX_RETRIES {
-        match provider.fetch(&config.location).await {
+        match provider.fetch(&config.location, &resolved).await {
             Ok(data) => {
                 on_fetch_success(weather, data);
-                return;
+                return Ok(());
             }
             Err(err) if err.is_retryable() && attempt < MAX_RETRIES => {
                 if wait_before_retry(token, &err, attempt).await.is_err() {
-                    return;
+                    return Err(WeatherErrorKind::from(&err));
                 }
             }
             Err(err) => {
                 warn!(error = %error_chain(&err), "cannot fetch weather data");
-                return;
+                return Err(WeatherErrorKind::from(&err));
             }
         }
     }
+
+    unreachable!("retry loop always returns")
 }
 
 fn on_fetch_success(weather: &Property<Option<Arc<Weather>>>, data: Weather) {
