@@ -17,7 +17,7 @@ use crate::infrastructure::themes::Palette;
 #[wayle_config]
 pub struct StylingConfig {
     /// Scale multiplier for dropdowns, popovers, and dialogs.
-    #[default(ScaleFactor::new(1.0))]
+    #[default(ScaleFactor::new(1.01))]
     pub scale: ConfigProperty<ScaleFactor>,
 
     /// Corner rounding for dropdowns, popovers, and dialogs.

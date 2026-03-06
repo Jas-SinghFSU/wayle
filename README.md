@@ -137,6 +137,15 @@ wayle config set bar.location bottom
 wayle config reset bar.scale
 ```
 
+Once the project is finished, documentation will be added for all configurable
+properties, in addition to having a settings GUI. Until then you can run the
+following command to generate a reference config `config.toml.example` in your
+config directory:
+
+```bash
+wayle config default
+```
+
 Editor intellisense is available via JSON Schema. Install
 [Tombi](https://marketplace.visualstudio.com/items?itemName=tombi-toml.tombi)
 for VSCode or the `tombi` LSP for Neovim. The schema is generated automatically
