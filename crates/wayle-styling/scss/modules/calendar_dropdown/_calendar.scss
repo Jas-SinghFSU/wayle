@@ -1,0 +1,106 @@
+.cal-section {
+    border-top: 1px solid var(--border-default);
+}
+
+.cal-header {
+    margin: var(--space-sm) 0;
+    padding: 0 var(--space-xs);
+    border-spacing: 0;
+}
+
+label.cal-month {
+    font-size: var(--text-md);
+    font-weight: var(--weight-bold);
+    color: var(--fg-default);
+}
+
+.cal-nav {
+    border-spacing: var(--space-xs);
+}
+
+button.cal-nav-btn {
+    all: unset;
+    min-width: var(--space-xl);
+    min-height: var(--space-xl);
+    border-radius: var(--rounding-element);
+    color: var(--fg-muted);
+
+    &:hover {
+        background: var(--bg-overlay);
+        color: var(--fg-default);
+    }
+
+    image {
+        -gtk-icon-size: var(--space-md);
+    }
+
+    &.cal-today-btn {
+        font-size: var(--text-md);
+        font-weight: var(--weight-medium);
+        padding: 0 var(--space-md);
+        min-width: 0;
+    }
+}
+
+.cal-grid-wrap {
+    background: var(--bg-elevated);
+    border-radius: var(--rounding-element);
+    padding: var(--space-sm);
+
+    grid {
+        border-spacing: var(--space-xs);
+    }
+}
+
+label.cal-weekday {
+    padding: var(--space-md) 0;
+    font-size: var(--text-lg);
+    color: var(--fg-subtle);
+    font-weight: var(--weight-semibold);
+
+    &.weekend {
+        color: var(--accent);
+        opacity: 0.75;
+    }
+}
+
+label.cal-day {
+    padding: calc(var(--space-sm) * 1.15) var(--space-md);
+    font-size: var(--text-lg);
+    font-weight: var(--weight-semibold);
+    color: var(--fg-muted);
+    border-radius: var(--rounding-element);
+
+    &:hover {
+        background: var(--bg-overlay);
+        color: var(--fg-default);
+    }
+
+    &.other {
+        color: var(--bg-active);
+
+        &:hover {
+            color: var(--fg-subtle);
+        }
+    }
+
+    &.weekend:not(.other):not(.today) {
+        color: color-mix(in srgb, var(--accent) 50%, var(--fg-muted));
+    }
+
+    &.today {
+        background: var(--accent);
+        color: var(--fg-on-accent);
+        font-weight: var(--weight-semibold);
+
+        &:hover {
+            background: var(--accent-hover);
+        }
+    }
+
+    &.selected:not(.today) {
+        background: var(--bg-selected);
+        color: var(--accent);
+        font-weight: var(--weight-medium);
+    }
+}

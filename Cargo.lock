@@ -4728,6 +4728,7 @@ dependencies = [
 name = "wayle-widgets"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "futures",
  "glib",
  "gtk4",

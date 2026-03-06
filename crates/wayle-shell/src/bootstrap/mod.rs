@@ -6,7 +6,7 @@ mod weather;
 use std::{error::Error, fmt::Display, sync::Arc, time::Duration};
 
 use tokio::task::JoinHandle;
-use tracing::warn;
+use tracing::{debug, warn};
 use wayle_audio::AudioService;
 use wayle_battery::BatteryService;
 use wayle_bluetooth::BluetoothService;
@@ -78,6 +78,8 @@ struct OptionalServices {
 }
 
 pub async fn is_already_running() -> bool {
+    let start = std::time::Instant::now();
+
     let Ok(connection) = Connection::session().await else {
         return false;
     };
@@ -90,7 +92,12 @@ pub async fn is_already_running() -> bool {
         return false;
     };
 
-    dbus.name_has_owner(name).await.unwrap_or(false)
+    let result = dbus.name_has_owner(name).await.unwrap_or(false);
+    debug!(
+        duration_ms = start.elapsed().as_millis() as u64,
+        "DBus instance check"
+    );
+    result
 }
 
 pub async fn init_services() -> Result<(StartupTimer, ShellServices), Box<dyn Error>> {

@@ -86,7 +86,7 @@ pub struct ClockConfig {
 
     /// Action on left click.
     #[serde(rename = "left-click")]
-    #[default(ClickAction::None)]
+    #[default(ClickAction::Dropdown(String::from("calendar")))]
     pub left_click: ConfigProperty<ClickAction>,
 
     /// Action on right click.

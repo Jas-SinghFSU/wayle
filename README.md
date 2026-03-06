@@ -77,9 +77,9 @@ experience. A successor to HyprPanel without the pain or dependency on Hyprland.
 - [x] **Battery Panel**
 - [x] **Media Panel**
 - [x] **Weather Panel**
-- [ ] **Calendar Panel (WIP)**
-- [ ] **Dashboard**
-- [ ] **Notifications Panel**
+- [x] **Calendar Panel**
+- [ ] **Dashboard (WIP)**
+- [ ] **Notifications Panel (Done after notifications)**
 
 ### Additional Features
 

@@ -27,6 +27,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
 
     tracing_init::init()?;
+    info!("Wayle shell starting");
 
     let runtime = Runtime::new()?;
     let _guard = runtime.enter();
@@ -37,6 +38,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
 
     let (timer, services) = runtime.block_on(bootstrap::init_services())?;
+    info!("Services initialized");
 
     let app = RelmApp::new("com.wayle.shell").visible_on_activate(false);
     app.run::<Shell>(ShellInit { timer, services });
