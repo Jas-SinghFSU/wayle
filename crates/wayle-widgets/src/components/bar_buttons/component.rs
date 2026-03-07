@@ -89,7 +89,6 @@ impl Component for BarButton {
             set_always_show_arrow: false,
             set_cursor_from_name: Some("pointer"),
 
-            #[watch]
             set_css_classes: &model.css_classes(),
 
             #[watch]
@@ -190,6 +189,7 @@ impl Component for BarButton {
         root.style_context()
             .add_provider(&model.css_provider, gtk::STYLE_PROVIDER_PRIORITY_USER);
         model.reload_css();
+        model.apply_css_classes(&root);
 
         let widgets = view_output!();
 
@@ -213,7 +213,7 @@ impl Component for BarButton {
             BarButtonInput::SetLabel(label) => {
                 if self.size_frozen {
                     self.pending_label = Some(label);
-                } else {
+                } else if self.label != label {
                     self.label = label;
                 }
             }
@@ -241,18 +241,25 @@ impl Component for BarButton {
             BarButtonCmd::VariantChanged(variant) => {
                 self.variant = variant;
                 self.reload_css();
+                self.apply_css_classes(root);
             }
             BarButtonCmd::IconPositionChanged(position) => {
                 Self::reorder_children(root, position);
+                self.apply_css_classes(root);
             }
             BarButtonCmd::ConfigChanged => {
                 self.reload_css();
+                self.apply_css_classes(root);
                 force_window_resize(root);
             }
         }
     }
 }
 impl BarButton {
+    fn apply_css_classes(&self, root: &gtk::MenuButton) {
+        root.set_css_classes(&self.css_classes());
+    }
+
     fn css_classes(&self) -> Vec<&'static str> {
         let mut classes = vec![BarButtonClass::BASE];
 

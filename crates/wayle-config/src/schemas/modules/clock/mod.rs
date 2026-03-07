@@ -31,7 +31,7 @@ pub struct ClockConfig {
     /// - `"%H:%M"` - "14:30"
     /// - `"%I:%M %p"` - "02:30 PM"
     /// - `"%a %b %d %I:%M %p"` - "Mon Jan 15 02:30 PM"
-    #[default(String::from("%a %b %d %I:%M:%S %p"))]
+    #[default(String::from("%a %b %d %I:%M %p"))]
     pub format: ConfigProperty<String>,
 
     /// Symbolic icon name.
