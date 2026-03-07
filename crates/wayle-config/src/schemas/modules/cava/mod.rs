@@ -4,7 +4,7 @@ mod types;
 
 use schemars::schema_for;
 pub use types::{BarCount, CavaDirection, CavaInput, CavaStyle, Framerate, FrequencyHz};
-use wayle_common::ConfigProperty;
+use wayle_common::{ConfigProperty, process::ClickAction};
 use wayle_derive::wayle_config;
 
 use crate::{
@@ -99,6 +99,31 @@ pub struct CavaConfig {
     #[serde(rename = "border-color")]
     #[default(ColorValue::Token(CssToken::BorderAccent))]
     pub border_color: ConfigProperty<ColorValue>,
+
+    /// Action on left click.
+    #[serde(rename = "left-click")]
+    #[default(ClickAction::None)]
+    pub left_click: ConfigProperty<ClickAction>,
+
+    /// Action on right click.
+    #[serde(rename = "right-click")]
+    #[default(ClickAction::None)]
+    pub right_click: ConfigProperty<ClickAction>,
+
+    /// Action on middle click.
+    #[serde(rename = "middle-click")]
+    #[default(ClickAction::None)]
+    pub middle_click: ConfigProperty<ClickAction>,
+
+    /// Action on scroll up.
+    #[serde(rename = "scroll-up")]
+    #[default(ClickAction::None)]
+    pub scroll_up: ConfigProperty<ClickAction>,
+
+    /// Action on scroll down.
+    #[serde(rename = "scroll-down")]
+    #[default(ClickAction::None)]
+    pub scroll_down: ConfigProperty<ClickAction>,
 }
 
 impl ModuleInfoProvider for CavaConfig {

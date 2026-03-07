@@ -65,6 +65,30 @@ impl DropdownInstance {
         }
     }
 
+    /// Toggles popover visibility anchored to an arbitrary widget.
+    ///
+    /// Unlike `toggle_for`, this does not freeze/thaw a `BarButton` or lock
+    /// parent size.
+    fn toggle_for_widget(&self, widget: &impl IsA<gtk::Widget>, style: DropdownStyle) {
+        let widget_ref = widget.upcast_ref::<gtk::Widget>();
+        let same_parent = self.popover.parent().as_ref() == Some(widget_ref);
+
+        if self.popover.is_visible() && same_parent {
+            self.popover.popdown();
+            return;
+        }
+
+        self.ensure_parent(widget_ref);
+        self.show_for_widget(style);
+    }
+
+    fn show_for_widget(&self, style: DropdownStyle) {
+        self.apply_position();
+        self.apply_margins(style.margins);
+        self.apply_style(&style);
+        self.popover.popup();
+    }
+
     fn reparent_and_show(&self, bar_button: &Controller<BarButton>, style: DropdownStyle) {
         if let Some(sender) = self.thaw_target.take() {
             sender.emit(BarButtonInput::ThawSize);
@@ -292,22 +316,47 @@ pub(crate) fn dispatch_click(
     registry: &DropdownRegistry,
     bar_button: &Controller<BarButton>,
 ) {
+    dispatch_action(action, registry, |dropdown, style| {
+        dropdown.toggle_for(bar_button, style);
+    });
+}
+
+/// Dispatches a click action anchored to an arbitrary widget instead of a `BarButton`.
+pub(crate) fn dispatch_click_widget(
+    action: &ClickAction,
+    registry: &DropdownRegistry,
+    widget: &impl IsA<gtk::Widget>,
+) {
+    dispatch_action(action, registry, |dropdown, style| {
+        dropdown.toggle_for_widget(widget, style);
+    });
+}
+
+fn dispatch_action(
+    action: &ClickAction,
+    registry: &DropdownRegistry,
+    toggle: impl FnOnce(&DropdownInstance, DropdownStyle),
+) {
     match action {
         ClickAction::Dropdown(name) => {
             if let Some(dropdown) = registry.get_or_create(name) {
-                let config = registry.services.config.config();
-                let bar = &config.bar;
-                let scale = bar.scale.get().value();
-                let style = DropdownStyle {
-                    margins: DropdownMargins::new(scale, bar.location.get()),
-                    opacity: f64::from(bar.dropdown_opacity.get().value()) / 100.0,
-                    shadow_enabled: bar.dropdown_shadow.get(),
-                    autohide: bar.dropdown_autohide.get(),
-                };
-                dropdown.toggle_for(bar_button, style);
+                let style = dropdown_style(registry);
+                toggle(&dropdown, style);
             }
         }
         ClickAction::Shell(cmd) => process::run_if_set(cmd),
         ClickAction::None => {}
+    }
+}
+
+fn dropdown_style(registry: &DropdownRegistry) -> DropdownStyle {
+    let config = registry.services.config.config();
+    let bar = &config.bar;
+    let scale = bar.scale.get().value();
+    DropdownStyle {
+        margins: DropdownMargins::new(scale, bar.location.get()),
+        opacity: f64::from(bar.dropdown_opacity.get().value()) / 100.0,
+        shadow_enabled: bar.dropdown_shadow.get(),
+        autohide: bar.dropdown_autohide.get(),
     }
 }

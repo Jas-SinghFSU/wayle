@@ -11,4 +11,5 @@ pub(crate) enum CalendarDropdownCmd {
     ScaleChanged(f32),
     TimeTick,
     FormatChanged(bool),
+    ShowSecondsChanged(bool),
 }

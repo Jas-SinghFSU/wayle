@@ -24,6 +24,7 @@ pub(crate) struct CalendarDropdown {
     calendar: Controller<Calendar>,
     scaled_width: i32,
     use_12h: bool,
+    show_seconds: bool,
     last_today: NaiveDate,
 
     day_names: [String; 7],
@@ -31,6 +32,7 @@ pub(crate) struct CalendarDropdown {
 
     hours: String,
     minutes: String,
+    seconds: String,
     ampm: String,
     day_name: String,
     date_rest: String,
@@ -74,8 +76,13 @@ impl Component for CalendarDropdown {
                         set_orientation: gtk::Orientation::Vertical,
 
                         gtk::Box {
-                            add_css_class: "clock-time-row",
                             set_halign: gtk::Align::Center,
+                            #[watch]
+                            set_css_classes: if model.show_seconds {
+                                &["clock-time-row", "show-seconds"]
+                            } else {
+                                &["clock-time-row"]
+                            },
 
                             gtk::Label {
                                 add_css_class: "clock-time",
@@ -92,6 +99,21 @@ impl Component for CalendarDropdown {
                                 add_css_class: "clock-time",
                                 #[watch]
                                 set_label: &model.minutes,
+                            },
+
+                            gtk::Label {
+                                set_css_classes: &["clock-time", "clock-separator"],
+                                set_label: ":",
+                                #[watch]
+                                set_visible: model.show_seconds,
+                            },
+
+                            gtk::Label {
+                                add_css_class: "clock-time",
+                                #[watch]
+                                set_label: &model.seconds,
+                                #[watch]
+                                set_visible: model.show_seconds,
                             },
 
                             gtk::Label {
@@ -134,8 +156,10 @@ impl Component for CalendarDropdown {
     ) -> ComponentParts<Self> {
         let now = Local::now();
         let today = now.date_naive();
-        let format_str = init.config.config().modules.clock.format.get();
+        let clock_config = &init.config.config().modules.clock;
+        let format_str = clock_config.format.get();
         let use_12h = helpers::is_12h_format(&format_str);
+        let show_seconds = clock_config.dropdown_show_seconds.get();
 
         let months = months_array();
 
@@ -162,9 +186,11 @@ impl Component for CalendarDropdown {
             calendar,
             scaled_width: scaled_dimension(BASE_WIDTH, scale),
             use_12h,
+            show_seconds,
             last_today: today,
             hours: helpers::hours_text(&now, use_12h),
             minutes: helpers::minutes_text(&now),
+            seconds: helpers::seconds_text(&now),
             ampm: helpers::ampm_text(&now),
             day_name: day_names[weekday_idx].clone(),
             date_rest: format_date_rest(&months, &now),
@@ -193,6 +219,7 @@ impl Component for CalendarDropdown {
 
                 self.hours = helpers::hours_text(&now, self.use_12h);
                 self.minutes = helpers::minutes_text(&now);
+                self.seconds = helpers::seconds_text(&now);
                 self.ampm = helpers::ampm_text(&now);
 
                 let weekday_idx = now.weekday().num_days_from_sunday() as usize;
@@ -210,6 +237,10 @@ impl Component for CalendarDropdown {
                 let now = Local::now();
                 self.use_12h = use_12h;
                 self.hours = helpers::hours_text(&now, use_12h);
+            }
+
+            CalendarDropdownCmd::ShowSecondsChanged(show) => {
+                self.show_seconds = show;
             }
         }
     }

@@ -18,6 +18,10 @@ pub(super) fn minutes_text(now: &DateTime<Local>) -> String {
     now.format("%M").to_string()
 }
 
+pub(super) fn seconds_text(now: &DateTime<Local>) -> String {
+    now.format("%S").to_string()
+}
+
 pub(super) fn ampm_text(now: &DateTime<Local>) -> String {
     now.format("%p").to_string()
 }

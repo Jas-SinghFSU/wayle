@@ -108,6 +108,11 @@ pub struct ClockConfig {
     #[serde(rename = "scroll-down")]
     #[default(ClickAction::None)]
     pub scroll_down: ConfigProperty<ClickAction>,
+
+    /// Show seconds in the calendar dropdown clock display.
+    #[serde(rename = "dropdown-show-seconds")]
+    #[default(false)]
+    pub dropdown_show_seconds: ConfigProperty<bool>,
 }
 
 impl ModuleInfoProvider for ClockConfig {

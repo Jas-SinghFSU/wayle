@@ -12,6 +12,7 @@ pub(super) fn spawn(sender: &ComponentSender<CalendarDropdown>, config: &Arc<Con
     spawn_scale_watcher(sender, config);
     spawn_time_tick(sender);
     spawn_format_watcher(sender, config);
+    spawn_show_seconds_watcher(sender, config);
 }
 
 fn spawn_scale_watcher(sender: &ComponentSender<CalendarDropdown>, config: &Arc<ConfigService>) {
@@ -44,5 +45,16 @@ fn spawn_format_watcher(sender: &ComponentSender<CalendarDropdown>, config: &Arc
     watch!(sender, [format_prop.watch()], |out| {
         let use_12h = helpers::is_12h_format(&format_prop.get());
         let _ = out.send(CalendarDropdownCmd::FormatChanged(use_12h));
+    });
+}
+
+fn spawn_show_seconds_watcher(
+    sender: &ComponentSender<CalendarDropdown>,
+    config: &Arc<ConfigService>,
+) {
+    let show_seconds = config.config().modules.clock.dropdown_show_seconds.clone();
+
+    watch!(sender, [show_seconds.watch()], |out| {
+        let _ = out.send(CalendarDropdownCmd::ShowSecondsChanged(show_seconds.get()));
     });
 }

@@ -4,6 +4,7 @@
 
 .clock-time-row {
     border-spacing: var(--space-xs);
+    margin-left: calc(var(--space-xl) + var(--space-sm));
 }
 
 label.clock-time {
@@ -13,6 +14,10 @@ label.clock-time {
 
 label.clock-separator {
     animation: blink 1s ease-in-out infinite;
+}
+
+.show-seconds label.clock-separator {
+    animation: none;
 }
 
 @keyframes blink {

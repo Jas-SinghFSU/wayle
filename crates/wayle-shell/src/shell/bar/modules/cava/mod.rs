@@ -6,7 +6,7 @@ mod watchers;
 
 use std::{cell::Cell, rc::Rc, sync::Arc};
 
-use gtk::prelude::*;
+use gtk::{glib::Propagation, prelude::*};
 use relm4::prelude::*;
 use tracing::{error, info};
 use wayle_cava::CavaService;
@@ -16,10 +16,12 @@ use wayle_widgets::prelude::{
     BarContainer, BarContainerBehavior, BarContainerColors, BarContainerInit,
 };
 
+use self::messages::CavaMsg;
 pub(crate) use self::{
     factory::Factory,
     messages::{CavaCmd, CavaInit},
 };
+use crate::shell::bar::dropdowns::{DropdownRegistry, dispatch_click_widget};
 
 /// Audio frequency visualizer rendered via cairo on a `DrawingArea`.
 pub(crate) struct CavaModule {
@@ -30,30 +32,36 @@ pub(crate) struct CavaModule {
     is_vertical: bool,
     cava: Option<Arc<CavaService>>,
     config: Arc<ConfigService>,
+    dropdowns: Rc<DropdownRegistry>,
+    container_widget: gtk::Box,
 }
 
 #[relm4::component(pub(crate))]
 impl Component for CavaModule {
     type Init = CavaInit;
-    type Input = ();
+    type Input = CavaMsg;
     type Output = ();
     type CommandOutput = CavaCmd;
 
     view! {
+        #[root]
         gtk::Box {
             add_css_class: "cava",
+            set_cursor_from_name: Some("pointer"),
 
             #[local_ref]
             container -> gtk::Box {
                 #[local_ref]
-                drawing_area -> gtk::DrawingArea {},
+                drawing_area -> gtk::DrawingArea {
+                    set_cursor_from_name: Some("pointer"),
+                },
             },
         }
     }
 
     fn init(
         init: Self::Init,
-        _root: Self::Root,
+        root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
         let is_vertical = init.settings.is_vertical.get();
@@ -120,6 +128,10 @@ impl Component for CavaModule {
             &init.wallpaper,
         );
 
+        let scroll_sensitivity = init.settings.scroll_sensitivity;
+        Self::attach_click_gesture(&root, &sender);
+        Self::attach_scroll_controller(&root, &sender, scroll_sensitivity);
+
         let model = Self {
             container,
             drawing_area: drawing_area.clone(),
@@ -128,12 +140,26 @@ impl Component for CavaModule {
             is_vertical,
             cava: None,
             config: init.config.clone(),
+            dropdowns: init.dropdowns,
+            container_widget: root.clone(),
         };
         let container = model.container.widget();
         let drawing_area = &model.drawing_area;
         let widgets = view_output!();
 
         ComponentParts { model, widgets }
+    }
+
+    fn update(&mut self, msg: CavaMsg, _sender: ComponentSender<Self>, _root: &Self::Root) {
+        let cava_config = &self.config.config().modules.cava;
+        let action = match msg {
+            CavaMsg::LeftClick => cava_config.left_click.get(),
+            CavaMsg::RightClick => cava_config.right_click.get(),
+            CavaMsg::MiddleClick => cava_config.middle_click.get(),
+            CavaMsg::ScrollUp => cava_config.scroll_up.get(),
+            CavaMsg::ScrollDown => cava_config.scroll_down.get(),
+        };
+        dispatch_click_widget(&action, &self.dropdowns, &self.container_widget);
     }
 
     fn update_cmd(&mut self, msg: CavaCmd, sender: ComponentSender<Self>, _root: &Self::Root) {
@@ -198,6 +224,49 @@ impl Component for CavaModule {
 }
 
 impl CavaModule {
+    fn attach_click_gesture(widget: &gtk::Box, sender: &ComponentSender<Self>) {
+        let click = gtk::GestureClick::new();
+        click.set_button(0);
+
+        let input_sender = sender.input_sender().clone();
+        click.connect_pressed(move |gesture, _n_press, _x, _y| {
+            let msg = match gesture.current_button() {
+                1 => CavaMsg::LeftClick,
+                2 => CavaMsg::MiddleClick,
+                3 => CavaMsg::RightClick,
+                _ => return,
+            };
+            input_sender.emit(msg);
+        });
+
+        widget.add_controller(click);
+    }
+
+    fn attach_scroll_controller(
+        widget: &gtk::Box,
+        sender: &ComponentSender<Self>,
+        sensitivity: f64,
+    ) {
+        let scroll = gtk::EventControllerScroll::new(gtk::EventControllerScrollFlags::VERTICAL);
+        let threshold = 0.5 / sensitivity.max(0.1);
+
+        let input_sender = sender.input_sender().clone();
+        scroll.connect_scroll(move |_controller, _dx, dy| {
+            if dy.abs() < threshold {
+                return Propagation::Proceed;
+            }
+            let msg = if dy < 0.0 {
+                CavaMsg::ScrollUp
+            } else {
+                CavaMsg::ScrollDown
+            };
+            input_sender.emit(msg);
+            Propagation::Stop
+        });
+
+        widget.add_controller(scroll);
+    }
+
     fn setup_draw_func(
         drawing_area: &gtk::DrawingArea,
         frame_data: &Rc<Cell<Vec<f64>>>,
