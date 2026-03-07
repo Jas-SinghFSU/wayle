@@ -106,30 +106,46 @@ impl NMMetered {
     }
 }
 
-/// Type of network connection currently active.
+/// Primary network connection type as reported by NetworkManager's
+/// `PrimaryConnectionType` D-Bus property.
 ///
-/// Tracks which interface type is providing the primary
-/// network connectivity.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// Uncommon types are passed through via Other(string)
+///
+/// Reference: https://gitlab.freedesktop.org/NetworkManager/NetworkManager/-/tree/main/src/libnm-core-public?ref_type=heads
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[non_exhaustive]
 pub enum ConnectionType {
-    /// Connection type cannot be determined or no connection is active.
-    Unknown,
-    /// Primary connectivity is through an ethernet/wired interface.
-    Wired,
-    /// Primary connectivity is through a WiFi interface.
+    /// No active primary connection (NM returns `""`).
+    None,
+    /// Primary connectivity is through a WiFi interface (`"802-11-wireless"`).
     Wifi,
+    /// Primary connectivity is through an ethernet interface (`"802-3-ethernet"`).
+    Wired,
+    /// Primary connectivity is through a VPN tunnel (`"vpn"`).
+    Vpn,
+    /// Primary connectivity is through WireGuard (`"wireguard"`).
+    WireGuard,
+    /// Primary connectivity is through Bluetooth (`"bluetooth"`).
+    Bluetooth,
+    /// An NM connection type without a dedicated variant.
+    Other(String),
 }
 
 impl ConnectionType {
-    /// Parses a NetworkManager connection type string into a [`ConnectionType`].
+    /// Parses a NetworkManager `PrimaryConnectionType` string.
     ///
-    /// Recognizes `"802-11-wireless"` and `"802-3-ethernet"` as returned by
-    /// the `PrimaryConnectionType` D-Bus property.
+    /// Empty strings (no connection) map to [`None`](Self::None).
+    /// Known desktop types map to their respective variants.
+    /// Everything else is preserved as [`Other`](Self::Other).
     pub fn from_nm_type(nm_type: &str) -> Self {
         match nm_type {
+            "" => Self::None,
             "802-11-wireless" => Self::Wifi,
             "802-3-ethernet" => Self::Wired,
-            _ => Self::Unknown,
+            "vpn" => Self::Vpn,
+            "wireguard" => Self::WireGuard,
+            "bluetooth" => Self::Bluetooth,
+            other => Self::Other(other.to_owned()),
         }
     }
 }

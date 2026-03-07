@@ -192,7 +192,12 @@ impl NetworkModule {
                     )
                 }
             }
-            ConnectionType::Unknown => {
+            ConnectionType::None => (
+                config.wifi_offline_icon.get().clone(),
+                t!("bar-network-offline"),
+            ),
+
+            _ => {
                 if let Some(wifi) = network.wifi.get() {
                     let ssid = wifi.ssid.get();
                     let ctx = WifiContext {
