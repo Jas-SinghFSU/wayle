@@ -5,7 +5,7 @@ use tokio_util::sync::CancellationToken;
 use tracing::{debug, warn};
 use wayle_common::Property;
 use wayle_traits::{Reactive, ServiceMonitoring};
-use zbus::{Connection, zvariant::OwnedObjectPath};
+use zbus::Connection;
 
 use super::{
     core::settings::Settings,
@@ -24,8 +24,6 @@ impl ServiceMonitoring for NetworkService {
     async fn start_monitoring(&self) -> Result<(), Self::Error> {
         spawn_primary_monitoring(
             self.zbus_connection.clone(),
-            self.wifi.clone(),
-            self.wired.clone(),
             self.primary.clone(),
             self.cancellation_token.child_token(),
         )
@@ -44,8 +42,6 @@ impl ServiceMonitoring for NetworkService {
 
 async fn spawn_primary_monitoring(
     connection: Connection,
-    wifi: Property<Option<Arc<Wifi>>>,
-    wired: Property<Option<Arc<Wired>>>,
     primary: Property<ConnectionType>,
     cancellation_token: CancellationToken,
 ) -> Result<(), Error> {
@@ -53,10 +49,10 @@ async fn spawn_primary_monitoring(
         .await
         .map_err(Error::DbusError)?;
 
-    let initial_primary = nm_proxy.primary_connection().await?;
-    update_primary_connection(&initial_primary, &wifi, &wired, &primary);
+    let initial_type = nm_proxy.primary_connection_type().await?;
+    update_primary_connection(&initial_type, &primary);
 
-    let mut primary_changed = nm_proxy.receive_primary_connection_changed().await;
+    let mut type_changed = nm_proxy.receive_primary_connection_type_changed().await;
 
     tokio::spawn(async move {
         loop {
@@ -65,10 +61,10 @@ async fn spawn_primary_monitoring(
                     debug!("NetworkMonitoring primary monitoring cancelled");
                     return;
                 }
-                Some(change) = primary_changed.next() => {
-                    if let Ok(new_primary) = change.get().await {
-                        debug!(path = %new_primary, "Primary connection changed");
-                        update_primary_connection(&new_primary, &wifi, &wired, &primary);
+                Some(change) = type_changed.next() => {
+                    if let Ok(nm_type) = change.get().await {
+                        debug!(nm_type = %nm_type, "Primary connection type changed");
+                        update_primary_connection(&nm_type, &primary);
                     }
                 }
             }
@@ -208,34 +204,8 @@ fn handle_wired_removed(device_path: &str, wired: &Property<Option<Arc<Wired>>>)
     }
 }
 
-fn update_primary_connection(
-    nm_primary: &OwnedObjectPath,
-    wifi: &Property<Option<Arc<Wifi>>>,
-    wired: &Property<Option<Arc<Wired>>>,
-    primary: &Property<ConnectionType>,
-) {
-    let nm_primary_str = nm_primary.as_str();
-
-    if nm_primary_str.is_empty() || nm_primary_str == "/" {
-        primary.set(ConnectionType::Unknown);
-        return;
-    }
-
-    if let Some(wifi_service) = wifi.get() {
-        let active_conn = wifi_service.device.core.active_connection.get();
-        if active_conn.as_str() == nm_primary_str {
-            primary.set(ConnectionType::Wifi);
-            return;
-        }
-    }
-
-    if let Some(wired_service) = wired.get() {
-        let active_conn = wired_service.device.core.active_connection.get();
-        if active_conn.as_str() == nm_primary_str {
-            primary.set(ConnectionType::Wired);
-            return;
-        }
-    }
-
-    primary.set(ConnectionType::Unknown);
+fn update_primary_connection(nm_type: &str, primary: &Property<ConnectionType>) {
+    let connection_type = ConnectionType::from_nm_type(nm_type);
+    debug!(?connection_type, "Primary connection type resolved");
+    primary.set(connection_type);
 }

@@ -119,3 +119,17 @@ pub enum ConnectionType {
     /// Primary connectivity is through a WiFi interface.
     Wifi,
 }
+
+impl ConnectionType {
+    /// Parses a NetworkManager connection type string into a [`ConnectionType`].
+    ///
+    /// Recognizes `"802-11-wireless"` and `"802-3-ethernet"` as returned by
+    /// the `PrimaryConnectionType` D-Bus property.
+    pub fn from_nm_type(nm_type: &str) -> Self {
+        match nm_type {
+            "802-11-wireless" => Self::Wifi,
+            "802-3-ethernet" => Self::Wired,
+            _ => Self::Unknown,
+        }
+    }
+}
