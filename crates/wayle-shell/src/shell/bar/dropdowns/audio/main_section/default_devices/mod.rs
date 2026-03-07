@@ -9,7 +9,6 @@ pub(super) use self::messages::*;
 use self::volume_section::{
     VolumeSection, VolumeSectionInit, VolumeSectionKind, VolumeSectionOutput,
 };
-use crate::i18n::t;
 
 pub(crate) struct DefaultDevices {
     has_output: bool,
@@ -27,6 +26,7 @@ impl SimpleComponent for DefaultDevices {
     view! {
         #[root]
         gtk::Box {
+            add_css_class: "audio-devices",
             set_orientation: gtk::Orientation::Vertical,
 
             #[local_ref]
@@ -46,7 +46,6 @@ impl SimpleComponent for DefaultDevices {
             .launch(VolumeSectionInit {
                 audio: init.audio.clone(),
                 kind: VolumeSectionKind::Output,
-                title: t!("dropdown-audio-output"),
             })
             .forward(sender.input_sender(), DefaultDevicesInput::OutputSection);
 
@@ -54,7 +53,6 @@ impl SimpleComponent for DefaultDevices {
             .launch(VolumeSectionInit {
                 audio: init.audio.clone(),
                 kind: VolumeSectionKind::Input,
-                title: t!("dropdown-audio-input"),
             })
             .forward(sender.input_sender(), DefaultDevicesInput::InputSection);
 

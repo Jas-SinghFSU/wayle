@@ -17,7 +17,6 @@ pub(crate) enum VolumeSectionKind {
 pub(crate) struct VolumeSectionInit {
     pub audio: Arc<wayle_audio::AudioService>,
     pub kind: VolumeSectionKind,
-    pub title: String,
 }
 
 #[derive(Debug)]

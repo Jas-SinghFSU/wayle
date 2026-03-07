@@ -1,6 +1,6 @@
 use gtk::{glib, pango, prelude::*};
 use relm4::{gtk, prelude::*};
-use wayle_widgets::prelude::{DebouncedSlider, GhostIconButton};
+use wayle_widgets::prelude::DebouncedSlider;
 
 use crate::shell::bar::dropdowns::audio::helpers;
 
@@ -45,6 +45,8 @@ impl FactoryComponent for AppVolumeItem {
         gtk::Box {
             add_css_class: "audio-app-item",
             set_orientation: gtk::Orientation::Vertical,
+            #[watch]
+            set_class_active: ("audio-muted", self.muted),
 
             gtk::Box {
                 add_css_class: "audio-app-header",
@@ -54,6 +56,7 @@ impl FactoryComponent for AppVolumeItem {
                     set_valign: gtk::Align::Center,
 
                     gtk::Image {
+                        add_css_class: "audio-app-icon-img",
                         #[watch]
                         set_icon_name: Some(self.icon.as_deref().unwrap_or("ld-app-window-symbolic")),
                     },
@@ -67,18 +70,31 @@ impl FactoryComponent for AppVolumeItem {
                     #[watch]
                     set_label: &self.name,
                 },
+
+                gtk::Label {
+                    add_css_class: "audio-app-value",
+                    #[watch]
+                    set_label: &format!("{:.0}%", self.slider.value()),
+                },
+
+                gtk::Button {
+                    add_css_class: "audio-mute-btn",
+                    set_valign: gtk::Align::Center,
+                    set_cursor_from_name: Some("pointer"),
+                    #[watch]
+                    set_class_active: ("muted", self.muted),
+                    connect_clicked => AppVolumeItemMsg::ToggleMute,
+
+                    gtk::Image {
+                        add_css_class: "audio-mute-icon",
+                        #[watch]
+                        set_icon_name: Some(helpers::volume_icon(self.slider.value(), self.muted)),
+                    },
+                },
             },
 
             gtk::Box {
-                add_css_class: "audio-app-controls",
-
-                #[template]
-                GhostIconButton {
-                    add_css_class: "audio-app-mute",
-                    #[watch]
-                    set_icon_name: helpers::volume_icon(self.slider.value(), self.muted),
-                    connect_clicked => AppVolumeItemMsg::ToggleMute,
-                },
+                add_css_class: "audio-app-slider",
 
                 #[local_ref]
                 slider_widget -> gtk::Box {},
@@ -92,7 +108,7 @@ impl FactoryComponent for AppVolumeItem {
             icon: init.icon,
             muted: init.muted,
             stream_index: init.stream_index,
-            slider: DebouncedSlider::with_label(init.volume),
+            slider: DebouncedSlider::new(init.volume),
         }
     }
 
@@ -104,10 +120,7 @@ impl FactoryComponent for AppVolumeItem {
         sender: FactorySender<Self>,
     ) -> Self::Widgets {
         if let Some(scale) = self.slider.scale() {
-            scale.add_css_class("audio-app-slider");
-        }
-        if let Some(label) = self.slider.label_widget() {
-            label.add_css_class("audio-app-value");
+            scale.add_css_class("audio-app-scale");
         }
 
         let commit_sender = sender.input_sender().clone();
