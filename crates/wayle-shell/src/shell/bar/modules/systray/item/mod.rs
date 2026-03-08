@@ -3,9 +3,9 @@ mod watchers;
 
 use std::sync::Arc;
 
-use gtk4::gio::SimpleActionGroup;
 #[allow(deprecated)]
 use gtk4::prelude::StyleContextExt;
+use gtk4::{gdk, gio::SimpleActionGroup};
 use helpers::{create_texture_from_pixmap, load_icon_from_theme_path, select_best_pixmap};
 use relm4::{
     gtk::{self, prelude::*},
@@ -349,6 +349,10 @@ impl SystrayItem {
                 .as_deref()
                 .and_then(|p| load_icon_from_theme_path(p, name))
             {
+                image.set_paintable(Some(&texture));
+                return;
+            }
+            if let Ok(texture) = gdk::Texture::from_filename(name) {
                 image.set_paintable(Some(&texture));
                 return;
             }
