@@ -187,7 +187,7 @@ wayle panel start
 ## Installation
 
 <details>
-    <summary> <h3> NixOS </h3> </summary>
+    <summary> <h3> NixOS - Flake </h3> </summary>
 
 For systems running NixOS, wayle is available to be used as home-manager module
 via a flake.
@@ -201,14 +201,17 @@ First, add wayle to your inputs in your `flake.nix` file:
     inputs = {
         # ...
         wayle = {
-          url = "github:Jas-SinghFSU/wayle";
-          inputs.nixpkgs.follows = "nixpkgs"; # Optional
+          url = "git+https://github.com/Jas-SinghFSU/wayle";
+          inputs.nixpkgs.follows = "nixpkgs-unstable"; # Optional (not tested on stable nixpkgs)
         };
         # ...
     };
     # ...
 }
 ```
+
+Note, you must use the path `git+https://github.com/...` since this project uses
+git submodules and the `github://...` path style does not support these.
 
 Then, still in your `flake.nix` file, add wayle as a module to your home manager
 config. How your home-manager is configured might be slightly different but in
@@ -333,6 +336,17 @@ without rebuilding your home-manager config everytime and to allow utilizing the
 This method allows you to configure wayle efficiently and benefit from its live
 config reloading and command line features, while still declaratively writing
 your config using nix.
+
+**CAUTION:** Home manager will automatically move any existing config to a
+`config.toml.hm-bak`, or similar, backup file name. This is expected, however,
+wayle will automatically create a _new_ `config.toml` file if you moved the
+symlink make by home-manager and didn't move it back. If this occurs,
+home-manager will try to move the new `config.toml` (non-symlink) file to
+`config.toml.hm-bak` (or similar) _again_ and fail because that back up file
+already exists. If you are rebuilding with nix, and it is failing, check if your
+`~/.config/wayle` directory contains these non-symlinked files and remove or
+re-backup them to a different file name. Home assistant seems to give very
+little to no feedback when this error occurs.
 
 </details>
 
