@@ -136,7 +136,7 @@ impl ActiveConnections {
                 return;
             };
 
-            for connection in network.settings.connections_for_ssid(&ssid).await {
+            for connection in network.settings.connections_for_ssid(&ssid) {
                 if let Err(err) = connection.delete().await {
                     warn!(error = %err, "failed to delete saved wifi profile");
                 }

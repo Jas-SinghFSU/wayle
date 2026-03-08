@@ -38,19 +38,19 @@ pub(super) fn spawn_settings_watcher(
 ) {
     let settings = settings.clone();
     watch_async!(sender, [settings.connections.watch()], |out| async {
-        let known_ssids = extract_known_ssids(&settings).await;
+        let known_ssids = extract_known_ssids(&settings);
         let _ = out.send(AvailableNetworksCmd::KnownSsidsUpdated(known_ssids));
     });
 }
 
-async fn extract_known_ssids(settings: &Settings) -> HashSet<String> {
-    let mut known = HashSet::new();
-    for connection in settings.connections.get() {
-        if let Some(ssid) = connection.wifi_ssid().await {
-            known.insert(ssid.to_string_lossy());
-        }
-    }
-    known
+fn extract_known_ssids(settings: &Settings) -> HashSet<String> {
+    settings
+        .connections
+        .get()
+        .into_iter()
+        .filter_map(|connection| connection.wifi_ssid.get())
+        .map(|ssid| ssid.to_string_lossy())
+        .collect()
 }
 
 pub(super) fn spawn_connection_watcher(

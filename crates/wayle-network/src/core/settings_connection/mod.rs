@@ -18,8 +18,9 @@ use zbus::{
 
 use super::access_point::types::Ssid;
 use crate::{
-    error::Error, proxy::settings::connection::SettingsConnectionProxy,
-    types::flags::NMConnectionSettingsFlags,
+    error::Error,
+    proxy::settings::connection::SettingsConnectionProxy,
+    types::{connectivity::ConnectionType, flags::NMConnectionSettingsFlags},
 };
 
 /// Connection Settings Profile.
@@ -31,13 +32,22 @@ pub struct ConnectionSettings {
     pub(crate) connection: Connection,
     #[debug(skip)]
     pub(crate) cancellation_token: Option<CancellationToken>,
-    /// D-Bus object path for this settings connection
+    /// D-Bus object path for this settings connection.
     pub object_path: OwnedObjectPath,
 
-    /// If set, indicates that the in-memory state of the connection does not
-    /// match the on-disk state. This flag will be set when UpdateUnsaved() is
-    /// called or when any connection details change, and cleared when the
-    /// connection is saved to disk via Save() or from internal operations.
+    /// Human-readable connection name (e.g. "Home WiFi", "Wired connection 1").
+    pub id: Property<String>,
+
+    /// Stable unique identifier for this connection profile.
+    pub uuid: Property<String>,
+
+    /// Network connection type.
+    pub connection_type: Property<ConnectionType>,
+
+    /// WiFi SSID, if this is a wireless connection.
+    pub wifi_ssid: Property<Option<Ssid>>,
+
+    /// Whether the in-memory state differs from the on-disk state.
     pub unsaved: Property<bool>,
 
     /// Additional flags of the connection profile.
@@ -78,10 +88,6 @@ impl PartialEq for ConnectionSettings {
 }
 
 impl ConnectionSettings {
-    /// Get a snapshot of the current settings connection state.
-    ///
-    /// Update the connection with new settings and properties.
-    ///
     /// Update the connection with new settings and properties (replacing all
     /// previous settings and properties) and save the connection to disk.
     /// Secrets may be part of the update request, and will be either stored
@@ -225,23 +231,12 @@ impl ConnectionSettings {
         .await
     }
 
-    /// Extracts the WiFi SSID from this connection profile, if it is a wireless connection.
-    ///
-    /// # Errors
-    ///
-    /// Returns `None` if this is not a wireless connection, or if the
-    /// D-Bus settings cannot be read.
-    pub async fn wifi_ssid(&self) -> Option<Ssid> {
-        let settings = self.get_settings().await.ok()?;
-        let wireless = settings.get("802-11-wireless")?;
-        let ssid_value = wireless.get("ssid")?;
-        let arr = ssid_value.downcast_ref::<zvariant::Array>().ok()?;
-        let bytes: Vec<u8> = arr.try_into().ok()?;
-        Some(Ssid::new(bytes))
-    }
-
-    pub(crate) async fn matches_ssid(&self, ssid: &Ssid) -> bool {
-        self.wifi_ssid().await.is_some_and(|stored| stored == *ssid)
+    /// Whether this is a wireless connection with the given SSID.
+    pub(crate) fn matches_ssid(&self, ssid: &Ssid) -> bool {
+        self.wifi_ssid
+            .get()
+            .as_ref()
+            .is_some_and(|stored| stored == ssid)
     }
 
     async fn from_path(
@@ -266,13 +261,29 @@ impl ConnectionSettings {
             .await
             .map_err(Error::DbusError)?;
 
-        let (unsaved, flags, filename) =
-            tokio::join!(proxy.unsaved(), proxy.flags(), proxy.filename());
+        let (unsaved, flags, filename, settings) = tokio::join!(
+            proxy.unsaved(),
+            proxy.flags(),
+            proxy.filename(),
+            proxy.get_settings()
+        );
+
+        let (id, uuid, connection_type, wifi_ssid) = match settings {
+            Ok(ref settings_map) => extract_identity(settings_map),
+            Err(err) => {
+                tracing::debug!("cannot fetch GetSettings for {:?}: {}", path, err);
+                (String::new(), String::new(), ConnectionType::None, None)
+            }
+        };
 
         Ok(SettingsConnectionProperties {
             unsaved: unwrap_bool!(unsaved, path),
             flags: unwrap_u32!(flags, path),
             filename: unwrap_string!(filename, path),
+            id,
+            uuid,
+            connection_type,
+            wifi_ssid,
         })
     }
 
@@ -286,6 +297,10 @@ impl ConnectionSettings {
             connection: connection.clone(),
             cancellation_token,
             object_path: path,
+            id: Property::new(props.id),
+            uuid: Property::new(props.uuid),
+            connection_type: Property::new(props.connection_type),
+            wifi_ssid: Property::new(props.wifi_ssid),
             unsaved: Property::new(props.unsaved),
             flags: Property::new(NMConnectionSettingsFlags::from_bits_truncate(props.flags)),
             filename: Property::new(props.filename),
@@ -329,8 +344,43 @@ impl ConnectionSettings {
     }
 }
 
+fn extract_identity(
+    settings_map: &HashMap<String, HashMap<String, OwnedValue>>,
+) -> (String, String, ConnectionType, Option<Ssid>) {
+    let connection_group = settings_map.get("connection");
+
+    let id = connection_group
+        .and_then(|conn| conn.get("id"))
+        .and_then(|val| String::try_from(val.clone()).ok())
+        .unwrap_or_default();
+
+    let uuid = connection_group
+        .and_then(|conn| conn.get("uuid"))
+        .and_then(|val| String::try_from(val.clone()).ok())
+        .unwrap_or_default();
+
+    let connection_type = connection_group
+        .and_then(|conn| conn.get("type"))
+        .and_then(|val| String::try_from(val.clone()).ok())
+        .map(|type_str| ConnectionType::from_nm_type(&type_str))
+        .unwrap_or(ConnectionType::None);
+
+    let wifi_ssid = settings_map
+        .get("802-11-wireless")
+        .and_then(|wireless| wireless.get("ssid"))
+        .and_then(|val| val.downcast_ref::<zvariant::Array>().ok())
+        .and_then(|arr| <Vec<u8>>::try_from(arr).ok())
+        .map(Ssid::new);
+
+    (id, uuid, connection_type, wifi_ssid)
+}
+
 struct SettingsConnectionProperties {
     unsaved: bool,
     flags: u32,
     filename: String,
+    id: String,
+    uuid: String,
+    connection_type: ConnectionType,
+    wifi_ssid: Option<Ssid>,
 }
