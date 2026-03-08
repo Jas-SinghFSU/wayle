@@ -7,6 +7,7 @@
       url = "github:nix-community/fenix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    self.submodules = true;
   };
 
   outputs = {
@@ -32,9 +33,14 @@
       };
     in {
       default = self.packages.${system}.wayle;
-      wayle = pkgs.callPackage ./nix/package.nix {
-        inherit rustPlatform;
-      };
+      wayle =
+        (pkgs.callPackage ./nix/package.nix {
+          inherit rustPlatform;
+        }).overrideAttrs (
+          oldAttrs: {
+            src = self;
+          }
+        );
     });
 
     homeManagerModules = {

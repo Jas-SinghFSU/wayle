@@ -21,12 +21,13 @@ rustPlatform.buildRustPackage (finalAttrs: rec {
   pname = "wayle";
   version = "0.1.0";
 
+  # This gets overridden by the flake.
   src = fetchFromGitHub {
     owner = "Jas-SinghFSU";
     repo = "wayle";
     # tag = "v${finalAttrs.version}"; # Use this once the first tag is released.
-    rev = "4e5f29e3fd1dfa9951bcfa7b7fb03c2554789e77"; # Once this ^, then delete this <.
-    hash = "sha256-Y/R8iI1sIHZxqxlPO1iTIqpLJGkCuTPAmh2OarvkoVA=";
+    rev = "b4ade2c55c59f4a706192ff784ad11ba38517158"; # Once this ^, then delete this <.
+    hash = "sha256-oc1EtpzH9KLKm0NUpqqQrfbYXftqjVvEfw72QbxlIfc=";
     fetchSubmodules = true;
   };
 
