@@ -18,12 +18,14 @@ impl ModuleFactory for Factory {
     fn create(
         settings: &BarSettings,
         services: &ShellServices,
-        _dropdowns: &Rc<DropdownRegistry>,
+        dropdowns: &Rc<DropdownRegistry>,
         class: Option<String>,
     ) -> Option<ModuleInstance> {
         let init = CavaInit {
             settings: settings.clone(),
             config: services.config.clone(),
+            wallpaper: services.wallpaper.clone(),
+            dropdowns: dropdowns.clone(),
         };
         let controller = dynamic_controller(CavaModule::builder().launch(init).detach());
         Some(ModuleInstance { controller, class })

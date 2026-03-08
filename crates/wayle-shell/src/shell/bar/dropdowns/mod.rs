@@ -1,12 +1,14 @@
 mod audio;
 mod battery;
 mod bluetooth;
+mod calendar;
 mod media;
 mod network;
 mod registry;
+mod weather;
 
 pub(crate) use self::registry::{
-    DropdownFactory, DropdownInstance, DropdownRegistry, dispatch_click,
+    DropdownFactory, DropdownInstance, DropdownRegistry, dispatch_click, dispatch_click_widget,
 };
 use crate::shell::services::ShellServices;
 
@@ -35,6 +37,8 @@ register_dropdowns! {
     "audio" => audio::Factory,
     "battery" => battery::Factory,
     "bluetooth" => bluetooth::Factory,
+    "calendar" => calendar::Factory,
     "media" => media::Factory,
     "network" => network::Factory,
+    "weather" => weather::Factory,
 }

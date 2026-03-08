@@ -18,6 +18,7 @@ gtk4-layer-shell.workspace = true
 gtk4.workspace = true
 gdk4.workspace = true
 bytesize.workspace = true
+chrono.workspace = true
 console.workspace = true
 glob.workspace = true
 i18n-embed.workspace = true
@@ -60,7 +61,6 @@ wayle-widgets = { workspace = true }
 zbus.workspace = true
 
 [dev-dependencies]
-chrono.workspace = true
 glob.workspace = true
 
 [lints]

@@ -1,4 +1,4 @@
-use chrono::{DateTime, NaiveDate, NaiveTime, Utc};
+use chrono::{DateTime, NaiveDate, NaiveDateTime, NaiveTime, Utc};
 use serde::{Deserialize, Serialize};
 
 use crate::types::{
@@ -58,8 +58,8 @@ pub struct CurrentWeather {
 /// Hourly weather forecast entry.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct HourlyForecast {
-    /// When this forecast applies (UTC).
-    pub time: DateTime<Utc>,
+    /// When this forecast applies (location local time).
+    pub time: NaiveDateTime,
     /// Predicted air temperature.
     pub temperature: Temperature,
     /// Predicted apparent temperature.

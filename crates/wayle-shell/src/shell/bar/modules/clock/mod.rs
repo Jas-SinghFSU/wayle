@@ -27,6 +27,7 @@ pub(crate) struct ClockModule {
     bar_button: Controller<BarButton>,
     config: Arc<ConfigService>,
     dropdowns: Rc<DropdownRegistry>,
+    last_label_len: usize,
 }
 
 #[relm4::component(pub(crate))]
@@ -52,6 +53,7 @@ impl Component for ClockModule {
         let config = init.config.config();
         let clock = &config.modules.clock;
         let formatted_time = helpers::format_time(&clock.format.get());
+        let initial_label_len = formatted_time.chars().count();
 
         let bar_button = BarButton::builder()
             .launch(BarButtonInit {
@@ -89,6 +91,7 @@ impl Component for ClockModule {
             bar_button,
             config: init.config,
             dropdowns: init.dropdowns,
+            last_label_len: initial_label_len,
         };
         let bar_button = model.bar_button.widget();
         let widgets = view_output!();
@@ -113,8 +116,12 @@ impl Component for ClockModule {
     fn update_cmd(&mut self, msg: ClockCmd, _sender: ComponentSender<Self>, root: &Self::Root) {
         match msg {
             ClockCmd::UpdateTime(time) => {
+                let new_len = time.chars().count();
                 self.bar_button.emit(BarButtonInput::SetLabel(time));
-                force_window_resize(root);
+                if new_len != self.last_label_len {
+                    self.last_label_len = new_len;
+                    force_window_resize(root);
+                }
             }
             ClockCmd::UpdateIcon(icon) => {
                 self.bar_button.emit(BarButtonInput::SetIcon(icon));

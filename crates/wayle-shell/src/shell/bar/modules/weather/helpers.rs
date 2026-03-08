@@ -65,7 +65,7 @@ pub(crate) fn condition_label(condition: WeatherCondition) -> String {
     }
 }
 
-fn format_temp_value(temp: Temperature, units: TemperatureUnit) -> String {
+pub(crate) fn format_temp_value(temp: Temperature, units: TemperatureUnit) -> String {
     let value = match units {
         TemperatureUnit::Metric => temp.celsius(),
         TemperatureUnit::Imperial => temp.fahrenheit(),
@@ -73,28 +73,49 @@ fn format_temp_value(temp: Temperature, units: TemperatureUnit) -> String {
     format!("{value:.0}")
 }
 
-fn temp_unit_symbol(units: TemperatureUnit) -> &'static str {
+pub(crate) fn temp_unit_symbol(units: TemperatureUnit) -> &'static str {
     match units {
         TemperatureUnit::Metric => "°C",
         TemperatureUnit::Imperial => "°F",
     }
 }
 
-fn format_speed(speed: wayle_weather::Speed, units: TemperatureUnit) -> String {
+pub(crate) fn format_speed(speed: wayle_weather::Speed, units: TemperatureUnit) -> String {
     match units {
         TemperatureUnit::Metric => format!("{:.0} km/h", speed.kmh()),
         TemperatureUnit::Imperial => format!("{:.0} mph", speed.mph()),
     }
 }
 
-pub(super) fn convert_temp_unit(config_unit: ConfigTempUnit) -> TemperatureUnit {
+pub(crate) fn convert_temp_unit(config_unit: ConfigTempUnit) -> TemperatureUnit {
     match config_unit {
         ConfigTempUnit::Metric => TemperatureUnit::Metric,
         ConfigTempUnit::Imperial => TemperatureUnit::Imperial,
     }
 }
 
-pub(super) fn condition_icon(condition: WeatherCondition, is_day: bool) -> &'static str {
+pub(crate) fn condition_color_class(condition: WeatherCondition) -> &'static str {
+    match condition {
+        WeatherCondition::Clear | WeatherCondition::PartlyCloudy => "sunny",
+        WeatherCondition::Cloudy
+        | WeatherCondition::Overcast
+        | WeatherCondition::Mist
+        | WeatherCondition::Fog
+        | WeatherCondition::Windy
+        | WeatherCondition::Unknown => "cloudy",
+        WeatherCondition::LightRain
+        | WeatherCondition::Rain
+        | WeatherCondition::HeavyRain
+        | WeatherCondition::Drizzle => "rainy",
+        WeatherCondition::Thunderstorm | WeatherCondition::Hail => "stormy",
+        WeatherCondition::LightSnow
+        | WeatherCondition::Snow
+        | WeatherCondition::HeavySnow
+        | WeatherCondition::Sleet => "snowy",
+    }
+}
+
+pub(crate) fn condition_icon(condition: WeatherCondition, is_day: bool) -> &'static str {
     match condition {
         WeatherCondition::Clear if is_day => "ld-sun-symbolic",
         WeatherCondition::Clear => "ld-moon-symbolic",

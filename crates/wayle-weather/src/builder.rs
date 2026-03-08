@@ -7,7 +7,7 @@ use wayle_common::Property;
 use crate::{
     model::{LocationQuery, TemperatureUnit, WeatherProviderKind},
     polling::{self, PollingConfig},
-    service::WeatherService,
+    service::{WeatherService, WeatherStatus},
 };
 
 const DEFAULT_POLL_INTERVAL: Duration = Duration::from_secs(30 * 60);
@@ -83,6 +83,7 @@ impl WeatherServiceBuilder {
     pub fn build(self) -> WeatherService {
         let cancellation_token = CancellationToken::new();
         let weather = Property::new(None);
+        let status = Property::new(WeatherStatus::Loading);
 
         let config = PollingConfig {
             kind: self.provider_kind,
@@ -93,7 +94,12 @@ impl WeatherServiceBuilder {
         };
 
         let polling_token = cancellation_token.child_token();
-        polling::spawn(polling_token.clone(), weather.clone(), config);
+        polling::spawn(
+            polling_token.clone(),
+            weather.clone(),
+            status.clone(),
+            config,
+        );
 
         WeatherService {
             cancellation_token,
@@ -105,6 +111,7 @@ impl WeatherServiceBuilder {
             visual_crossing_key: RwLock::new(self.visual_crossing_key),
             weatherapi_key: RwLock::new(self.weatherapi_key),
             weather,
+            status,
         }
     }
 }

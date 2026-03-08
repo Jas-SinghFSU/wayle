@@ -124,7 +124,7 @@ impl WifiControls {
         let device_path =
             OwnedObjectPath::try_from(device_path).map_err(|err| Error::DbusError(err.into()))?;
 
-        let existing_profiles = settings.connections_for_ssid(&ssid).await;
+        let existing_profiles = settings.connections_for_ssid(&ssid);
 
         if let Some(profile) = existing_profiles.first() {
             debug!(

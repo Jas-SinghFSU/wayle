@@ -243,44 +243,30 @@ impl Settings {
         SettingsController::save_hostname(&self.zbus_connection, hostname).await
     }
 
-    /// Get saved connection profiles that match the given Ssid.
+    /// Saved connection profiles matching the given SSID.
     ///
-    /// Returns all connection profiles configured for the specified Ssid.
-    /// A single Ssid may have multiple profiles with different configurations.
-    pub async fn connections_for_ssid(&self, ssid: &Ssid) -> Vec<ConnectionSettings> {
-        let mut matching = Vec::new();
-
-        for connection in self.connections.get() {
-            if connection.matches_ssid(ssid).await {
-                matching.push(connection);
-            }
-        }
-
-        matching
+    /// A single SSID may have multiple profiles with different configurations.
+    pub fn connections_for_ssid(&self, ssid: &Ssid) -> Vec<ConnectionSettings> {
+        self.connections
+            .get()
+            .into_iter()
+            .filter(|connection| connection.matches_ssid(ssid))
+            .collect()
     }
 
-    /// Get a reactive stream of saved connections for the given Ssid.
+    /// Reactive stream of saved connections for the given SSID.
     ///
-    /// Returns a stream that emits whenever connections are added, removed,
-    /// or modified for the specified Ssid.
+    /// Emits whenever connections are added, removed, or modified
+    /// for the specified SSID.
     pub fn connections_for_ssid_monitored(
         &self,
         ssid: Ssid,
     ) -> impl Stream<Item = Vec<ConnectionSettings>> + '_ {
-        self.connections.watch().then(move |connections| {
-            let ssid = ssid.clone();
-
-            async move {
-                let mut matching = Vec::new();
-
-                for connection in connections {
-                    if connection.matches_ssid(&ssid).await {
-                        matching.push(connection);
-                    }
-                }
-
-                matching
-            }
+        self.connections.watch().map(move |connections| {
+            connections
+                .into_iter()
+                .filter(|connection| connection.matches_ssid(&ssid))
+                .collect()
         })
     }
 

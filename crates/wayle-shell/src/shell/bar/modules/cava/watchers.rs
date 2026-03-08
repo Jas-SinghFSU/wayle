@@ -1,10 +1,15 @@
 use std::sync::Arc;
 
+use futures::{
+    StreamExt,
+    stream::{self, BoxStream},
+};
 use relm4::ComponentSender;
 use tokio_util::sync::CancellationToken;
 use wayle_cava::CavaService;
 use wayle_common::{ConfigProperty, watch, watch_cancellable, watchers::changes_stream};
 use wayle_config::ConfigService;
+use wayle_wallpaper::WallpaperService;
 
 use super::{CavaCmd, CavaModule};
 
@@ -23,6 +28,7 @@ pub(super) fn spawn_config_watchers(
     sender: &ComponentSender<CavaModule>,
     is_vertical: ConfigProperty<bool>,
     config: &Arc<ConfigService>,
+    wallpaper: &Option<Arc<WallpaperService>>,
 ) {
     let full_config = config.config();
     let cava_config = &full_config.modules.cava;
@@ -42,6 +48,11 @@ pub(super) fn spawn_config_watchers(
     let theme = styling.theme_provider.clone();
     let palette = styling.palette.clone();
 
+    let extraction_stream: BoxStream<'static, ()> = match wallpaper {
+        Some(ws) => ws.watch_extraction().boxed(),
+        None => stream::pending().boxed(),
+    };
+
     watch!(
         sender,
         [
@@ -56,7 +67,8 @@ pub(super) fn spawn_config_watchers(
             changes_stream(&border_color),
             changes_stream(&scale),
             changes_stream(&theme),
-            changes_stream(&palette)
+            changes_stream(&palette),
+            extraction_stream
         ],
         |out| {
             let _ = out.send(CavaCmd::StylingChanged);

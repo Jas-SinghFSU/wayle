@@ -1,0 +1,78 @@
+.daily-forecast {
+    border-spacing: var(--space-xs);
+}
+
+.daily-item {
+    border-spacing: var(--space-sm);
+    padding: calc(var(--space-xs) * 3);
+    background: var(--bg-elevated);
+    border-radius: var(--rounding-element);
+
+    &.today label.daily-day {
+        font-weight: var(--weight-bold);
+        color: var(--accent);
+    }
+}
+
+label.daily-day {
+    font-size: var(--text-md);
+    font-weight: var(--weight-medium);
+    color: var(--fg-default);
+    min-width: calc(var(--space-md) * 4);
+}
+
+image.daily-icon {
+    -gtk-icon-size: var(--icon-lg);
+    color: var(--fg-muted);
+
+    &.sunny {
+        color: var(--status-warning);
+    }
+    &.cloudy {
+        color: var(--fg-subtle);
+    }
+    &.rainy {
+        color: var(--status-info);
+    }
+    &.stormy {
+        color: var(--accent);
+    }
+    &.snowy {
+        color: var(--fg-default);
+    }
+}
+
+label.daily-condition {
+    font-size: var(--text-md);
+    font-weight: var(--weight-medium);
+    color: var(--fg-subtle);
+}
+
+.daily-temps {
+    border-spacing: var(--space-sm);
+}
+
+label.daily-high {
+    margin-left: var(--space-md);
+    font-size: var(--text-md);
+    font-weight: var(--weight-bold);
+    color: var(--fg-default);
+}
+
+label.daily-low {
+    margin-left: var(--space-xs);
+    font-size: var(--text-md);
+    color: var(--fg-subtle);
+}
+
+.daily-bar {
+    min-height: var(--space-xs);
+    background: var(--bg-hover);
+    border-radius: var(--rounding-element);
+}
+
+.daily-bar-fill {
+    min-height: var(--space-xs);
+    border-radius: var(--rounding-element);
+    background: linear-gradient(90deg, var(--status-info), var(--status-warning));
+}

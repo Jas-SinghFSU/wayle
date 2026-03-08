@@ -55,7 +55,7 @@ pub struct NetworkService {
     pub wifi: Property<Option<Arc<Wifi>>>,
     /// Wired device, if present (live-updated on hot-plug).
     pub wired: Property<Option<Arc<Wired>>>,
-    /// Primary connection type (WiFi, Wired, or Unknown).
+    /// Primary connection type as reported by NetworkManager.
     pub primary: Property<ConnectionType>,
 }
 
@@ -128,7 +128,7 @@ impl NetworkService {
             None
         };
 
-        let primary = Property::new(ConnectionType::Unknown);
+        let primary = Property::new(ConnectionType::None);
 
         let service = Self {
             zbus_connection: connection.clone(),

@@ -1,0 +1,49 @@
+.clock-hero {
+    padding: var(--space-xs) var(--space-md) var(--space-md);
+}
+
+.clock-time-row {
+    border-spacing: var(--space-xs);
+    margin-left: calc(var(--space-xl) + var(--space-sm));
+}
+
+label.clock-time {
+    font-size: calc(var(--text-xl) * 3);
+    color: var(--fg-default);
+}
+
+label.clock-separator {
+    animation: blink 1s ease-in-out infinite;
+}
+
+.show-seconds label.clock-separator {
+    animation: none;
+}
+
+@keyframes blink {
+    0%,
+    50% {
+        opacity: 1;
+    }
+    51%,
+    100% {
+        opacity: 0.3;
+    }
+}
+
+label.clock-ampm {
+    font-size: var(--text-xl);
+    font-weight: var(--weight-semibold);
+    color: var(--fg-subtle);
+}
+
+.clock-date {
+    font-size: var(--text-md);
+    font-weight: var(--weight-medium);
+    color: var(--fg-subtle);
+}
+
+label.clock-date-day {
+    color: var(--fg-default);
+    font-weight: var(--weight-bold);
+}

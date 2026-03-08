@@ -2,11 +2,14 @@ use relm4::prelude::*;
 use tracing::warn;
 use wayle_audio::volume::types::Volume;
 
-use crate::shell::bar::dropdowns::audio::{
-    helpers,
-    main_section::default_devices::volume_section::{
-        VolumeSection,
-        messages::{ActiveDevice, VolumeSectionCmd, VolumeSectionKind},
+use crate::{
+    i18n::t,
+    shell::bar::dropdowns::audio::{
+        helpers,
+        main_section::default_devices::volume_section::{
+            VolumeSection,
+            messages::{ActiveDevice, VolumeSectionCmd, VolumeSectionKind},
+        },
     },
 };
 
@@ -15,6 +18,13 @@ impl VolumeSection {
         match self.kind {
             VolumeSectionKind::Output => helpers::volume_icon(self.slider.value(), self.muted),
             VolumeSectionKind::Input => helpers::input_icon(self.muted),
+        }
+    }
+
+    pub(super) fn label(&self) -> String {
+        match self.kind {
+            VolumeSectionKind::Output => t!("dropdown-audio-output"),
+            VolumeSectionKind::Input => t!("dropdown-audio-input"),
         }
     }
 

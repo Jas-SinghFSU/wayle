@@ -1,0 +1,31 @@
+.sun-times {
+    padding: var(--space-lg) calc(var(--space-lg) * 2);
+}
+
+.sun-time {
+    border-spacing: var(--space-sm);
+}
+
+image.sun-icon {
+    -gtk-icon-size: var(--icon-2xl);
+    color: var(--fg-muted);
+
+    &.sunrise {
+        color: var(--status-warning);
+    }
+    &.sunset {
+        color: var(--accent);
+    }
+}
+
+label.sun-label {
+    font-size: var(--text-base);
+    font-weight: var(--weight-medium);
+    color: var(--fg-subtle);
+}
+
+label.sun-value {
+    font-size: var(--text-md);
+    font-weight: var(--weight-bold);
+    color: var(--fg-default);
+}

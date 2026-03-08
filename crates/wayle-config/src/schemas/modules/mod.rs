@@ -1,3 +1,5 @@
+mod types;
+
 mod battery;
 mod bluetooth;
 mod cava;
@@ -52,6 +54,7 @@ pub use ram::RamConfig;
 pub use separator::SeparatorConfig;
 pub use storage::StorageConfig;
 pub use systray::{SystrayConfig, TrayItemOverride};
+pub use types::TimeFormat;
 pub use volume::{AppIconSource, VolumeConfig};
 use wayle_common::ConfigProperty;
 use wayle_derive::wayle_config;

@@ -152,6 +152,21 @@ impl ConfigPaths {
         }
     }
 
+    /// Path to `config.toml.example` with default configuration values.
+    ///
+    /// # Panics
+    ///
+    /// Panics if config directory cannot be determined.
+    #[allow(clippy::panic)]
+    pub fn example_config() -> PathBuf {
+        match Self::config_dir() {
+            Ok(dir) => dir.join("config.toml.example"),
+            Err(_) => {
+                panic!("Failed to determine config directory - is $HOME or $XDG_CONFIG_HOME set?")
+            }
+        }
+    }
+
     /// Path to `tombi.toml` for Tombi TOML editor support.
     ///
     /// # Panics

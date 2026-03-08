@@ -27,6 +27,7 @@ pub(crate) struct WorldClockModule {
     bar_button: Controller<BarButton>,
     config: Arc<ConfigService>,
     dropdowns: Rc<DropdownRegistry>,
+    last_label_len: usize,
 }
 
 #[relm4::component(pub(crate))]
@@ -53,6 +54,7 @@ impl Component for WorldClockModule {
         let config = init.config.config();
         let world_clock = &config.modules.world_clock;
         let label = helpers::format_world_clock(&world_clock.format.get());
+        let initial_label_len = label.chars().count();
 
         let bar_button = BarButton::builder()
             .launch(BarButtonInit {
@@ -90,6 +92,7 @@ impl Component for WorldClockModule {
             bar_button,
             config: init.config,
             dropdowns: init.dropdowns,
+            last_label_len: initial_label_len,
         };
         let bar_button = model.bar_button.widget();
         let widgets = view_output!();
@@ -119,8 +122,12 @@ impl Component for WorldClockModule {
     ) {
         match msg {
             WorldClockCmd::UpdateLabel(label) => {
+                let new_len = label.chars().count();
                 self.bar_button.emit(BarButtonInput::SetLabel(label));
-                force_window_resize(root);
+                if new_len != self.last_label_len {
+                    self.last_label_len = new_len;
+                    force_window_resize(root);
+                }
             }
             WorldClockCmd::UpdateIcon(icon) => {
                 self.bar_button.emit(BarButtonInput::SetIcon(icon));

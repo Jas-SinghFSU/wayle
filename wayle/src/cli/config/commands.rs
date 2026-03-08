@@ -26,4 +26,10 @@ pub enum ConfigCommands {
         #[arg(long)]
         stdout: bool,
     },
+    /// Output the default configuration as TOML
+    Default {
+        /// Print to stdout instead of writing config.toml.example
+        #[arg(long)]
+        stdout: bool,
+    },
 }

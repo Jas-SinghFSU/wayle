@@ -2,18 +2,16 @@ mod parse;
 mod types;
 
 use async_trait::async_trait;
-use chrono::{NaiveTime, Utc};
 use parse::PROVIDER;
-use types::{ApiResponse, ForecastRequest, GeoLocation, GeocodingRequest, GeocodingResponse};
+use types::{ApiResponse, ForecastRequest};
 
+use super::{WeatherProvider, build_weather};
 use crate::{
     error::{Error, Result},
-    model::{Astronomy, Location, LocationQuery, Weather, WeatherProviderKind},
-    provider::WeatherProvider,
+    model::{Location, LocationQuery, Weather, WeatherProviderKind},
 };
 
 const FORECAST_URL: &str = "https://api.open-meteo.com/v1/forecast";
-const GEOCODING_URL: &str = "https://geocoding-api.open-meteo.com/v1/search";
 
 const HOURLY_PARAMS: &str = "temperature_2m,relative_humidity_2m,apparent_temperature,\
     precipitation_probability,precipitation,weather_code,cloud_cover,pressure_msl,\
@@ -36,49 +34,6 @@ impl OpenMeteo {
             client: reqwest::Client::new(),
         }
     }
-
-    async fn geocode(&self, query: &LocationQuery) -> Result<GeoLocation> {
-        match query {
-            LocationQuery::Coordinates { lat, lon } => Ok(GeoLocation {
-                latitude: *lat,
-                longitude: *lon,
-                name: String::new(),
-                admin1: None,
-                country: String::new(),
-            }),
-            LocationQuery::City { name, country } => {
-                let request = GeocodingRequest {
-                    name,
-                    count: 1,
-                    country: country.as_deref(),
-                };
-
-                let resp = self
-                    .client
-                    .get(GEOCODING_URL)
-                    .query(&request)
-                    .send()
-                    .await
-                    .map_err(|e| Error::http(PROVIDER, e))?;
-
-                if !resp.status().is_success() {
-                    return Err(Error::status(PROVIDER, resp.status()));
-                }
-
-                let geo: GeocodingResponse = resp
-                    .json()
-                    .await
-                    .map_err(|e| Error::parse(PROVIDER, e.to_string()))?;
-
-                geo.results
-                    .into_iter()
-                    .next()
-                    .ok_or_else(|| Error::LocationNotFound {
-                        query: name.clone(),
-                    })
-            }
-        }
-    }
 }
 
 impl Default for OpenMeteo {
@@ -93,17 +48,15 @@ impl WeatherProvider for OpenMeteo {
         WeatherProviderKind::OpenMeteo
     }
 
-    async fn fetch(&self, location: &LocationQuery) -> Result<Weather> {
-        let geo = self.geocode(location).await?;
-
+    async fn fetch(&self, _location: &LocationQuery, resolved: &Location) -> Result<Weather> {
         let request = ForecastRequest {
-            latitude: geo.latitude,
-            longitude: geo.longitude,
+            latitude: resolved.lat,
+            longitude: resolved.lon,
             hourly: HOURLY_PARAMS,
             daily: DAILY_PARAMS,
             temperature_unit: "celsius",
             wind_speed_unit: "kmh",
-            timezone: "UTC",
+            timezone: "auto",
             forecast_days: 7,
         };
 
@@ -113,7 +66,7 @@ impl WeatherProvider for OpenMeteo {
             .query(&request)
             .send()
             .await
-            .map_err(|e| Error::http(PROVIDER, e))?;
+            .map_err(|err| Error::http(PROVIDER, err))?;
 
         if resp.status() == reqwest::StatusCode::TOO_MANY_REQUESTS {
             return Err(Error::RateLimited { provider: PROVIDER });
@@ -126,36 +79,12 @@ impl WeatherProvider for OpenMeteo {
         let data: ApiResponse = resp
             .json()
             .await
-            .map_err(|e| Error::parse(PROVIDER, e.to_string()))?;
+            .map_err(|err| Error::parse(PROVIDER, err.to_string()))?;
 
         let current = parse::build_current(&data)?;
         let hourly = parse::build_hourly(&data.hourly, 24)?;
         let daily = parse::build_daily(&data, 7)?;
 
-        let astronomy = daily.first().map_or_else(
-            || Astronomy {
-                sunrise: NaiveTime::from_hms_opt(6, 0, 0).unwrap_or_default(),
-                sunset: NaiveTime::from_hms_opt(18, 0, 0).unwrap_or_default(),
-            },
-            |first_day| Astronomy {
-                sunrise: first_day.sunrise,
-                sunset: first_day.sunset,
-            },
-        );
-
-        Ok(Weather {
-            current,
-            hourly,
-            daily,
-            location: Location {
-                city: geo.name,
-                region: geo.admin1,
-                country: geo.country,
-                lat: geo.latitude,
-                lon: geo.longitude,
-            },
-            astronomy,
-            updated_at: Utc::now(),
-        })
+        Ok(build_weather(current, hourly, daily, resolved.clone()))
     }
 }

@@ -5,7 +5,7 @@ use tokio_util::sync::CancellationToken;
 use tracing::debug;
 use wayle_traits::ModelMonitoring;
 
-use super::ConnectionSettings;
+use super::{ConnectionSettings, extract_identity};
 use crate::{
     error::Error, proxy::settings::connection::SettingsConnectionProxy,
     types::flags::NMConnectionSettingsFlags,
@@ -43,6 +43,10 @@ async fn monitor(
     let mut unsaved_changed = proxy.receive_unsaved_changed().await;
     let mut flags_changed = proxy.receive_flags_changed().await;
     let mut filename_changed = proxy.receive_filename_changed().await;
+    let Ok(mut updated) = proxy.receive_updated().await else {
+        debug!("failed to subscribe to Updated signal for SettingsConnection");
+        return;
+    };
 
     loop {
         let Some(settings) = weak_settings.upgrade() else {
@@ -67,6 +71,15 @@ async fn monitor(
             Some(change) = filename_changed.next() => {
                 if let Ok(value) = change.get().await {
                     settings.filename.set(value);
+                }
+            }
+            Some(_) = updated.next() => {
+                if let Ok(settings_map) = proxy.get_settings().await {
+                    let (id, uuid, connection_type, wifi_ssid) = extract_identity(&settings_map);
+                    settings.id.set(id);
+                    settings.uuid.set(uuid);
+                    settings.connection_type.set(connection_type);
+                    settings.wifi_ssid.set(wifi_ssid);
                 }
             }
             else => {

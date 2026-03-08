@@ -50,6 +50,7 @@ impl Component for AppVolumes {
 
                     #[local_ref]
                     app_volume_list -> gtk::Box {
+                        add_css_class: "audio-app-list",
                         set_orientation: gtk::Orientation::Vertical,
                     },
 

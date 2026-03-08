@@ -14,29 +14,6 @@ pub struct ForecastRequest {
     pub forecast_days: u8,
 }
 
-#[derive(Debug, Serialize)]
-pub struct GeocodingRequest<'a> {
-    pub name: &'a str,
-    pub count: u8,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub country: Option<&'a str>,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct GeocodingResponse {
-    #[serde(default)]
-    pub results: Vec<GeoLocation>,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct GeoLocation {
-    pub latitude: f64,
-    pub longitude: f64,
-    pub name: String,
-    pub admin1: Option<String>,
-    pub country: String,
-}
-
 #[derive(Debug, Deserialize)]
 pub struct ApiResponse {
     pub timezone: Option<String>,

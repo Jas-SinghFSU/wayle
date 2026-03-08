@@ -1,4 +1,5 @@
-use chrono::{DateTime, NaiveDate, NaiveTime, TimeZone, Utc};
+use chrono::{Local, NaiveDate, NaiveDateTime, NaiveTime};
+use tracing::warn;
 
 use super::types::{ApiResponse, HourlyData};
 use crate::{
@@ -17,14 +18,6 @@ pub fn build_current(data: &ApiResponse) -> Result<CurrentWeather> {
 
     let is_day_value = is_day(&hourly.is_day, idx)?;
     let wmo_code = raw_u8(&hourly.weather_code, idx)?;
-    tracing::debug!(
-        idx,
-        is_day_value,
-        wmo_code,
-        is_day_raw = ?hourly.is_day.get(idx),
-        time_at_idx = ?hourly.time.get(idx),
-        "Building current weather"
-    );
 
     Ok(CurrentWeather {
         temperature: temperature(&hourly.temperature_2m, idx)?,
@@ -49,24 +42,24 @@ pub fn build_hourly(hourly: &HourlyData, count: usize) -> Result<Vec<HourlyForec
     let end = (start + count).min(hourly.time.len());
 
     let mut forecasts = Vec::with_capacity(count);
-    for i in start..end {
+    for hour_idx in start..end {
         forecasts.push(HourlyForecast {
-            time: parse_iso_datetime(&hourly.time[i])?,
-            temperature: temperature(&hourly.temperature_2m, i)?,
-            feels_like: temperature(&hourly.apparent_temperature, i)?,
-            condition: WeatherCondition::from_wmo_code(raw_u8(&hourly.weather_code, i)?),
-            humidity: percentage(&hourly.relative_humidity_2m, i)?,
-            wind_speed: speed(&hourly.wind_speed_10m, i)?,
-            wind_direction: wind_dir(&hourly.wind_direction_10m, i)?,
-            wind_gust: speed(&hourly.wind_gusts_10m, i)?,
-            rain_chance: percentage(&hourly.precipitation_probability, i)?,
-            uv_index: uv(&hourly.uv_index, i)?,
-            cloud_cover: percentage(&hourly.cloud_cover, i)?,
-            pressure: pressure(&hourly.pressure_msl, i)?,
-            visibility: visibility_from_meters(&hourly.visibility, i)?,
-            dewpoint: temperature(&hourly.dew_point_2m, i)?,
-            precipitation: precip(&hourly.precipitation, i)?,
-            is_day: is_day(&hourly.is_day, i)?,
+            time: parse_iso_datetime(&hourly.time[hour_idx])?,
+            temperature: temperature(&hourly.temperature_2m, hour_idx)?,
+            feels_like: temperature(&hourly.apparent_temperature, hour_idx)?,
+            condition: WeatherCondition::from_wmo_code(raw_u8(&hourly.weather_code, hour_idx)?),
+            humidity: percentage(&hourly.relative_humidity_2m, hour_idx)?,
+            wind_speed: speed(&hourly.wind_speed_10m, hour_idx)?,
+            wind_direction: wind_dir(&hourly.wind_direction_10m, hour_idx)?,
+            wind_gust: speed(&hourly.wind_gusts_10m, hour_idx)?,
+            rain_chance: percentage(&hourly.precipitation_probability, hour_idx)?,
+            uv_index: uv(&hourly.uv_index, hour_idx)?,
+            cloud_cover: percentage(&hourly.cloud_cover, hour_idx)?,
+            pressure: pressure(&hourly.pressure_msl, hour_idx)?,
+            visibility: visibility_from_meters(&hourly.visibility, hour_idx)?,
+            dewpoint: temperature(&hourly.dew_point_2m, hour_idx)?,
+            precipitation: precip(&hourly.precipitation, hour_idx)?,
+            is_day: is_day(&hourly.is_day, hour_idx)?,
         });
     }
     Ok(forecasts)
@@ -77,27 +70,27 @@ pub fn build_daily(data: &ApiResponse, count: usize) -> Result<Vec<DailyForecast
     let end = daily.time.len().min(count);
 
     let mut forecasts = Vec::with_capacity(count);
-    for i in 0..end {
-        let date = parse_date(&daily.time[i])?;
-        let sunrise = parse_time_from_iso(&daily.sunrise[i])?;
-        let sunset = parse_time_from_iso(&daily.sunset[i])?;
+    for day_idx in 0..end {
+        let date = parse_date(&daily.time[day_idx])?;
+        let sunrise = parse_time_from_iso(&daily.sunrise[day_idx])?;
+        let sunset = parse_time_from_iso(&daily.sunset[day_idx])?;
 
-        let temp_high = temperature(&daily.temperature_2m_max, i)?;
-        let temp_low = temperature(&daily.temperature_2m_min, i)?;
+        let temp_high = temperature(&daily.temperature_2m_max, day_idx)?;
+        let temp_low = temperature(&daily.temperature_2m_min, day_idx)?;
         let avg = (temp_high.celsius() + temp_low.celsius()) / 2.0;
 
         forecasts.push(DailyForecast {
             date,
-            condition: WeatherCondition::from_wmo_code(raw_u8(&daily.weather_code, i)?),
+            condition: WeatherCondition::from_wmo_code(raw_u8(&daily.weather_code, day_idx)?),
             temp_high,
             temp_low,
             temp_avg: Temperature::new(avg)
                 .ok_or_else(|| Error::parse(PROVIDER, "invalid avg temp"))?,
-            humidity_avg: percentage(&daily.relative_humidity_2m_mean, i)?,
-            wind_speed_max: speed(&daily.wind_speed_10m_max, i)?,
-            rain_chance: percentage(&daily.precipitation_probability_max, i)?,
-            uv_index_max: uv(&daily.uv_index_max, i)?,
-            precipitation_sum: precip(&daily.precipitation_sum, i)?,
+            humidity_avg: percentage(&daily.relative_humidity_2m_mean, day_idx)?,
+            wind_speed_max: speed(&daily.wind_speed_10m_max, day_idx)?,
+            rain_chance: percentage(&daily.precipitation_probability_max, day_idx)?,
+            uv_index_max: uv(&daily.uv_index_max, day_idx)?,
+            precipitation_sum: precip(&daily.precipitation_sum, day_idx)?,
             sunrise,
             sunset,
         });
@@ -106,40 +99,30 @@ pub fn build_daily(data: &ApiResponse, count: usize) -> Result<Vec<DailyForecast
 }
 
 pub fn find_current_hour_index(times: &[String]) -> usize {
-    let now = Utc::now();
-    tracing::debug!(%now, times_len = times.len(), "Finding current hour index");
+    let now = Local::now().naive_local();
     for (hour_idx, time_str) in times.iter().enumerate() {
         if let Ok(datetime) = parse_iso_datetime(time_str)
             && datetime > now
         {
-            let idx = hour_idx.saturating_sub(1);
-            tracing::debug!(
-                hour_idx,
-                %datetime,
-                selected_idx = idx,
-                time_str = %times.get(idx).map(String::as_str).unwrap_or("N/A"),
-                "Found future hour"
-            );
-            return idx;
+            return hour_idx.saturating_sub(1);
         }
     }
-    tracing::warn!(first_time = ?times.first(), last_time = ?times.last(), "No future hour found, using fallback");
+    warn!("no future hour found in forecast, using fallback index 0");
     0
 }
 
-pub fn parse_iso_datetime(s: &str) -> Result<DateTime<Utc>> {
-    let naive = chrono::NaiveDateTime::parse_from_str(s, "%Y-%m-%dT%H:%M")
-        .map_err(|e| Error::parse(PROVIDER, e.to_string()))?;
-    Ok(Utc.from_utc_datetime(&naive))
+pub fn parse_iso_datetime(s: &str) -> Result<NaiveDateTime> {
+    NaiveDateTime::parse_from_str(s, "%Y-%m-%dT%H:%M")
+        .map_err(|err| Error::parse(PROVIDER, err.to_string()))
 }
 
 pub fn parse_date(s: &str) -> Result<NaiveDate> {
-    NaiveDate::parse_from_str(s, "%Y-%m-%d").map_err(|e| Error::parse(PROVIDER, e.to_string()))
+    NaiveDate::parse_from_str(s, "%Y-%m-%d").map_err(|err| Error::parse(PROVIDER, err.to_string()))
 }
 
 pub fn parse_time_from_iso(s: &str) -> Result<NaiveTime> {
-    let dt = chrono::NaiveDateTime::parse_from_str(s, "%Y-%m-%dT%H:%M")
-        .map_err(|e| Error::parse(PROVIDER, e.to_string()))?;
+    let dt = NaiveDateTime::parse_from_str(s, "%Y-%m-%dT%H:%M")
+        .map_err(|err| Error::parse(PROVIDER, err.to_string()))?;
     Ok(dt.time())
 }
 

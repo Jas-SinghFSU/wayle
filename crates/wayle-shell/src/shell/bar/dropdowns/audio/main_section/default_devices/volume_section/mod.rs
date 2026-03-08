@@ -8,7 +8,7 @@ use gtk::{glib, prelude::*};
 use relm4::{gtk, prelude::*};
 use wayle_audio::AudioService;
 use wayle_common::WatcherToken;
-use wayle_widgets::prelude::{DebouncedSlider, GhostIconButton};
+use wayle_widgets::prelude::DebouncedSlider;
 
 pub(crate) use self::messages::*;
 use crate::i18n::t;
@@ -16,7 +16,6 @@ use crate::i18n::t;
 pub(crate) struct VolumeSection {
     audio: Arc<AudioService>,
     kind: VolumeSectionKind,
-    title: String,
     device: Option<ActiveDevice>,
     device_name: String,
     device_icon: &'static str,
@@ -36,44 +35,75 @@ impl Component for VolumeSection {
     view! {
         #[root]
         gtk::Box {
-            add_css_class: "audio-section",
+            add_css_class: "audio-device",
             set_orientation: gtk::Orientation::Vertical,
+            #[watch]
+            set_class_active: ("muted", model.muted),
 
             gtk::Box {
-                add_css_class: "audio-section-header",
+                add_css_class: "audio-device-trigger",
+                #[watch]
+                set_visible: model.has_device,
 
-                gtk::Label {
-                    add_css_class: "audio-section-title",
-                    #[watch]
-                    set_label: &model.title,
+                gtk::Box {
+                    add_css_class: "audio-device-icon",
+                    set_valign: gtk::Align::Center,
+
+                    gtk::Image {
+                        add_css_class: "audio-device-icon-img",
+                        #[watch]
+                        set_icon_name: Some(model.device_icon),
+                    },
+                },
+
+                gtk::Box {
+                    add_css_class: "audio-device-info",
+                    set_orientation: gtk::Orientation::Vertical,
                     set_hexpand: true,
-                    set_halign: gtk::Align::Start,
+
+                    gtk::Label {
+                        add_css_class: "audio-device-label",
+                        set_halign: gtk::Align::Start,
+                        #[watch]
+                        set_label: &model.label(),
+                    },
+
+                    gtk::Button {
+                        add_css_class: "audio-device-trigger-btn",
+                        set_cursor_from_name: Some("pointer"),
+                        set_halign: gtk::Align::Start,
+                        connect_clicked => VolumeSectionInput::ShowDevicesClicked,
+
+                        gtk::Box {
+                            add_css_class: "audio-device-name",
+
+                            gtk::Label {
+                                add_css_class: "audio-device-name-text",
+                                set_ellipsize: gtk::pango::EllipsizeMode::End,
+                                #[watch]
+                                set_label: &model.device_name,
+                            },
+
+                            gtk::Image {
+                                add_css_class: "audio-device-chevron",
+                                set_icon_name: Some("ld-chevron-right-symbolic"),
+                            },
+                        },
+                    },
                 },
 
                 gtk::Button {
-                    add_css_class: "device-trigger",
+                    add_css_class: "audio-mute-btn",
+                    set_valign: gtk::Align::Center,
                     set_cursor_from_name: Some("pointer"),
                     #[watch]
-                    set_visible: model.has_device,
-                    connect_clicked => VolumeSectionInput::ShowDevicesClicked,
+                    set_class_active: ("muted", model.muted),
+                    connect_clicked => VolumeSectionInput::MuteClicked,
 
-                    gtk::Box {
-                        gtk::Image {
-                            add_css_class: "device-trigger-icon",
-                            #[watch]
-                            set_icon_name: Some(model.device_icon),
-                        },
-                        gtk::Label {
-                            add_css_class: "device-trigger-name",
-                            set_ellipsize: gtk::pango::EllipsizeMode::End,
-                            set_max_width_chars: 20,
-                            #[watch]
-                            set_label: &model.device_name,
-                        },
-                        gtk::Image {
-                            add_css_class: "device-trigger-chevron",
-                            set_icon_name: Some("ld-chevron-right-symbolic"),
-                        },
+                    gtk::Image {
+                        add_css_class: "audio-mute-icon",
+                        #[watch]
+                        set_icon_name: Some(model.mute_icon()),
                     },
                 },
             },
@@ -82,14 +112,6 @@ impl Component for VolumeSection {
                 add_css_class: "audio-slider-row",
                 #[watch]
                 set_visible: model.has_device,
-
-                #[template]
-                GhostIconButton {
-                    add_css_class: "audio-slider-icon",
-                    #[watch]
-                    set_icon_name: model.mute_icon(),
-                    connect_clicked => VolumeSectionInput::MuteClicked,
-                },
 
                 #[local_ref]
                 slider_widget -> gtk::Box {},
@@ -174,7 +196,6 @@ impl Component for VolumeSection {
         let mut model = Self {
             audio: init.audio,
             kind: init.kind,
-            title: init.title,
             device: default_device,
             device_name,
             device_icon,

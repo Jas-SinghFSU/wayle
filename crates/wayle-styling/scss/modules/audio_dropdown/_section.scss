@@ -1,19 +1,107 @@
-.audio-section {
+.audio-devices {
     background: var(--bg-elevated);
     border-radius: var(--rounding-element);
-    padding: var(--space-sm);
 }
 
-.audio-section + .audio-section {
-    margin-top: var(--space-sm);
+.audio-device {
+    padding: calc(var(--space-sm) * 1.25) var(--space-sm);
 }
 
-.audio-section-header {
+.audio-device + .audio-device {
+    border-top: 1px solid var(--border-subtle);
+}
+
+.audio-device-trigger {
+    border-spacing: var(--space-sm);
     margin-bottom: var(--space-xs);
+}
 
-    .audio-section-title {
-        font-size: var(--text-md);
-        font-weight: var(--weight-bold);
+button.audio-device-trigger-btn {
+    color: var(--fg-muted);
+    font-size: var(--text-xs);
+    transition: color var(--duration-fast);
+
+    .audio-device-name {
+        margin: 0;
+        border-spacing: var(--space-xs);
+    }
+
+    &:hover {
         color: var(--fg-default);
+    }
+}
+
+.audio-device-icon {
+    border-radius: var(--rounding-element);
+    background: var(--bg-overlay);
+}
+
+image.audio-device-icon-img {
+    -gtk-icon-size: var(--icon-lg);
+    color: var(--fg-muted);
+    margin: var(--space-sm);
+}
+
+.audio-device-label {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-bold);
+    color: var(--fg-muted);
+    text-transform: uppercase;
+}
+
+.audio-device-name-text {
+    font-size: var(--text-base);
+    font-weight: var(--weight-semibold);
+    color: var(--fg-default);
+    transition: color var(--duration-fast);
+
+    &:hover {
+        color: var(--fg-muted);
+    }
+}
+
+.audio-device-chevron {
+    -gtk-icon-size: var(--icon-sm);
+    color: var(--fg-subtle);
+}
+
+button.audio-mute-btn {
+    background: var(--bg-overlay);
+    color: var(--fg-muted);
+    transition:
+        background var(--duration-fast),
+        color var(--duration-fast);
+
+    image.audio-mute-icon {
+        -gtk-icon-size: var(--icon-md);
+        margin: calc(var(--space-xs) * 1.5);
+    }
+
+    &:hover {
+        color: var(--fg-default);
+        background: var(--bg-hover);
+    }
+
+    &.muted {
+        background: var(--status-error-subtle);
+        color: var(--status-error);
+    }
+}
+
+.audio-device.muted {
+    image.audio-device-icon-img {
+        color: var(--fg-subtle);
+    }
+
+    .audio-device-label {
+        color: var(--fg-subtle);
+    }
+
+    .audio-device-name-text {
+        color: var(--fg-subtle);
+    }
+
+    .audio-volume-slider trough highlight {
+        background: var(--fg-subtle);
     }
 }

@@ -2,6 +2,7 @@ use std::time::{Duration, Instant};
 
 use console::style;
 use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
+use tracing::{info, warn};
 
 const SLOW_THRESHOLD: Duration = Duration::from_millis(100);
 const MODERATE_THRESHOLD: Duration = Duration::from_millis(50);
@@ -61,7 +62,10 @@ impl StartupTimer {
 
         let duration_str = format!("({}ms)", duration.as_millis());
 
+        let duration_ms = duration.as_millis() as u64;
+
         if result.is_ok() {
+            info!(service = name, duration_ms, "Service ready");
             let (check, timing) = if duration >= SLOW_THRESHOLD {
                 (style("✓").red().bold(), style(duration_str).red())
             } else if duration >= MODERATE_THRESHOLD {
@@ -71,6 +75,7 @@ impl StartupTimer {
             };
             let _ = self.multi.println(format!("{check} {name} {timing}"));
         } else {
+            warn!(service = name, duration_ms, "Service unavailable");
             let _ = self
                 .multi
                 .println(format!("{} {name}", style("✗").red().bold()));
@@ -91,7 +96,10 @@ impl StartupTimer {
 
         pb.finish_and_clear();
 
-        let duration_str = format!("({}ms)", duration.as_millis());
+        let duration_ms = duration.as_millis() as u64;
+        let duration_str = format!("({}ms)", duration_ms);
+
+        info!(service = name, duration_ms, "Service ready");
 
         let (check, timing) = if duration >= SLOW_THRESHOLD {
             (style("✓").red().bold(), style(duration_str).red())
