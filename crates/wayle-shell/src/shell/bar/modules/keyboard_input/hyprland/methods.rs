@@ -9,8 +9,12 @@ use wayle_widgets::{prelude::BarButtonInput, utils::force_window_resize};
 use super::{HyprlandKeyboardInput, helpers};
 
 impl HyprlandKeyboardInput {
-    pub(super) fn update_label(&self, format: &str, root: &gtk::Box) {
-        let label = helpers::format_label(format, &self.current_layout);
+    pub(super) fn update_label(&self, root: &gtk::Box) {
+        let config = self.config.config();
+        let format = config.modules.keyboard_input.format.get();
+        let language_name_map = config.modules.keyboard_input.language_name_map.get();
+
+        let label = helpers::format_label(&self.current_layout, &format, &language_name_map);
         self.bar_button.emit(BarButtonInput::SetLabel(label));
         force_window_resize(root);
     }

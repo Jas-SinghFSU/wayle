@@ -24,7 +24,8 @@ pub(crate) enum KeyboardInputMsg {
 
 #[derive(Debug)]
 pub(crate) enum KeyboardInputCmd {
-    LayoutChanged { layout: String, format: String },
+    LayoutChanged(String),
     FormatChanged,
+    LanguageNameMapChanged,
     UpdateIcon(String),
 }

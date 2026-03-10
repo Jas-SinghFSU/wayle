@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use schemars::schema_for;
 use wayle_common::{ConfigProperty, process::ClickAction};
 use wayle_derive::wayle_config;
@@ -96,6 +98,19 @@ pub struct KeyboardInputConfig {
     #[serde(rename = "scroll-down")]
     #[default(ClickAction::None)]
     pub scroll_down: ConfigProperty<ClickAction>,
+
+    /// Language name mapping.
+    ///
+    /// ## Example
+    ///
+    /// ```toml
+    /// [modules.keyboard-input.language-name-map]
+    /// "English (US)" = "EN"
+    /// "Czech (QWERTY)" = "Czech"
+    /// ```
+    #[serde(rename = "language-name-map")]
+    #[default(HashMap::new())]
+    pub language_name_map: ConfigProperty<HashMap<String, String>>,
 }
 
 impl ModuleInfoProvider for KeyboardInputConfig {

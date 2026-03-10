@@ -49,7 +49,11 @@ impl Component for HyprlandKeyboardInput {
         let keyboard_input = &config.modules.keyboard_input;
 
         let initial_layout = methods::initial_layout(&init.hyprland);
-        let formatted_label = helpers::format_label(&keyboard_input.format.get(), &initial_layout);
+        let formatted_label = helpers::format_label(
+            &initial_layout,
+            &keyboard_input.format.get(),
+            &keyboard_input.language_name_map.get(),
+        );
 
         let bar_button = BarButton::builder()
             .launch(BarButtonInit {
@@ -116,13 +120,12 @@ impl Component for HyprlandKeyboardInput {
         root: &Self::Root,
     ) {
         match msg {
-            KeyboardInputCmd::LayoutChanged { layout, format } => {
+            KeyboardInputCmd::LayoutChanged(layout) => {
                 self.current_layout = layout;
-                self.update_label(&format, root);
+                self.update_label(root);
             }
-            KeyboardInputCmd::FormatChanged => {
-                let format = self.config.config().modules.keyboard_input.format.get();
-                self.update_label(&format, root);
+            KeyboardInputCmd::LanguageNameMapChanged | KeyboardInputCmd::FormatChanged => {
+                self.update_label(root);
             }
             KeyboardInputCmd::UpdateIcon(icon) => {
                 self.bar_button.emit(BarButtonInput::SetIcon(icon));

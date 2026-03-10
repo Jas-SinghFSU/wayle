@@ -3,7 +3,7 @@ use std::sync::Arc;
 use futures::StreamExt;
 use relm4::ComponentSender;
 use tracing::warn;
-use wayle_common::{ConfigProperty, watch};
+use wayle_common::watch;
 use wayle_config::schemas::modules::KeyboardInputConfig;
 use wayle_hyprland::{HyprlandEvent, HyprlandService};
 
@@ -15,13 +15,12 @@ pub(super) fn spawn_watchers(
     config: &KeyboardInputConfig,
     hyprland: &Option<Arc<HyprlandService>>,
 ) {
-    spawn_layout_watcher(sender, config, hyprland);
+    spawn_layout_watcher(sender, hyprland);
     spawn_config_watchers(sender, config);
 }
 
 fn spawn_layout_watcher(
     sender: &ComponentSender<HyprlandKeyboardInput>,
-    config: &KeyboardInputConfig,
     hyprland: &Option<Arc<HyprlandService>>,
 ) {
     let Some(hyprland) = hyprland.clone() else {
@@ -33,15 +32,11 @@ fn spawn_layout_watcher(
         return;
     };
 
-    let format = config.format.clone();
-    sender.command(move |out, shutdown| {
-        watch_layout_events(hyprland.clone(), format.clone(), out, shutdown)
-    });
+    sender.command(move |out, shutdown| watch_layout_events(hyprland.clone(), out, shutdown));
 }
 
 async fn watch_layout_events(
     hyprland: Arc<HyprlandService>,
-    format: ConfigProperty<String>,
     out: relm4::Sender<KeyboardInputCmd>,
     shutdown: relm4::ShutdownReceiver,
 ) {
@@ -56,10 +51,7 @@ async fn watch_layout_events(
                 let Some(HyprlandEvent::ActiveLayout { layout, .. }) = event else {
                     continue;
                 };
-                let _ = out.send(KeyboardInputCmd::LayoutChanged {
-                    layout,
-                    format: format.get(),
-                });
+                let _ = out.send(KeyboardInputCmd::LayoutChanged(layout));
             }
         }
     }
@@ -77,5 +69,10 @@ fn spawn_config_watchers(
     let icon_name = config.icon_name.clone();
     watch!(sender, [icon_name.watch()], |out| {
         let _ = out.send(KeyboardInputCmd::UpdateIcon(icon_name.get().clone()));
+    });
+
+    let language_name_map = config.language_name_map.clone();
+    watch!(sender, [language_name_map.watch()], |out| {
+        let _ = out.send(KeyboardInputCmd::LanguageNameMapChanged);
     });
 }
