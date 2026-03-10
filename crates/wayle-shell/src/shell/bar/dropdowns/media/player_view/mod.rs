@@ -2,7 +2,13 @@ mod messages;
 mod methods;
 mod watchers;
 
-use std::{sync::Arc, time::Duration};
+use std::{
+    sync::{
+        Arc,
+        atomic::{AtomicU64, Ordering},
+    },
+    time::Duration,
+};
 
 use gdk4::Display;
 use gtk::prelude::*;
@@ -17,10 +23,19 @@ use wayle_widgets::prelude::*;
 pub(crate) use self::messages::*;
 use crate::{i18n::t, shell::bar::dropdowns::media::helpers};
 
+static NEXT_ART_CSS_ID: AtomicU64 = AtomicU64::new(1);
+
+fn next_art_css_class() -> String {
+    let id = NEXT_ART_CSS_ID.fetch_add(1, Ordering::Relaxed);
+    format!("media-artwork-instance-{id}")
+}
+
 pub(crate) struct PlayerView {
     player: Option<Arc<Player>>,
     player_watcher: WatcherToken,
+    is_active: bool,
     art_css_provider: CssProvider,
+    art_css_class: String,
     seek_slider: DebouncedSlider,
 
     has_player: bool,
@@ -108,6 +123,7 @@ impl Component for PlayerView {
                     #[name = "artwork"]
                     gtk::Box {
                         add_css_class: "media-artwork",
+                        add_css_class: &model.art_css_class,
                         set_vexpand: true,
 
                         #[name = "artwork_placeholder"]
@@ -339,7 +355,9 @@ impl Component for PlayerView {
         let model = Self {
             player: None,
             player_watcher: WatcherToken::new(),
+            is_active: false,
             art_css_provider,
+            art_css_class: next_art_css_class(),
             seek_slider: seek_slider.clone(),
 
             has_player: false,
@@ -372,6 +390,10 @@ impl Component for PlayerView {
 
     fn update(&mut self, msg: Self::Input, sender: ComponentSender<Self>, _root: &Self::Root) {
         match msg {
+            PlayerViewInput::SetActive(active) => {
+                self.set_active(active, &sender);
+            }
+
             PlayerViewInput::ShowSourcePickerClicked => {
                 let _ = sender.output(PlayerViewOutput::ShowSourcePicker);
             }
@@ -443,11 +465,6 @@ impl Component for PlayerView {
 
             PlayerViewCmd::MetadataChanged => {
                 self.refresh_metadata();
-            }
-
-            PlayerViewCmd::CoverArtChanged(path) => {
-                self.cover_art = path;
-                self.update_artwork_css();
             }
 
             PlayerViewCmd::CapabilitiesChanged => {

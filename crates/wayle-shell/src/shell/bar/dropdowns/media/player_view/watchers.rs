@@ -26,12 +26,6 @@ pub(super) fn spawn_player(
         let _ = out.send(PlayerViewCmd::MetadataChanged);
     });
 
-    let cover_art = player.metadata.cover_art.clone();
-    let cover_art_token = token.clone();
-    watch_cancellable!(sender, cover_art_token, [cover_art.watch()], |out| {
-        let _ = out.send(PlayerViewCmd::CoverArtChanged(cover_art.get()));
-    });
-
     let playback_state = player.playback_state.clone();
     let state_token = token.clone();
     watch_cancellable!(sender, state_token, [playback_state.watch()], |out| {
@@ -75,7 +69,7 @@ pub(super) fn spawn_player(
     sender.command(move |out, shutdown| async move {
         let shutdown_fut = shutdown.wait();
         tokio::pin!(shutdown_fut);
-        let mut stream = Box::pin(position_player.watch_position());
+        let mut stream = Box::pin(position_player.position.watch());
         loop {
             tokio::select! {
                 () = &mut shutdown_fut => break,

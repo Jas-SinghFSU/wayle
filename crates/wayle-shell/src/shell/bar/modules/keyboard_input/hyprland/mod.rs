@@ -1,19 +1,14 @@
+mod methods;
 mod watchers;
 
 use std::{rc::Rc, sync::Arc};
 
 use gtk::prelude::*;
 use relm4::prelude::*;
-use tracing::warn;
 use wayle_common::ConfigProperty;
 use wayle_config::{ConfigService, schemas::styling::CssToken};
-use wayle_hyprland::HyprlandService;
-use wayle_widgets::{
-    prelude::{
-        BarButton, BarButtonBehavior, BarButtonColors, BarButtonInit, BarButtonInput,
-        BarButtonOutput,
-    },
-    utils::force_window_resize,
+use wayle_widgets::prelude::{
+    BarButton, BarButtonBehavior, BarButtonColors, BarButtonInit, BarButtonInput, BarButtonOutput,
 };
 
 use super::{
@@ -53,7 +48,7 @@ impl Component for HyprlandKeyboardInput {
         let config = init.config.config();
         let keyboard_input = &config.modules.keyboard_input;
 
-        let initial_layout = initial_layout(&init.hyprland);
+        let initial_layout = methods::initial_layout(&init.hyprland);
         let formatted_label = helpers::format_label(&keyboard_input.format.get(), &initial_layout);
 
         let bar_button = BarButton::builder()
@@ -132,35 +127,6 @@ impl Component for HyprlandKeyboardInput {
             KeyboardInputCmd::UpdateIcon(icon) => {
                 self.bar_button.emit(BarButtonInput::SetIcon(icon));
             }
-        }
-    }
-}
-
-impl HyprlandKeyboardInput {
-    fn update_label(&self, format: &str, root: &gtk::Box) {
-        let label = helpers::format_label(format, &self.current_layout);
-        self.bar_button.emit(BarButtonInput::SetLabel(label));
-        force_window_resize(root);
-    }
-}
-
-fn initial_layout(hyprland: &Option<Arc<HyprlandService>>) -> String {
-    let Some(hyprland) = hyprland else {
-        warn!(
-            service = "HyprlandService",
-            "unavailable, using fallback layout"
-        );
-        return String::from("?");
-    };
-
-    let runtime = tokio::runtime::Handle::current();
-    match runtime.block_on(hyprland.devices()) {
-        Ok(devices) => helpers::main_keyboard_layout(&devices)
-            .unwrap_or("?")
-            .to_string(),
-        Err(err) => {
-            warn!(error = %err, "cannot get keyboard devices");
-            String::from("?")
         }
     }
 }

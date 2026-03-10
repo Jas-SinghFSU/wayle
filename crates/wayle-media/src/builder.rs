@@ -1,6 +1,6 @@
 //! Builder for configuring a MediaService.
 
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::HashMap, sync::Arc, time::Duration};
 
 use tokio::sync::RwLock;
 use tokio_util::sync::CancellationToken;
@@ -20,12 +20,24 @@ use crate::{
 ///
 /// Allows customization of ignored player patterns for filtering out
 /// specific media players from being tracked.
-#[derive(Default)]
 pub struct MediaServiceBuilder {
     ignored_players: Vec<String>,
     priority_players: Vec<String>,
     register_daemon: bool,
     enable_art_cache: bool,
+    position_poll_interval: Duration,
+}
+
+impl Default for MediaServiceBuilder {
+    fn default() -> Self {
+        Self {
+            ignored_players: Vec::new(),
+            priority_players: Vec::new(),
+            register_daemon: false,
+            enable_art_cache: false,
+            position_poll_interval: Duration::from_secs(1),
+        }
+    }
 }
 
 impl MediaServiceBuilder {
@@ -78,6 +90,15 @@ impl MediaServiceBuilder {
         self
     }
 
+    /// Sets how often live players refresh the `Position` property.
+    ///
+    /// This interval is shared across all monitored players and used by a
+    /// single polling task per player.
+    pub fn position_poll_interval(mut self, interval: Duration) -> Self {
+        self.position_poll_interval = interval;
+        self
+    }
+
     /// Builds and initializes the MediaService.
     ///
     /// This will establish a D-Bus session connection and start monitoring
@@ -110,6 +131,7 @@ impl MediaServiceBuilder {
             priority_patterns: self.priority_players,
             cancellation_token: cancellation_token.clone(),
             art_resolver,
+            position_poll_interval: self.position_poll_interval,
         });
 
         service.start_monitoring().await?;

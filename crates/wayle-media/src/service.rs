@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::HashMap, sync::Arc, time::Duration};
 
 use derive_more::Debug;
 use futures::Stream;
@@ -37,6 +37,8 @@ pub struct MediaService {
     pub priority_patterns: Vec<String>,
     #[debug(skip)]
     pub(crate) art_resolver: Option<ArtResolver>,
+    /// Shared position polling interval for all monitored players.
+    pub position_poll_interval: Duration,
 }
 
 impl MediaService {
@@ -89,6 +91,7 @@ impl MediaService {
             player_id: player_id.clone(),
             cancellation_token: &self.cancellation_token,
             art_resolver: self.art_resolver.clone(),
+            position_poll_interval: self.position_poll_interval,
         })
         .await
     }

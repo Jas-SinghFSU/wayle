@@ -1,0 +1,33 @@
+.dashboard-dropdown {
+    .dashboard-controls {
+        border-spacing: var(--space-xs);
+    }
+
+    .dashboard-slider-row {
+        border-spacing: var(--space-sm);
+
+        &:disabled {
+            opacity: 0.35;
+        }
+    }
+
+    button.ghost-icon.dashboard-volume-icon {
+        > image {
+            margin: var(--space-xs);
+            color: var(--fg-muted);
+        }
+    }
+
+    .dashboard-slider-value {
+        font-size: var(--text-base);
+        font-weight: var(--weight-semibold);
+        color: var(--fg-muted);
+        min-width: calc(3rem * var(--global-scale));
+    }
+
+    .controls-device {
+        font-size: var(--text-sm);
+        font-weight: var(--weight-semibold);
+        color: var(--fg-subtle);
+    }
+}

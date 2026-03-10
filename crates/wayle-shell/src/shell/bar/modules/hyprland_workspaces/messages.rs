@@ -31,5 +31,6 @@ pub(crate) enum WorkspacesCmd {
     HyprlandConfigReloaded,
     UrgentWindow(Address),
     WindowFocused(Address),
+    BlinkTick,
     WorkspaceRulesLoaded(HashMap<WorkspaceId, String>),
 }

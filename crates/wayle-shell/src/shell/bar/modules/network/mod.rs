@@ -1,6 +1,7 @@
 mod factory;
 mod helpers;
 mod messages;
+mod methods;
 mod watchers;
 
 use std::{rc::Rc, sync::Arc};
@@ -8,24 +9,17 @@ use std::{rc::Rc, sync::Arc};
 use gtk::prelude::*;
 use relm4::prelude::*;
 use wayle_common::{ConfigProperty, WatcherToken};
-use wayle_config::{
-    ConfigService,
-    schemas::{modules::NetworkConfig, styling::CssToken},
-};
-use wayle_network::{NetworkService, types::connectivity::ConnectionType};
+use wayle_config::{ConfigService, schemas::styling::CssToken};
+use wayle_network::NetworkService;
 use wayle_widgets::prelude::{
     BarButton, BarButtonBehavior, BarButtonColors, BarButtonInit, BarButtonInput, BarButtonOutput,
 };
 
-use self::helpers::{WifiContext, WiredContext, wifi_icon, wifi_label, wired_icon, wired_label};
 pub(crate) use self::{
     factory::Factory,
     messages::{NetworkCmd, NetworkInit, NetworkMsg},
 };
-use crate::{
-    i18n::t,
-    shell::bar::dropdowns::{self, DropdownRegistry},
-};
+use crate::shell::bar::dropdowns::{self, DropdownRegistry};
 
 pub(crate) struct NetworkModule {
     bar_button: Controller<BarButton>,
@@ -152,72 +146,6 @@ impl Component for NetworkModule {
                 let (icon, label) = Self::compute_display(network_config, &self.network);
                 self.bar_button.emit(BarButtonInput::SetIcon(icon));
                 self.bar_button.emit(BarButtonInput::SetLabel(label));
-            }
-        }
-    }
-}
-
-impl NetworkModule {
-    fn compute_display(config: &NetworkConfig, network: &NetworkService) -> (String, String) {
-        let primary = network.primary.get();
-
-        match primary {
-            ConnectionType::Wifi => {
-                if let Some(wifi) = network.wifi.get() {
-                    let ssid = wifi.ssid.get();
-                    let ctx = WifiContext {
-                        enabled: wifi.enabled.get(),
-                        connectivity: wifi.connectivity.get(),
-                        strength: wifi.strength.get(),
-                        ssid: ssid.as_deref(),
-                    };
-                    (wifi_icon(config, &ctx), wifi_label(&ctx))
-                } else {
-                    (
-                        config.wifi_offline_icon.get().clone(),
-                        t!("bar-network-no-wifi"),
-                    )
-                }
-            }
-            ConnectionType::Wired => {
-                if let Some(wired) = network.wired.get() {
-                    let ctx = WiredContext {
-                        connectivity: wired.connectivity.get(),
-                    };
-                    (wired_icon(config, &ctx), wired_label(&ctx))
-                } else {
-                    (
-                        config.wired_disconnected_icon.get().clone(),
-                        t!("bar-network-no-ethernet"),
-                    )
-                }
-            }
-            ConnectionType::None => (
-                config.wifi_offline_icon.get().clone(),
-                t!("bar-network-offline"),
-            ),
-
-            _ => {
-                if let Some(wifi) = network.wifi.get() {
-                    let ssid = wifi.ssid.get();
-                    let ctx = WifiContext {
-                        enabled: wifi.enabled.get(),
-                        connectivity: wifi.connectivity.get(),
-                        strength: wifi.strength.get(),
-                        ssid: ssid.as_deref(),
-                    };
-                    (wifi_icon(config, &ctx), wifi_label(&ctx))
-                } else if let Some(wired) = network.wired.get() {
-                    let ctx = WiredContext {
-                        connectivity: wired.connectivity.get(),
-                    };
-                    (wired_icon(config, &ctx), wired_label(&ctx))
-                } else {
-                    (
-                        config.wifi_offline_icon.get().clone(),
-                        t!("bar-network-offline"),
-                    )
-                }
             }
         }
     }

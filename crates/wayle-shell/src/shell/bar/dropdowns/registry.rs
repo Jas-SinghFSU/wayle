@@ -298,6 +298,12 @@ impl DropdownRegistry {
         }
     }
 
+    pub(crate) fn warm_all(&self) {
+        for name in super::DROPDOWN_NAMES {
+            let _ = self.get_or_create(name);
+        }
+    }
+
     fn get_or_create(&self, name: &str) -> Option<Rc<DropdownInstance>> {
         let mut cache = self.cache.borrow_mut();
         if let Some(instance) = cache.get(name) {

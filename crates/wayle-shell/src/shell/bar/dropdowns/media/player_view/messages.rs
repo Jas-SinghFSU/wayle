@@ -12,6 +12,7 @@ pub(crate) struct PlayerViewInit {
 
 #[derive(Debug)]
 pub(crate) enum PlayerViewInput {
+    SetActive(bool),
     ShowSourcePickerClicked,
     PlayPauseClicked,
     NextClicked,
@@ -30,7 +31,6 @@ pub(crate) enum PlayerViewOutput {
 pub(crate) enum PlayerViewCmd {
     PlayerChanged(Option<Arc<Player>>),
     MetadataChanged,
-    CoverArtChanged(Option<String>),
     PlaybackStateChanged(PlaybackState),
     PositionTick(Duration),
     CapabilitiesChanged,

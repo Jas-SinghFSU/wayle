@@ -144,6 +144,7 @@ impl Component for Bar {
         watchers::dropdowns::spawn(&sender, &init.services.config);
 
         let dropdowns = Rc::new(DropdownRegistry::new(&init.services));
+        dropdowns.warm_all();
 
         let mut model = Self {
             settings,

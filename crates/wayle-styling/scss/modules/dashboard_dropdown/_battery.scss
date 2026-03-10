@@ -1,0 +1,69 @@
+.dashboard-dropdown {
+    .battery-status {
+        border-spacing: var(--space-sm);
+        margin-bottom: var(--space-xs);
+    }
+
+    .battery-icon {
+        image {
+            -gtk-icon-size: var(--icon-md);
+            color: var(--status-success);
+        }
+
+        &.warning image {
+            color: var(--status-warning);
+        }
+
+        &.critical image {
+            color: var(--status-error);
+        }
+    }
+
+    .battery-percent {
+        font-size: var(--text-lg);
+        font-weight: var(--weight-semibold);
+        color: var(--fg-default);
+
+        &.warning {
+            color: var(--status-warning);
+        }
+
+        &.critical {
+            color: var(--status-error);
+        }
+    }
+
+    .progress-bar {
+        margin-bottom: var(--space-sm);
+    }
+
+    .battery-detail {
+        font-size: var(--text-sm);
+        font-weight: var(--weight-medium);
+        color: var(--fg-subtle);
+        margin-bottom: var(--space-xs);
+
+        &.warning {
+            color: var(--status-warning);
+        }
+
+        &.critical {
+            color: var(--status-error);
+        }
+    }
+
+    .battery-profile {
+        border-spacing: var(--space-xs);
+    }
+
+    .battery-profile-icon {
+        -gtk-icon-size: var(--icon-sm);
+        color: var(--status-warning);
+    }
+
+    .battery-profile-label {
+        font-size: var(--text-base);
+        font-weight: var(--weight-semibold);
+        color: var(--fg-muted);
+    }
+}

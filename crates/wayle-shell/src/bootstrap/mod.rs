@@ -6,11 +6,11 @@ mod weather;
 use std::{error::Error, fmt::Display, sync::Arc, time::Duration};
 
 use tokio::task::JoinHandle;
-use tracing::{debug, warn};
+use tracing::{debug, info, warn};
 use wayle_audio::AudioService;
 use wayle_battery::BatteryService;
 use wayle_bluetooth::BluetoothService;
-use wayle_common::shell::APP_ID;
+use wayle_common::{Property, shell::APP_ID};
 use wayle_config::{ConfigService, infrastructure::schema};
 use wayle_hyprland::HyprlandService;
 use wayle_media::MediaService;
@@ -74,7 +74,6 @@ struct DaemonServices {
 struct OptionalServices {
     bluetooth: Option<Arc<BluetoothService>>,
     hyprland: Option<Arc<HyprlandService>>,
-    power_profiles: Option<Arc<PowerProfilesService>>,
 }
 
 pub async fn is_already_running() -> bool {
@@ -112,6 +111,8 @@ pub async fn init_services() -> Result<(StartupTimer, ShellServices), Box<dyn Er
 
     let config_service = timer.time("Config", ConfigService::load()).await?;
 
+    let power_profiles: Property<Option<Arc<PowerProfilesService>>> = Property::new(None);
+
     let (weather, core, daemons, optional) = {
         let config = config_service.config();
         let weather = timer.time_sync("Weather", || {
@@ -127,6 +128,8 @@ pub async fn init_services() -> Result<(StartupTimer, ShellServices), Box<dyn Er
         (weather, core?, daemons, optional)
     };
 
+    spawn_deferred_power_profiles(power_profiles.clone());
+
     timer.mark_services_done();
 
     let services = ShellServices {
@@ -135,7 +138,7 @@ pub async fn init_services() -> Result<(StartupTimer, ShellServices), Box<dyn Er
         bluetooth: optional.bluetooth,
         config: config_service,
         hyprland: optional.hyprland,
-        power_profiles: optional.power_profiles,
+        power_profiles,
         idle_inhibit: core.idle_inhibit,
         media: daemons.media,
         network: core.network,
@@ -205,26 +208,33 @@ async fn init_core_services(
 async fn init_optional_services(timer: &StartupTimer) -> OptionalServices {
     let bluetooth_task = tokio::spawn(BluetoothService::new());
     let hyprland_task = tokio::spawn(HyprlandService::new());
-    let power_profiles_task = tokio::spawn(PowerProfilesService::new());
 
-    let (bluetooth, hyprland, power_profiles) = tokio::join!(
+    let (bluetooth, hyprland) = tokio::join!(
         async { try_service!(timer, "Bluetooth", spawned(bluetooth_task)) },
         async { timer.time("Hyprland", spawned(hyprland_task)).await.ok() },
-        async {
-            try_service!(
-                timer,
-                "PowerProfiles",
-                spawned(power_profiles_task),
-                no_wrap
-            )
-        },
     );
 
     OptionalServices {
         bluetooth,
         hyprland,
-        power_profiles,
     }
+}
+
+fn spawn_deferred_power_profiles(property: Property<Option<Arc<PowerProfilesService>>>) {
+    tokio::spawn(async move {
+        let start = std::time::Instant::now();
+
+        match PowerProfilesService::builder().with_daemon().build().await {
+            Ok(service) => {
+                let duration_ms = start.elapsed().as_millis() as u64;
+                info!(duration_ms, "PowerProfiles ready (deferred)");
+                property.replace(Some(service));
+            }
+            Err(err) => {
+                warn!(error = %err, "PowerProfiles unavailable");
+            }
+        }
+    });
 }
 
 async fn init_daemon_services(

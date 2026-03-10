@@ -66,7 +66,7 @@ use futures::stream::{Stream, StreamExt};
 #[cfg(feature = "schema")]
 use schemars::{JsonSchema, Schema, SchemaGenerator};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use tokio::sync::watch;
+use tokio::sync::{Notify, watch};
 use tokio_stream::wrappers::WatchStream;
 pub use traits::{
     ApplyConfigLayer, ApplyRuntimeLayer, ClearRuntimeByPath, CommitConfigReload,
@@ -98,6 +98,7 @@ pub struct Property<T: Clone + Send + Sync + 'static> {
     tx: watch::Sender<T>,
     rx: watch::Receiver<T>,
     subscriber_count: Arc<AtomicUsize>,
+    subscriber_notify: Arc<Notify>,
 }
 
 impl<T: Clone + Send + Sync + 'static> Property<T> {
@@ -109,6 +110,7 @@ impl<T: Clone + Send + Sync + 'static> Property<T> {
             tx,
             rx,
             subscriber_count: Arc::new(AtomicUsize::new(0)),
+            subscriber_notify: Arc::new(Notify::new()),
         }
     }
 
@@ -128,6 +130,11 @@ impl<T: Clone + Send + Sync + 'static> Property<T> {
         });
     }
 
+    /// Sets the value without equality checking, always notifying watchers.
+    pub fn replace(&self, new_value: T) {
+        self.tx.send_modify(|current| *current = new_value);
+    }
+
     /// Returns the current value.
     pub fn get(&self) -> T {
         self.rx.borrow().clone()
@@ -140,12 +147,20 @@ impl<T: Clone + Send + Sync + 'static> Property<T> {
         SubscribedStream::new(
             WatchStream::new(self.rx.clone()),
             Arc::clone(&self.subscriber_count),
+            Arc::clone(&self.subscriber_notify),
         )
     }
 
     /// Returns `true` if any [`watch`](Self::watch) streams are currently alive.
     pub fn has_subscribers(&self) -> bool {
-        self.subscriber_count.load(Ordering::Relaxed) > 0
+        self.subscriber_count.load(Ordering::Acquire) > 0
+    }
+
+    /// Waits until at least one watcher is subscribed.
+    pub async fn wait_for_subscribers(&self) {
+        while !self.has_subscribers() {
+            self.subscriber_notify.notified().await;
+        }
     }
 }
 
@@ -155,12 +170,18 @@ impl<T: Clone + Send + Sync + 'static> Property<T> {
 struct SubscribedStream<T> {
     inner: WatchStream<T>,
     count: Arc<AtomicUsize>,
+    notify: Arc<Notify>,
 }
 
 impl<T: Clone + Send + Sync + 'static> SubscribedStream<T> {
-    fn new(inner: WatchStream<T>, count: Arc<AtomicUsize>) -> Self {
-        count.fetch_add(1, Ordering::Relaxed);
-        Self { inner, count }
+    fn new(inner: WatchStream<T>, count: Arc<AtomicUsize>, notify: Arc<Notify>) -> Self {
+        count.fetch_add(1, Ordering::Release);
+        notify.notify_waiters();
+        Self {
+            inner,
+            count,
+            notify,
+        }
     }
 }
 
@@ -174,7 +195,8 @@ impl<T: Clone + Send + Sync + 'static> Stream for SubscribedStream<T> {
 
 impl<T> Drop for SubscribedStream<T> {
     fn drop(&mut self) {
-        self.count.fetch_sub(1, Ordering::Relaxed);
+        self.count.fetch_sub(1, Ordering::Release);
+        self.notify.notify_waiters();
     }
 }
 
@@ -557,5 +579,37 @@ mod tests {
         let property: Property<i32> = serde_json::from_str(json).unwrap();
 
         assert!(!property.has_subscribers());
+    }
+
+    #[tokio::test]
+    async fn wait_for_subscribers_returns_when_stream_is_created() {
+        let property = Property::new(0);
+        let waiting = property.clone();
+
+        let waiter = tokio::spawn(async move {
+            waiting.wait_for_subscribers().await;
+        });
+
+        tokio::time::sleep(tokio::time::Duration::from_millis(10)).await;
+        let stream = property.watch();
+
+        tokio::time::timeout(tokio::time::Duration::from_millis(100), waiter)
+            .await
+            .expect("waiter should complete")
+            .expect("waiter task should not panic");
+        drop(stream);
+    }
+
+    #[tokio::test]
+    async fn wait_for_subscribers_returns_immediately_with_existing_subscriber() {
+        let property = Property::new(0);
+        let _stream = property.watch();
+
+        tokio::time::timeout(
+            tokio::time::Duration::from_millis(100),
+            property.wait_for_subscribers(),
+        )
+        .await
+        .expect("wait_for_subscribers should return immediately");
     }
 }

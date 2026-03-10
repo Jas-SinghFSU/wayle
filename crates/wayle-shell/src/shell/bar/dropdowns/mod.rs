@@ -2,6 +2,7 @@ mod audio;
 mod battery;
 mod bluetooth;
 mod calendar;
+mod dashboard;
 mod media;
 mod network;
 mod registry;
@@ -18,6 +19,8 @@ pub(crate) fn scaled_dimension(base: f32, scale: f32) -> i32 {
 
 macro_rules! register_dropdowns {
     ($($name:literal => $factory:ty),+ $(,)?) => {
+        pub(crate) const DROPDOWN_NAMES: &[&str] = &[$($name),+];
+
         pub(crate) fn create(
             name: &str,
             services: &ShellServices,
@@ -38,6 +41,7 @@ register_dropdowns! {
     "battery" => battery::Factory,
     "bluetooth" => bluetooth::Factory,
     "calendar" => calendar::Factory,
+    "dashboard" => dashboard::Factory,
     "media" => media::Factory,
     "network" => network::Factory,
     "weather" => weather::Factory,

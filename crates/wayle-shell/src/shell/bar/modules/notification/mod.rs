@@ -1,6 +1,7 @@
 mod factory;
 mod helpers;
 mod messages;
+mod methods;
 mod watchers;
 
 use std::{rc::Rc, sync::Arc};
@@ -8,12 +9,9 @@ use std::{rc::Rc, sync::Arc};
 use gtk::prelude::*;
 use relm4::prelude::*;
 use wayle_common::ConfigProperty;
-use wayle_config::{
-    ConfigService,
-    schemas::{modules::NotificationConfig, styling::CssToken},
-};
+use wayle_config::{ConfigService, schemas::styling::CssToken};
 use wayle_widgets::prelude::{
-    BarButton, BarButtonBehavior, BarButtonColors, BarButtonInit, BarButtonInput, BarButtonOutput,
+    BarButton, BarButtonBehavior, BarButtonColors, BarButtonInit, BarButtonOutput,
 };
 
 use self::helpers::{IconContext, format_label, select_icon};
@@ -148,25 +146,5 @@ impl Component for NotificationModule {
                 self.update_display(notification_config);
             }
         }
-    }
-}
-
-impl NotificationModule {
-    fn update_display(&self, config: &NotificationConfig) {
-        let icon_name = config.icon_name.get();
-        let icon_unread = config.icon_unread.get();
-        let icon_dnd = config.icon_dnd.get();
-
-        let icon = select_icon(&IconContext {
-            count: self.count,
-            dnd: self.dnd,
-            icon_name: &icon_name,
-            icon_unread: &icon_unread,
-            icon_dnd: &icon_dnd,
-        });
-        self.bar_button.emit(BarButtonInput::SetIcon(icon));
-
-        let label = format_label(self.count);
-        self.bar_button.emit(BarButtonInput::SetLabel(label));
     }
 }

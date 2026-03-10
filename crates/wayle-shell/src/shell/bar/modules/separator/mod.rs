@@ -1,5 +1,6 @@
 mod factory;
 mod messages;
+mod methods;
 mod styling;
 mod watchers;
 
@@ -80,17 +81,6 @@ impl Component for SeparatorModule {
                 self.is_vertical = is_vertical;
                 styling::apply_styling(&self.css_provider, self.is_vertical, &self.config);
             }
-        }
-    }
-}
-
-impl SeparatorModule {
-    /// Returns the separator orientation based on bar orientation.
-    fn orientation_for_vertical(is_vertical: bool) -> gtk::Orientation {
-        if is_vertical {
-            gtk::Orientation::Horizontal
-        } else {
-            gtk::Orientation::Vertical
         }
     }
 }

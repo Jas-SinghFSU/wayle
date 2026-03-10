@@ -16,6 +16,12 @@ use crate::{
     },
 };
 
+const UNKNOWN_PROPERTY_ERROR: &str = "org.freedesktop.DBus.Error.UnknownProperty";
+
+fn is_unknown_property_error(error: &zbus::Error) -> bool {
+    matches!(error, zbus::Error::MethodError(name, _, _) if name.as_str() == UNKNOWN_PROPERTY_ERROR)
+}
+
 impl ModelMonitoring for TrayItem {
     type Error = Error;
 
@@ -125,6 +131,8 @@ async fn monitor_properties(
             return;
         }
     };
+
+    let mut new_icon_has_name_property = true;
 
     loop {
         let Some(tray_item) = weak_item.upgrade() else {
@@ -294,9 +302,20 @@ async fn monitor_properties(
 
             Some(_) = new_icon.next() => {
                 debug!("NewIcon signal received");
-                if let Ok(name) = item_proxy.icon_name().await {
-                    let icon_name = if name.is_empty() { None } else { Some(name) };
-                    tray_item.icon_name.set(icon_name);
+                if new_icon_has_name_property {
+                    match item_proxy.icon_name().await {
+                        Ok(name) => {
+                            let icon_name = if name.is_empty() { None } else { Some(name) };
+                            tray_item.icon_name.set(icon_name);
+                        }
+                        Err(error) => {
+                            if is_unknown_property_error(&error) {
+                                debug!("IconName property is unsupported for this tray item; skipping future refreshes");
+                                new_icon_has_name_property = false;
+                                tray_item.icon_name.set(None);
+                            }
+                        }
+                    }
                 }
                 if let Ok(pixmaps) = item_proxy.icon_pixmap().await {
                     let pixmaps: Vec<IconPixmap> = pixmaps.into_iter().map(Into::into).collect();

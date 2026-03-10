@@ -1,30 +1,21 @@
+mod methods;
 mod watchers;
 
 use std::{rc::Rc, sync::Arc};
 
 use gtk::prelude::*;
 use relm4::prelude::*;
-use tokio::runtime::Handle;
-use tracing::warn;
 use wayle_common::ConfigProperty;
 use wayle_config::{ConfigService, schemas::styling::CssToken};
-use wayle_hyprland::HyprlandService;
-use wayle_widgets::{
-    prelude::{
-        BarButton, BarButtonBehavior, BarButtonColors, BarButtonInit, BarButtonInput,
-        BarButtonOutput,
-    },
-    utils::force_window_resize,
+use wayle_widgets::prelude::{
+    BarButton, BarButtonBehavior, BarButtonColors, BarButtonInit, BarButtonInput, BarButtonOutput,
 };
 
 use super::{
     helpers::{self, IconContext},
     messages::{WindowTitleCmd, WindowTitleInit, WindowTitleMsg},
 };
-use crate::{
-    i18n::t,
-    shell::bar::dropdowns::{self, DropdownRegistry},
-};
+use crate::shell::bar::dropdowns::{self, DropdownRegistry};
 
 pub(crate) struct HyprlandWindowTitle {
     bar_button: Controller<BarButton>,
@@ -58,7 +49,7 @@ impl Component for HyprlandWindowTitle {
         let config = init.config.config();
         let window_title = &config.modules.window_title;
 
-        let (initial_title, initial_class) = initial_window(&init.hyprland);
+        let (initial_title, initial_class) = methods::initial_window(&init.hyprland);
         let formatted_label =
             helpers::format_label(&window_title.format.get(), &initial_title, &initial_class);
         let initial_icon = helpers::resolve_icon(&IconContext {
@@ -158,47 +149,5 @@ impl Component for HyprlandWindowTitle {
                 self.bar_button.emit(BarButtonInput::SetIcon(icon));
             }
         }
-    }
-}
-
-impl HyprlandWindowTitle {
-    fn update_display(&self, format: &str, root: &gtk::Box) {
-        let window_title = &self.config.config().modules.window_title;
-
-        let label = helpers::format_label(format, &self.current_title, &self.current_class);
-        let icon = helpers::resolve_icon(&IconContext {
-            title: &self.current_title,
-            class: &self.current_class,
-            user_mappings: &window_title.icon_mappings.get(),
-            fallback: &window_title.icon_name.get(),
-        });
-
-        self.bar_button.emit(BarButtonInput::SetLabel(label));
-        self.bar_button.emit(BarButtonInput::SetIcon(icon));
-        force_window_resize(root);
-    }
-
-    fn update_label(&self, format: &str, root: &gtk::Box) {
-        let label = helpers::format_label(format, &self.current_title, &self.current_class);
-        self.bar_button.emit(BarButtonInput::SetLabel(label));
-        force_window_resize(root);
-    }
-}
-
-fn initial_window(hyprland: &Option<Arc<HyprlandService>>) -> (String, String) {
-    let fallback = || (t!("bar-window-title-empty"), t!("bar-window-title-empty"));
-
-    let Some(hyprland) = hyprland else {
-        warn!(
-            service = "HyprlandService",
-            "unavailable, using fallback window"
-        );
-        return fallback();
-    };
-
-    let runtime = Handle::current();
-    match runtime.block_on(hyprland.active_window()) {
-        Some(client) => (client.title.get(), client.class.get()),
-        None => fallback(),
     }
 }

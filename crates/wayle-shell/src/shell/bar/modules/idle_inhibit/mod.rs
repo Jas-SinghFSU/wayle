@@ -1,20 +1,19 @@
 mod factory;
 mod helpers;
 mod messages;
+mod methods;
 mod watchers;
 
 use std::{rc::Rc, sync::Arc};
 
 use relm4::{gtk::prelude::*, prelude::*};
-use tracing::warn;
 use wayle_common::ConfigProperty;
 use wayle_config::{ConfigService, schemas::styling::CssToken};
 use wayle_idle_inhibit::IdleInhibitor;
 use wayle_widgets::prelude::{
-    BarButton, BarButtonBehavior, BarButtonColors, BarButtonInit, BarButtonInput, BarButtonOutput,
+    BarButton, BarButtonBehavior, BarButtonColors, BarButtonInit, BarButtonOutput,
 };
 
-use self::helpers::LabelContext;
 pub(crate) use self::{
     factory::Factory,
     messages::{IdleInhibitCmd, IdleInhibitInit, IdleInhibitMsg},
@@ -130,58 +129,6 @@ impl Component for IdleInhibitModule {
                 self.update_display(config);
             }
         }
-    }
-}
-
-impl IdleInhibitModule {
-    fn sync_inhibitor(&mut self) {
-        let should_be_active = self.state.active.get();
-        let is_active = self.inhibitor.is_some();
-
-        if should_be_active && !is_active {
-            self.create_inhibitor();
-        } else if !should_be_active && is_active {
-            self.inhibitor.take();
-        }
-    }
-
-    fn create_inhibitor(&mut self) {
-        let widget = self.bar_button.widget();
-        let Some(native) = widget.native() else {
-            warn!("widget has no native surface");
-            return;
-        };
-        let Some(gdk_surface) = native.surface() else {
-            warn!("native has no surface");
-            return;
-        };
-        let Some(inhibitor) = IdleInhibitor::new(&gdk_surface) else {
-            warn!("failed to create idle inhibitor");
-            return;
-        };
-
-        self.inhibitor = Some(inhibitor);
-    }
-
-    fn update_display(&self, config: &wayle_config::schemas::modules::IdleInhibitConfig) {
-        let active = self.state.active.get();
-
-        let icon = helpers::select_icon(
-            active,
-            &config.icon_inactive.get(),
-            &config.icon_active.get(),
-        );
-        self.bar_button.emit(BarButtonInput::SetIcon(icon));
-
-        let label = helpers::build_label(
-            &config.format.get(),
-            &LabelContext {
-                active,
-                duration_mins: self.state.duration_mins.get(),
-                remaining_secs: self.state.remaining_secs.get(),
-            },
-        );
-        self.bar_button.emit(BarButtonInput::SetLabel(label));
     }
 }
 

@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::HashMap, sync::Arc, time::Duration};
 
 use futures::StreamExt;
 use tokio::sync::RwLock;
@@ -24,6 +24,7 @@ struct MonitoringContext<'a> {
     priority_patterns: &'a [String],
     cancellation_token: &'a CancellationToken,
     art_resolver: &'a Option<ArtResolver>,
+    position_poll_interval: Duration,
 }
 
 const MPRIS_BUS_PREFIX: &str = "org.mpris.MediaPlayer2.";
@@ -42,6 +43,7 @@ impl ServiceMonitoring for MediaService {
             priority_patterns: &self.priority_patterns,
             cancellation_token: &self.cancellation_token,
             art_resolver: &self.art_resolver,
+            position_poll_interval: self.position_poll_interval,
         };
 
         discover_existing_players(&ctx).await?;
@@ -96,6 +98,7 @@ fn spawn_name_monitoring(ctx: &MonitoringContext<'_>) {
     let priority_patterns = ctx.priority_patterns.to_vec();
     let cancellation_token = ctx.cancellation_token.child_token();
     let art_resolver = ctx.art_resolver.clone();
+    let position_poll_interval = ctx.position_poll_interval;
 
     tokio::spawn(async move {
         debug!("MprisMonitoring task spawned");
@@ -118,6 +121,7 @@ fn spawn_name_monitoring(ctx: &MonitoringContext<'_>) {
             priority_patterns: &priority_patterns,
             cancellation_token: &cancellation_token,
             art_resolver: &art_resolver,
+            position_poll_interval,
         };
 
         loop {
@@ -181,6 +185,7 @@ async fn handle_player_added(ctx: &MonitoringContext<'_>, player_id: PlayerId) {
         player_id: player_id.clone(),
         cancellation_token: &child_token,
         art_resolver: ctx.art_resolver.clone(),
+        position_poll_interval: ctx.position_poll_interval,
     })
     .await
     {

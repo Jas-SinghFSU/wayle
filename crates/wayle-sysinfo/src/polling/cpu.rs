@@ -50,57 +50,68 @@ pub(crate) fn spawn(
         let mut ticker = interval(poll_interval);
 
         loop {
+            if !cpu.has_subscribers() {
+                tokio::select! {
+                    _ = token.cancelled() => {
+                        debug!("CPU polling cancelled");
+                        return;
+                    }
+                    _ = cpu.wait_for_subscribers() => {}
+                }
+                ticker.reset();
+            }
+
+            if !cpu.has_subscribers() {
+                continue;
+            }
+
+            system.refresh_cpu_all();
+            components.refresh(false);
+
+            let cores: Vec<CoreData> = system
+                .cpus()
+                .iter()
+                .map(|c| CoreData {
+                    name: c.name().to_string(),
+                    usage_percent: c.cpu_usage(),
+                    frequency_mhz: c.frequency(),
+                })
+                .collect();
+
+            let (avg_freq, max_freq, busiest_freq) = if cores.is_empty() {
+                (0, 0, 0)
+            } else {
+                let sum: u64 = cores.iter().map(|c| c.frequency_mhz).sum();
+                let max = cores.iter().map(|c| c.frequency_mhz).max().unwrap_or(0);
+                let busiest = cores
+                    .iter()
+                    .max_by(|a, b| {
+                        a.usage_percent
+                            .partial_cmp(&b.usage_percent)
+                            .unwrap_or(std::cmp::Ordering::Equal)
+                    })
+                    .map(|c| c.frequency_mhz)
+                    .unwrap_or(0);
+                (sum / cores.len() as u64, max, busiest)
+            };
+
+            let temperature = find_cpu_temperature(&components, &temp_sensor);
+
+            cpu.set(CpuData {
+                usage_percent: system.global_cpu_usage(),
+                avg_frequency_mhz: avg_freq,
+                max_frequency_mhz: max_freq,
+                busiest_core_freq_mhz: busiest_freq,
+                temperature_celsius: temperature,
+                cores,
+            });
+
             tokio::select! {
                 _ = token.cancelled() => {
                     debug!("CPU polling cancelled");
                     return;
                 }
-                _ = ticker.tick() => {
-                    if !cpu.has_subscribers() {
-                        continue;
-                    }
-
-                    system.refresh_cpu_all();
-                    components.refresh(false);
-
-                    let cores: Vec<CoreData> = system
-                        .cpus()
-                        .iter()
-                        .map(|c| CoreData {
-                            name: c.name().to_string(),
-                            usage_percent: c.cpu_usage(),
-                            frequency_mhz: c.frequency(),
-                        })
-                        .collect();
-
-                    let (avg_freq, max_freq, busiest_freq) = if cores.is_empty() {
-                        (0, 0, 0)
-                    } else {
-                        let sum: u64 = cores.iter().map(|c| c.frequency_mhz).sum();
-                        let max = cores.iter().map(|c| c.frequency_mhz).max().unwrap_or(0);
-                        let busiest = cores
-                            .iter()
-                            .max_by(|a, b| {
-                                a.usage_percent
-                                    .partial_cmp(&b.usage_percent)
-                                    .unwrap_or(std::cmp::Ordering::Equal)
-                            })
-                            .map(|c| c.frequency_mhz)
-                            .unwrap_or(0);
-                        (sum / cores.len() as u64, max, busiest)
-                    };
-
-                    let temperature = find_cpu_temperature(&components, &temp_sensor);
-
-                    cpu.set(CpuData {
-                        usage_percent: system.global_cpu_usage(),
-                        avg_frequency_mhz: avg_freq,
-                        max_frequency_mhz: max_freq,
-                        busiest_core_freq_mhz: busiest_freq,
-                        temperature_celsius: temperature,
-                        cores,
-                    });
-                }
+                _ = ticker.tick() => {}
             }
         }
     });

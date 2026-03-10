@@ -1,6 +1,7 @@
 mod factory;
 mod helpers;
 mod messages;
+mod methods;
 mod watchers;
 
 use std::{rc::Rc, sync::Arc};
@@ -172,27 +173,6 @@ impl Component for MediaModule {
                     let state = player.playback_state.get();
                     Self::update_spinning_state(root, state);
                 }
-            }
-        }
-    }
-}
-
-impl MediaModule {
-    fn update_disc_mode(root: &gtk::Box, enabled: bool) {
-        if enabled {
-            root.add_css_class("media-disc");
-        } else {
-            root.remove_css_class("media-disc");
-        }
-    }
-
-    fn update_spinning_state(root: &gtk::Box, state: PlaybackState) {
-        match state {
-            PlaybackState::Playing => {
-                root.add_css_class("media-spinning");
-            }
-            PlaybackState::Paused | PlaybackState::Stopped => {
-                root.remove_css_class("media-spinning");
             }
         }
     }

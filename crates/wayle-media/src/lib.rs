@@ -56,6 +56,7 @@
 //! | `with_daemon()` | Control playback from scripts or other processes |
 //! | `with_art_cache()` | Download and cache HTTP album art to disk |
 //! | `ignore_player(pattern)` | Skip players matching the pattern |
+//! | `position_poll_interval(dur)` | How often to refresh playback position (default: 1s) |
 //!
 //! ```rust,no_run
 //! use wayle_media::MediaService;

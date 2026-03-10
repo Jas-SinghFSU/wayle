@@ -18,44 +18,55 @@ pub(crate) fn spawn(
         let mut ticker = interval(poll_interval);
 
         loop {
+            if !disks.has_subscribers() {
+                tokio::select! {
+                    _ = token.cancelled() => {
+                        debug!("Disk polling cancelled");
+                        return;
+                    }
+                    _ = disks.wait_for_subscribers() => {}
+                }
+                ticker.reset();
+            }
+
+            if !disks.has_subscribers() {
+                continue;
+            }
+
+            sysinfo_disks.refresh(false);
+
+            let data: Vec<DiskData> = sysinfo_disks
+                .iter()
+                .map(|disk| {
+                    let total = disk.total_space();
+                    let available = disk.available_space();
+                    let used = total.saturating_sub(available);
+
+                    let usage_percent = if total > 0 {
+                        (used as f32 / total as f32) * 100.0
+                    } else {
+                        0.0
+                    };
+
+                    DiskData {
+                        mount_point: disk.mount_point().to_path_buf(),
+                        filesystem: disk.file_system().to_string_lossy().to_string(),
+                        total_bytes: total,
+                        used_bytes: used,
+                        available_bytes: available,
+                        usage_percent,
+                    }
+                })
+                .collect();
+
+            disks.set(data);
+
             tokio::select! {
                 _ = token.cancelled() => {
                     debug!("Disk polling cancelled");
                     return;
                 }
-                _ = ticker.tick() => {
-                    if !disks.has_subscribers() {
-                        continue;
-                    }
-
-                    sysinfo_disks.refresh(false);
-
-                    let data: Vec<DiskData> = sysinfo_disks
-                        .iter()
-                        .map(|disk| {
-                            let total = disk.total_space();
-                            let available = disk.available_space();
-                            let used = total.saturating_sub(available);
-
-                            let usage_percent = if total > 0 {
-                                (used as f32 / total as f32) * 100.0
-                            } else {
-                                0.0
-                            };
-
-                            DiskData {
-                                mount_point: disk.mount_point().to_path_buf(),
-                                filesystem: disk.file_system().to_string_lossy().to_string(),
-                                total_bytes: total,
-                                used_bytes: used,
-                                available_bytes: available,
-                                usage_percent,
-                            }
-                        })
-                        .collect();
-
-                    disks.set(data);
-                }
+                _ = ticker.tick() => {}
             }
         }
     });

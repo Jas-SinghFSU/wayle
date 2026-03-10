@@ -295,6 +295,31 @@ impl Component for BluetoothDropdown {
                                     ),
                                 },
                             },
+
+                            #[name = "empty_no_adapter"]
+                            #[template]
+                            EmptyState {
+                                #[watch]
+                                set_visible: !model.available,
+                                #[template_child]
+                                icon {
+                                    set_icon_name: Some(
+                                        "ld-bluetooth-off-symbolic"
+                                    ),
+                                },
+                                #[template_child]
+                                title {
+                                    set_label: &t!(
+                                        "dropdown-bluetooth-no-adapter-title"
+                                    ),
+                                },
+                                #[template_child]
+                                description {
+                                    set_label: &t!(
+                                        "dropdown-bluetooth-no-adapter-description"
+                                    ),
+                                },
+                            },
                         },
                     },
                 },

@@ -1,0 +1,38 @@
+.dashboard-dropdown {
+    > contents > .dropdown {
+        min-width: 0;
+    }
+
+    .dropdown-content {
+        border-spacing: var(--space-sm);
+    }
+
+    .dashboard-card {
+        border-radius: var(--rounding-element);
+        min-width: 0;
+        padding-left: var(--space-md);
+        padding-right: var(--space-md);
+    }
+
+    .dashboard-info-row {
+        border-spacing: var(--space-sm);
+    }
+
+    .card-header {
+        margin-bottom: var(--space-sm);
+    }
+
+    .card-title {
+        font-size: var(--text-2xs);
+        font-weight: var(--weight-semibold);
+        color: var(--fg-subtle);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        border-spacing: var(--space-xs);
+
+        image {
+            -gtk-icon-size: var(--icon-md);
+            margin-right: var(--space-sm);
+        }
+    }
+}

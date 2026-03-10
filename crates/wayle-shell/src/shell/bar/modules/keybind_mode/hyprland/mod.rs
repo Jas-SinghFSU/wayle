@@ -1,12 +1,11 @@
+mod methods;
 mod watchers;
 
 use std::{rc::Rc, sync::Arc};
 
 use relm4::{gtk::prelude::*, prelude::*};
-use tracing::warn;
 use wayle_common::ConfigProperty;
 use wayle_config::{ConfigService, schemas::styling::CssToken};
-use wayle_hyprland::HyprlandService;
 use wayle_widgets::{
     prelude::{
         BarButton, BarButtonBehavior, BarButtonColors, BarButtonInit, BarButtonInput,
@@ -19,10 +18,7 @@ use super::{
     helpers,
     messages::{KeybindModeCmd, KeybindModeInit, KeybindModeMsg},
 };
-use crate::{
-    i18n::t,
-    shell::bar::dropdowns::{self, DropdownRegistry},
-};
+use crate::shell::bar::dropdowns::{self, DropdownRegistry};
 
 pub(crate) struct HyprlandKeybindMode {
     bar_button: Controller<BarButton>,
@@ -140,41 +136,6 @@ impl Component for HyprlandKeybindMode {
             }
             KeybindModeCmd::UpdateIcon(icon) => {
                 self.bar_button.emit(BarButtonInput::SetIcon(icon));
-            }
-        }
-    }
-}
-
-impl HyprlandKeybindMode {
-    fn update_display(&self, format: &str, root: &gtk::Box) {
-        let auto_hide = self.config.config().modules.keybind_mode.auto_hide.get();
-
-        let label = helpers::format_label(format, &self.current_mode);
-        self.bar_button.emit(BarButtonInput::SetLabel(label));
-
-        let visible = helpers::compute_visibility(&self.current_mode, auto_hide);
-        if let Some(parent) = root.parent() {
-            parent.set_visible(visible);
-        }
-
-        force_window_resize(root);
-    }
-
-    fn initial_mode(hyprland: &Option<Arc<HyprlandService>>) -> String {
-        let Some(hyprland) = hyprland else {
-            warn!(
-                service = "HyprlandService",
-                "unavailable, using default mode"
-            );
-            return t!("bar-keybind-mode-default");
-        };
-
-        let runtime = tokio::runtime::Handle::current();
-        match runtime.block_on(hyprland.submap()) {
-            Ok(mode) => mode,
-            Err(err) => {
-                warn!(error = %err, "cannot get current keybind mode");
-                t!("bar-keybind-mode-default")
             }
         }
     }
