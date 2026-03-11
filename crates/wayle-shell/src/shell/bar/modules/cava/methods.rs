@@ -4,7 +4,7 @@ use gtk::{glib::Propagation, prelude::*};
 use relm4::prelude::*;
 use wayle_config::{ConfigService, schemas::modules::CavaStyle};
 
-use super::{CavaModule, helpers, messages::CavaMsg, rendering};
+use super::{CavaModule, color, helpers, messages::CavaMsg, rendering};
 
 impl CavaModule {
     pub(super) fn attach_click_gesture(widget: &gtk::Box, sender: &ComponentSender<Self>) {
@@ -56,53 +56,64 @@ impl CavaModule {
         is_vertical: bool,
         config: &Arc<ConfigService>,
     ) {
-        let frame_ref = frame_data.clone();
+        let frame_values = frame_data.clone();
         let full_config = config.config();
         let cava_config = &full_config.modules.cava;
 
         let style = cava_config.style.get();
         let direction = cava_config.direction.get();
         let bar_width = cava_config.bar_width.get() as f64;
-        let bar_gap = cava_config.bar_gap.get() as f64;
+        let bar_spacing = cava_config.bar_gap.get() as f64;
         let bar_scale = full_config.bar.scale.get().value();
-        let color = helpers::resolve_rgba(&cava_config.color.get(), config);
+        let fill_color = color::resolve_rgba(&cava_config.color.get(), config);
         let padding_rem = cava_config.internal_padding.get().value();
-        let internal_padding = helpers::rem_to_px(padding_rem, bar_scale);
+        let horizontal_padding = helpers::rem_to_px(padding_rem, bar_scale);
 
-        let draw_config = helpers::DrawConfig {
+        let render_params = rendering::RenderParams {
             bar_width,
-            bar_gap,
-            color,
-            internal_padding,
+            bar_spacing,
+            fill_color,
         };
 
         let peak_state = Cell::new(Vec::<f64>::new());
 
         drawing_area.set_draw_func(move |_area, cr, width, height| {
-            let w = width as f64;
-            let h = height as f64;
+            let pixel_width = width as f64;
+            let pixel_height = height as f64;
 
-            let values = frame_ref.take();
+            let values = frame_values.take();
             if values.is_empty() {
-                frame_ref.set(values);
+                frame_values.set(values);
                 return;
             }
 
-            let (draw_w, draw_h) = if is_vertical { (h, w) } else { (w, h) };
+            let (canvas_width, canvas_height) = if is_vertical {
+                (pixel_height, pixel_width)
+            } else {
+                (pixel_width, pixel_height)
+            };
+            let content_width = (canvas_width - horizontal_padding * 2.0).max(0.0);
 
             if is_vertical {
-                cr.translate(0.0, h);
+                cr.translate(0.0, pixel_height);
                 cr.rotate(-std::f64::consts::FRAC_PI_2);
             }
 
-            cr.translate(draw_config.internal_padding, 0.0);
+            cr.translate(horizontal_padding, 0.0);
 
             match style {
                 CavaStyle::Bars => {
-                    rendering::draw_bars(cr, &values, draw_h, direction, &draw_config);
+                    rendering::draw_bars(cr, &values, canvas_height, direction, &render_params);
                 }
                 CavaStyle::Wave => {
-                    rendering::draw_wave(cr, &values, draw_w, draw_h, direction, &draw_config);
+                    rendering::draw_wave(
+                        cr,
+                        &values,
+                        content_width,
+                        canvas_height,
+                        direction,
+                        &render_params,
+                    );
                 }
                 CavaStyle::Peaks => {
                     let mut peaks = peak_state.take();
@@ -110,15 +121,15 @@ impl CavaModule {
                         cr,
                         &values,
                         &mut peaks,
-                        draw_h,
+                        canvas_height,
                         direction,
-                        &draw_config,
+                        &render_params,
                     );
                     peak_state.set(peaks);
                 }
             }
 
-            frame_ref.set(values);
+            frame_values.set(values);
         });
     }
 

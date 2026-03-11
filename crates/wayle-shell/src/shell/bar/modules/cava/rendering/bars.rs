@@ -1,30 +1,30 @@
 use gtk4::cairo;
 use wayle_config::schemas::modules::CavaDirection;
 
-use super::{DrawConfig, MIN_BAR_HEIGHT, apply_color, draw_directed_bar};
+use super::{MIN_BAR_HEIGHT, RenderParams, apply_color, fill_bar_rect};
 
 pub(crate) fn draw_bars(
     cr: &cairo::Context,
     values: &[f64],
     canvas_height: f64,
     direction: CavaDirection,
-    config: &DrawConfig,
+    params: &RenderParams,
 ) {
-    apply_color(cr, config);
+    apply_color(cr, params);
 
-    let step = config.bar_width + config.bar_gap;
+    let bar_stride = params.bar_width + params.bar_spacing;
 
-    for (index, &value) in values.iter().enumerate() {
-        let x = index as f64 * step;
-        let bar_height = (value * canvas_height).clamp(MIN_BAR_HEIGHT, canvas_height);
+    for (bar_idx, &amplitude) in values.iter().enumerate() {
+        let x = bar_idx as f64 * bar_stride;
+        let bar_height = (amplitude * canvas_height).clamp(MIN_BAR_HEIGHT, canvas_height);
 
-        draw_directed_bar(
+        fill_bar_rect(
             cr,
             x,
             bar_height,
             canvas_height,
             direction,
-            config.bar_width,
+            params.bar_width,
         );
         let _ = cr.fill();
     }
