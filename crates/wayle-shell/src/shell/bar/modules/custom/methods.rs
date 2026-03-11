@@ -44,6 +44,7 @@ impl CustomModule {
         self.definition_present = true;
 
         if needs_restart {
+            self.last_output.clear();
             self.restart_execution_watchers(sender);
         }
 
