@@ -16,7 +16,8 @@ mod media;
 mod microphone;
 mod netstat;
 mod network;
-mod notification;
+/// Notification module configuration and popup types.
+pub mod notification;
 mod power;
 mod ram;
 mod separator;
@@ -48,7 +49,10 @@ pub use media::{BUILTIN_MAPPINGS, MediaConfig, MediaIconType};
 pub use microphone::MicrophoneConfig;
 pub use netstat::NetstatConfig;
 pub use network::NetworkConfig;
-pub use notification::NotificationConfig;
+pub use notification::{
+    IconSource, NotificationConfig, PopupCloseBehavior, PopupMonitor, PopupPosition, StackingOrder,
+    UrgencyBarThreshold,
+};
 pub use power::PowerConfig;
 pub use ram::RamConfig;
 pub use separator::SeparatorConfig;

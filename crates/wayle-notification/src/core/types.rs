@@ -17,6 +17,65 @@ pub(crate) struct NotificationProps {
     pub timestamp: DateTime<Utc>,
 }
 
+/// Raw pixel data from the `image-data` notification hint.
+///
+/// Matches the D-Bus `(iiibiiay)` structure from the
+/// [freedesktop icons and images spec](https://specifications.freedesktop.org/notification/1.2/icons-and-images.html).
+/// `bits_per_sample` is always 8; `channels` is 3 (RGB) or 4 (RGBA).
+#[derive(Debug, Clone)]
+pub struct ImageData {
+    /// Image width in pixels.
+    pub width: i32,
+    /// Image height in pixels.
+    pub height: i32,
+    /// Distance in bytes between row starts (may include padding).
+    pub rowstride: i32,
+    /// Whether the image has an alpha channel.
+    pub has_alpha: bool,
+    /// Bits per sample (always 8 per spec).
+    pub bits_per_sample: i32,
+    /// Number of channels (3 for RGB, 4 for RGBA).
+    pub channels: i32,
+    /// Raw pixel data in RGB or RGBA byte order.
+    pub data: Vec<u8>,
+}
+
+pub(crate) const IMAGE_DATA_KEYS: [&str; 3] = ["image-data", "image_data", "icon_data"];
+
+impl ImageData {
+    /// Extracts `image-data` from notification hints.
+    ///
+    /// Tries the current key (`image-data`) and deprecated fallbacks
+    /// (`image_data`, `icon_data`) in priority order per the spec.
+    pub(crate) fn from_hints(hints: &NotificationHints) -> Option<Self> {
+        type Tuple = (i32, i32, i32, bool, i32, i32, Vec<u8>);
+
+        for key in &IMAGE_DATA_KEYS {
+            let Some(value) = hints.get(*key) else {
+                continue;
+            };
+
+            let Ok((width, height, rowstride, has_alpha, bits_per_sample, channels, data)) =
+                Tuple::try_from(value.clone())
+            else {
+                continue;
+            };
+
+            return Some(Self {
+                width,
+                height,
+                rowstride,
+                has_alpha,
+                bits_per_sample,
+                channels,
+                data,
+            });
+        }
+
+        None
+    }
+}
+
 /// Hints for notifications as specified by the Desktop Notifications Specification.
 pub type NotificationHints = HashMap<String, OwnedValue>;
 

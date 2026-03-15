@@ -12,11 +12,15 @@ use crate::{
     core::{notification::Notification, types::NotificationProps},
     daemon::NotificationDaemon,
     error::Error,
+    events::NotificationEvent,
     persistence::{NotificationStore, StoredNotification},
+    popup_timer::PopupTimerManager,
     service::NotificationService,
     types::dbus::{SERVICE_NAME, SERVICE_PATH, WAYLE_SERVICE_NAME, WAYLE_SERVICE_PATH},
     wayle_daemon::WayleDaemon,
 };
+
+const EVENT_CHANNEL_CAPACITY: usize = 10_000;
 
 /// Builder for configuring and creating a NotificationService instance.
 ///
@@ -27,6 +31,7 @@ pub struct NotificationServiceBuilder {
     popup_duration: Property<u32>,
     dnd: Property<bool>,
     remove_expired: Property<bool>,
+    blocklist: Property<Vec<String>>,
     register_wayle_daemon: bool,
 }
 
@@ -36,6 +41,7 @@ impl Default for NotificationServiceBuilder {
             popup_duration: Property::new(5000),
             dnd: Property::new(false),
             remove_expired: Property::new(true),
+            blocklist: Property::new(vec![]),
             register_wayle_daemon: false,
         }
     }
@@ -67,6 +73,17 @@ impl NotificationServiceBuilder {
         self
     }
 
+    /// Sets glob patterns for blocking notifications by app name.
+    ///
+    /// Notifications from matching apps are silently dropped.
+    /// Patterns support `*` and `?` wildcards.
+    pub fn blocklist(self, patterns: Property<Vec<String>>) -> Self {
+        Self {
+            blocklist: patterns,
+            ..self
+        }
+    }
+
     /// Enables the Wayle D-Bus daemon for CLI control.
     ///
     /// When enabled, the service registers at `com.wayle.Notifications1`,
@@ -88,23 +105,31 @@ impl NotificationServiceBuilder {
         let connection = Connection::session().await.map_err(|err| {
             Error::ServiceInitializationFailed(format!("D-Bus connection failed: {err}"))
         })?;
-        let (notif_tx, _) = broadcast::channel(10000);
+        let (notif_tx, _) = broadcast::channel(EVENT_CHANNEL_CAPACITY);
         let cancellation_token = CancellationToken::new();
 
         let store = init_store();
         let stored_notifications =
-            load_stored_notifications(&store, self.remove_expired.get(), &connection);
-        let max_id = stored_notifications.iter().map(|n| n.id).max().unwrap_or(0);
+            load_stored_notifications(&store, self.remove_expired.get(), &connection, &notif_tx);
+        let max_id = stored_notifications
+            .iter()
+            .map(|notif| notif.id)
+            .max()
+            .unwrap_or(0);
 
         let freedesktop_daemon = NotificationDaemon {
             counter: AtomicU32::new(max_id + 1),
             zbus_connection: connection.clone(),
             notif_tx: notif_tx.clone(),
+            blocklist: self.blocklist.clone(),
         };
 
         register_dbus_object(&connection, SERVICE_PATH, freedesktop_daemon).await?;
         register_dbus_name(&connection, SERVICE_NAME).await?;
         info!("Notification daemon registered at {SERVICE_NAME}");
+
+        let popups = Property::new(vec![]);
+        let popup_timers = Arc::new(PopupTimerManager::new(popups.clone()));
 
         let service = Arc::new(NotificationService {
             cancellation_token,
@@ -112,10 +137,12 @@ impl NotificationServiceBuilder {
             store,
             connection: connection.clone(),
             notifications: Property::new(stored_notifications),
-            popups: Property::new(vec![]),
+            popups,
             popup_duration: self.popup_duration,
             dnd: self.dnd,
             remove_expired: self.remove_expired,
+            blocklist: self.blocklist,
+            popup_timers,
         });
 
         service.start_monitoring().await?;
@@ -151,20 +178,27 @@ fn load_stored_notifications(
     store: &Option<NotificationStore>,
     remove_expired: bool,
     connection: &Connection,
+    notif_tx: &broadcast::Sender<NotificationEvent>,
 ) -> Vec<Arc<Notification>> {
     store
         .as_ref()
-        .and_then(|s| s.load_all(remove_expired).ok())
+        .and_then(|store| store.load_all(remove_expired).ok())
         .map(|stored| {
             stored
                 .into_iter()
-                .map(|n| stored_to_notification(n, connection.clone()))
+                .map(|notification| {
+                    stored_to_notification(notification, connection.clone(), notif_tx.clone())
+                })
                 .collect()
         })
         .unwrap_or_default()
 }
 
-fn stored_to_notification(stored: StoredNotification, connection: Connection) -> Arc<Notification> {
+fn stored_to_notification(
+    stored: StoredNotification,
+    connection: Connection,
+    notif_tx: broadcast::Sender<NotificationEvent>,
+) -> Arc<Notification> {
     Arc::new(Notification::new(
         NotificationProps {
             id: stored.id,
@@ -180,6 +214,7 @@ fn stored_to_notification(stored: StoredNotification, connection: Connection) ->
                 .unwrap_or_else(Utc::now),
         },
         connection,
+        notif_tx,
     ))
 }
 

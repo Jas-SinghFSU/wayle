@@ -1,10 +1,15 @@
+mod types;
+
 use schemars::schema_for;
+pub use types::{
+    IconSource, PopupCloseBehavior, PopupMonitor, PopupPosition, StackingOrder, UrgencyBarThreshold,
+};
 use wayle_common::{ConfigProperty, process::ClickAction};
 use wayle_derive::wayle_config;
 
 use crate::{
     docs::{ModuleInfo, ModuleInfoProvider},
-    schemas::styling::{ColorValue, CssToken},
+    schemas::styling::{ColorValue, CssToken, Spacing},
 };
 
 /// Notification module configuration.
@@ -94,6 +99,89 @@ pub struct NotificationConfig {
     #[serde(rename = "scroll-down")]
     #[default(ClickAction::None)]
     pub scroll_down: ConfigProperty<ClickAction>,
+
+    /// Glob patterns for app names whose notifications are blocked entirely.
+    ///
+    /// Matched notifications are silently dropped.
+    /// Supports `*` (any characters) and `?` (single character).
+    ///
+    /// Examples: `["notify-send", "*chromium*", "Vivaldi*"]`
+    #[serde(rename = "blocklist")]
+    #[default(Vec::new())]
+    pub blocklist: ConfigProperty<Vec<String>>,
+
+    /// How notification icons are resolved.
+    ///
+    /// | Mode | Per-notification image | No image provided |
+    /// |------|----------------------|-------------------|
+    /// | `automatic` | Shows the image | Mapped icon |
+    /// | `mapped` | Ignored | Mapped icon |
+    /// | `application` | Shows the image | App's generic icon, then mapped fallback |
+    #[serde(rename = "icon-source")]
+    #[default(IconSource::default())]
+    pub icon_source: ConfigProperty<IconSource>,
+
+    /// Screen position for popup notifications.
+    #[serde(rename = "popup-position")]
+    #[default(PopupPosition::default())]
+    pub popup_position: ConfigProperty<PopupPosition>,
+
+    /// Maximum number of popups visible at once.
+    #[serde(rename = "popup-max-visible")]
+    #[default(5)]
+    pub popup_max_visible: ConfigProperty<u32>,
+
+    /// Order in which popups stack on screen.
+    #[serde(rename = "popup-stacking-order")]
+    #[default(StackingOrder::default())]
+    pub popup_stacking_order: ConfigProperty<StackingOrder>,
+
+    /// Maximum popup display duration in milliseconds.
+    ///
+    /// Applications may request a shorter timeout, which takes precedence.
+    #[serde(rename = "popup-duration")]
+    #[default(5000u32)]
+    pub popup_duration: ConfigProperty<u32>,
+
+    /// Pause popup auto-dismiss timer on hover.
+    #[serde(rename = "popup-hover-pause")]
+    #[default(true)]
+    pub popup_hover_pause: ConfigProperty<bool>,
+
+    /// Horizontal margin from screen edges.
+    #[serde(rename = "popup-margin-x")]
+    #[default(Spacing::new(0.0))]
+    pub popup_margin_x: ConfigProperty<Spacing>,
+
+    /// Vertical margin from screen edges.
+    #[serde(rename = "popup-margin-y")]
+    #[default(Spacing::new(0.0))]
+    pub popup_margin_y: ConfigProperty<Spacing>,
+
+    /// Gap between stacked popups.
+    #[serde(rename = "popup-gap")]
+    #[default(Spacing::new(8.0))]
+    pub popup_gap: ConfigProperty<Spacing>,
+
+    /// Target monitor: "primary" or a connector name like "DP-1".
+    #[serde(rename = "popup-monitor")]
+    #[default(PopupMonitor::default())]
+    pub popup_monitor: ConfigProperty<PopupMonitor>,
+
+    /// What happens when the close button on a popup is clicked.
+    #[serde(rename = "popup-close-behavior")]
+    #[default(PopupCloseBehavior::default())]
+    pub popup_close_behavior: ConfigProperty<PopupCloseBehavior>,
+
+    /// Display drop shadow on popup cards.
+    #[serde(rename = "popup-shadow")]
+    #[default(true)]
+    pub popup_shadow: ConfigProperty<bool>,
+
+    /// Minimum urgency level that displays a colored urgency bar.
+    #[serde(rename = "popup-urgency-bar")]
+    #[default(UrgencyBarThreshold::default())]
+    pub popup_urgency_bar: ConfigProperty<UrgencyBarThreshold>,
 }
 
 impl ModuleInfoProvider for NotificationConfig {

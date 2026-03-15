@@ -1,18 +1,25 @@
 use std::{
     collections::HashMap,
     sync::atomic::{AtomicU32, Ordering},
-    time::Duration,
 };
 
 use chrono::Utc;
 use derive_more::Debug;
 use tokio::sync::broadcast;
-use tracing::instrument;
-use zbus::{Connection, fdo, zvariant::OwnedValue};
+use tracing::{debug, instrument};
+use wayle_common::{Property, glob};
+use zbus::{
+    Connection, fdo,
+    zvariant::{OwnedValue, Str},
+};
 
 use crate::{
-    core::{notification::Notification, types::NotificationProps},
+    core::{
+        notification::Notification,
+        types::{IMAGE_DATA_KEYS, ImageData, NotificationHints, NotificationProps},
+    },
     events::NotificationEvent,
+    image_cache,
     types::{Capabilities, ClosedReason, Name, SpecVersion, Vendor, Version},
 };
 
@@ -23,6 +30,8 @@ pub(crate) struct NotificationDaemon {
     pub zbus_connection: Connection,
     #[debug(skip)]
     pub notif_tx: broadcast::Sender<NotificationEvent>,
+    #[debug(skip)]
+    pub blocklist: Property<Vec<String>>,
 }
 
 #[zbus::interface(name = "org.freedesktop.Notifications")]
@@ -53,6 +62,19 @@ impl NotificationDaemon {
             self.counter.fetch_add(1, Ordering::Relaxed)
         };
 
+        let blocked = self
+            .blocklist
+            .get()
+            .iter()
+            .any(|pattern| glob::matches(pattern, &app_name));
+
+        if blocked {
+            debug!(app = %app_name, "notification blocked by blocklist");
+            return Ok(id);
+        }
+
+        let hints = replace_image_data_with_cached_png(hints);
+
         let notif = Notification::new(
             NotificationProps {
                 id,
@@ -67,19 +89,11 @@ impl NotificationDaemon {
                 timestamp: Utc::now(),
             },
             self.zbus_connection.clone(),
+            self.notif_tx.clone(),
         );
 
         let notif_id = notif.id;
         let _ = self.notif_tx.send(NotificationEvent::Add(Box::new(notif)));
-
-        if expire_timeout > 0 {
-            let tx = self.notif_tx.clone();
-
-            tokio::spawn(async move {
-                tokio::time::sleep(Duration::from_millis(expire_timeout as u64)).await;
-                let _ = tx.send(NotificationEvent::Remove(notif_id, ClosedReason::Expired));
-            });
-        }
 
         Ok(notif_id)
     }
@@ -92,7 +106,6 @@ impl NotificationDaemon {
         Ok(())
     }
 
-    #[instrument(skip(self))]
     pub async fn get_capabilities(&self) -> Vec<String> {
         vec![
             Capabilities::Body.to_string(),
@@ -103,7 +116,6 @@ impl NotificationDaemon {
         ]
     }
 
-    #[instrument(skip(self))]
     pub async fn get_server_information(&self) -> (Name, Vendor, Version, SpecVersion) {
         let name = String::from("wayle");
         let vendor = String::from("jaskir");
@@ -112,4 +124,23 @@ impl NotificationDaemon {
 
         (name, vendor, version, spec_version)
     }
+}
+
+fn replace_image_data_with_cached_png(mut hints: NotificationHints) -> NotificationHints {
+    let Some(image) = ImageData::from_hints(&hints) else {
+        return hints;
+    };
+
+    if let Some(cached_path) = image_cache::cache_image(&image) {
+        hints.insert(
+            String::from("image-path"),
+            OwnedValue::from(Str::from(cached_path)),
+        );
+    }
+
+    for key in IMAGE_DATA_KEYS {
+        hints.remove(key);
+    }
+
+    hints
 }

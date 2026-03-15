@@ -78,8 +78,10 @@ pub(crate) mod daemon;
 /// Error types.
 pub mod error;
 pub(crate) mod events;
+pub(crate) mod image_cache;
 pub(crate) mod monitoring;
 pub(crate) mod persistence;
+pub(crate) mod popup_timer;
 pub(crate) mod proxy;
 /// Service implementation.
 pub mod service;

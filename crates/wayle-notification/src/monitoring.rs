@@ -2,7 +2,7 @@ use std::{sync::Arc, time::Duration};
 
 use chrono::Utc;
 use tokio::sync::broadcast;
-use tracing::{info, instrument, warn};
+use tracing::{debug, info, instrument, warn};
 use wayle_common::Property;
 use wayle_traits::ServiceMonitoring;
 use zbus::Connection;
@@ -12,6 +12,7 @@ use crate::{
     error::Error,
     events::NotificationEvent,
     persistence::NotificationStore,
+    popup_timer::PopupTimerManager,
     service::NotificationService,
     types::{
         ClosedReason, Signal,
@@ -40,6 +41,7 @@ async fn handle_notifications(service: &NotificationService) -> Result<(), Error
     let remove_expired = service.remove_expired.clone();
     let connection = service.connection.clone();
     let notif_tx = service.notif_tx.clone();
+    let popup_timers = service.popup_timers.clone();
 
     tokio::spawn(async move {
         loop {
@@ -58,7 +60,13 @@ async fn handle_notifications(service: &NotificationService) -> Result<(), Error
                                 &remove_expired,
                                 &notif_tx
                             );
-                            handle_popup_added(&notif, &popup_list, &popup_dur, dnd.clone());
+                            handle_popup_added(
+                                &notif,
+                                &popup_list,
+                                &popup_dur,
+                                dnd.clone(),
+                                &popup_timers,
+                            );
                         }
                         NotificationEvent::Remove(id, reason) => {
                             handle_notification_removed(
@@ -67,7 +75,8 @@ async fn handle_notifications(service: &NotificationService) -> Result<(), Error
                                 &notification_list,
                                 &popup_list,
                                 &store,
-                                &connection
+                                &connection,
+                                &popup_timers,
                             ).await;
                         }
                     }
@@ -84,6 +93,7 @@ fn handle_popup_added(
     popups: &Property<Vec<Arc<Notification>>>,
     popup_duration: &Property<u32>,
     dnd: Property<bool>,
+    popup_timers: &Arc<PopupTimerManager>,
 ) {
     if dnd.get() {
         return;
@@ -93,19 +103,21 @@ fn handle_popup_added(
     let mut list = popups.get();
     list.retain(|popup| popup != &incoming_popup);
     list.insert(0, incoming_popup.clone());
+    popups.replace(list);
 
-    popups.set(list);
+    let default_duration = Duration::from_millis(popup_duration.get() as u64);
 
-    let id = incoming_popup.id;
-    let duration = popup_duration.get();
-    let popups = popups.clone();
+    let expire_duration = incoming_popup
+        .expire_timeout
+        .get()
+        .map(|ttl| Duration::from_millis(ttl as u64));
 
-    tokio::spawn(async move {
-        tokio::time::sleep(Duration::from_millis(duration as u64)).await;
-        let mut list = popups.get();
-        list.retain(|popup| popup.id != id);
-        popups.set(list);
-    });
+    let timer_duration = match expire_duration {
+        Some(expire) if !expire.is_zero() => default_duration.min(expire),
+        _ => default_duration,
+    };
+
+    popup_timers.start(incoming_popup.id, timer_duration);
 }
 
 fn handle_notification_added(
@@ -124,7 +136,7 @@ fn handle_notification_added(
     list.retain(|notif| notif.id != notif_arc.id);
     list.insert(0, notif_arc.clone());
 
-    notifications.set(list);
+    notifications.replace(list);
 
     if let Some(store) = store.as_ref() {
         let _ = store.add(incoming_notif);
@@ -165,20 +177,32 @@ async fn handle_notification_removed(
     popups: &Property<Vec<Arc<Notification>>>,
     store: &Option<NotificationStore>,
     connection: &Connection,
+    popup_timers: &Arc<PopupTimerManager>,
 ) {
+    if !matches!(reason, ClosedReason::Expired) {
+        popup_timers.cancel(id);
+
+        let mut popup_list = popups.get();
+        popup_list.retain(|popup| popup.id != id);
+        popups.set(popup_list);
+    }
+
     let mut notif_list = notifications.get();
+    let prev_len = notif_list.len();
     notif_list.retain(|notif| notif.id != id);
-    notifications.set(notif_list.clone());
+
+    if notif_list.len() == prev_len {
+        return;
+    }
+
+    notifications.set(notif_list);
 
     if let Some(store) = store.as_ref() {
         let _ = store.remove(id);
     };
 
-    let mut popup_list = popups.get();
-    popup_list.retain(|popup| popup.id != id);
-    popups.set(popup_list);
-
-    if let Err(e) = connection
+    debug!(id = id, ?reason, "emitting NotificationClosed");
+    if let Err(err) = connection
         .emit_signal(
             None::<()>,
             SERVICE_PATH,
@@ -188,6 +212,6 @@ async fn handle_notification_removed(
         )
         .await
     {
-        warn!(id = id, error = %e, "cannot emit NotificationClosed signal");
+        warn!(id = id, error = %err, "cannot emit NotificationClosed signal");
     }
 }

@@ -2,17 +2,19 @@ use std::cmp::PartialEq;
 
 use chrono::{DateTime, Utc};
 use derive_more::Debug;
+use tokio::sync::broadcast;
 use tracing::instrument;
 use wayle_common::Property;
 use zbus::Connection;
 
 use super::{
     controls::NotificationControls,
-    types::{Action, NotificationHints, NotificationProps},
+    types::{Action, ImageData, NotificationHints, NotificationProps},
 };
 use crate::{
     error::Error,
-    types::{Category, Urgency},
+    events::NotificationEvent,
+    types::{Category, ClosedReason, Urgency},
 };
 
 /// A desktop notification.
@@ -24,6 +26,8 @@ use crate::{
 pub struct Notification {
     #[debug(skip)]
     zbus_connection: Connection,
+    #[debug(skip)]
+    notif_tx: broadcast::Sender<NotificationEvent>,
 
     /// The ID of the notification
     pub id: u32,
@@ -72,6 +76,8 @@ pub struct Notification {
     pub category: Property<Option<Category>>,
     /// When the notification was created.
     pub timestamp: Property<DateTime<Utc>>,
+    /// Raw pixel data from `image-data` hint.
+    pub image_data: Property<Option<ImageData>>,
     /// Path to an image file from hints.
     pub image_path: Property<Option<String>>,
     /// Desktop entry name of the application.
@@ -101,21 +107,22 @@ impl PartialEq for Notification {
 }
 
 impl Notification {
-    pub(crate) fn new(props: NotificationProps, connection: Connection) -> Self {
-        Self::from_props(props, connection)
+    pub(crate) fn new(
+        props: NotificationProps,
+        connection: Connection,
+        notif_tx: broadcast::Sender<NotificationEvent>,
+    ) -> Self {
+        Self::from_props(props, connection, notif_tx)
     }
 
-    /// Causes a notification to be forcefully closed and removed from the user's view.
-    /// It can be used, for example, in the event that what the notification pertains to
-    /// is no longer relevant, or to cancel a notification with no expiration time.
-    ///
-    /// The NotificationClosed signal is emitted by this method.
-    ///
-    /// # Errors
-    /// Returns error if the D-Bus signal emission fails.
-    #[instrument(skip(self), fields(notification_id = %self.id), err)]
-    pub async fn dismiss(&self) -> Result<(), Error> {
-        NotificationControls::dismiss(&self.zbus_connection, &self.id).await
+    /// Dismisses the notification, removing it from history and emitting
+    /// the D-Bus NotificationClosed signal.
+    #[instrument(skip(self), fields(notification_id = %self.id))]
+    pub fn dismiss(&self) {
+        let _ = self.notif_tx.send(NotificationEvent::Remove(
+            self.id,
+            ClosedReason::DismissedByUser,
+        ));
     }
 
     /// Invoke an action on the notification.
@@ -128,7 +135,11 @@ impl Notification {
     }
 
     #[allow(clippy::too_many_lines)]
-    fn from_props(props: NotificationProps, connection: Connection) -> Notification {
+    fn from_props(
+        props: NotificationProps,
+        connection: Connection,
+        notif_tx: broadcast::Sender<NotificationEvent>,
+    ) -> Notification {
         let app_name = if !props.app_name.is_empty() {
             Some(props.app_name)
         } else {
@@ -156,71 +167,76 @@ impl Notification {
         let urgency = &props
             .hints
             .get("urgency")
-            .and_then(|u| u.downcast_ref::<u8>().ok())
+            .and_then(|hint| hint.downcast_ref::<u8>().ok())
             .map_or(Urgency::Normal, Urgency::from);
 
         let category = props
             .hints
             .get("category")
-            .and_then(|v| v.downcast_ref::<String>().ok())
-            .and_then(|s| s.parse().ok());
+            .and_then(|hint| hint.downcast_ref::<String>().ok())
+            .and_then(|category| category.parse().ok());
+
+        let image_data = ImageData::from_hints(&props.hints);
 
         let image_path = props
             .hints
             .get("image-path")
-            .and_then(|v| v.downcast_ref::<String>().ok());
+            .and_then(|hint| hint.downcast_ref::<String>().ok());
 
         let desktop_entry = props
             .hints
             .get("desktop-entry")
-            .and_then(|v| v.downcast_ref::<String>().ok());
+            .and_then(|hint| hint.downcast_ref::<String>().ok());
 
         let is_transient = props
             .hints
             .get("transient")
-            .and_then(|v| v.downcast_ref::<bool>().ok())
+            .and_then(|hint| hint.downcast_ref::<bool>().ok())
             .unwrap_or(false);
 
         let is_resident = props
             .hints
             .get("resident")
-            .and_then(|v| v.downcast_ref::<bool>().ok())
+            .and_then(|hint| hint.downcast_ref::<bool>().ok())
             .unwrap_or(false);
 
         let sound_file = props
             .hints
             .get("sound-file")
-            .and_then(|v| v.downcast_ref::<String>().ok());
+            .and_then(|hint| hint.downcast_ref::<String>().ok());
 
         let sound_name = props
             .hints
             .get("sound-name")
-            .and_then(|v| v.downcast_ref::<String>().ok());
+            .and_then(|hint| hint.downcast_ref::<String>().ok());
 
         let suppress_sound = props
             .hints
             .get("suppress-sound")
-            .and_then(|v| v.downcast_ref::<bool>().ok())
+            .and_then(|hint| hint.downcast_ref::<bool>().ok())
             .unwrap_or(false);
 
         let x = props
             .hints
             .get("x")
-            .and_then(|v| v.downcast_ref::<i32>().ok());
+            .and_then(|hint| hint.downcast_ref::<i32>().ok());
 
         let y = props
             .hints
             .get("y")
-            .and_then(|v| v.downcast_ref::<i32>().ok());
+            .and_then(|hint| hint.downcast_ref::<i32>().ok());
 
         let action_icons = props
             .hints
             .get("action-icons")
-            .and_then(|v| v.downcast_ref::<bool>().ok())
+            .and_then(|hint| hint.downcast_ref::<bool>().ok())
             .unwrap_or(false);
 
         let parsed_actions = Action::parse_dbus_actions(&props.actions);
-        let default_action = parsed_actions.iter().find(|a| a.id == "default").cloned();
+        let default_action = parsed_actions
+            .iter()
+            .find(|action| action.id == "default")
+            .cloned();
 
         let hints = if !props.hints.is_empty() {
             Some(props.hints)
@@ -238,6 +254,7 @@ impl Notification {
 
         Self {
             zbus_connection: connection.clone(),
+            notif_tx,
             id,
             app_name: Property::new(app_name),
             app_icon: Property::new(app_icon),
@@ -251,6 +268,7 @@ impl Notification {
             urgency: Property::new(*urgency),
             category: Property::new(category),
             timestamp: Property::new(props.timestamp),
+            image_data: Property::new(image_data),
             image_path: Property::new(image_path),
             desktop_entry: Property::new(desktop_entry),
             is_transient: Property::new(is_transient),

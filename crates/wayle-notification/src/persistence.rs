@@ -12,7 +12,10 @@ use tracing::{debug, instrument, warn};
 use zbus::zvariant::OwnedValue;
 
 use crate::{
-    core::{notification::Notification, types::Action},
+    core::{
+        notification::Notification,
+        types::{Action, IMAGE_DATA_KEYS},
+    },
     error::Error,
 };
 
@@ -61,12 +64,12 @@ impl NotificationStore {
 
         let data_dir = format!("{home}/.local/share/wayle");
         fs::create_dir_all(&data_dir)
-            .map_err(|e| Error::DatabaseError(format!("cannot create data directory: {e}")))?;
+            .map_err(|err| Error::DatabaseError(format!("cannot create data directory: {err}")))?;
 
         let db_path = format!("{data_dir}/notifications.db");
-        debug!("Database path: {db_path}");
+        debug!(path = %db_path, "notification store opened");
         let connection = Connection::open(db_path)
-            .map_err(|e| Error::DatabaseError(format!("cannot open database: {e}")))?;
+            .map_err(|err| Error::DatabaseError(format!("cannot open database: {err}")))?;
 
         connection
             .execute(
@@ -84,14 +87,14 @@ impl NotificationStore {
                 )",
                 [],
             )
-            .map_err(|e| Error::DatabaseError(format!("cannot create table: {e}")))?;
+            .map_err(|err| Error::DatabaseError(format!("cannot create table: {err}")))?;
 
         connection
             .execute_batch(
                 "PRAGMA journal_mode = WAL;
                  PRAGMA synchronous = NORMAL;",
             )
-            .map_err(|e| Error::DatabaseError(format!("cannot set pragmas: {e}")))?;
+            .map_err(|err| Error::DatabaseError(format!("cannot set pragmas: {err}")))?;
 
         Ok(Self {
             connection: Arc::new(Mutex::new(connection)),
@@ -103,9 +106,14 @@ impl NotificationStore {
         let stored = StoredNotification::from(notification);
 
         let actions_json = serde_json::to_string(&stored.actions)
-            .map_err(|e| Error::DatabaseError(format!("cannot serialize actions: {e}")))?;
-        let hints_json = serde_json::to_string(&stored.hints)
-            .map_err(|e| Error::DatabaseError(format!("cannot serialize hints: {e}")))?;
+            .map_err(|err| Error::DatabaseError(format!("cannot serialize actions: {err}")))?;
+
+        let mut hints_for_storage = stored.hints.clone();
+        for key in &IMAGE_DATA_KEYS {
+            hints_for_storage.remove(*key);
+        }
+        let hints_json = serde_json::to_string(&hints_for_storage)
+            .map_err(|err| Error::DatabaseError(format!("cannot serialize hints: {err}")))?;
 
         self.connection
             .lock()
@@ -128,7 +136,7 @@ impl NotificationStore {
                     stored.timestamp,
                 ],
             )
-            .map_err(|e| Error::DatabaseError(format!("cannot store notification: {e}")))?;
+            .map_err(|err| Error::DatabaseError(format!("cannot store notification: {err}")))?;
 
         Ok(())
     }
@@ -139,7 +147,7 @@ impl NotificationStore {
             .lock()
             .map_err(|_| Error::DatabaseError("cannot acquire lock on database".to_string()))?
             .execute("DELETE FROM notifications WHERE id = ?1", params![id])
-            .map_err(|e| Error::DatabaseError(format!("cannot remove notification: {e}")))?;
+            .map_err(|err| Error::DatabaseError(format!("cannot remove notification: {err}")))?;
 
         Ok(())
     }
@@ -157,7 +165,7 @@ impl NotificationStore {
                  FROM notifications
                  ORDER BY timestamp DESC",
             )
-            .map_err(|e| Error::DatabaseError(format!("cannot prepare query: {e}")))?;
+            .map_err(|err| Error::DatabaseError(format!("cannot prepare query: {err}")))?;
 
         let notifications = stmt
             .query_map([], |row| {
@@ -165,13 +173,13 @@ impl NotificationStore {
                 let hints_json: String = row.get(7)?;
 
                 let actions: Vec<String> =
-                    serde_json::from_str(&actions_json).unwrap_or_else(|e| {
-                        warn!(error = %e, "cannot deserialize actions");
+                    serde_json::from_str(&actions_json).unwrap_or_else(|err| {
+                        warn!(error = %err, "cannot deserialize actions");
                         Vec::new()
                     });
                 let hints_json_map: HashMap<String, serde_json::Value> =
-                    serde_json::from_str(&hints_json).unwrap_or_else(|e| {
-                        warn!(error = %e, "cannot deserialize hints");
+                    serde_json::from_str(&hints_json).unwrap_or_else(|err| {
+                        warn!(error = %err, "cannot deserialize hints");
                         HashMap::new()
                     });
                 let hints: HashMap<String, OwnedValue> = hints_json_map
@@ -196,23 +204,24 @@ impl NotificationStore {
                     timestamp: row.get(9)?,
                 })
             })
-            .map_err(|e| Error::DatabaseError(format!("cannot query notifications: {e}")))?
+            .map_err(|err| Error::DatabaseError(format!("cannot query notifications: {err}")))?
             .collect::<Result<Vec<_>, _>>()
-            .map_err(|e| Error::DatabaseError(format!("cannot parse notifications: {e}")))?;
+            .map_err(|err| Error::DatabaseError(format!("cannot parse notifications: {err}")))?;
 
         if !remove_expired {
-            debug!("Loaded {} stored notifications", notifications.len());
+            debug!(count = notifications.len(), "loaded stored notifications");
             return Ok(notifications);
         }
 
         let now = Utc::now();
         let notifications: Vec<StoredNotification> = notifications
             .into_iter()
-            .filter(|n| {
-                let Some(timeout) = n.expire_timeout else {
+            .filter(|notif| {
+                let Some(timeout) = notif.expire_timeout else {
                     return true;
                 };
-                let Some(timestamp) = DateTime::<Utc>::from_timestamp_millis(n.timestamp) else {
+                let Some(timestamp) = DateTime::<Utc>::from_timestamp_millis(notif.timestamp)
+                else {
                     return false;
                 };
                 timestamp + Duration::from_millis(timeout as u64) > now
@@ -220,8 +229,8 @@ impl NotificationStore {
             .collect();
 
         debug!(
-            "Loaded {} stored notifications (after filtering expired)",
-            notifications.len()
+            count = notifications.len(),
+            "loaded stored notifications (expired filtered)"
         );
         Ok(notifications)
     }

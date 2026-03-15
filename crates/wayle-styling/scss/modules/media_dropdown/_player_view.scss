@@ -114,8 +114,7 @@ scale.media-seek-slider {
             all: unset;
             min-width: var(--space-md);
             min-height: var(--space-md);
-            margin-top: calc(var(--space-md) / -2);
-            margin-bottom: calc(var(--space-md) / -2);
+            margin: calc(var(--space-md) / -2);
             border-radius: var(--radius-full);
             background: var(--fg-default);
             box-shadow: var(--shadow-sm);
