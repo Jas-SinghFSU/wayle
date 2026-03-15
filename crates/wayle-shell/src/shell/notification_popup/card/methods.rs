@@ -28,7 +28,12 @@ impl NotificationPopupCard {
 
     pub(super) fn apply_icon(&self, icon: &gtk::Image, icon_container: &gtk::Box) {
         match &self.resolved_icon {
-            ResolvedIcon::Named(name) => icon.set_icon_name(Some(name)),
+            ResolvedIcon::Named(name) => {
+                icon.set_icon_name(Some(name));
+                if !name.ends_with("-symbolic") {
+                    icon_container.add_css_class("file-icon");
+                }
+            }
 
             ResolvedIcon::File(path) => {
                 icon.set_from_file(Some(path));
