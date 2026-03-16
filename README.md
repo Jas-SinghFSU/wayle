@@ -79,11 +79,11 @@ experience. A successor to HyprPanel without the pain or dependency on Hyprland.
 - [x] **Weather Panel**
 - [x] **Calendar Panel**
 - [x] **Dashboard**
-- [ ] **Notifications Panel (Done after notifications)**
+- [ ] **Notifications Panel (WIP)**
 
 ### Additional Features
 
-- [ ] **Notifications (WIP)**
+- [x] **Notifications**
 - [ ] **OSD**
 - [ ] **Settings Dialog**
 
