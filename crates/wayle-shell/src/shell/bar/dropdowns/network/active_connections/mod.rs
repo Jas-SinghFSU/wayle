@@ -180,20 +180,6 @@ impl Component for ActiveConnections {
                         set_transition_duration: 150,
                         set_valign: gtk::Align::Center,
                         set_hexpand: false,
-                        #[watch]
-                        set_visible_child_name:
-                            if model.wifi.hovered
-                                && model.wifi.connected
-                            {
-                                "actions"
-                            } else if model.wifi.hovered
-                                && model.has_wifi_error()
-                            {
-                                "error-actions"
-                            } else {
-                                "status"
-                            },
-
                         add_named[Some("status")] = &gtk::Box {
                             set_halign: gtk::Align::End,
                             set_valign: gtk::Align::Center,
@@ -279,6 +265,20 @@ impl Component for ActiveConnections {
                                     ActiveConnectionsInput::DismissError,
                             },
                         },
+
+                        #[watch]
+                        set_visible_child_name:
+                            if model.wifi.hovered
+                                && model.wifi.connected
+                            {
+                                "actions"
+                            } else if model.wifi.hovered
+                                && model.has_wifi_error()
+                            {
+                                "error-actions"
+                            } else {
+                                "status"
+                            },
                     },
                 },
             },

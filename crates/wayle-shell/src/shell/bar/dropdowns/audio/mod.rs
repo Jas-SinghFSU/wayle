@@ -86,9 +86,6 @@ impl Component for AudioDropdown {
                     set_vexpand: true,
                     set_transition_type: gtk::StackTransitionType::SlideLeftRight,
                     set_transition_duration: 200,
-                    #[watch]
-                    set_visible_child_name: model.active_page.name(),
-
                     #[local_ref]
                     add_named[Some("main")] = main_section_widget -> gtk::Box {},
 
@@ -97,6 +94,9 @@ impl Component for AudioDropdown {
 
                     #[local_ref]
                     add_named[Some("input")] = input_picker_widget -> gtk::Box {},
+
+                    #[watch]
+                    set_visible_child_name: model.active_page.name(),
                 },
             },
         }
