@@ -1,4 +1,7 @@
-use std::sync::{Arc, atomic::AtomicU32};
+use std::{
+    collections::HashMap,
+    sync::{Arc, Mutex, atomic::AtomicU32},
+};
 
 use chrono::{DateTime, Utc};
 use tokio::sync::broadcast;
@@ -117,11 +120,19 @@ impl NotificationServiceBuilder {
             .max()
             .unwrap_or(0);
 
+        let mut initial_owners = HashMap::new();
+        for notification in &stored_notifications {
+            if let Some(app_name) = notification.app_name.get() {
+                initial_owners.insert(notification.id, app_name);
+            }
+        }
+
         let freedesktop_daemon = NotificationDaemon {
             counter: AtomicU32::new(max_id + 1),
             zbus_connection: connection.clone(),
             notif_tx: notif_tx.clone(),
             blocklist: self.blocklist.clone(),
+            id_owners: Mutex::new(initial_owners),
         };
 
         register_dbus_object(&connection, SERVICE_PATH, freedesktop_daemon).await?;

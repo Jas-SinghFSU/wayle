@@ -79,12 +79,12 @@ experience. A successor to HyprPanel without the pain or dependency on Hyprland.
 - [x] **Weather Panel**
 - [x] **Calendar Panel**
 - [x] **Dashboard**
-- [ ] **Notifications Panel (WIP)**
+- [x] **Notifications Panel**
 
 ### Additional Features
 
 - [x] **Notifications**
-- [ ] **OSD**
+- [ ] **OSD (WIP)**
 - [ ] **Settings Dialog**
 
 ## Configuration
@@ -127,8 +127,6 @@ imports = ["colors.toml", "modules/bar.toml"]
 location = "top"
 ```
 
-Paths prefixed with `@` resolve relative to the config directory.
-
 CLI commands can also be used to modify, get or reset any property:
 
 ```bash
@@ -160,14 +158,13 @@ wayle config schema
 
 ## Building
 
-Switch to nightly Rust:
+Install Rust via [rustup](https://rustup.rs):
 
 ```bash
-rustup toolchain install nightly
-rustup override set nightly
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
 
-Then clone the repository recursively and build:
+Clone the repository recursively and build:
 
 ```bash
 git clone --recursive https://github.com/Jas-SinghFSU/wayle

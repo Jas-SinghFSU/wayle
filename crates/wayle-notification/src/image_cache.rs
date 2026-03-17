@@ -1,4 +1,5 @@
 use std::{
+    borrow::Cow,
     collections::hash_map::DefaultHasher,
     fs,
     hash::{Hash, Hasher},
@@ -9,21 +10,36 @@ use std::{
 use png::ColorType;
 use tracing::{debug, warn};
 
-use crate::core::types::ImageData;
+use crate::core::types::BorrowedImageData;
 
 const EXPECTED_BITS_PER_SAMPLE: i32 = 8;
 const RGB_CHANNELS: i32 = 3;
 const RGBA_CHANNELS: i32 = 4;
 
-/// Caches raw pixel data as a PNG file and returns the file path.
-///
-/// Duplicate images reuse the same cached file.
-/// Returns `None` if the image format is unsupported or encoding fails.
-pub(crate) fn cache_image(image: &ImageData) -> Option<String> {
-    let color_type = png_color_type(image.bits_per_sample, image.channels)?;
+/// Caches borrowed raw pixel data as a PNG file and returns the file path.
+pub(crate) fn cache_borrowed_image(image: BorrowedImageData<'_>) -> Option<String> {
+    cache_image_data(
+        image.width,
+        image.height,
+        image.rowstride,
+        image.bits_per_sample,
+        image.channels,
+        image.data,
+    )
+}
+
+fn cache_image_data(
+    width: i32,
+    height: i32,
+    rowstride: i32,
+    bits_per_sample: i32,
+    channels: i32,
+    data: &[u8],
+) -> Option<String> {
+    let color_type = png_color_type(bits_per_sample, channels)?;
 
     let dir = cache_dir();
-    let path = dir.join(format!("{}.png", content_hash(&image.data)));
+    let path = dir.join(format!("{}.png", content_hash(data)));
 
     if path.exists() {
         return Some(path_to_string(&path));
@@ -34,13 +50,13 @@ pub(crate) fn cache_image(image: &ImageData) -> Option<String> {
         return None;
     }
 
-    let pixel_data = strip_rowstride_padding(image);
+    let pixel_data = strip_rowstride_padding(width, channels, rowstride, data);
     encode_png(
         &path,
-        image.width as u32,
-        image.height as u32,
+        width as u32,
+        height as u32,
         color_type,
-        &pixel_data,
+        pixel_data.as_ref(),
     )?;
 
     debug!(path = %path.display(), "cached notification image");
@@ -66,20 +82,25 @@ fn png_color_type(bits_per_sample: i32, channels: i32) -> Option<ColorType> {
     }
 }
 
-fn strip_rowstride_padding(image: &ImageData) -> Vec<u8> {
-    let row_bytes = (image.channels * image.width) as usize;
-    let rowstride = image.rowstride as usize;
+fn strip_rowstride_padding<'a>(
+    width: i32,
+    channels: i32,
+    rowstride: i32,
+    data: &'a [u8],
+) -> Cow<'a, [u8]> {
+    let row_bytes = (channels * width) as usize;
+    let rowstride = rowstride as usize;
 
     if rowstride == row_bytes {
-        return image.data.clone();
+        return Cow::Borrowed(data);
     }
 
-    image
-        .data
-        .chunks(rowstride)
-        .flat_map(|row| &row[..row_bytes.min(row.len())])
-        .copied()
-        .collect()
+    Cow::Owned(
+        data.chunks(rowstride)
+            .flat_map(|row| &row[..row_bytes.min(row.len())])
+            .copied()
+            .collect(),
+    )
 }
 
 fn encode_png(
@@ -100,6 +121,7 @@ fn encode_png(
     let mut encoder = png::Encoder::new(BufWriter::new(file), width, height);
     encoder.set_color(color_type);
     encoder.set_depth(png::BitDepth::Eight);
+    encoder.set_compression(png::Compression::Fast);
 
     let mut writer = match encoder.write_header() {
         Ok(writer) => writer,

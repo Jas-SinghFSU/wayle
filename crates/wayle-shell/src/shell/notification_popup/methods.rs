@@ -30,13 +30,10 @@ impl NotificationPopupHost {
         self.remove_stale_cards(&visible_popups);
 
         let existing_ids: Vec<u32> = self.cards.iter().map(|(notif, _)| notif.id).collect();
-        debug!(
-            active_ids = ?visible_popups.iter().map(|notif| notif.id).collect::<Vec<_>>(),
-            ?existing_ids,
-            "reconcile diff",
-        );
 
         self.insert_new_cards(&visible_popups, &existing_ids);
+
+        debug!(cards = self.cards.len(), "popup reconcile complete");
 
         root.set_visible(!visible_popups.is_empty());
     }
@@ -46,7 +43,7 @@ impl NotificationPopupHost {
         self.cards.retain(|(stored_notif, controller)| {
             let still_active = active_popups
                 .iter()
-                .any(|popup| Arc::ptr_eq(popup, stored_notif));
+                .any(|popup| popup.id == stored_notif.id);
 
             if !still_active {
                 container.remove(controller.widget());

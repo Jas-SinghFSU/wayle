@@ -1,6 +1,9 @@
 use std::{
     collections::HashMap,
-    sync::atomic::{AtomicU32, Ordering},
+    sync::{
+        Mutex,
+        atomic::{AtomicU32, Ordering},
+    },
 };
 
 use chrono::Utc;
@@ -16,7 +19,7 @@ use zbus::{
 use crate::{
     core::{
         notification::Notification,
-        types::{IMAGE_DATA_KEYS, ImageData, NotificationHints, NotificationProps},
+        types::{BorrowedImageData, IncomingHints, NotificationHints, NotificationProps},
     },
     events::NotificationEvent,
     image_cache,
@@ -32,6 +35,8 @@ pub(crate) struct NotificationDaemon {
     pub notif_tx: broadcast::Sender<NotificationEvent>,
     #[debug(skip)]
     pub blocklist: Property<Vec<String>>,
+    #[debug(skip)]
+    pub id_owners: Mutex<HashMap<u32, String>>,
 }
 
 #[zbus::interface(name = "org.freedesktop.Notifications")]
@@ -45,7 +50,7 @@ impl NotificationDaemon {
             timeout = %expire_timeout
         )
     )]
-    pub async fn notify(
+    pub fn notify(
         &self,
         app_name: String,
         replaces_id: u32,
@@ -53,14 +58,10 @@ impl NotificationDaemon {
         summary: String,
         body: String,
         actions: Vec<String>,
-        hints: HashMap<String, OwnedValue>,
+        hints: IncomingHints<'_>,
         expire_timeout: i32,
     ) -> fdo::Result<u32> {
-        let id = if replaces_id > 0 {
-            replaces_id
-        } else {
-            self.counter.fetch_add(1, Ordering::Relaxed)
-        };
+        let id = self.resolve_id(replaces_id, &app_name);
 
         let blocked = self
             .blocklist
@@ -73,7 +74,8 @@ impl NotificationDaemon {
             return Ok(id);
         }
 
-        let hints = replace_image_data_with_cached_png(hints);
+        let hints = normalize_hints(hints);
+        self.register_owner(id, &app_name);
 
         let notif = Notification::new(
             NotificationProps {
@@ -100,6 +102,7 @@ impl NotificationDaemon {
 
     #[instrument(skip(self), fields(notification_id = %id))]
     pub async fn close_notification(&self, id: u32) -> fdo::Result<()> {
+        self.remove_owner(id);
         let _ = self
             .notif_tx
             .send(NotificationEvent::Remove(id, ClosedReason::Closed));
@@ -126,21 +129,119 @@ impl NotificationDaemon {
     }
 }
 
-fn replace_image_data_with_cached_png(mut hints: NotificationHints) -> NotificationHints {
-    let Some(image) = ImageData::from_hints(&hints) else {
-        return hints;
-    };
+impl NotificationDaemon {
+    /// Only allows an app to reuse `replaces_id` values it owns.
+    /// Assigns a new ID otherwise.
+    fn resolve_id(&self, replaces_id: u32, app_name: &str) -> u32 {
+        if replaces_id == 0 {
+            let new_id = self.counter.fetch_add(1, Ordering::Relaxed);
+            debug!(new_id, "assigned new notification id");
+            return new_id;
+        }
 
-    if let Some(cached_path) = image_cache::cache_image(&image) {
-        hints.insert(
+        let owned_by_caller = self
+            .id_owners
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner())
+            .get(&replaces_id)
+            .is_some_and(|owner| owner == app_name);
+
+        if owned_by_caller {
+            debug!(replaces_id, "reusing replaces_id owned by same app");
+            replaces_id
+        } else {
+            let new_id = self.counter.fetch_add(1, Ordering::Relaxed);
+            debug!(
+                replaces_id,
+                new_id, "replaces_id belongs to different app, assigned new id"
+            );
+            new_id
+        }
+    }
+
+    fn register_owner(&self, id: u32, app_name: &str) {
+        let mut owners = self
+            .id_owners
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner());
+        owners.insert(id, app_name.to_owned());
+    }
+
+    fn remove_owner(&self, id: u32) {
+        let mut owners = self
+            .id_owners
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner());
+        owners.remove(&id);
+    }
+}
+
+fn normalize_hints(hints: IncomingHints<'_>) -> NotificationHints {
+    normalize_hints_with(hints, image_cache::cache_borrowed_image)
+}
+
+fn normalize_hints_with<F>(hints: IncomingHints<'_>, cache_image: F) -> NotificationHints
+where
+    F: FnOnce(BorrowedImageData<'_>) -> Option<String>,
+{
+    let cached_path = hints.image_data().and_then(cache_image);
+    let mut normalized = hints.into_owned();
+
+    if let Some(cached_path) = cached_path {
+        normalized.insert(
             String::from("image-path"),
             OwnedValue::from(Str::from(cached_path)),
         );
     }
 
-    for key in IMAGE_DATA_KEYS {
-        hints.remove(key);
+    normalized
+}
+
+#[cfg(test)]
+mod tests {
+    use std::collections::HashMap;
+
+    use zbus::zvariant::{LE, Value, serialized::Context, to_bytes};
+
+    use super::*;
+
+    #[test]
+    fn normalize_hints_replaces_image_data_with_cached_path() {
+        let pixels = [0u8, 1, 2, 3];
+        let mut raw = HashMap::new();
+        raw.insert("category", Value::new("im.received"));
+        raw.insert(
+            "image-data",
+            Value::new((1i32, 1i32, 4i32, true, 8i32, 4i32, &pixels[..])),
+        );
+        let encoded = to_bytes(Context::new_dbus(LE, 0), &raw).expect("hints should encode");
+        let (hints, _) = encoded
+            .deserialize::<IncomingHints<'_>>()
+            .expect("hints should decode");
+
+        let normalized = normalize_hints_with(hints, |_| Some(String::from("/tmp/fake.png")));
+
+        assert!(normalized.contains_key("category"));
+        assert!(!normalized.contains_key("image-data"));
+        assert_eq!(
+            normalized
+                .get("image-path")
+                .and_then(|value| value.downcast_ref::<String>().ok())
+                .as_deref(),
+            Some("/tmp/fake.png")
+        );
     }
 
-    hints
+    #[test]
+    fn normalize_hints_discards_malformed_image_data() {
+        let mut raw = HashMap::new();
+        raw.insert("urgency", Value::new(1u8));
+        raw.insert("image-data", Value::new("not-an-image"));
+        let encoded = to_bytes(Context::new_dbus(LE, 0), &raw).expect("hints should encode");
+
+        assert!(
+            encoded.deserialize::<IncomingHints<'_>>().is_err(),
+            "invalid image-data should be rejected at the D-Bus boundary"
+        );
+    }
 }

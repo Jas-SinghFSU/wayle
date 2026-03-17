@@ -133,6 +133,29 @@ fn handle_notification_added(
 
     let notif_arc = Arc::new(incoming_notif.clone());
     let mut list = notifications.get();
+
+    let replaced = list
+        .iter()
+        .find(|notif| notif.id == notif_arc.id)
+        .map(|notif| (notif.id, notif.app_name.get()));
+    if let Some((replaced_id, replaced_app)) = &replaced {
+        debug!(
+            incoming_id = notif_arc.id,
+            incoming_app = ?notif_arc.app_name.get(),
+            replaced_id,
+            replaced_app = ?replaced_app,
+            "replacing existing notification"
+        );
+    } else {
+        debug!(
+            id = notif_arc.id,
+            app = ?notif_arc.app_name.get(),
+            summary = %notif_arc.summary.get(),
+            list_size = list.len(),
+            "adding new notification"
+        );
+    }
+
     list.retain(|notif| notif.id != notif_arc.id);
     list.insert(0, notif_arc.clone());
 

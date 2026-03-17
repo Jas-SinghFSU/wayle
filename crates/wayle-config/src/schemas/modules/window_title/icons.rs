@@ -43,7 +43,7 @@ pub const BUILTIN_MAPPINGS: &[(&str, &str)] = &[
     ("*webcord*", "si-discord-symbolic"),
     ("*element*", "si-element-symbolic"),
     ("*signal*", "si-signal-symbolic"),
-    ("*slack*", "tb-brand-slack-symbolic"),
+    ("*slack*", "ld-slack-symbolic"),
     ("*telegram*", "si-telegram-symbolic"),
     ("*thunderbird*", "si-thunderbird-symbolic"),
     // File managers

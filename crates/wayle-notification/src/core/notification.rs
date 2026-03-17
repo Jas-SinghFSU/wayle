@@ -9,7 +9,7 @@ use zbus::Connection;
 
 use super::{
     controls::NotificationControls,
-    types::{Action, ImageData, NotificationHints, NotificationProps},
+    types::{Action, NotificationHints, NotificationProps},
 };
 use crate::{
     error::Error,
@@ -76,8 +76,6 @@ pub struct Notification {
     pub category: Property<Option<Category>>,
     /// When the notification was created.
     pub timestamp: Property<DateTime<Utc>>,
-    /// Raw pixel data from `image-data` hint.
-    pub image_data: Property<Option<ImageData>>,
     /// Path to an image file from hints.
     pub image_path: Property<Option<String>>,
     /// Desktop entry name of the application.
@@ -176,8 +174,6 @@ impl Notification {
             .and_then(|hint| hint.downcast_ref::<String>().ok())
             .and_then(|category| category.parse().ok());
 
-        let image_data = ImageData::from_hints(&props.hints);
-
         let image_path = props
             .hints
             .get("image-path")
@@ -235,7 +231,7 @@ impl Notification {
         let parsed_actions = Action::parse_dbus_actions(&props.actions);
         let default_action = parsed_actions
             .iter()
-            .find(|action| action.id == "default")
+            .find(|action| action.id == Action::DEFAULT_ID)
             .cloned();
 
         let hints = if !props.hints.is_empty() {
@@ -268,7 +264,6 @@ impl Notification {
             urgency: Property::new(*urgency),
             category: Property::new(category),
             timestamp: Property::new(props.timestamp),
-            image_data: Property::new(image_data),
             image_path: Property::new(image_path),
             desktop_entry: Property::new(desktop_entry),
             is_transient: Property::new(is_transient),

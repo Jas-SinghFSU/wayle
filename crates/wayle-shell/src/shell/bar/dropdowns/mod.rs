@@ -5,6 +5,7 @@ mod calendar;
 mod dashboard;
 mod media;
 mod network;
+mod notification;
 mod registry;
 mod weather;
 
@@ -44,5 +45,6 @@ register_dropdowns! {
     "dashboard" => dashboard::Factory,
     "media" => media::Factory,
     "network" => network::Factory,
+    "notification" => notification::Factory,
     "weather" => weather::Factory,
 }

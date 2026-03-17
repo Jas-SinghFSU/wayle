@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
 use wayle_config::schemas::modules::notification::{IconSource, UrgencyBarThreshold};
-use wayle_notification::{core::types::ImageData, types::Urgency};
+use wayle_notification::types::Urgency;
 
 use crate::shell::bar::icons::lookup_app_icon;
 
@@ -9,17 +9,15 @@ const MINUTES_PER_HOUR: i64 = 60;
 
 /// Resolved notification icon.
 #[derive(Debug, Clone)]
-pub(super) enum ResolvedIcon {
+pub(crate) enum ResolvedIcon {
     /// GTK icon theme name.
     Named(String),
     /// Filesystem path to an image file.
     File(String),
-    /// Raw pixel data from the `image-data` hint.
-    ImageData(ImageData),
 }
 
 /// Returns the CSS class name for a notification's urgency level.
-pub(super) fn urgency_css_class(urgency: Urgency) -> &'static str {
+pub(crate) fn urgency_css_class(urgency: Urgency) -> &'static str {
     match urgency {
         Urgency::Low => "low",
         Urgency::Normal => "normal",
@@ -39,14 +37,14 @@ pub(super) fn urgency_bar_visible(urgency: Urgency, threshold: UrgencyBarThresho
 
 /// Time elapsed since a notification was created.
 #[derive(Debug)]
-pub(super) enum RelativeTime {
+pub(crate) enum RelativeTime {
     JustNow,
     Minutes(i64),
     Hours(i64),
 }
 
 /// Computes the relative time from a timestamp to now.
-pub(super) fn relative_time(timestamp: &DateTime<Utc>) -> RelativeTime {
+pub(crate) fn relative_time(timestamp: &DateTime<Utc>) -> RelativeTime {
     let duration = Utc::now().signed_duration_since(timestamp);
     let minutes = duration.num_minutes();
 
@@ -60,22 +58,17 @@ pub(super) fn relative_time(timestamp: &DateTime<Utc>) -> RelativeTime {
 }
 
 /// Resolves the notification icon based on the configured source mode.
-pub(super) fn resolve_icon(
+pub(crate) fn resolve_icon(
     icon_source: IconSource,
     app_name: &Option<String>,
     app_icon: &Option<String>,
     image_path: &Option<String>,
-    image_data: &Option<ImageData>,
     desktop_entry: &Option<String>,
 ) -> ResolvedIcon {
     match icon_source {
         IconSource::Mapped => mapped_icon(app_name),
 
         IconSource::Automatic => {
-            if let Some(data) = image_data {
-                return ResolvedIcon::ImageData(data.clone());
-            }
-
             if let Some(resolved) = try_icon_string(image_path) {
                 return resolved;
             }
@@ -84,10 +77,6 @@ pub(super) fn resolve_icon(
         }
 
         IconSource::Application => {
-            if let Some(data) = image_data {
-                return ResolvedIcon::ImageData(data.clone());
-            }
-
             if let Some(resolved) = try_icon_string(image_path) {
                 return resolved;
             }
@@ -142,30 +131,63 @@ mod tests {
 
     #[test]
     fn urgency_bar_none_always_hidden() {
-        assert!(!urgency_bar_visible(Urgency::Low, UrgencyBarThreshold::None));
-        assert!(!urgency_bar_visible(Urgency::Normal, UrgencyBarThreshold::None));
-        assert!(!urgency_bar_visible(Urgency::Critical, UrgencyBarThreshold::None));
+        assert!(!urgency_bar_visible(
+            Urgency::Low,
+            UrgencyBarThreshold::None
+        ));
+        assert!(!urgency_bar_visible(
+            Urgency::Normal,
+            UrgencyBarThreshold::None
+        ));
+        assert!(!urgency_bar_visible(
+            Urgency::Critical,
+            UrgencyBarThreshold::None
+        ));
     }
 
     #[test]
     fn urgency_bar_low_always_visible() {
         assert!(urgency_bar_visible(Urgency::Low, UrgencyBarThreshold::Low));
-        assert!(urgency_bar_visible(Urgency::Normal, UrgencyBarThreshold::Low));
-        assert!(urgency_bar_visible(Urgency::Critical, UrgencyBarThreshold::Low));
+        assert!(urgency_bar_visible(
+            Urgency::Normal,
+            UrgencyBarThreshold::Low
+        ));
+        assert!(urgency_bar_visible(
+            Urgency::Critical,
+            UrgencyBarThreshold::Low
+        ));
     }
 
     #[test]
     fn urgency_bar_normal_hides_low() {
-        assert!(!urgency_bar_visible(Urgency::Low, UrgencyBarThreshold::Normal));
-        assert!(urgency_bar_visible(Urgency::Normal, UrgencyBarThreshold::Normal));
-        assert!(urgency_bar_visible(Urgency::Critical, UrgencyBarThreshold::Normal));
+        assert!(!urgency_bar_visible(
+            Urgency::Low,
+            UrgencyBarThreshold::Normal
+        ));
+        assert!(urgency_bar_visible(
+            Urgency::Normal,
+            UrgencyBarThreshold::Normal
+        ));
+        assert!(urgency_bar_visible(
+            Urgency::Critical,
+            UrgencyBarThreshold::Normal
+        ));
     }
 
     #[test]
     fn urgency_bar_critical_only_shows_critical() {
-        assert!(!urgency_bar_visible(Urgency::Low, UrgencyBarThreshold::Critical));
-        assert!(!urgency_bar_visible(Urgency::Normal, UrgencyBarThreshold::Critical));
-        assert!(urgency_bar_visible(Urgency::Critical, UrgencyBarThreshold::Critical));
+        assert!(!urgency_bar_visible(
+            Urgency::Low,
+            UrgencyBarThreshold::Critical
+        ));
+        assert!(!urgency_bar_visible(
+            Urgency::Normal,
+            UrgencyBarThreshold::Critical
+        ));
+        assert!(urgency_bar_visible(
+            Urgency::Critical,
+            UrgencyBarThreshold::Critical
+        ));
     }
 
     #[test]

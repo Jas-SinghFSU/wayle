@@ -9,7 +9,7 @@ use chrono::{DateTime, Utc};
 use derive_more::Debug;
 use rusqlite::{Connection, params};
 use tracing::{debug, instrument, warn};
-use zbus::zvariant::OwnedValue;
+use zbus::zvariant::{OwnedValue, Str};
 
 use crate::{
     core::{
@@ -29,6 +29,7 @@ pub(crate) struct StoredNotification {
     pub body: Option<String>,
     pub actions: Vec<String>,
     pub hints: HashMap<String, OwnedValue>,
+    pub image_path: Option<String>,
     pub expire_timeout: Option<u32>,
     pub timestamp: i64,
 }
@@ -44,6 +45,7 @@ impl From<&Notification> for StoredNotification {
             body: notification.body.get().clone(),
             actions: Action::to_dbus_format(&notification.actions.get()),
             hints: notification.hints.get().clone().unwrap_or_default(),
+            image_path: notification.image_path.get().clone(),
             expire_timeout: notification.expire_timeout.get(),
             timestamp: notification.timestamp.get().timestamp_millis(),
         }
@@ -83,7 +85,8 @@ impl NotificationStore {
                     actions TEXT NOT NULL,
                     hints TEXT NOT NULL,
                     expire_timeout INTEGER,
-                    timestamp INTEGER NOT NULL
+                    timestamp INTEGER NOT NULL,
+                    image_path TEXT
                 )",
                 [],
             )
@@ -121,8 +124,8 @@ impl NotificationStore {
             .execute(
                 "INSERT OR REPLACE INTO notifications
                  (id, app_name, replaces_id, app_icon, summary, body, actions, hints,
-                 expire_timeout, timestamp)
-                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
+                 expire_timeout, timestamp, image_path)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)",
                 params![
                     stored.id,
                     stored.app_name,
@@ -134,6 +137,7 @@ impl NotificationStore {
                     hints_json,
                     stored.expire_timeout,
                     stored.timestamp,
+                    stored.image_path,
                 ],
             )
             .map_err(|err| Error::DatabaseError(format!("cannot store notification: {err}")))?;
@@ -161,7 +165,7 @@ impl NotificationStore {
         let mut stmt = conn
             .prepare(
                 "SELECT id, app_name, replaces_id, app_icon, summary, body,
-                 actions, hints, expire_timeout, timestamp
+                 actions, hints, expire_timeout, timestamp, image_path
                  FROM notifications
                  ORDER BY timestamp DESC",
             )
@@ -171,6 +175,7 @@ impl NotificationStore {
             .query_map([], |row| {
                 let actions_json: String = row.get(6)?;
                 let hints_json: String = row.get(7)?;
+                let image_path: Option<String> = row.get(10)?;
 
                 let actions: Vec<String> =
                     serde_json::from_str(&actions_json).unwrap_or_else(|err| {
@@ -182,7 +187,7 @@ impl NotificationStore {
                         warn!(error = %err, "cannot deserialize hints");
                         HashMap::new()
                     });
-                let hints: HashMap<String, OwnedValue> = hints_json_map
+                let mut hints: HashMap<String, OwnedValue> = hints_json_map
                     .into_iter()
                     .filter_map(|(key, value)| {
                         serde_json::from_value::<OwnedValue>(value)
@@ -190,6 +195,13 @@ impl NotificationStore {
                             .map(|owned_value| (key, owned_value))
                     })
                     .collect();
+
+                if let Some(ref path) = image_path {
+                    hints.insert(
+                        String::from("image-path"),
+                        OwnedValue::from(Str::from(path.as_str())),
+                    );
+                }
 
                 Ok(StoredNotification {
                     id: row.get(0)?,
@@ -200,6 +212,7 @@ impl NotificationStore {
                     body: row.get(5)?,
                     actions,
                     hints,
+                    image_path,
                     expire_timeout: row.get(8)?,
                     timestamp: row.get(9)?,
                 })

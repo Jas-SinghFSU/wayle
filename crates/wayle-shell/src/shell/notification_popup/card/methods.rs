@@ -1,7 +1,6 @@
 use gtk::prelude::*;
-use gtk4::{gdk, glib};
 use relm4::{gtk, spawn_local};
-use wayle_config::schemas::modules::notification::UrgencyBarThreshold;
+use wayle_config::schemas::modules::notification::{PopupCloseBehavior, UrgencyBarThreshold};
 use wayle_notification::core::types::Action;
 
 use super::NotificationPopupCard;
@@ -39,24 +38,6 @@ impl NotificationPopupCard {
                 icon.set_from_file(Some(path));
                 icon_container.add_css_class("file-icon");
             }
-
-            ResolvedIcon::ImageData(data) => {
-                let format = if data.has_alpha {
-                    gdk::MemoryFormat::R8g8b8a8
-                } else {
-                    gdk::MemoryFormat::R8g8b8
-                };
-                let bytes = glib::Bytes::from_owned(data.data.clone());
-                let texture = gdk::MemoryTexture::new(
-                    data.width,
-                    data.height,
-                    format,
-                    &bytes,
-                    data.rowstride as usize,
-                );
-                icon.set_paintable(Some(&texture.upcast::<gdk::Texture>()));
-                icon_container.add_css_class("file-icon");
-            }
         }
     }
 
@@ -82,7 +63,7 @@ impl NotificationPopupCard {
         let actions = self.notification.actions.get();
         let visible_actions: Vec<_> = actions
             .iter()
-            .filter(|action| action.id != "default")
+            .filter(|action| action.id != Action::DEFAULT_ID)
             .collect();
 
         if visible_actions.is_empty() {
@@ -135,6 +116,36 @@ impl NotificationPopupCard {
         });
 
         button
+    }
+
+    pub(super) fn setup_default_action(&self, root: &gtk::Box) {
+        let default_action = self.notification.default_action.get();
+        if default_action.is_none() {
+            return;
+        }
+
+        root.set_cursor_from_name(Some("pointer"));
+
+        let notification = self.notification.clone();
+        let service = self.service.clone();
+        let notif_id = self.notification.id;
+        let close_behavior = self.close_behavior;
+
+        let click = gtk::GestureClick::new();
+        click.connect_released(move |gesture, _, _, _| {
+            gesture.set_state(gtk::EventSequenceState::Claimed);
+            let notif = notification.clone();
+            match close_behavior {
+                PopupCloseBehavior::Dismiss => service.dismiss_popup(notif_id),
+                PopupCloseBehavior::Remove => notif.dismiss(),
+            }
+            spawn_local(async move {
+                if let Err(err) = notif.invoke(Action::DEFAULT_ID).await {
+                    tracing::warn!(error = %err, "default action invocation failed");
+                }
+            });
+        });
+        root.add_controller(click);
     }
 
     pub(super) fn setup_hover_controller(&self, root: &gtk::Box) {

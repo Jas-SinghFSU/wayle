@@ -141,7 +141,6 @@ impl Component for NotificationPopupCard {
             &notif.app_name.get(),
             &notif.app_icon.get(),
             &notif.image_path.get(),
-            &notif.image_data.get(),
             &notif.desktop_entry.get(),
         );
 
@@ -167,6 +166,7 @@ impl Component for NotificationPopupCard {
         model.apply_css_classes(&root, init.shadow, init.urgency_bar);
         model.apply_icon(&widgets.icon, &widgets.icon_container);
         model.setup_action_buttons(&widgets.actions_box);
+        model.setup_default_action(&root);
         model.setup_hover_controller(&root);
 
         watchers::spawn(&sender, &init.config);
