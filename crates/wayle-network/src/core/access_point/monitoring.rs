@@ -53,6 +53,7 @@ async fn monitor(
     let mut hw_address_changes = proxy.receive_hw_address_changed().await;
     let mut mode_changes = proxy.receive_mode_changed().await;
     let mut max_bitrate_changes = proxy.receive_max_bitrate_changed().await;
+    let mut bandwidth_changes = proxy.receive_bandwidth_changed().await;
     let mut strength_changes = proxy.receive_strength_changed().await;
     let mut last_seen_changes = proxy.receive_last_seen_changed().await;
 
@@ -133,6 +134,11 @@ async fn monitor(
             Some(change) = max_bitrate_changes.next() => {
                 if let Ok(new_bitrate) = change.get().await {
                     access_point.max_bitrate.set(new_bitrate);
+                }
+            }
+            Some(change) = bandwidth_changes.next() => {
+                if let Ok(new_bandwidth) = change.get().await {
+                    access_point.bandwidth.set(new_bandwidth);
                 }
             }
             Some(change) = strength_changes.next() => {

@@ -18,7 +18,11 @@ use zbus::{Connection, zvariant::OwnedObjectPath};
 use crate::{
     error::Error,
     proxy::{battery::Battery1Proxy, device::Device1Proxy},
-    types::{ServiceNotification, UUID, adapter::AddressType, device::PreferredBearer},
+    types::{
+        ServiceNotification, UUID,
+        adapter::AddressType,
+        device::{DisconnectReason, PreferredBearer},
+    },
 };
 
 /// Bluetooth device from BlueZ.
@@ -33,7 +37,7 @@ use crate::{
 /// - [`pair()`](Self::pair) / [`cancel_pairing()`](Self::cancel_pairing) - Pairing flow
 /// - [`connect_profile()`](Self::connect_profile) /
 ///   [`disconnect_profile()`](Self::disconnect_profile) - Profile-specific
-/// - [`set_trusted()`](Self::set_trused) / [`set_blocked()`](Self::set_blocked) -
+/// - [`set_trusted()`](Self::set_trusted) / [`set_blocked()`](Self::set_blocked) -
 ///   Trust and block settings
 /// - [`set_alias()`](Self::set_alias) - Custom display name
 /// - [`forget()`](Self::forget) - Remove from adapter and clear bonding
@@ -90,9 +94,6 @@ pub struct Device {
     /// devices exchange the information to establish an encrypted connection has been
     /// completed.
     pub paired: Property<bool>,
-
-    /// Indicate whether or not the device is currently in the process of pairing
-    pub pairing: Property<bool>,
 
     /// Indicates if the remote device is bonded. Bonded means the information exchanged
     /// on pairing process has been stored and will be persisted.
@@ -381,7 +382,7 @@ impl Device {
     ///
     /// # Errors
     /// Returns error if D-Bus operation fails or device is not available.
-    pub async fn set_trused(&self, trusted: bool) -> Result<(), Error> {
+    pub async fn set_trusted(&self, trusted: bool) -> Result<(), Error> {
         DeviceControls::set_trusted(&self.zbus_connection, &self.object_path, trusted).await
     }
 
@@ -465,7 +466,7 @@ impl Device {
 
         Ok(stream.filter_map(|signal| async move {
             signal.args().ok().map(|args| DisconnectedEvent {
-                reason: args.reason,
+                reason: DisconnectReason::from(args.reason.as_str()),
                 message: args.message,
             })
         }))
@@ -488,7 +489,7 @@ impl Device {
             paired,
             bonded,
             connected,
-            trused,
+            trusted,
             blocked,
             wake_allowed,
             alias,
@@ -548,7 +549,7 @@ impl Device {
             paired: unwrap_bool!(paired),
             bonded: unwrap_bool!(bonded),
             connected: unwrap_bool!(connected),
-            trused: unwrap_bool!(trused),
+            trusted: unwrap_bool!(trusted),
             blocked: unwrap_bool!(blocked),
             wake_allowed: unwrap_bool!(wake_allowed),
             alias: unwrap_string!(alias),
@@ -593,10 +594,9 @@ impl Device {
             appearance: Property::new(props.appearance),
             uuids: Property::new(props.uuids),
             paired: Property::new(props.paired),
-            pairing: Property::new(false),
             bonded: Property::new(props.bonded),
             connected: Property::new(props.connected),
-            trusted: Property::new(props.trused),
+            trusted: Property::new(props.trusted),
             blocked: Property::new(props.blocked),
             wake_allowed: Property::new(props.wake_allowed),
             alias: Property::new(props.alias),

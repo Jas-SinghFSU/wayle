@@ -16,6 +16,10 @@ pub struct SampleSpec {
 pub enum SampleFormat {
     /// Unsigned 8-bit samples.
     U8,
+    /// 8-bit a-Law encoded samples.
+    ALaw,
+    /// 8-bit mu-Law encoded samples.
+    ULaw,
     /// Signed 16-bit little-endian samples.
     S16LE,
     /// Signed 16-bit big-endian samples.
@@ -24,6 +28,10 @@ pub enum SampleFormat {
     S24LE,
     /// Signed 24-bit big-endian samples.
     S24BE,
+    /// Signed 24-bit samples in LSB of 32-bit words, little-endian.
+    S24_32LE,
+    /// Signed 24-bit samples in LSB of 32-bit words, big-endian.
+    S24_32BE,
     /// Signed 32-bit little-endian samples.
     S32LE,
     /// Signed 32-bit big-endian samples.
@@ -48,25 +56,45 @@ pub struct ChannelMap {
 /// Channel position enumeration
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ChannelPosition {
-    /// Mono channel.
+    /// Single mono channel.
     Mono,
-    /// Front left channel.
+    /// Front left.
     FrontLeft,
-    /// Front right channel.
+    /// Front right.
     FrontRight,
-    /// Front center channel.
+    /// Front center.
     FrontCenter,
-    /// Rear left channel.
+    /// Rear left.
     RearLeft,
-    /// Rear right channel.
+    /// Rear right.
     RearRight,
-    /// Low frequency effects channel (subwoofer).
+    /// Rear center (Dolby: "Surround Rear Center").
+    RearCenter,
+    /// Low frequency effects (subwoofer).
     LFE,
-    /// Side left channel.
+    /// Side left (Dolby: "Surround Left").
     SideLeft,
-    /// Side right channel.
+    /// Side right (Dolby: "Surround Right").
     SideRight,
-    /// Unknown channel position.
+    /// Front left of center (Dolby: "Left Center").
+    FrontLeftOfCenter,
+    /// Front right of center (Dolby: "Right Center").
+    FrontRightOfCenter,
+    /// Top center (Apple: "Top Center Surround").
+    TopCenter,
+    /// Top front left (Apple: "Vertical Height Left").
+    TopFrontLeft,
+    /// Top front right (Apple: "Vertical Height Right").
+    TopFrontRight,
+    /// Top front center (Apple: "Vertical Height Center").
+    TopFrontCenter,
+    /// Top rear left (Microsoft/Apple: "Top Back Left").
+    TopRearLeft,
+    /// Top rear right (Microsoft/Apple: "Top Back Right").
+    TopRearRight,
+    /// Top rear center (Microsoft/Apple: "Top Back Center").
+    TopRearCenter,
+    /// Unrecognized position from PulseAudio.
     Unknown,
 }
 

@@ -19,6 +19,8 @@ pub enum PowerProfile {
     Balanced,
     /// High performance mode.
     Performance,
+    /// Unrecognized profile from the daemon.
+    Unknown,
 }
 
 impl From<&str> for PowerProfile {
@@ -27,7 +29,7 @@ impl From<&str> for PowerProfile {
             "power-saver" => Self::PowerSaver,
             "balanced" => Self::Balanced,
             "performance" => Self::Performance,
-            _ => Self::Balanced,
+            _ => Self::Unknown,
         }
     }
 }
@@ -38,6 +40,7 @@ impl Display for PowerProfile {
             Self::PowerSaver => write!(f, "power-saver"),
             Self::Balanced => write!(f, "balanced"),
             Self::Performance => write!(f, "performance"),
+            Self::Unknown => write!(f, "unknown"),
         }
     }
 }

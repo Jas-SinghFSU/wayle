@@ -107,17 +107,16 @@ fn handle_popup_added(
 
     let default_duration = Duration::from_millis(popup_duration.get() as u64);
 
-    let expire_duration = incoming_popup
-        .expire_timeout
-        .get()
-        .map(|ttl| Duration::from_millis(ttl as u64));
-
-    let timer_duration = match expire_duration {
-        Some(expire) if !expire.is_zero() => default_duration.min(expire),
-        _ => default_duration,
-    };
-
-    popup_timers.start(incoming_popup.id, timer_duration);
+    match incoming_popup.expire_timeout.get() {
+        Some(0) => {}
+        Some(ttl) => {
+            let expire = Duration::from_millis(ttl as u64);
+            popup_timers.start(incoming_popup.id, default_duration.min(expire));
+        }
+        None => {
+            popup_timers.start(incoming_popup.id, default_duration);
+        }
+    }
 }
 
 fn handle_notification_added(

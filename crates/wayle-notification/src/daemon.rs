@@ -123,7 +123,7 @@ impl NotificationDaemon {
         let name = String::from("wayle");
         let vendor = String::from("jaskir");
         let version = String::from(env!("CARGO_PKG_VERSION"));
-        let spec_version = String::from("1.2");
+        let spec_version = String::from("1.3");
 
         (name, vendor, version, spec_version)
     }

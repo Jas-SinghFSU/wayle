@@ -149,12 +149,6 @@ impl HyprMessenger {
     }
 
     #[instrument(skip(self), err)]
-    pub(crate) async fn layouts(&self) -> Result<Vec<String>> {
-        let response = self.send("j/layouts").await?;
-        parse_json_response("j/layouts", &response)
-    }
-
-    #[instrument(skip(self), err)]
     pub(crate) async fn submap(&self) -> Result<String> {
         let response = self.send("submap").await?;
         Ok(response.trim().to_string())

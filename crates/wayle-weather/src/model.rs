@@ -193,8 +193,7 @@ impl WeatherCondition {
         match code {
             0 => Self::Clear,
             1..=2 => Self::PartlyCloudy,
-            3 => Self::Cloudy,
-            44 => Self::Mist,
+            3 => Self::Overcast,
             45 | 48 => Self::Fog,
             51 | 53 | 55 => Self::Drizzle,
             56 | 57 => Self::Sleet,

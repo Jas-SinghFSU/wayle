@@ -51,7 +51,7 @@ impl HyprMessenger {
     pub(crate) async fn set_error(&self, command: SetErrorCommand<'_>) -> Result<String> {
         match command {
             SetErrorCommand::Set { color, message } => {
-                self.send(&format!("seterror '{color}' {message}")).await
+                self.send(&format!("seterror {color} {message}")).await
             }
             SetErrorCommand::Disable => self.send("seterror disable").await,
         }
@@ -77,7 +77,7 @@ impl HyprMessenger {
         let color = color.unwrap_or("0");
 
         self.send(&format!(
-            "notify {} {} '{}' '{}'",
+            "notify {} {} {} {}",
             icon,
             time.as_millis(),
             color,

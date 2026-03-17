@@ -61,6 +61,9 @@ pub struct AccessPoint {
     /// The maximum bitrate this access point is capable of, in kilobits/second (Kb/s).
     pub max_bitrate: Property<u32>,
 
+    /// The bandwidth announced by the access point in MHz.
+    pub bandwidth: Property<u32>,
+
     /// The current signal quality of the access point, in percent.
     pub strength: Property<u8>,
 
@@ -154,6 +157,7 @@ impl AccessPoint {
             hw_address,
             mode,
             max_bitrate,
+            bandwidth,
             strength,
             last_seen,
         ) = tokio::join!(
@@ -165,6 +169,7 @@ impl AccessPoint {
             ap_proxy.hw_address(),
             ap_proxy.mode(),
             ap_proxy.max_bitrate(),
+            ap_proxy.bandwidth(),
             ap_proxy.strength(),
             ap_proxy.last_seen(),
         );
@@ -177,6 +182,7 @@ impl AccessPoint {
         let hw_address = Bssid::new(unwrap_string!(hw_address, path).into_bytes());
         let mode = NM80211Mode::from_u32(unwrap_u32!(mode, path));
         let max_bitrate = unwrap_u32!(max_bitrate, path);
+        let bandwidth = unwrap_u32!(bandwidth, path);
         let strength = unwrap_u8!(strength, path);
         let last_seen = unwrap_i32_or!(last_seen, path, -1);
 
@@ -195,6 +201,7 @@ impl AccessPoint {
             bssid: Property::new(hw_address),
             mode: Property::new(mode),
             max_bitrate: Property::new(max_bitrate),
+            bandwidth: Property::new(bandwidth),
             strength: Property::new(strength),
             last_seen: Property::new(last_seen),
             security: Property::new(security),

@@ -7,13 +7,13 @@ use zbus::{
     zvariant::{OwnedObjectPath, OwnedValue},
 };
 
-use crate::types::ServiceNotification;
+use crate::types::{ServiceNotification, device::DisconnectReason};
 
 /// Event emitted when a device is disconnected.
 pub struct DisconnectedEvent {
-    /// Reason code for the disconnection.
-    pub reason: u8,
-    /// Human-readable message describing the disconnection.
+    /// Reason for the disconnection.
+    pub reason: DisconnectReason,
+    /// Human-readable message from BlueZ.
     pub message: String,
 }
 
@@ -23,51 +23,23 @@ pub type ManufacturerData = HashMap<u16, Vec<u8>>;
 pub type AdvertisingData = HashMap<u8, Vec<u8>>;
 /// Service-specific advertisement data keyed by UUID.
 pub type ServiceData = HashMap<String, Vec<u8>>;
-/// Device set membership information.
+/// Device set membership from the `Device.Sets` property.
 ///
-/// Represents a Bluetooth Coordinated Set that this device belongs to.
+/// For full set properties (Adapter, Devices, Size), query
+/// `org.bluez.DeviceSet1` at `path`.
 #[derive(Debug, Clone)]
 pub struct DeviceSet {
     /// Object path of the device set.
     pub path: OwnedObjectPath,
-    /// The adapter this set belongs to.
-    pub adapter: Option<OwnedObjectPath>,
-    /// Whether devices in the set should auto-connect together.
-    pub auto_connect: bool,
-    /// List of device paths that are members of this set.
-    pub devices: Vec<OwnedObjectPath>,
-    /// Number of members in the set.
-    pub size: u8,
+    /// Rank of this device within the set.
+    pub rank: Option<u8>,
 }
 
 impl DeviceSet {
     pub(crate) fn from_dbus(path: OwnedObjectPath, props: HashMap<String, OwnedValue>) -> Self {
-        let adapter = props
-            .get("Adapter")
-            .and_then(|v| OwnedObjectPath::try_from(v.clone()).ok());
+        let rank = props.get("Rank").and_then(|value| u8::try_from(value).ok());
 
-        let auto_connect = props
-            .get("AutoConnect")
-            .and_then(|v| bool::try_from(v).ok())
-            .unwrap_or(false);
-
-        let devices = props
-            .get("Devices")
-            .and_then(|v| Vec::<OwnedObjectPath>::try_from(v.clone()).ok())
-            .unwrap_or_default();
-
-        let size = props
-            .get("Size")
-            .and_then(|v| u8::try_from(v).ok())
-            .unwrap_or(0);
-
-        Self {
-            path,
-            adapter,
-            auto_connect,
-            devices,
-            size,
-        }
+        Self { path, rank }
     }
 }
 
@@ -98,7 +70,7 @@ pub(crate) struct DeviceProperties {
     pub paired: bool,
     pub bonded: bool,
     pub connected: bool,
-    pub trused: bool,
+    pub trusted: bool,
     pub blocked: bool,
     pub wake_allowed: bool,
     pub alias: String,

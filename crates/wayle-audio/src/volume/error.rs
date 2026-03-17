@@ -2,7 +2,7 @@
 #[derive(thiserror::Error, Debug, Clone, PartialEq)]
 pub enum Error {
     /// Invalid volume level
-    #[error("Invalid volume {volume} for channel {channel} (must be 0.0-10.0)")]
+    #[error("Invalid volume {volume} for channel {channel} (must be 0.0-4.0)")]
     InvalidVolume {
         /// Channel index
         channel: usize,

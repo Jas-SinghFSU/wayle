@@ -9,7 +9,7 @@ use futures::{Stream, StreamExt};
 use tokio_util::sync::CancellationToken;
 use tracing::instrument;
 use types::TrayItemProperties;
-use wayle_common::{Property, unwrap_bool, unwrap_string, unwrap_u32};
+use wayle_common::{Property, unwrap_bool, unwrap_i32, unwrap_string};
 use wayle_traits::{ModelMonitoring, Reactive};
 use zbus::{
     Connection,
@@ -59,7 +59,7 @@ pub struct TrayItem {
 
     /// It's the windowing-system dependent identifier for a window, the application can chose one
     /// of its windows to be available trough this property or just set 0 if it's not interested.
-    pub window_id: Property<u32>,
+    pub window_id: Property<i32>,
 
     /// The item only support the context menu, the visualization should prefer showing the menu
     /// or sending `ContextMenu()` instead of `Activate()`
@@ -158,6 +158,25 @@ impl Reactive for TrayItem {
 }
 
 impl TrayItem {
+    /// Passes an XDG activation token before calling Activate or ContextMenu.
+    /// Required on Wayland for the item to raise its window.
+    ///
+    /// # Errors
+    ///
+    /// Returns error if the D-Bus call fails or the item doesn't support it.
+    #[instrument(skip(self), fields(bus_name = %self.bus_name.get()), err)]
+    pub async fn provide_xdg_activation_token(&self, token: &str) -> Result<(), Error> {
+        let bus_name = self.bus_name.get();
+        let id = Self::parse_service_identifier(&bus_name);
+        TrayItemController::provide_xdg_activation_token(
+            &self.zbus_connection,
+            id.service,
+            id.path,
+            token,
+        )
+        .await
+    }
+
     /// Asks the status notifier item to show a context menu, this is typically a consequence of
     /// user input, such as mouse right click over the graphical representation of the item.
     ///
@@ -570,6 +589,23 @@ impl TrayItem {
         }))
     }
 
+    /// The item's menu object path changed.
+    ///
+    /// # Errors
+    /// Returns error if D-Bus proxy creation fails.
+    pub async fn new_menu_signal(&self) -> Result<impl Stream<Item = ()>, Error> {
+        let bus_name = &self.bus_name.get();
+        let id = Self::parse_service_identifier(bus_name);
+        let proxy = StatusNotifierItemProxy::builder(&self.zbus_connection)
+            .destination(id.service)?
+            .path(id.path)?
+            .build()
+            .await?;
+        let stream = proxy.receive_new_menu().await?;
+
+        Ok(stream.filter_map(|_signal| async move { Some(()) }))
+    }
+
     /// Parse a service identifier into service name and object path.
     ///
     /// Handles two formats:
@@ -639,7 +675,7 @@ impl TrayItem {
             title: unwrap_string!(title),
             category: Category::from(category.as_str()),
             status: Status::from(status.as_str()),
-            window_id: unwrap_u32!(window_id),
+            window_id: unwrap_i32!(window_id),
             item_is_menu: unwrap_bool!(item_is_menu),
             icon_name,
             icon_pixmap: icon_pixmap

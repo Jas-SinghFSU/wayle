@@ -68,10 +68,18 @@ pub enum NMDeviceType {
     WifiP2p = 30,
     /// A VRF (Virtual Routing and Forwarding) interface. Since: 1.24.
     Vrf = 31,
+    /// A loopback interface. Since: 1.42.
+    Loopback = 32,
+    /// A HSR/PRP device. Since: 1.46.
+    Hsr = 33,
+    /// An IPVLAN device. Since: 1.52.
+    Ipvlan = 34,
+    /// A GENEVE device. Since: 1.58.
+    Geneve = 35,
 }
 
 impl NMDeviceType {
-    /// Convert from D-Bus u32 representation
+    /// Converts from the D-Bus u32 representation.
     pub fn from_u32(value: u32) -> Self {
         match value {
             0 => Self::Unknown,
@@ -106,6 +114,10 @@ impl NMDeviceType {
             29 => Self::Wireguard,
             30 => Self::WifiP2p,
             31 => Self::Vrf,
+            32 => Self::Loopback,
+            33 => Self::Hsr,
+            34 => Self::Ipvlan,
+            35 => Self::Geneve,
             _ => Self::Unknown,
         }
     }
@@ -160,6 +172,36 @@ impl NMIPTunnelMode {
             11 => Self::Ip6gretap,
             _ => Self::Unknown,
         }
+    }
+}
+
+/// Values for the `SetManaged` D-Bus method. Since: 1.58.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum NMDeviceManaged {
+    /// The device is not managed.
+    No = 0,
+    /// The device is managed.
+    Yes = 1,
+    /// Reset the device managed state to the default value.
+    Reset = 2,
+}
+
+bitflags::bitflags! {
+    /// Flags for the `SetManaged` D-Bus method. Since: 1.58.
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+    pub struct NMDeviceManagedFlags: u32 {
+        /// No flag set.
+        const NONE = 0x00;
+        /// Set the managed state as a runtime value.
+        const RUNTIME = 0x01;
+        /// Set the managed state as a permanent (on disk) value.
+        const PERMANENT = 0x02;
+        /// Match the device by name, not by MAC address. Only with `PERMANENT`.
+        const PERMANENT_BY_NAME = 0x04;
+        /// Match the device by MAC address, not by name. Only with `PERMANENT`.
+        const PERMANENT_BY_MAC = 0x08;
+        /// Set the administrative state (up/down) based on the managed value.
+        const SET_ADMIN_STATE = 0x10;
     }
 }
 

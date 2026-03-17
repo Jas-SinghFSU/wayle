@@ -8,7 +8,7 @@ use libpulse_binding::{
 
 use crate::{
     backend::{
-        conversion::{create_device_info_from_sink, create_device_info_from_source},
+        conversion::device::{from_sink, from_source},
         types::{DeviceStore, EventSender},
     },
     events::AudioEvent,
@@ -23,7 +23,7 @@ pub(crate) fn trigger_discovery(context: &Context, devices: &DeviceStore, events
 
     introspect.get_sink_info_list(move |sink_list| {
         if let ListResult::Item(sink) = sink_list {
-            let sink_info = create_device_info_from_sink(sink);
+            let sink_info = from_sink(sink);
             let device_key = sink_info.key();
             let device_data = Device::Sink(sink_info);
 
@@ -36,7 +36,7 @@ pub(crate) fn trigger_discovery(context: &Context, devices: &DeviceStore, events
 
     introspect.get_source_info_list(move |source_list| {
         if let ListResult::Item(source) = source_list {
-            let source_info = create_device_info_from_source(source);
+            let source_info = from_source(source);
             let device_key = source_info.key();
             let device_data = Device::Source(source_info);
 
@@ -61,7 +61,7 @@ pub(crate) fn trigger_refresh(
         Facility::Sink => {
             introspect.get_sink_info_by_index(device_key.index, move |sink_list| {
                 if let ListResult::Item(sink) = sink_list {
-                    let sink_info = create_device_info_from_sink(sink);
+                    let sink_info = from_sink(sink);
                     let device_data = Device::Sink(sink_info);
 
                     process_device_update(
@@ -76,7 +76,7 @@ pub(crate) fn trigger_refresh(
         Facility::Source => {
             introspect.get_source_info_by_index(device_key.index, move |source_list| {
                 if let ListResult::Item(source) = source_list {
-                    let source_info = create_device_info_from_source(source);
+                    let source_info = from_source(source);
                     let device_data = Device::Source(source_info);
 
                     process_device_update(

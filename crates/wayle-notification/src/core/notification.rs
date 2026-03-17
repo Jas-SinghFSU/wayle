@@ -68,7 +68,7 @@ pub struct Notification {
     /// The timeout time in milliseconds since the display of the notification at which
     /// the notification should automatically close.
     ///
-    /// If None, the notification never expires.
+    /// `None` = server decides, `Some(0)` = never expires, `Some(ms)` = timeout in milliseconds.
     pub expire_timeout: Property<Option<u32>>,
     /// The urgency level.
     pub urgency: Property<Urgency>,
@@ -240,10 +240,10 @@ impl Notification {
             None
         };
 
-        let expire_timeout = if props.expire_timeout > 0 {
-            Some(props.expire_timeout as u32)
-        } else {
-            None
+        let expire_timeout = match props.expire_timeout {
+            t if t > 0 => Some(t as u32),
+            0 => Some(0),
+            _ => None,
         };
 
         let id = props.id;

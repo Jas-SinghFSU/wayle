@@ -310,15 +310,6 @@ impl HyprlandService {
         self.hypr_messenger.devices().await
     }
 
-    /// Returns all available keyboard layouts.
-    ///
-    /// # Errors
-    /// Returns error if IPC communication fails.
-    #[instrument(skip(self), err)]
-    pub async fn layouts(&self) -> Result<Vec<String>> {
-        self.hypr_messenger.layouts().await
-    }
-
     /// Returns the currently active submap name.
     ///
     /// # Errors

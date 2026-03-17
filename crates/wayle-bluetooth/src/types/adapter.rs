@@ -37,14 +37,16 @@ impl From<&str> for AddressType {
 /// (BlueZ experimental)
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PowerState {
-    /// Adapter is powered on
+    /// Adapter is powered on.
     On,
-    /// Adapter is powered off
+    /// Adapter is powered off.
     Off,
-    /// Adapter is transitioning from off to on
+    /// Transitioning from off to on.
     OffToOn,
-    /// Adapter is transitioning from on to off
+    /// Transitioning from on to off.
     OnToOff,
+    /// Blocked by rfkill.
+    OffBlocked,
 }
 
 impl From<&str> for PowerState {
@@ -54,6 +56,7 @@ impl From<&str> for PowerState {
             "off" => Self::Off,
             "off-enabling" => Self::OffToOn,
             "on-disabling" => Self::OnToOff,
+            "off-blocked" => Self::OffBlocked,
             _ => Self::Off,
         }
     }
@@ -66,6 +69,7 @@ impl Display for PowerState {
             Self::Off => write!(f, "off"),
             Self::OffToOn => write!(f, "off-enabling"),
             Self::OnToOff => write!(f, "on-disabling"),
+            Self::OffBlocked => write!(f, "off-blocked"),
         }
     }
 }
@@ -152,6 +156,10 @@ pub struct DiscoveryFilterOptions<'a> {
     pub duplicate_data: Option<bool>,
     /// Whether to make this client discoverable.
     pub discoverable: Option<bool>,
+    /// Prefix filter for device address or name.
+    pub pattern: Option<&'a str>,
+    /// Auto-connect to devices matching the pattern.
+    pub auto_connect: Option<bool>,
 }
 
 impl<'a> DiscoveryFilterOptions<'a> {
@@ -187,6 +195,14 @@ impl<'a> DiscoveryFilterOptions<'a> {
 
         if let Some(discoverable) = self.discoverable {
             filter.insert("Discoverable".to_string(), Value::from(discoverable));
+        }
+
+        if let Some(pattern) = self.pattern {
+            filter.insert("Pattern".to_string(), Value::from(pattern));
+        }
+
+        if let Some(auto_connect) = self.auto_connect {
+            filter.insert("AutoConnect".to_string(), Value::from(auto_connect));
         }
 
         filter
@@ -301,15 +317,19 @@ mod tests {
             transport: Some(DiscoveryTransport::Le),
             duplicate_data: Some(true),
             discoverable: Some(false),
+            pattern: Some("dev"),
+            auto_connect: Some(true),
         };
         let filter = options.to_filter();
 
-        assert_eq!(filter.len(), 6);
+        assert_eq!(filter.len(), 8);
         assert!(filter.contains_key("UUIDs"));
         assert!(filter.contains_key("RSSI"));
         assert!(filter.contains_key("Pathloss"));
         assert!(filter.contains_key("Transport"));
         assert!(filter.contains_key("DuplicateData"));
         assert!(filter.contains_key("Discoverable"));
+        assert!(filter.contains_key("Pattern"));
+        assert!(filter.contains_key("AutoConnect"));
     }
 }

@@ -51,9 +51,9 @@ impl Volume {
     /// # Errors
     /// Returns error if any volume is negative or exceeds 4.0.
     pub fn with_amplification(volumes: Vec<f64>) -> Result<Self, Error> {
-        for &volume in &volumes {
+        for (channel, &volume) in volumes.iter().enumerate() {
             if !(0.0..=4.0).contains(&volume) {
-                return Err(Error::InvalidVolume { channel: 0, volume });
+                return Err(Error::InvalidVolume { channel, volume });
             }
         }
         Ok(Self { volumes })

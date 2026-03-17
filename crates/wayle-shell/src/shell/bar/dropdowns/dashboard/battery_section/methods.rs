@@ -54,7 +54,9 @@ impl BatterySection {
     pub(super) fn power_profile_label(&self) -> String {
         match self.power_profile {
             PowerProfile::PowerSaver => t!("dropdown-dashboard-battery-profile-saver"),
-            PowerProfile::Balanced => t!("dropdown-dashboard-battery-profile-balanced"),
+            PowerProfile::Balanced | PowerProfile::Unknown => {
+                t!("dropdown-dashboard-battery-profile-balanced")
+            }
             PowerProfile::Performance => t!("dropdown-dashboard-battery-profile-performance"),
         }
     }
@@ -62,7 +64,7 @@ impl BatterySection {
     pub(super) fn power_profile_icon(&self) -> &'static str {
         match self.power_profile {
             PowerProfile::PowerSaver => "ld-leaf-symbolic",
-            PowerProfile::Balanced => "ld-scale-symbolic",
+            PowerProfile::Balanced | PowerProfile::Unknown => "ld-scale-symbolic",
             PowerProfile::Performance => "ld-zap-symbolic",
         }
     }
