@@ -305,8 +305,11 @@ mod tests {
     }
 
     #[test]
-    fn wmo_code_3_is_cloudy() {
-        assert_eq!(WeatherCondition::from_wmo_code(3), WeatherCondition::Cloudy);
+    fn wmo_code_3_is_overcast() {
+        assert_eq!(
+            WeatherCondition::from_wmo_code(3),
+            WeatherCondition::Overcast
+        );
     }
 
     #[test]

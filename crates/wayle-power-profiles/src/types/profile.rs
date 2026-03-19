@@ -199,17 +199,17 @@ mod tests {
     }
 
     #[test]
-    fn from_str_unknown_value_returns_balanced_default() {
+    fn from_str_unknown_value_returns_unknown() {
         let profile = PowerProfile::from("unknown-profile");
 
-        assert_eq!(profile, PowerProfile::Balanced);
+        assert_eq!(profile, PowerProfile::Unknown);
     }
 
     #[test]
-    fn from_str_empty_string_returns_balanced_default() {
+    fn from_str_empty_string_returns_unknown() {
         let profile = PowerProfile::from("");
 
-        assert_eq!(profile, PowerProfile::Balanced);
+        assert_eq!(profile, PowerProfile::Unknown);
     }
 
     #[test]

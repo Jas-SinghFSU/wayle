@@ -178,14 +178,22 @@ mod tests {
     }
 
     #[test]
-    fn screencast_owner_try_from_fails_for_invalid_value() {
+    fn screencast_owner_try_from_region() {
         let result = ScreencastOwner::try_from("2");
+
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), ScreencastOwner::Region);
+    }
+
+    #[test]
+    fn screencast_owner_try_from_fails_for_invalid_value() {
+        let result = ScreencastOwner::try_from("99");
 
         assert!(result.is_err());
         let error = result.unwrap_err();
         if let Error::InvalidEnumValue { type_name, value } = error {
             assert_eq!(type_name, "ScreencastOwner");
-            assert_eq!(value, "2");
+            assert_eq!(value, "99");
         } else {
             panic!("Expected InvalidEnumValue error");
         }
