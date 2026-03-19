@@ -30,7 +30,7 @@ use crate::{
     proxy::devices::DeviceProxy,
     types::{
         connectivity::{NMConnectivityState, NMMetered},
-        device::{LldpNeighbor, NMDeviceType},
+        device::{LldpNeighbor, NMDeviceManaged, NMDeviceManagedFlags, NMDeviceType},
         flags::{NMDeviceCapabilities, NMDeviceInterfaceFlags},
         states::{NMDeviceState, NMDeviceStateReason},
     },
@@ -467,6 +467,18 @@ impl Device {
     /// Returns error if the delete operation fails.
     pub async fn delete(&self) -> Result<(), Error> {
         DeviceControls::delete(&self.connection, &self.object_path).await
+    }
+
+    /// Sets the managed state with optional persistence. Since: NM 1.58.
+    ///
+    /// # Errors
+    /// Returns error if the operation fails.
+    pub async fn set_managed_ext(
+        &self,
+        managed: NMDeviceManaged,
+        flags: NMDeviceManagedFlags,
+    ) -> Result<(), Error> {
+        DeviceControls::set_managed_ext(&self.connection, &self.object_path, managed, flags).await
     }
 
     /// Emitted when the device's state changes.

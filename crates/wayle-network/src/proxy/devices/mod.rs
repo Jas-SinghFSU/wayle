@@ -76,6 +76,14 @@ pub(crate) trait Device {
     /// Deletes a software device from NetworkManager and removes the interface from the system.
     fn delete(&self) -> zbus::Result<()>;
 
+    /// Sets the managed state of the device with optional persistence. Since: 1.58.
+    ///
+    /// # Arguments
+    /// * `managed` - 0 = unmanaged, 1 = managed, 2 = reset to default
+    /// * `flags` - NMDeviceManagedFlags
+    #[zbus(name = "SetManaged")]
+    fn set_managed_ext(&self, managed: u32, flags: u32) -> zbus::Result<()>;
+
     /// Operating-system specific transient device hardware identifier.
     #[zbus(property)]
     fn udi(&self) -> zbus::Result<String>;

@@ -9,7 +9,8 @@ use zbus::Connection;
 
 use crate::{
     builder::NotificationServiceBuilder, core::notification::Notification, error::Error,
-    events::NotificationEvent, persistence::NotificationStore, types::ClosedReason,
+    events::NotificationEvent, persistence::NotificationStore, popup_timer::PopupTimerManager,
+    types::ClosedReason,
 };
 
 /// Desktop notification service. See [crate-level docs](crate) for usage.
@@ -34,6 +35,10 @@ pub struct NotificationService {
     pub dnd: Property<bool>,
     /// Auto-remove expired notifications.
     pub remove_expired: Property<bool>,
+    /// Glob patterns for blocking notifications by app name.
+    pub blocklist: Property<Vec<String>>,
+    #[debug(skip)]
+    pub(crate) popup_timers: Arc<PopupTimerManager>,
 }
 
 impl NotificationService {
@@ -51,11 +56,7 @@ impl NotificationService {
         NotificationServiceBuilder::new()
     }
 
-    /// Dismisses all notifications currently in the service.
-    ///
-    /// This sends Remove events for each notification. The monitoring task
-    /// handles the actual removal from memory, database, and emits the
-    /// NotificationClosed signals.
+    /// Dismisses all notifications and emits `NotificationClosed` for each.
     ///
     /// # Errors
     /// Returns error if the event channel is closed.
@@ -79,17 +80,39 @@ impl NotificationService {
     ///
     /// When enabled, new notifications will not appear as popups but will
     /// still be added to the notification list.
-    #[instrument(skip(self), fields(dnd = %dnd))]
-    pub async fn set_dnd(&self, dnd: bool) {
+    pub fn set_dnd(&self, dnd: bool) {
         self.dnd.set(dnd)
     }
 
     /// Sets the duration for how long popup notifications are displayed.
-    ///
-    /// The duration is specified in milliseconds.
-    #[instrument(skip(self), fields(duration_ms = %duration))]
-    pub async fn set_popup_duration(&self, duration: u32) {
+    pub fn set_popup_duration(&self, duration: u32) {
         self.popup_duration.set(duration)
+    }
+
+    /// Replaces the blocklist patterns.
+    pub fn set_blocklist(&self, patterns: Vec<String>) {
+        self.blocklist.set(patterns)
+    }
+
+    /// Removes a popup from the visible list without affecting notification history.
+    ///
+    /// Cancels any running popup timer for this ID.
+    pub fn dismiss_popup(&self, id: u32) {
+        self.popup_timers.cancel(id);
+
+        let mut list = self.popups.get();
+        list.retain(|popup| popup.id != id);
+        self.popups.set(list);
+    }
+
+    /// Pauses the popup countdown timer.
+    pub fn inhibit_popup(&self, id: u32) {
+        self.popup_timers.pause(id);
+    }
+
+    /// Resumes the popup countdown timer after a pause.
+    pub fn release_popup(&self, id: u32) {
+        self.popup_timers.resume(id);
     }
 }
 

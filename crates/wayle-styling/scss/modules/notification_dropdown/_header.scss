@@ -1,0 +1,12 @@
+button.notification-dropdown-clear-all {
+    font-size: var(--text-base);
+    font-weight: var(--weight-semibold);
+
+    > box {
+        margin: 0 var(--space-xs);
+    }
+
+    &:hover label {
+        color: var(--status-error);
+    }
+}

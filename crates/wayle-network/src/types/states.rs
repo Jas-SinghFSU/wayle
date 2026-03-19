@@ -326,10 +326,34 @@ pub enum NMDeviceStateReason {
     SriovConfigurationFailed = 66,
     /// The Wi-Fi P2P peer could not be found
     PeerNotFound = 67,
+    /// The device handler dispatcher returned an error. Since: 1.46
+    DeviceHandlerFailed = 68,
+    /// The device type is unmanaged by default. Since: 1.48
+    UnmanagedByDefault = 69,
+    /// The device is an external device and is unconfigured (down or without addresses). Since: 1.48
+    UnmanagedExternalDown = 70,
+    /// The link is not initialized by udev. Since: 1.48
+    UnmanagedLinkNotInit = 71,
+    /// NetworkManager is quitting. Since: 1.48
+    UnmanagedQuitting = 72,
+    /// Networking is disabled or the system is suspended. Since: 1.56
+    UnmanagedManagerDisabled = 73,
+    /// Unmanaged by user decision in NetworkManager.conf. Since: 1.48
+    UnmanagedUserConf = 74,
+    /// Unmanaged by explicit user decision (e.g. `nmcli device set $DEV managed no`). Since: 1.48
+    UnmanagedUserExplicit = 75,
+    /// Unmanaged via settings plugin (keyfile `unmanaged-devices` or ifcfg-rh `NM_CONTROLLED=no`). Since: 1.48
+    UnmanagedUserSettings = 76,
+    /// Unmanaged via udev rule. Since: 1.48
+    UnmanagedUserUdev = 77,
+    /// NetworkManager was disabled (networking off). Since: 1.56
+    NetworkingOff = 78,
+    /// The modem's operator code wasn't available, and auto-configuration was requested. Since: 1.56
+    ModemNoOperatorCode = 79,
 }
 
 impl NMDeviceStateReason {
-    /// Convert from D-Bus u32 representation
+    /// Converts from the D-Bus u32 representation.
     pub fn from_u32(value: u32) -> Self {
         match value {
             0 => Self::None,
@@ -375,18 +399,43 @@ impl NMDeviceStateReason {
             40 => Self::Carrier,
             41 => Self::ConnectionAssumed,
             42 => Self::SupplicantAvailable,
-            43 => Self::ModemAvailable,
-            44 => Self::ModemFailed,
-            45 => Self::ModemAvailable,
-            46 => Self::SimPinIncorrect,
-            47 => Self::NewActivation,
-            48 => Self::ParentChanged,
-            49 => Self::ParentManagedChanged,
-            50 => Self::OvsdbFailed,
-            51 => Self::IpAddressDuplicate,
-            52 => Self::IpMethodUnsupported,
-            53 => Self::SriovConfigurationFailed,
-            54 => Self::PeerNotFound,
+            43 => Self::ModemNotFound,
+            44 => Self::BtFailed,
+            45 => Self::GsmSimNotInserted,
+            46 => Self::GsmSimPinRequired,
+            47 => Self::GsmSimPukRequired,
+            48 => Self::GsmSimWrong,
+            49 => Self::InfinibandMode,
+            50 => Self::DependencyFailed,
+            51 => Self::Br2684Failed,
+            52 => Self::ModemManagerUnavailable,
+            53 => Self::SsidNotFound,
+            54 => Self::SecondaryConnectionFailed,
+            55 => Self::DcbFcoeFailed,
+            56 => Self::TeamdControlFailed,
+            57 => Self::ModemFailed,
+            58 => Self::ModemAvailable,
+            59 => Self::SimPinIncorrect,
+            60 => Self::NewActivation,
+            61 => Self::ParentChanged,
+            62 => Self::ParentManagedChanged,
+            63 => Self::OvsdbFailed,
+            64 => Self::IpAddressDuplicate,
+            65 => Self::IpMethodUnsupported,
+            66 => Self::SriovConfigurationFailed,
+            67 => Self::PeerNotFound,
+            68 => Self::DeviceHandlerFailed,
+            69 => Self::UnmanagedByDefault,
+            70 => Self::UnmanagedExternalDown,
+            71 => Self::UnmanagedLinkNotInit,
+            72 => Self::UnmanagedQuitting,
+            73 => Self::UnmanagedManagerDisabled,
+            74 => Self::UnmanagedUserConf,
+            75 => Self::UnmanagedUserExplicit,
+            76 => Self::UnmanagedUserSettings,
+            77 => Self::UnmanagedUserUdev,
+            78 => Self::NetworkingOff,
+            79 => Self::ModemNoOperatorCode,
             _ => Self::Unknown,
         }
     }

@@ -231,14 +231,6 @@ pub enum HyprlandEvent {
         name: String,
     },
 
-    /// Emitted when a window changes its floating mode.
-    ChangeFloatingMode {
-        /// Window address.
-        address: Address,
-        /// Whether the window is floating.
-        floating: bool,
-    },
-
     /// Emitted when a window requests an urgent state.
     Urgent {
         /// Window address.
@@ -279,17 +271,6 @@ pub enum HyprlandEvent {
         address: Address,
         /// New window title.
         title: String,
-    },
-
-    /// Emitted when the togglegroup command is used.
-    ///
-    /// Returns state and handle where the state is a toggle status and the
-    /// handle is one or more window addresses separated by a comma.
-    ToggleGroup {
-        /// Whether a group was created (true) or destroyed (false).
-        state: bool,
-        /// Window addresses that were part of the group.
-        addresses: Vec<Address>,
     },
 
     /// Emitted when a window is merged into a group.

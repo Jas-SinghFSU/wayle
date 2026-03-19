@@ -155,16 +155,6 @@ impl FactoryComponent for DeviceItem {
                 #[watch]
                 set_visible: self.is_my_device()
                     || self.pending.is_some(),
-                #[watch]
-                set_visible_child_name:
-                    if self.hovered
-                        && self.pending.is_none()
-                    {
-                        "actions"
-                    } else {
-                        "status"
-                    },
-
                 add_named[Some("status")] = &gtk::Box {
                     set_halign: gtk::Align::End,
                     set_valign: gtk::Align::Center,
@@ -228,6 +218,16 @@ impl FactoryComponent for DeviceItem {
                             DeviceItemInput::ForgetClicked,
                     },
                 },
+
+                #[watch]
+                set_visible_child_name:
+                    if self.hovered
+                        && self.pending.is_none()
+                    {
+                        "actions"
+                    } else {
+                        "status"
+                    },
             },
         }
     }

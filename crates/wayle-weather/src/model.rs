@@ -193,8 +193,7 @@ impl WeatherCondition {
         match code {
             0 => Self::Clear,
             1..=2 => Self::PartlyCloudy,
-            3 => Self::Cloudy,
-            44 => Self::Mist,
+            3 => Self::Overcast,
             45 | 48 => Self::Fog,
             51 | 53 | 55 => Self::Drizzle,
             56 | 57 => Self::Sleet,
@@ -306,8 +305,11 @@ mod tests {
     }
 
     #[test]
-    fn wmo_code_3_is_cloudy() {
-        assert_eq!(WeatherCondition::from_wmo_code(3), WeatherCondition::Cloudy);
+    fn wmo_code_3_is_overcast() {
+        assert_eq!(
+            WeatherCondition::from_wmo_code(3),
+            WeatherCondition::Overcast
+        );
     }
 
     #[test]

@@ -3,7 +3,29 @@
 //! Patterns use glob syntax and match case-insensitively.
 //! Order matters - first match wins.
 
+use std::sync::OnceLock;
+
 use glob::Pattern;
+
+struct CompiledEntry {
+    pattern: Pattern,
+    icon: &'static str,
+}
+
+static COMPILED_MAP: OnceLock<Vec<CompiledEntry>> = OnceLock::new();
+
+fn compiled_map() -> &'static [CompiledEntry] {
+    COMPILED_MAP.get_or_init(|| {
+        DEFAULT_APP_ICON_MAP
+            .iter()
+            .filter_map(|(glob_str, icon)| {
+                Pattern::new(&glob_str.to_lowercase())
+                    .ok()
+                    .map(|pattern| CompiledEntry { pattern, icon })
+            })
+            .collect()
+    })
+}
 
 pub(crate) const DEFAULT_APP_ICON_MAP: &[(&str, &str)] = &[
     // Browsers
@@ -96,7 +118,7 @@ pub(crate) const DEFAULT_APP_ICON_MAP: &[(&str, &str)] = &[
     ("*session*", "si-session-symbolic"),
     ("*signal*", "si-signal-symbolic"),
     ("*skype*", "ld-message-circle-symbolic"),
-    ("*slack*", "tb-brand-slack-symbolic"),
+    ("*slack*", "ld-slack-symbolic"),
     ("*teams*", "ld-message-circle-symbolic"),
     ("*telegram*", "si-telegram-symbolic"),
     ("*thunderbird*", "si-thunderbird-symbolic"),
@@ -231,16 +253,16 @@ pub(crate) fn matches_glob(text: &str, pattern: &str) -> bool {
     }
 
     Pattern::new(pattern)
-        .map(|p| p.matches(&text_lower))
+        .map(|compiled| compiled.matches(&text_lower))
         .unwrap_or(false)
 }
 
 /// Looks up an icon from the default app icon map by matching against the given name.
 pub(crate) fn lookup_app_icon(name: &str) -> Option<&'static str> {
-    for (pattern, icon) in DEFAULT_APP_ICON_MAP {
-        if matches_glob(name, &pattern.to_lowercase()) {
-            return Some(icon);
-        }
-    }
-    None
+    let name_lower = name.to_lowercase();
+
+    compiled_map()
+        .iter()
+        .find(|entry| entry.pattern.matches(&name_lower))
+        .map(|entry| entry.icon)
 }

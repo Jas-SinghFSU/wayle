@@ -43,7 +43,7 @@ async fn forward_geocode(
         .query(&[("name", name), ("count", "1")]);
 
     if let Some(country_code) = country {
-        request = request.query(&[("country", country_code)]);
+        request = request.query(&[("countryCode", country_code)]);
     }
 
     let resp = request

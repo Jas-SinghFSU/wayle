@@ -18,7 +18,7 @@ impl WayleDaemon {
         self.service
             .dismiss_all()
             .await
-            .map_err(|e| fdo::Error::Failed(e.to_string()))
+            .map_err(|err| fdo::Error::Failed(err.to_string()))
     }
 
     /// Dismisses a specific notification by ID.
@@ -27,7 +27,7 @@ impl WayleDaemon {
         self.service
             .notif_tx
             .send(NotificationEvent::Remove(id, ClosedReason::DismissedByUser))
-            .map_err(|e| fdo::Error::Failed(e.to_string()))?;
+            .map_err(|err| fdo::Error::Failed(err.to_string()))?;
         Ok(())
     }
 
@@ -36,7 +36,7 @@ impl WayleDaemon {
     /// When enabled, new notifications won't appear as popups.
     #[instrument(skip(self), fields(enabled = enabled))]
     pub async fn set_dnd(&self, enabled: bool) -> fdo::Result<()> {
-        self.service.set_dnd(enabled).await;
+        self.service.set_dnd(enabled);
         Ok(())
     }
 
@@ -44,14 +44,14 @@ impl WayleDaemon {
     #[instrument(skip(self))]
     pub async fn toggle_dnd(&self) -> fdo::Result<()> {
         let current = self.service.dnd.get();
-        self.service.set_dnd(!current).await;
+        self.service.set_dnd(!current);
         Ok(())
     }
 
     /// Sets the popup display duration in milliseconds.
     #[instrument(skip(self), fields(duration_ms = duration_ms))]
     pub async fn set_popup_duration(&self, duration_ms: u32) -> fdo::Result<()> {
-        self.service.set_popup_duration(duration_ms).await;
+        self.service.set_popup_duration(duration_ms);
         Ok(())
     }
 
@@ -64,12 +64,12 @@ impl WayleDaemon {
             .notifications
             .get()
             .iter()
-            .map(|n| {
+            .map(|notif| {
                 (
-                    n.id,
-                    n.app_name.get().unwrap_or_default(),
-                    n.summary.get(),
-                    n.body.get().unwrap_or_default(),
+                    notif.id,
+                    notif.app_name.get().unwrap_or_default(),
+                    notif.summary.get(),
+                    notif.body.get().unwrap_or_default(),
                 )
             })
             .collect()

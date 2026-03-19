@@ -26,7 +26,8 @@ impl BluetoothAgent {
             .map_err(|e| fdo::Error::Failed(format!("User cancelled: {e}")))
     }
 
-    async fn display_pincode(&self, device: OwnedObjectPath, pincode: String) -> fdo::Result<()> {
+    #[zbus(name = "DisplayPinCode")]
+    async fn display_pin_code(&self, device: OwnedObjectPath, pincode: String) -> fdo::Result<()> {
         self.service_tx
             .send(AgentEvent::DisplayPinCode {
                 device_path: device,
@@ -118,8 +119,12 @@ impl BluetoothAgent {
     async fn cancel(&self) -> fdo::Result<()> {
         self.service_tx
             .send(AgentEvent::Cancelled)
-            .map_err(|e| fdo::Error::Failed(format!("Service unavailable: {e}")))?;
+            .map_err(|err| fdo::Error::Failed(format!("Service unavailable: {err}")))?;
 
+        Ok(())
+    }
+
+    async fn release(&self) -> fdo::Result<()> {
         Ok(())
     }
 }

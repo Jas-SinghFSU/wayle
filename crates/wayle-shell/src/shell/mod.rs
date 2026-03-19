@@ -1,5 +1,6 @@
 mod bar;
 mod helpers;
+mod notification_popup;
 pub(crate) mod services;
 
 use std::time::Instant;
@@ -12,12 +13,14 @@ use relm4::{gtk::prelude::*, prelude::*};
 pub(crate) use services::ShellServices;
 use tracing::info;
 
+use self::notification_popup::{NotificationPopupHost, PopupHostInit};
 use crate::{startup::StartupTimer, watchers};
 
 pub(crate) struct Shell {
     css_provider: CssProvider,
     bars: helpers::monitors::BarMap,
     services: ShellServices,
+    _notification_popup: Option<Controller<NotificationPopupHost>>,
 }
 
 pub(crate) struct ShellInit {
@@ -85,10 +88,20 @@ impl Component for Shell {
 
         init.timer.finish();
 
+        let notification_popup = init.services.notification.as_ref().map(|notification| {
+            NotificationPopupHost::builder()
+                .launch(PopupHostInit {
+                    notification: notification.clone(),
+                    config: init.services.config.clone(),
+                })
+                .detach()
+        });
+
         let model = Shell {
             css_provider,
             bars,
             services: init.services,
+            _notification_popup: notification_popup,
         };
         let widgets = view_output!();
 

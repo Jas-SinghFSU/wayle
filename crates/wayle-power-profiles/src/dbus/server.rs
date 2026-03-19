@@ -39,6 +39,7 @@ impl PowerProfilesDaemon {
             PowerProfile::PowerSaver => PowerProfile::Balanced,
             PowerProfile::Balanced => PowerProfile::Performance,
             PowerProfile::Performance => PowerProfile::PowerSaver,
+            PowerProfile::Unknown => PowerProfile::Balanced,
         };
 
         self.service

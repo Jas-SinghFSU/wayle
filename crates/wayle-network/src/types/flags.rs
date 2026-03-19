@@ -98,6 +98,8 @@ bitflags! {
         const FREQ_2GHZ = 0x00000200;
         /// device supports 5GHz frequencies
         const FREQ_5GHZ = 0x00000400;
+        /// device supports 6GHz frequencies. Since: 1.46.
+        const FREQ_6GHZ = 0x00000800;
         /// device supports acting as a mesh point. Since: 1.20.
         const MESH = 0x00001000;
         /// device supports WPA2/RSN in an IBSS network. Since: 1.22.
@@ -133,6 +135,8 @@ bitflags! {
         const GSM_UMTS = 0x00000004;
         /// modem has LTE data capability
         const LTE = 0x00000008;
+        /// modem has 5GNR data capability. Since: 1.36.
+        const FIVEGNR = 0x00000040;
     }
 
     /// NMSecretAgentCapabilities indicate various capabilities of the agent.
@@ -265,6 +269,12 @@ bitflags! {
         /// younger checkpoints. This opts-in that the checkpoint can be automatically
         /// destroyed by the rollback of an older checkpoint. Since: 1.12.
         const ALLOW_OVERLAPPING = 0x00000008;
+        /// During rollback, detach all external ports from bridge devices.
+        /// Before 1.38, this was the default behavior. Since: 1.38.
+        const NO_PRESERVE_EXTERNAL_PORTS = 0x00000010;
+        /// During rollback, revert global DNS changes made via D-Bus.
+        /// Global DNS defined in NetworkManager.conf is not affected. Since: 1.48.
+        const TRACK_INTERNAL_GLOBAL_DNS = 0x00000020;
     }
 
     /// Flags describing the current activation state.

@@ -253,7 +253,13 @@ async fn init_daemon_services(
             .priority_players(priority)
             .build(),
     );
-    let notification_task = tokio::spawn(NotificationService::builder().with_daemon().build());
+    let blocklist = Property::new(modules.notification.blocklist.get());
+    let notification_task = tokio::spawn(
+        NotificationService::builder()
+            .with_daemon()
+            .blocklist(blocklist)
+            .build(),
+    );
     let systray_task = tokio::spawn(
         SystemTrayService::builder()
             .with_daemon()

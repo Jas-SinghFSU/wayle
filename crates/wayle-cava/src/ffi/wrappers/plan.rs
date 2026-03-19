@@ -2,6 +2,8 @@
 
 use std::ptr::NonNull;
 
+use libc::free;
+
 use super::{
     super::types::{cava_destroy, cava_execute, cava_plan},
     AudioInput, AudioOutput,
@@ -42,14 +44,13 @@ impl Plan {
 
 impl Drop for Plan {
     fn drop(&mut self) {
-        // SAFETY: ptr was created by cava_init and is valid.
-        // cava_destroy frees all resources associated with the plan.
+        // SAFETY: `ptr` is non-null (NonNull), was allocated by `cava_init` via malloc,
+        // and has not been freed. No other references to this plan exist (we have `&mut self`).
         unsafe {
             cava_destroy(self.ptr.as_ptr());
+            free(self.ptr.as_ptr().cast());
         }
     }
 }
 
 unsafe impl Send for Plan {}
-
-unsafe impl Sync for Plan {}

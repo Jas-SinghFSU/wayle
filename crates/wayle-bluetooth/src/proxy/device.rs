@@ -119,5 +119,5 @@ pub(crate) trait Device1 {
     fn set_preferred_bearer(&self, bearer: &str) -> Result<()>;
 
     #[zbus(signal)]
-    async fn disconnected(&self, reason: u8, message: String) -> Result<()>;
+    async fn disconnected(&self, reason: String, message: String) -> Result<()>;
 }

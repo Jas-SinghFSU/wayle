@@ -6,17 +6,19 @@ use crate::volume::types::Volume;
 /// Stream state enumeration
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum StreamState {
-    /// Stream is creating
+    /// Stream is creating.
     Creating,
-    /// Stream is ready
+    /// Stream is ready.
     Ready,
-    /// Stream is running
+    /// Stream is actively playing or recording.
     Running,
-    /// Stream is failed
+    /// Stream is paused (corked in PulseAudio).
+    Corked,
+    /// Stream has failed.
     Failed,
-    /// Stream is terminated
+    /// Stream has been terminated.
     Terminated,
-    /// Stream is unlinked
+    /// Stream has been unlinked.
     Unlinked,
 }
 

@@ -149,6 +149,11 @@ impl Component for CustomModule {
             dynamic_classes: Vec::new(),
             last_output: String::new(),
         };
+
+        if helpers::should_hide("", model.definition.hide_if_empty) {
+            root.set_visible(false);
+        }
+
         let bar_button = model.bar_button.widget();
         let widgets = view_output!();
 

@@ -7,7 +7,11 @@ use zbus::{
 };
 
 use super::types::AppliedConnection;
-use crate::{error::Error, proxy::devices::DeviceProxy};
+use crate::{
+    error::Error,
+    proxy::devices::DeviceProxy,
+    types::device::{NMDeviceManaged, NMDeviceManagedFlags},
+};
 
 pub(super) struct DeviceControls;
 
@@ -32,6 +36,32 @@ impl DeviceControls {
             .map_err(|e| Error::OperationFailed {
                 operation: "set managed",
                 source: e.into(),
+            })?;
+
+        Ok(())
+    }
+
+    #[instrument(
+        skip(connection),
+        fields(device = %path, managed = ?managed, flags = ?flags),
+        err
+    )]
+    pub(super) async fn set_managed_ext(
+        connection: &Connection,
+        path: &OwnedObjectPath,
+        managed: NMDeviceManaged,
+        flags: NMDeviceManagedFlags,
+    ) -> Result<(), Error> {
+        let proxy = DeviceProxy::new(connection, path)
+            .await
+            .map_err(Error::DbusError)?;
+
+        proxy
+            .set_managed_ext(managed as u32, flags.bits())
+            .await
+            .map_err(|err| Error::OperationFailed {
+                operation: "set managed (ext)",
+                source: err.into(),
             })?;
 
         Ok(())

@@ -19,6 +19,8 @@ pub enum PowerProfile {
     Balanced,
     /// High performance mode.
     Performance,
+    /// Unrecognized profile from the daemon.
+    Unknown,
 }
 
 impl From<&str> for PowerProfile {
@@ -27,7 +29,7 @@ impl From<&str> for PowerProfile {
             "power-saver" => Self::PowerSaver,
             "balanced" => Self::Balanced,
             "performance" => Self::Performance,
-            _ => Self::Balanced,
+            _ => Self::Unknown,
         }
     }
 }
@@ -38,6 +40,7 @@ impl Display for PowerProfile {
             Self::PowerSaver => write!(f, "power-saver"),
             Self::Balanced => write!(f, "balanced"),
             Self::Performance => write!(f, "performance"),
+            Self::Unknown => write!(f, "unknown"),
         }
     }
 }
@@ -196,17 +199,17 @@ mod tests {
     }
 
     #[test]
-    fn from_str_unknown_value_returns_balanced_default() {
+    fn from_str_unknown_value_returns_unknown() {
         let profile = PowerProfile::from("unknown-profile");
 
-        assert_eq!(profile, PowerProfile::Balanced);
+        assert_eq!(profile, PowerProfile::Unknown);
     }
 
     #[test]
-    fn from_str_empty_string_returns_balanced_default() {
+    fn from_str_empty_string_returns_unknown() {
         let profile = PowerProfile::from("");
 
-        assert_eq!(profile, PowerProfile::Balanced);
+        assert_eq!(profile, PowerProfile::Unknown);
     }
 
     #[test]

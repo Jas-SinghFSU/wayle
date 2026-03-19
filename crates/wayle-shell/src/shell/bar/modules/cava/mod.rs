@@ -1,3 +1,4 @@
+mod color;
 mod factory;
 mod helpers;
 mod messages;

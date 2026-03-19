@@ -1,0 +1,36 @@
+@use "content";
+@use "actions";
+
+.notification-popup-host {
+    background: transparent;
+}
+
+.notification-popup-list {
+    margin: var(--space-sm);
+}
+
+.notification-popup-card {
+    --_urgency-shadow: 0 0 0 0 transparent;
+    --_drop-shadow: 0 0 0 0 transparent;
+
+    min-width: calc(340px * var(--global-scale));
+    background: var(--bg-elevated);
+    border-radius: var(--rounding-element);
+    box-shadow: var(--_urgency-shadow), var(--_drop-shadow);
+
+    &.shadow {
+        --_drop-shadow: var(--shadow-xs);
+    }
+
+    &.urgency-bar {
+        --_urgency-shadow: inset 0 calc(2px * var(--global-scale)) 0 0 var(--accent);
+    }
+
+    &.urgency-bar.critical {
+        --_urgency-shadow: inset 0 calc(2px * var(--global-scale)) 0 0 var(--status-error);
+    }
+
+    &.urgency-bar.low {
+        --_urgency-shadow: inset 0 calc(2px * var(--global-scale)) 0 0 var(--fg-subtle);
+    }
+}

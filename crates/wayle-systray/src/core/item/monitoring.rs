@@ -116,6 +116,14 @@ async fn monitor_properties(
         }
     };
 
+    let mut new_menu = match item_proxy.receive_new_menu().await {
+        Ok(stream) => stream,
+        Err(error) => {
+            error!(error = %error, "cannot subscribe to NewMenu signal");
+            return;
+        }
+    };
+
     let mut layout_updated = match menu_proxy.receive_layout_updated().await {
         Ok(layout) => layout,
         Err(error) => {
@@ -269,6 +277,20 @@ async fn monitor_properties(
                         Some(new_icon_theme_path)
                     };
                     tray_item.icon_theme_path.set(icon_theme_path);
+                }
+            }
+
+            Some(_) = new_menu.next() => {
+                debug!("new_menu signal received");
+                match menu_proxy.get_layout(0, -1, vec![]).await {
+                    Ok(layout) => {
+                        let menu_item = MenuItem::from(layout);
+                        tray_item.menu.set(Some(menu_item));
+                    }
+                    Err(error) => {
+                        tray_item.menu.set(None);
+                        error!(error = %error, "cannot update menu layout after NewMenu");
+                    }
                 }
             }
 

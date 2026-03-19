@@ -328,17 +328,18 @@ impl Player {
         Ok(())
     }
 
-    /// Seek by offset (relative position change).
+    /// Seeks forward or backward by the given offset in microseconds.
+    ///
+    /// Positive values seek forward, negative values seek backward.
     ///
     /// # Errors
     ///
-    /// Returns `Error::Control` if the D-Bus operation fails
-    pub async fn seek(&self, offset: Duration) -> Result<(), Error> {
-        let offset_micros = offset.as_micros() as i64;
+    /// Returns `Error::Control` if the D-Bus operation fails.
+    pub async fn seek(&self, offset_micros: i64) -> Result<(), Error> {
         self.proxy
             .seek(offset_micros)
             .await
-            .map_err(|e| Error::Control(format!("seek: {e}")))?;
+            .map_err(|err| Error::Control(format!("seek: {err}")))?;
         Ok(())
     }
 

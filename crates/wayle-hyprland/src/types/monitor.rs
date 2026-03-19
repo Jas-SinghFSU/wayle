@@ -23,10 +23,10 @@ where
 {
     let arr: [u32; 4] = Deserialize::deserialize(deserializer)?;
     Ok(Reserved {
-        top: arr[0],
-        bottom: arr[1],
-        left: arr[2],
-        right: arr[3],
+        left: arr[0],
+        top: arr[1],
+        right: arr[2],
+        bottom: arr[3],
     })
 }
 
@@ -106,8 +106,8 @@ pub enum SolitaryBlocker {
     Workspaces,
     /// Window has subsurfaces.
     Surfaces,
-    /// Configuration error.
-    Errorbar,
+    /// Configuration error is present.
+    ConfigError,
 }
 
 impl FromStr for SolitaryBlocker {
@@ -130,7 +130,7 @@ impl FromStr for SolitaryBlocker {
             "FLOAT" => Self::Float,
             "WORKSPACES" => Self::Workspaces,
             "SURFACES" => Self::Surfaces,
-            "ERRORBAR" => Self::Errorbar,
+            "CONFIGERROR" => Self::ConfigError,
             _ => Self::Unknown,
         })
     }
@@ -167,6 +167,8 @@ pub enum TearingBlocker {
     Candidate,
     /// Window settings prevent tearing.
     Window,
+    /// Hardware cursor prevents tearing.
+    HwCursor,
 }
 
 impl FromStr for TearingBlocker {
@@ -180,6 +182,7 @@ impl FromStr for TearingBlocker {
             "SUPPORT" => Self::Support,
             "CANDIDATE" => Self::Candidate,
             "WINDOW" => Self::Window,
+            "HW_CURSOR" => Self::HwCursor,
             _ => Self::Unknown,
         })
     }
@@ -224,8 +227,6 @@ pub enum DirectScanoutBlocker {
     Transform,
     /// Invalid DMA buffer.
     Dma,
-    /// Tearing is active.
-    Tearing,
     /// Activation failed.
     Failed,
     /// Color management is active.
@@ -247,7 +248,6 @@ impl FromStr for DirectScanoutBlocker {
             "SURFACE" => Self::Surface,
             "TRANSFORM" => Self::Transform,
             "DMA" => Self::Dma,
-            "TEARING" => Self::Tearing,
             "FAILED" => Self::Failed,
             "CM" => Self::Cm,
             _ => Self::Unknown,

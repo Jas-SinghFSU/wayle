@@ -67,14 +67,14 @@ impl Component for MediaDropdown {
                     set_vexpand: true,
                     set_transition_type: gtk::StackTransitionType::SlideLeftRight,
                     set_transition_duration: 200,
-                    #[watch]
-                    set_visible_child_name: model.active_page.name(),
-
                     #[local_ref]
                     add_named[Some("main")] = player_view_widget -> gtk::Box {},
 
                     #[local_ref]
                     add_named[Some("sources")] = source_picker_widget -> gtk::Box {},
+
+                    #[watch]
+                    set_visible_child_name: model.active_page.name(),
                 },
             },
         }

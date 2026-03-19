@@ -11,7 +11,7 @@ use std::{
 };
 
 use commands::Command;
-use conversion::convert_volume_to_pulse;
+use conversion::volume::to_pulse as convert_volume_to_pulse;
 use dispatcher::{handle_external_command, handle_internal_command};
 use libpulse_binding::context::{Context, FlagSet as ContextFlags};
 use tokio::{

@@ -28,7 +28,7 @@ pub(crate) trait StatusNotifierItem {
     fn status(&self) -> Result<String>;
 
     #[zbus(property)]
-    fn window_id(&self) -> Result<u32>;
+    fn window_id(&self) -> Result<i32>;
 
     #[zbus(property)]
     fn icon_name(&self) -> Result<String>;
@@ -63,6 +63,9 @@ pub(crate) trait StatusNotifierItem {
     #[zbus(property)]
     fn icon_theme_path(&self) -> Result<String>;
 
+    /// Passes an XDG activation token to the item before calling Activate/ContextMenu.
+    fn provide_xdg_activation_token(&self, token: &str) -> Result<()>;
+
     #[zbus(signal)]
     fn new_title(&self) -> Result<()>;
 
@@ -77,6 +80,9 @@ pub(crate) trait StatusNotifierItem {
 
     #[zbus(signal)]
     fn new_tool_tip(&self) -> Result<()>;
+
+    #[zbus(signal)]
+    fn new_menu(&self) -> Result<()>;
 
     #[zbus(signal)]
     fn new_status(&self, status: String) -> Result<()>;

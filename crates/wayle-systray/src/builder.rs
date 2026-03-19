@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 use tokio::sync::broadcast;
 use tokio_util::sync::CancellationToken;
@@ -11,11 +11,14 @@ use crate::{
     dbus::{SERVICE_NAME, SERVICE_PATH, SystemTrayDaemon},
     discovery::SystemTrayServiceDiscovery,
     error::Error,
+    events::TrayEvent,
     proxy::status_notifier_watcher::StatusNotifierWatcherProxy,
     service::SystemTrayService,
     types::{TrayMode, WATCHER_BUS_NAME, WATCHER_OBJECT_PATH},
-    watcher::StatusNotifierWatcher,
+    watcher::{StatusNotifierWatcher, discovery},
 };
+
+const EVENT_CHANNEL_CAPACITY: usize = 256;
 
 /// Builder for configuring a SystemTrayService.
 pub struct SystemTrayServiceBuilder {
@@ -60,7 +63,7 @@ impl SystemTrayServiceBuilder {
         let connection = Connection::session().await?;
 
         let cancellation_token = CancellationToken::new();
-        let (event_tx, _) = broadcast::channel(256);
+        let (event_tx, event_rx) = broadcast::channel(EVENT_CHANNEL_CAPACITY);
 
         let unique_name = connection
             .unique_name()
@@ -91,6 +94,7 @@ impl SystemTrayServiceBuilder {
         let service = Arc::new(SystemTrayService {
             cancellation_token,
             event_tx,
+            event_rx: Mutex::new(Some(event_rx)),
             connection,
             is_watcher,
             items: Property::new(Vec::new()),
@@ -143,24 +147,26 @@ impl SystemTrayServiceBuilder {
         Ok(service)
     }
 
-    /// Sets up as watcher
+    /// Attempts to become the StatusNotifierWatcher.
     ///
-    /// Returns `true` if successfully became watcher, `false` if fell back to host.
+    /// Returns `true` if name was acquired, `false` if fell back to host mode.
     #[instrument(skip(connection, event_tx, cancellation_token), err)]
     async fn setup_as_watcher(
         connection: &Connection,
-        event_tx: broadcast::Sender<crate::events::TrayEvent>,
+        event_tx: broadcast::Sender<TrayEvent>,
         cancellation_token: &CancellationToken,
         unique_name: &str,
         force: bool,
     ) -> Result<bool, Error> {
         let watcher = StatusNotifierWatcher::with_initial_host(
-            event_tx,
+            event_tx.clone(),
             connection,
             cancellation_token,
             unique_name.to_string(),
         )
         .await?;
+
+        let registered_items = watcher.registered_items.clone();
 
         connection
             .object_server()
@@ -170,6 +176,15 @@ impl SystemTrayServiceBuilder {
         match connection.request_name(WATCHER_BUS_NAME).await {
             Ok(_) => {
                 info!("Operating as StatusNotifierWatcher");
+
+                discovery::spawn_orphan_scan(
+                    connection.clone(),
+                    registered_items,
+                    event_tx,
+                    cancellation_token.clone(),
+                    unique_name.to_string(),
+                );
+
                 Ok(true)
             }
             Err(err) => {

@@ -75,7 +75,7 @@ impl QuickActionsSection {
         let target = !self.dnd_active;
 
         sender.oneshot_command(async move {
-            notification.set_dnd(target).await;
+            notification.set_dnd(target);
             QuickActionsCmd::DndChanged(target)
         });
     }
