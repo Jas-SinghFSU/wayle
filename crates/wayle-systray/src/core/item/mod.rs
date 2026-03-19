@@ -644,14 +644,26 @@ impl TrayItem {
         let status = item_proxy.status().await.unwrap_or_default();
         let window_id = item_proxy.window_id().await;
         let item_is_menu = item_proxy.item_is_menu().await;
-        let icon_name = item_proxy.icon_name().await.ok();
+        let icon_name = item_proxy.icon_name().await.ok().filter(|s| !s.is_empty());
         let icon_pixmap = item_proxy.icon_pixmap().await;
-        let overlay_icon_name = item_proxy.overlay_icon_name().await.ok();
+        let overlay_icon_name = item_proxy
+            .overlay_icon_name()
+            .await
+            .ok()
+            .filter(|s| !s.is_empty());
         let overlay_icon_pixmap = item_proxy.overlay_icon_pixmap().await;
-        let attention_icon_name = item_proxy.attention_icon_name().await.ok();
+        let attention_icon_name = item_proxy
+            .attention_icon_name()
+            .await
+            .ok()
+            .filter(|s| !s.is_empty());
         let attention_icon_pixmap = item_proxy.attention_icon_pixmap().await;
         let attention_movie_name = item_proxy.attention_movie_name().await.ok();
-        let icon_theme_path = item_proxy.icon_theme_path().await.ok();
+        let icon_theme_path = item_proxy
+            .icon_theme_path()
+            .await
+            .ok()
+            .filter(|s| !s.is_empty());
         let tooltip = item_proxy.tool_tip().await;
         let menu_path = item_proxy.menu().await.unwrap_or_default();
 
