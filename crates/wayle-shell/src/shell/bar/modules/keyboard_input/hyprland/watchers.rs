@@ -71,8 +71,8 @@ fn spawn_config_watchers(
         let _ = out.send(KeyboardInputCmd::UpdateIcon(icon_name.get().clone()));
     });
 
-    let language_name_map = config.language_name_map.clone();
-    watch!(sender, [language_name_map.watch()], |out| {
-        let _ = out.send(KeyboardInputCmd::LanguageNameMapChanged);
+    let layout_alias_map = config.layout_alias_map.clone();
+    watch!(sender, [layout_alias_map.watch()], |out| {
+        let _ = out.send(KeyboardInputCmd::LayoutAliasMapChanged);
     });
 }

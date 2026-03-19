@@ -52,7 +52,7 @@ impl Component for HyprlandKeyboardInput {
         let formatted_label = helpers::format_label(
             &initial_layout,
             &keyboard_input.format.get(),
-            &keyboard_input.language_name_map.get(),
+            &keyboard_input.layout_alias_map.get(),
         );
 
         let bar_button = BarButton::builder()
@@ -124,7 +124,7 @@ impl Component for HyprlandKeyboardInput {
                 self.current_layout = layout;
                 self.update_label(root);
             }
-            KeyboardInputCmd::LanguageNameMapChanged | KeyboardInputCmd::FormatChanged => {
+            KeyboardInputCmd::LayoutAliasMapChanged | KeyboardInputCmd::FormatChanged => {
                 self.update_label(root);
             }
             KeyboardInputCmd::UpdateIcon(icon) => {

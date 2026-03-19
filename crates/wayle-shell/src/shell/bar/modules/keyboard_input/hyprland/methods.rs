@@ -12,9 +12,9 @@ impl HyprlandKeyboardInput {
     pub(super) fn update_label(&self, root: &gtk::Box) {
         let config = self.config.config();
         let format = config.modules.keyboard_input.format.get();
-        let language_name_map = config.modules.keyboard_input.language_name_map.get();
+        let layout_alias_map = config.modules.keyboard_input.layout_alias_map.get();
 
-        let label = helpers::format_label(&self.current_layout, &format, &language_name_map);
+        let label = helpers::format_label(&self.current_layout, &format, &layout_alias_map);
         self.bar_button.emit(BarButtonInput::SetLabel(label));
         force_window_resize(root);
     }

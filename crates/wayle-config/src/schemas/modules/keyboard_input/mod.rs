@@ -16,12 +16,14 @@ pub struct KeyboardInputConfig {
     ///
     /// ## Placeholders
     ///
-    /// - `{{ layout }}` - Keyboard layout code (e.g., "us", "de", "fr")
+    /// - `{{ layout }}` - Raw layout name from the compositor (e.g., "English (US)")
+    /// - `{{ alias }}` - User-defined alias from `layout-alias-map`, falls back to`{{ layout }}`
     ///
     /// ## Examples
     ///
-    /// - `"{{ layout }}"` - "us"
-    #[default(String::from("{{ layout }}"))]
+    /// - `"{{ layout }}"` - "English (US)"
+    /// - `"{{ alias }}"` - "EN" (with alias map configured)
+    #[default(String::from("{{ alias }}"))]
     pub format: ConfigProperty<String>,
 
     /// Symbolic icon name.
@@ -104,13 +106,13 @@ pub struct KeyboardInputConfig {
     /// ## Example
     ///
     /// ```toml
-    /// [modules.keyboard-input.language-name-map]
+    /// [modules.keyboard-input.layout-alias-map]
     /// "English (US)" = "EN"
     /// "Czech (QWERTY)" = "Czech"
     /// ```
-    #[serde(rename = "language-name-map")]
+    #[serde(rename = "layout-alias-map")]
     #[default(HashMap::new())]
-    pub language_name_map: ConfigProperty<HashMap<String, String>>,
+    pub layout_alias_map: ConfigProperty<HashMap<String, String>>,
 }
 
 impl ModuleInfoProvider for KeyboardInputConfig {

@@ -5,11 +5,14 @@ use wayle_hyprland::DeviceInfo;
 pub(super) fn format_label(
     layout: &str,
     format: &str,
-    language_name_map: &HashMap<String, String>,
+    layout_alias_map: &HashMap<String, String>,
 ) -> String {
-    let ctx = json!({ "layout": layout });
-    let raw = wayle_common::template::render(format, ctx).unwrap_or_default();
-    return language_name_map.get(&raw).unwrap_or(&raw).to_string();
+    let alias = layout_alias_map
+        .get(layout)
+        .map(String::as_str)
+        .unwrap_or(layout);
+    let ctx = json!({ "layout": layout, "alias": alias });
+    wayle_common::template::render(format, ctx).unwrap_or_default()
 }
 
 pub(super) fn main_keyboard_layout(devices: &DeviceInfo) -> Option<&str> {
@@ -40,8 +43,20 @@ mod tests {
     #[test]
     fn format_multiple_placeholders() {
         assert_eq!(
-            format_label("us", "{{ layout }} | {{ layout }}", &HashMap::new()),
+            format_label("us", "{{ layout }} | {{ alias }}", &HashMap::new()),
             "us | us"
+        );
+    }
+
+    #[test]
+    fn format_multiple_placeholders_with_alias() {
+        assert_eq!(
+            format_label(
+                "us",
+                "{{ layout }} | {{ alias }}",
+                &HashMap::from([("us".to_string(), "US".to_string())])
+            ),
+            "us | US"
         );
     }
 
@@ -50,7 +65,7 @@ mod tests {
         assert_eq!(
             format_label(
                 "us",
-                "{{ layout }}",
+                "{{ alias }}",
                 &HashMap::from([
                     ("us".to_string(), "US".to_string()),
                     ("de".to_string(), "DE".to_string()),
@@ -65,7 +80,7 @@ mod tests {
         assert_eq!(
             format_label(
                 "cz",
-                "{{ layout }}",
+                "{{ alias }}",
                 &HashMap::from([
                     ("us".to_string(), "US".to_string()),
                     ("de".to_string(), "DE".to_string()),
