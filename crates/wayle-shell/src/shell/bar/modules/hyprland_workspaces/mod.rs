@@ -1,3 +1,15 @@
+//! Hyprland workspace buttons for the bar.
+//!
+//! High level flow tldr:
+//!   Workspace switch -> clear urgency, rebuild or update state
+//!   Window open/close/move -> full rebuild (icons change)
+//!   Urgent -> addr into urgent_windows, start blink timer,
+//!     update_active_state sends UpdateState w/ urgent_addresses.
+//!     urgent-mode=application -> button matches addrs, blinks individual icons.
+//!     urgent-mode=workspace (default) -> empty addrs, whole workspace blinks.
+//!   BlinkTick -> flip blink_on, update_active_state again (the pulse)
+//!   Switch to urgent ws -> clear addrs, stop timer if set empty
+
 mod button;
 mod factory;
 mod filtering;

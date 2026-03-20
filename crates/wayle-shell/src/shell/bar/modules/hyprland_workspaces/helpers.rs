@@ -6,7 +6,7 @@ use std::{
 
 use glob::Pattern;
 use wayle_config::schemas::modules::{DisplayMode, Numbering};
-use wayle_hyprland::{Client, WorkspaceId};
+use wayle_hyprland::{Address, Client, WorkspaceId};
 
 use super::filtering::relative_workspace_number;
 use crate::shell::bar::icons::{DEFAULT_APP_ICON_MAP, matches_glob};
@@ -60,34 +60,45 @@ pub(crate) fn resolve_app_icon(window: &WindowInfo<'_>, ctx: &IconContext<'_>) -
     ctx.fallback.to_string()
 }
 
+pub(crate) struct ResolvedIcon {
+    pub icon_name: String,
+    pub addresses: Vec<Address>,
+}
+
 pub(crate) fn resolve_workspace_icons(
     workspace_id: WorkspaceId,
     clients: &[Arc<Client>],
     ctx: &IconContext<'_>,
     dedupe: bool,
-) -> Vec<String> {
-    let mut icons = Vec::new();
-    let mut seen: HashSet<String> = HashSet::new();
+) -> Vec<ResolvedIcon> {
+    let mut icons: Vec<ResolvedIcon> = Vec::new();
+    let mut seen: HashMap<String, usize> = HashMap::new();
 
     for client in clients
         .iter()
-        .filter(|c| c.workspace.get().id == workspace_id)
+        .filter(|client| client.workspace.get().id == workspace_id)
     {
         let class = client.class.get();
         let title = client.title.get();
+        let address = client.address.get();
+        let key = workspace_class_key(&class);
 
         if dedupe {
-            let key = workspace_class_key(&class);
-            if !seen.insert(key) {
+            if let Some(&idx) = seen.get(&key) {
+                icons[idx].addresses.push(address);
                 continue;
             }
+            seen.insert(key, icons.len());
         }
 
         let window = WindowInfo {
             class: &class,
             title: &title,
         };
-        icons.push(resolve_app_icon(&window, ctx));
+        icons.push(ResolvedIcon {
+            icon_name: resolve_app_icon(&window, ctx),
+            addresses: vec![address],
+        });
     }
 
     icons

@@ -127,6 +127,10 @@
 
 .workspace-icon {
     -gtk-icon-size: calc(var(--ws-icon-size-px) * 1px);
+
+    &.urgent {
+        opacity: 0.5;
+    }
 }
 
 .workspace-divider {

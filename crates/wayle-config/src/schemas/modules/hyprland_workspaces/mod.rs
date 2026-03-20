@@ -37,6 +37,19 @@ pub enum Numbering {
     Relative,
 }
 
+/// Where the urgent pulse animation is applied.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
+pub enum UrgentMode {
+    /// Pulse the entire workspace.
+    #[default]
+    Workspace,
+    /// Pulse only the app icon(s) belonging to the urgent window.
+    ///
+    /// Falls back to `workspace` when app icons are disabled.
+    Application,
+}
+
 /// Visual indicator style for the active workspace.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
@@ -155,6 +168,15 @@ pub struct HyprlandWorkspacesConfig {
     #[serde(rename = "urgent-show")]
     #[default(true)]
     pub urgent_show: ConfigProperty<bool>,
+
+    /// Where the urgent pulse is applied.
+    ///
+    /// - `workspace`: Entire workspace pulses (default)
+    /// - `application`: Only the app icon(s) belonging to the urgent window
+    ///   pulse, falling back to `workspace` when app icons are disabled
+    #[serde(rename = "urgent-mode")]
+    #[default(UrgentMode::Workspace)]
+    pub urgent_mode: ConfigProperty<UrgentMode>,
 
     /// What identifies each workspace button.
     ///

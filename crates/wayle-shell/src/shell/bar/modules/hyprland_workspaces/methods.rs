@@ -8,7 +8,7 @@ use relm4::prelude::*;
 use tracing::{debug, error, warn};
 use wayle_config::schemas::{
     bar::BorderLocation,
-    modules::{HyprlandWorkspacesConfig, Numbering},
+    modules::{HyprlandWorkspacesConfig, Numbering, UrgentMode},
 };
 use wayle_hyprland::{Address, HyprlandService, WorkspaceId};
 use wayle_widgets::prelude::BarSettings;
@@ -200,21 +200,30 @@ impl HyprlandWorkspaces {
         let clients = hyprland.clients.get();
 
         let numbering = ws_config.numbering.get();
+        let per_icon_urgent = ws_config.app_icons_show.get()
+            && ws_config.urgent_mode.get() == UrgentMode::Application;
+        let urgent_show = ws_config.urgent_show.get();
         let button_inits: Vec<_> = workspaces
             .iter()
             .map(|ws| {
+                let is_urgent = self.blink_on
+                    && urgent_show
+                    && self.workspace_has_urgent_window(ws.id, hyprland);
+                let urgent_addrs = if is_urgent && per_icon_urgent {
+                    self.urgent_windows.clone()
+                } else {
+                    HashSet::new()
+                };
                 let ctx = ButtonBuildContext {
                     id: ws.id,
                     display_id: self.display_id(ws.id, numbering),
                     name: &ws.name,
                     windows: ws.windows,
                     is_active: ws.id == self.active_workspace_id,
-                    is_urgent: self.blink_on
-                        && ws_config.urgent_show.get()
-                        && self.workspace_has_urgent_window(ws.id, hyprland),
+                    is_urgent,
                     is_vertical,
                 };
-                build_button_init(&ctx, ws_config, &clients)
+                build_button_init(&ctx, ws_config, &clients, urgent_addrs)
             })
             .collect();
 
@@ -263,6 +272,9 @@ impl HyprlandWorkspaces {
 
         let config = self.config.config();
         let ws_config = &config.modules.hyprland_workspaces;
+        let per_icon_urgent = ws_config.app_icons_show.get()
+            && ws_config.urgent_mode.get() == UrgentMode::Application;
+        let urgent_show = ws_config.urgent_show.get();
 
         for idx in 0..self.buttons.len() {
             let Some(button) = self.buttons.get(idx) else {
@@ -270,8 +282,14 @@ impl HyprlandWorkspaces {
             };
             let button_id = button.id();
             let is_urgent = self.blink_on
-                && ws_config.urgent_show.get()
+                && urgent_show
                 && self.workspace_has_urgent_window(button_id, hyprland);
+
+            let urgent_addrs = if is_urgent && per_icon_urgent {
+                self.urgent_windows.clone()
+            } else {
+                HashSet::new()
+            };
 
             self.buttons.send(
                 idx,
@@ -279,6 +297,7 @@ impl HyprlandWorkspaces {
                     windows: self.window_count_for_workspace(button_id, hyprland),
                     is_active: button_id == self.active_workspace_id,
                     is_urgent,
+                    urgent_addresses: urgent_addrs,
                 },
             );
         }
