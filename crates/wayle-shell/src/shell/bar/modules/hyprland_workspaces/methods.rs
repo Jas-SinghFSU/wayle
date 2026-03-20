@@ -55,11 +55,8 @@ impl HyprlandWorkspaces {
                         .into_iter()
                         .filter_map(|rule| {
                             let id = rule.workspace_string.parse::<WorkspaceId>().ok()?;
-                            if id > 0 {
-                                Some((id, rule.monitor))
-                            } else {
-                                None
-                            }
+                            let monitor = rule.monitor?;
+                            if id > 0 { Some((id, monitor)) } else { None }
                         })
                         .collect();
                     WorkspacesCmd::WorkspaceRulesLoaded(map)

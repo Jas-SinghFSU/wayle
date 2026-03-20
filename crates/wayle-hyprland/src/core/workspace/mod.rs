@@ -11,8 +11,8 @@ pub struct Workspace {
     pub name: Property<String>,
     /// Monitor name this workspace is on.
     pub monitor: Property<String>,
-    /// Monitor ID.
-    pub monitor_id: Property<MonitorId>,
+    /// Monitor ID, if the workspace has an assigned monitor.
+    pub monitor_id: Property<Option<MonitorId>>,
     /// Window count.
     pub windows: Property<u16>,
     /// Whether any window is fullscreen.

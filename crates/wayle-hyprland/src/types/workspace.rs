@@ -8,8 +8,9 @@ use crate::{Address, MonitorId, WorkspaceId, deserialize_optional_address};
 pub struct WorkspaceRule {
     /// The workspace identifier string (could be name or ID).
     pub workspace_string: String,
-    /// The monitor this workspace is bound to.
-    pub monitor: String,
+    /// The monitor this workspace is bound to, if specified.
+    #[serde(default)]
+    pub monitor: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Clone, PartialEq)]
@@ -19,7 +20,7 @@ pub(crate) struct WorkspaceData {
     pub name: String,
     pub monitor: String,
     #[serde(rename = "monitorID")]
-    pub monitor_id: MonitorId,
+    pub monitor_id: Option<MonitorId>,
     pub windows: u16,
     #[serde(rename = "hasfullscreen")]
     pub fullscreen: bool,

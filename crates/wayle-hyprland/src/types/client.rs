@@ -47,23 +47,26 @@ where
     Ok(ClientLocation { x, y })
 }
 
-/// Window fullscreen state.
+/// Window fullscreen state matching Hyprland's `eFullscreenMode`.
 #[derive(Debug, Deserialize, Clone, PartialEq)]
 #[serde(from = "u8")]
 pub enum FullscreenMode {
     /// Not fullscreen.
     None = 0,
-    /// Fullscreen mode.
-    Full = 1,
-    /// Maximized mode.
-    Maximize = 2,
+    /// Maximized.
+    Maximized = 1,
+    /// Fullscreen.
+    Fullscreen = 2,
+    /// Both maximized and fullscreen.
+    MaximizedFullscreen = 3,
 }
 
 impl From<u8> for FullscreenMode {
     fn from(value: u8) -> Self {
         match value {
-            1 => Self::Full,
-            2 => Self::Maximize,
+            1 => Self::Maximized,
+            2 => Self::Fullscreen,
+            3 => Self::MaximizedFullscreen,
             _ => Self::None,
         }
     }
@@ -114,17 +117,24 @@ mod tests {
     use super::*;
 
     #[test]
-    fn fullscreen_mode_from_u8_converts_full() {
+    fn fullscreen_mode_from_u8_converts_maximized() {
         let mode = FullscreenMode::from(1u8);
 
-        assert_eq!(mode, FullscreenMode::Full);
+        assert_eq!(mode, FullscreenMode::Maximized);
     }
 
     #[test]
-    fn fullscreen_mode_from_u8_converts_maximize() {
+    fn fullscreen_mode_from_u8_converts_fullscreen() {
         let mode = FullscreenMode::from(2u8);
 
-        assert_eq!(mode, FullscreenMode::Maximize);
+        assert_eq!(mode, FullscreenMode::Fullscreen);
+    }
+
+    #[test]
+    fn fullscreen_mode_from_u8_converts_combined() {
+        let mode = FullscreenMode::from(3u8);
+
+        assert_eq!(mode, FullscreenMode::MaximizedFullscreen);
     }
 
     #[test]
