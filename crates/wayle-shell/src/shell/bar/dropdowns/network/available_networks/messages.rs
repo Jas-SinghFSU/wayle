@@ -22,6 +22,7 @@ pub(crate) enum AvailableNetworksInput {
     WifiAvailabilityChanged(bool),
     WifiEnabledChanged(bool),
     NetworkSelected(usize),
+    ForgetNetwork(String),
     PasswordForm(PasswordFormOutput),
 }
 

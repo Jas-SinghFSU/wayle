@@ -8,6 +8,7 @@ use controls::SettingsController;
 use derive_more::Debug;
 use futures::{Stream, StreamExt, future::join_all};
 use tokio_util::sync::CancellationToken;
+use tracing::warn;
 pub(crate) use types::{LiveSettingsParams, SettingsParams};
 use wayle_common::{Property, unwrap_bool, unwrap_string, unwrap_u64, unwrap_vec};
 use wayle_traits::{ModelMonitoring, Reactive};
@@ -252,6 +253,18 @@ impl Settings {
             .into_iter()
             .filter(|connection| connection.matches_ssid(ssid))
             .collect()
+    }
+
+    /// Deletes all saved connection profiles for the given SSID.
+    ///
+    /// Individual profile deletion errors are logged but do not stop
+    /// remaining deletions.
+    pub async fn delete_connections_for_ssid(&self, ssid: &Ssid) {
+        for connection in self.connections_for_ssid(ssid) {
+            if let Err(err) = connection.delete().await {
+                warn!(error = %err, "failed to delete saved wifi profile");
+            }
+        }
     }
 
     /// Reactive stream of saved connections for the given SSID.

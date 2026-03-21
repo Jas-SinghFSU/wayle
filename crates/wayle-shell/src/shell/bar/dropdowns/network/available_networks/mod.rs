@@ -213,6 +213,9 @@ impl Component for AvailableNetworks {
             AvailableNetworksInput::NetworkSelected(index) => {
                 self.select_network(index, &sender);
             }
+            AvailableNetworksInput::ForgetNetwork(ssid) => {
+                self.forget_network(ssid, &sender);
+            }
             AvailableNetworksInput::PasswordForm(form_output) => {
                 self.handle_password_form(form_output, &sender);
             }

@@ -131,16 +131,13 @@ impl ActiveConnections {
     pub(super) fn forget_wifi(&self, sender: &ComponentSender<Self>) {
         let network = self.network.clone();
         let ssid = self.wifi.ssid.clone();
+
         sender.command(|_out, _shutdown| async move {
-            let Some(ssid) = ssid.map(|s| Ssid::new(s.into_bytes())) else {
+            let Some(ssid) = ssid.map(|raw| Ssid::new(raw.into_bytes())) else {
                 return;
             };
 
-            for connection in network.settings.connections_for_ssid(&ssid) {
-                if let Err(err) = connection.delete().await {
-                    warn!(error = %err, "failed to delete saved wifi profile");
-                }
-            }
+            network.settings.delete_connections_for_ssid(&ssid).await;
 
             if let Some(wifi) = network.wifi.get()
                 && let Err(err) = wifi.disconnect().await
