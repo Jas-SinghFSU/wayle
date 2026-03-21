@@ -17,7 +17,7 @@ pub struct KeyboardInputConfig {
     /// ## Placeholders
     ///
     /// - `{{ layout }}` - Raw layout name from the compositor (e.g., "English (US)")
-    /// - `{{ alias }}` - User-defined alias from `layout-alias-map`, falls back to`{{ layout }}`
+    /// - `{{ alias }}` - User-defined alias from `layout-alias-map`, falls back to `{{ layout }}`
     ///
     /// ## Examples
     ///
