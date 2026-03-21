@@ -120,6 +120,18 @@ impl Component for UserSessionSection {
                     },
 
                     #[template]
+                    #[name = "reboot_btn"]
+                    IconButton {
+                        set_css_classes: &["icon", "session-btn", "danger"],
+                        set_tooltip_text: Some(&t!("dropdown-dashboard-reboot")),
+                        connect_clicked => UserSessionInput::Reboot,
+
+                        gtk::Image {
+                            set_icon_name: Some("ld-refresh-cw-symbolic"),
+                        },
+                    },
+
+                    #[template]
                     #[name = "power_off_btn"]
                     IconButton {
                         set_css_classes: &["icon", "session-btn", "danger"],
@@ -181,6 +193,9 @@ impl Component for UserSessionSection {
             }
             UserSessionInput::Logout => {
                 process::run_if_set(&dashboard.dropdown_logout_command.get());
+            }
+            UserSessionInput::Reboot => {
+                process::run_if_set(&dashboard.dropdown_reboot_command.get());
             }
             UserSessionInput::PowerOff => {
                 process::run_if_set(&dashboard.dropdown_poweroff_command.get());

@@ -53,4 +53,5 @@ dropdown-dashboard-temp = CPU Temp
 ## User Session
 dropdown-dashboard-lock = Lock
 dropdown-dashboard-logout = Log Out
+dropdown-dashboard-reboot = Reboot
 dropdown-dashboard-power-off = Power Off
