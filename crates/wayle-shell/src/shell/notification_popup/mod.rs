@@ -8,7 +8,7 @@ mod watchers;
 use std::sync::Arc;
 
 use gtk::prelude::*;
-use gtk4_layer_shell::{KeyboardMode, Layer, LayerShell};
+use gtk4_layer_shell::{KeyboardMode, LayerShell};
 use relm4::{gtk, prelude::*};
 use wayle_config::ConfigService;
 use wayle_notification::{NotificationService, core::notification::Notification};
@@ -52,7 +52,6 @@ impl Component for NotificationPopupHost {
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
         root.init_layer_shell();
-        root.set_layer(Layer::Overlay);
         root.set_keyboard_mode(KeyboardMode::None);
         root.set_namespace(Some("wayle-notification-popup"));
 
@@ -72,6 +71,7 @@ impl Component for NotificationPopupHost {
         };
 
         model.apply_position(&root);
+        model.apply_layer(&root);
 
         let card_container = &model.card_container;
         card_container.set_spacing(gap);
@@ -90,6 +90,7 @@ impl Component for NotificationPopupHost {
 
             PopupHostCmd::ConfigChanged => {
                 self.apply_position(root);
+                self.apply_layer(root);
 
                 let config = self.config.config();
                 let notif_config = &config.modules.notification;

@@ -3,7 +3,7 @@ use std::sync::Arc;
 use gtk::prelude::*;
 use gtk4_layer_shell::{Edge, LayerShell};
 use relm4::{Component, ComponentController, gtk};
-use tracing::{debug, warn};
+use tracing::debug;
 use wayle_config::schemas::modules::notification::{PopupMonitor, PopupPosition, StackingOrder};
 use wayle_notification::core::notification::Notification;
 
@@ -11,7 +11,9 @@ use super::{
     NotificationPopupHost,
     card::{CardInit, NotificationPopupCard},
 };
-use crate::shell::helpers::monitors::current_monitors;
+use crate::shell::helpers::layer_shell::{
+    apply_monitor_by_connector, apply_primary_monitor, apply_tearing_layer, reset_anchors,
+};
 
 impl NotificationPopupHost {
     /// Reconciles the card list with the current popup state.
@@ -101,15 +103,7 @@ impl NotificationPopupHost {
         let mx = (notif_config.popup_margin_x.get().value() * scale) as i32;
         let my = (notif_config.popup_margin_y.get().value() * scale) as i32;
 
-        root.set_anchor(Edge::Top, false);
-        root.set_anchor(Edge::Bottom, false);
-        root.set_anchor(Edge::Left, false);
-        root.set_anchor(Edge::Right, false);
-
-        root.set_margin(Edge::Top, 0);
-        root.set_margin(Edge::Bottom, 0);
-        root.set_margin(Edge::Left, 0);
-        root.set_margin(Edge::Right, 0);
+        reset_anchors(root);
 
         match position {
             PopupPosition::TopLeft => {
@@ -161,40 +155,19 @@ impl NotificationPopupHost {
             }
         }
 
-        self.apply_monitor(root, &notif_config.popup_monitor.get());
+        let monitor = notif_config.popup_monitor.get();
+
+        match &monitor {
+            PopupMonitor::Primary => {
+                apply_primary_monitor(root);
+            }
+            PopupMonitor::Connector(name) => {
+                apply_monitor_by_connector(root, name);
+            }
+        }
     }
 
-    fn apply_monitor(&self, root: &gtk::Window, monitor_config: &PopupMonitor) {
-        let monitors = current_monitors();
-
-        let resolved = match monitor_config {
-            PopupMonitor::Primary => monitors.into_iter().next().map(|(_, monitor)| monitor),
-
-            PopupMonitor::Connector(name) => {
-                let mut primary = None;
-                let mut matched = None;
-
-                for (connector, monitor) in monitors {
-                    if primary.is_none() {
-                        primary = Some(monitor.clone());
-                    }
-                    if connector == *name {
-                        matched = Some(monitor);
-                        break;
-                    }
-                }
-
-                if matched.is_none() {
-                    warn!(
-                        connector = name.as_str(),
-                        "configured monitor not found, falling back to primary"
-                    );
-                }
-
-                matched.or(primary)
-            }
-        };
-
-        root.set_monitor(resolved.as_ref());
+    pub(super) fn apply_layer(&self, root: &gtk::Window) {
+        apply_tearing_layer(root, &self.config);
     }
 }

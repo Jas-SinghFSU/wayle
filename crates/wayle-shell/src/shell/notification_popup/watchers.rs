@@ -31,6 +31,7 @@ pub(super) fn spawn(
     let close_behavior = notif_config.popup_close_behavior.clone();
     let hover_pause = notif_config.popup_hover_pause.clone();
     let scale = full_config.styling.scale.clone();
+    let tearing_mode = full_config.general.tearing_mode.clone();
 
     watch!(
         sender,
@@ -47,6 +48,7 @@ pub(super) fn spawn(
             close_behavior.watch(),
             hover_pause.watch(),
             scale.watch(),
+            tearing_mode.watch(),
         ],
         |out| {
             let _ = out.send(PopupHostCmd::ConfigChanged);

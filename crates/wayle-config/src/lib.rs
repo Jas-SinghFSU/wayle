@@ -14,6 +14,8 @@ pub mod schemas {
     pub mod general;
     /// Module-specific configurations.
     pub mod modules;
+    /// On-screen display configuration.
+    pub mod osd;
     /// Styling configuration.
     pub mod styling;
     /// Wallpaper service configuration.
@@ -54,7 +56,8 @@ pub use infrastructure::{
     watcher::FileWatcher,
 };
 use schemas::{
-    bar::BarConfig, modules::ModulesConfig, styling::StylingConfig, wallpaper::WallpaperConfig,
+    bar::BarConfig, modules::ModulesConfig, osd::OsdConfig, styling::StylingConfig,
+    wallpaper::WallpaperConfig,
 };
 use wayle_derive::wayle_config;
 
@@ -89,6 +92,9 @@ pub struct Config {
 
     /// Module-specific configurations.
     pub modules: ModulesConfig,
+
+    /// On-screen display settings.
+    pub osd: OsdConfig,
 
     /// Wallpaper service settings.
     pub wallpaper: WallpaperConfig,
