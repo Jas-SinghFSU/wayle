@@ -70,6 +70,11 @@ pub struct DashboardConfig {
     #[default(String::from("loginctl terminate-session $XDG_SESSION_ID"))]
     pub dropdown_logout_command: ConfigProperty<String>,
 
+    /// Shell command for the reboot button in the dashboard dropdown.
+    #[serde(rename = "dropdown-reboot-command")]
+    #[default(String::from("systemctl reboot"))]
+    pub dropdown_reboot_command: ConfigProperty<String>,
+
     /// Shell command for the power-off button in the dashboard dropdown.
     #[serde(rename = "dropdown-poweroff-command")]
     #[default(String::from("systemctl poweroff"))]

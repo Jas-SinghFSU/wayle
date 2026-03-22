@@ -11,6 +11,7 @@ pub(crate) struct UserSessionInit {
 pub(crate) enum UserSessionInput {
     Lock,
     Logout,
+    Reboot,
     PowerOff,
 }
 
