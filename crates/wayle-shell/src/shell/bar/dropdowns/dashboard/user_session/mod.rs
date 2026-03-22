@@ -122,7 +122,7 @@ impl Component for UserSessionSection {
                     #[template]
                     #[name = "reboot_btn"]
                     IconButton {
-                        set_css_classes: &["icon", "session-btn", "danger"],
+                        add_css_class: "session-btn",
                         set_tooltip_text: Some(&t!("dropdown-dashboard-reboot")),
                         connect_clicked => UserSessionInput::Reboot,
 
