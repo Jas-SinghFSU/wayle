@@ -56,19 +56,17 @@ impl Component for UserSessionSection {
                 #[name = "user_info"]
                 gtk::Box {
                     add_css_class: "user-info",
+                    set_orientation: gtk::Orientation::Vertical,
                     set_halign: gtk::Align::Center,
-                    set_valign: gtk::Align::Start,
 
                     #[name = "avatar"]
                     gtk::Box {
                         add_css_class: "user-avatar",
-                        set_halign: gtk::Align::Start,
                         set_valign: gtk::Align::Center,
 
                         gtk::Image {
                             set_icon_name: Some("ld-user-symbolic"),
                             set_hexpand: true,
-                            set_halign: gtk::Align::Start,
                             set_valign: gtk::Align::Center,
                             #[watch]
                             set_visible: !model.has_face,
@@ -77,8 +75,7 @@ impl Component for UserSessionSection {
 
                     #[name = "user_meta"]
                     gtk::Box {
-                        set_valign: gtk::Align::Center,
-                        set_halign: gtk::Align::Start,
+                        set_halign: gtk::Align::Center,
 
                         #[name = "username_label"]
                         gtk::Label {
