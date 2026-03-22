@@ -38,6 +38,8 @@
     }
 
     button.icon.session-btn {
+        padding: var(--space-xs);
+
         > image {
             -gtk-icon-size: var(--icon-md);
             color: var(--fg-muted);
