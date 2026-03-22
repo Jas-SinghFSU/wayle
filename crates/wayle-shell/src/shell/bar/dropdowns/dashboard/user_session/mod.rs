@@ -220,7 +220,7 @@ impl Component for UserSessionSection {
                 process::run_if_set(&dashboard.dropdown_sleep_command.get());
             }
             UserSessionInput::Hibernate => {
-                process::run_if_set(&dashboard.dropdown_sleep_command.get());
+                process::run_if_set(&dashboard.dropdown_hibernate_command.get());
             }
             UserSessionInput::Logout => {
                 process::run_if_set(&dashboard.dropdown_logout_command.get());
