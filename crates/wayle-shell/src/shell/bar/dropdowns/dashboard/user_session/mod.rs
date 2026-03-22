@@ -49,11 +49,12 @@ impl Component for UserSessionSection {
             set_css_classes: &["card", "dashboard-card"],
             
             #[name = "session_row"]
-            gtk::Grid {
+            gtk::Box {
                 add_css_class: "dashboard-user-session",
+                set_orientation: gtk::Orientation::Vertical,
 
                 #[name = "user_info"]
-                attach[0, 0, 1, 1] = &gtk::Box {
+                gtk::Box {
                     add_css_class: "user-info",
                     set_halign: gtk::Align::Center,
                     set_valign: gtk::Align::Start,
@@ -90,7 +91,7 @@ impl Component for UserSessionSection {
                 },
 
                 #[name = "session_actions"]
-                attach[0, 1, 1, 1] = &gtk::Box {
+                gtk::Box {
                     add_css_class: "session-actions",
                     set_hexpand: true,
                     set_halign: gtk::Align::Center,
