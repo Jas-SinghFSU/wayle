@@ -71,8 +71,8 @@
 //! # }
 //! ```
 //!
-//! [`Property`]: wayle_common::Property
-//! [`Property<T>`]: wayle_common::Property
+//! [`Property`]: wayle_core::Property
+//! [`Property<T>`]: wayle_core::Property
 
 mod core;
 mod discovery;

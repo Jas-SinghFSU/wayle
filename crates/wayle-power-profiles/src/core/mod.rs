@@ -11,7 +11,7 @@ use futures::{Stream, StreamExt};
 use tokio_util::sync::CancellationToken;
 pub(crate) use types::LivePowerProfilesParams;
 use types::{PowerProfilesParams, PowerProfilesProps};
-use wayle_common::{Property, unwrap_string, unwrap_vec};
+use wayle_core::{Property, unwrap_dbus};
 use wayle_traits::{ModelMonitoring, Reactive};
 use zbus::Connection;
 
@@ -122,11 +122,11 @@ impl PowerProfiles {
         );
 
         Ok(PowerProfilesProps {
-            active_profile: unwrap_string!(active_profile),
-            performance_degraded: unwrap_string!(performance_degraded),
-            profiles: unwrap_vec!(profiles),
-            actions: unwrap_vec!(actions),
-            active_profile_holds: unwrap_vec!(active_profile_holds),
+            active_profile: unwrap_dbus!(active_profile),
+            performance_degraded: unwrap_dbus!(performance_degraded),
+            profiles: unwrap_dbus!(profiles),
+            actions: unwrap_dbus!(actions),
+            active_profile_holds: unwrap_dbus!(active_profile_holds),
         })
     }
 

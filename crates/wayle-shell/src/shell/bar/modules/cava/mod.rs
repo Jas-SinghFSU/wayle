@@ -12,10 +12,10 @@ use gtk::prelude::*;
 use relm4::prelude::*;
 use tracing::{error, info};
 use wayle_cava::CavaService;
-use wayle_common::{ConfigProperty, WatcherToken};
-use wayle_config::ConfigService;
-use wayle_widgets::prelude::{
-    BarContainer, BarContainerBehavior, BarContainerColors, BarContainerInit,
+use wayle_config::{ConfigProperty, ConfigService};
+use wayle_widgets::{
+    WatcherToken,
+    prelude::{BarContainer, BarContainerBehavior, BarContainerColors, BarContainerInit},
 };
 
 use self::messages::CavaMsg;

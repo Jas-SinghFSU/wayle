@@ -8,8 +8,8 @@ use wayle_audio::{
     core::device::{input::InputDevice, output::OutputDevice},
 };
 use wayle_brightness::{BacklightDevice, BrightnessService};
-use wayle_common::{watch, watch_cancellable, watch_cancellable_throttled};
 use wayle_config::ConfigService;
+use wayle_widgets::{watch, watch_cancellable, watch_cancellable_throttled};
 
 use super::{
     Osd,

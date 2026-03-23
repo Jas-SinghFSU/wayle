@@ -3,7 +3,7 @@ use std::{collections::HashMap, sync::Arc, time::Instant};
 use tokio::sync::broadcast;
 use tokio_util::sync::CancellationToken;
 use tracing::{debug, info};
-use wayle_common::Property;
+use wayle_core::Property;
 use wayle_traits::ServiceMonitoring;
 use zbus::Connection;
 

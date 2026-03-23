@@ -3,8 +3,8 @@ use std::sync::Arc;
 use relm4::ComponentSender;
 use tokio_util::sync::CancellationToken;
 use wayle_audio::{AudioService, core::device::input::InputDevice};
-use wayle_common::{watch, watch_cancellable};
 use wayle_config::schemas::modules::MicrophoneConfig;
+use wayle_widgets::{watch, watch_cancellable};
 
 use super::{MicrophoneModule, messages::MicrophoneCmd};
 

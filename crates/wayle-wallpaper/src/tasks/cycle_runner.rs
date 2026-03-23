@@ -4,7 +4,7 @@ use futures::{StreamExt, future::join_all};
 use tokio::{select, sync::mpsc};
 use tokio_util::sync::CancellationToken;
 use tracing::{info, warn};
-use wayle_common::Property;
+use wayle_core::Property;
 
 use super::{
     timer::CyclingTimer,

@@ -6,9 +6,8 @@ use std::sync::Arc;
 
 use gtk::prelude::*;
 use relm4::{gtk, prelude::*};
-use wayle_common::WatcherToken;
 use wayle_network::{NetworkService, types::states::NetworkStatus};
-use wayle_widgets::prelude::*;
+use wayle_widgets::{WatcherToken, prelude::*};
 
 use self::messages::{ActiveConnectionsCmd, ConnectionProgress, WifiState, WiredState};
 pub(crate) use self::messages::{ActiveConnectionsInit, ActiveConnectionsInput};

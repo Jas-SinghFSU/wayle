@@ -3,9 +3,9 @@ use std::sync::Arc;
 use futures::StreamExt;
 use relm4::ComponentSender;
 use tracing::warn;
-use wayle_common::{ConfigProperty, watch};
-use wayle_config::schemas::modules::WindowTitleConfig;
+use wayle_config::{ConfigProperty, schemas::modules::WindowTitleConfig};
 use wayle_hyprland::{HyprlandEvent, HyprlandService};
+use wayle_widgets::watch;
 
 use super::HyprlandWindowTitle;
 use crate::shell::bar::modules::window_title::WindowTitleCmd;

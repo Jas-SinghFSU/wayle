@@ -119,6 +119,7 @@ fn mapped_icon(app_name: &Option<String>) -> ResolvedIcon {
 }
 
 #[cfg(test)]
+#[allow(clippy::panic)]
 mod tests {
     use super::*;
 

@@ -1,9 +1,9 @@
 use schemars::{JsonSchema, schema_for};
 use serde::{Deserialize, Serialize};
-use wayle_common::ConfigProperty;
 use wayle_derive::wayle_config;
 
 use crate::{
+    ConfigProperty,
     docs::{ModuleInfo, ModuleInfoProvider},
     schemas::styling::{ColorValue, CssToken, ScaleFactor, Spacing},
 };

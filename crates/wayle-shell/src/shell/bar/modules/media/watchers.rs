@@ -2,9 +2,9 @@ use std::sync::Arc;
 
 use relm4::ComponentSender;
 use tokio_util::sync::CancellationToken;
-use wayle_common::{watch, watch_cancellable};
 use wayle_config::schemas::modules::{MediaConfig, MediaIconType};
 use wayle_media::{MediaService, core::player::Player};
+use wayle_widgets::{watch, watch_cancellable};
 
 use super::{MediaModule, messages::MediaCmd};
 

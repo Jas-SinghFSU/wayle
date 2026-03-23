@@ -4,7 +4,7 @@ use derive_more::Debug;
 use tokio::task::JoinHandle;
 use tokio_util::sync::CancellationToken;
 use tracing::{error, instrument};
-use wayle_common::Property;
+use wayle_core::Property;
 use wayle_traits::Reactive;
 use zbus::Connection;
 

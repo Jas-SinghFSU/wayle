@@ -7,9 +7,11 @@ use std::sync::Arc;
 
 use gtk::prelude::*;
 use relm4::{gtk, prelude::*};
-use wayle_common::WatcherToken;
 use wayle_sysinfo::SysinfoService;
-use wayle_widgets::primitives::progress_ring::{ProgressRing, ProgressRingInit, Size};
+use wayle_widgets::{
+    WatcherToken,
+    primitives::progress_ring::{ProgressRing, ProgressRingInit, Size},
+};
 
 use self::messages::SystemStatsCmd;
 pub(crate) use self::messages::{SystemStatsInit, SystemStatsInput};

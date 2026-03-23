@@ -8,11 +8,10 @@ use std::{
 use gtk::prelude::*;
 use gtk4_layer_shell::{KeyboardMode, LayerShell};
 use relm4::{gtk, prelude::*};
-use wayle_common::process::{self, ClickAction};
-use wayle_config::schemas::bar::Location;
+use wayle_config::{ClickAction, schemas::bar::Location};
 use wayle_widgets::prelude::{BarButton, BarButtonInput};
 
-use crate::shell::services::ShellServices;
+use crate::{process, shell::services::ShellServices};
 
 /// Shared dropdown instance for a dropdown name.
 ///

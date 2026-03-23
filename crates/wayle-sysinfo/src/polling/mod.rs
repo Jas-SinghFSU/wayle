@@ -6,7 +6,7 @@ pub(crate) mod network;
 use std::time::Duration;
 
 use tokio_util::sync::CancellationToken;
-use wayle_common::Property;
+use wayle_core::Property;
 
 use crate::types::{CpuData, DiskData, MemoryData, NetworkData};
 

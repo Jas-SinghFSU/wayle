@@ -1,4 +1,4 @@
-use wayle_common::Property;
+use wayle_core::Property;
 
 use crate::{
     Address, ClientData, ClientLocation, ClientSize, FocusHistoryId, FullscreenMode, MonitorId,

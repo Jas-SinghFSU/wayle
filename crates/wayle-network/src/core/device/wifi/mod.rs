@@ -10,9 +10,7 @@ use futures::{Stream, StreamExt};
 use tracing::warn;
 use types::{BitrateKbps, BootTimeMs, WifiProperties, WirelessCapabilities};
 pub(crate) use types::{DeviceWifiParams, LiveDeviceWifiParams};
-use wayle_common::{
-    Property, unwrap_i64_or, unwrap_path_or, unwrap_string, unwrap_u32, unwrap_vec,
-};
+use wayle_core::{Property, unwrap_dbus, unwrap_dbus_or};
 use wayle_traits::{ModelMonitoring, Reactive};
 use zbus::{Connection, zvariant::OwnedObjectPath};
 
@@ -162,17 +160,17 @@ impl DeviceWifi {
         );
 
         Ok(WifiProperties {
-            perm_hw_address: unwrap_string!(perm_hw_address, device_path),
-            mode: unwrap_u32!(mode, device_path),
-            bitrate: unwrap_u32!(bitrate, device_path),
-            access_points: unwrap_vec!(access_points, device_path),
-            active_access_point: unwrap_path_or!(
+            perm_hw_address: unwrap_dbus!(perm_hw_address, device_path),
+            mode: unwrap_dbus!(mode, device_path),
+            bitrate: unwrap_dbus!(bitrate, device_path),
+            access_points: unwrap_dbus!(access_points, device_path),
+            active_access_point: unwrap_dbus_or!(
                 active_access_point,
                 device_path,
                 OwnedObjectPath::default()
             ),
-            wireless_capabilities: unwrap_u32!(wireless_capabilities, device_path),
-            last_scan: unwrap_i64_or!(last_scan, -1, device_path),
+            wireless_capabilities: unwrap_dbus!(wireless_capabilities, device_path),
+            last_scan: unwrap_dbus_or!(last_scan, device_path, -1),
         })
     }
 
@@ -243,16 +241,16 @@ impl DeviceWifi {
 
         let device = Self {
             core: base,
-            perm_hw_address: Property::new(unwrap_string!(perm_hw_address)),
-            mode: Property::new(NM80211Mode::from_u32(unwrap_u32!(mode))),
-            bitrate: Property::new(unwrap_u32!(bitrate)),
-            access_points: Property::new(unwrap_vec!(access_points)),
-            active_access_point: Property::new(unwrap_path_or!(
+            perm_hw_address: Property::new(unwrap_dbus!(perm_hw_address)),
+            mode: Property::new(NM80211Mode::from_u32(unwrap_dbus!(mode))),
+            bitrate: Property::new(unwrap_dbus!(bitrate)),
+            access_points: Property::new(unwrap_dbus!(access_points)),
+            active_access_point: Property::new(unwrap_dbus_or!(
                 active_access_point,
                 OwnedObjectPath::default()
             )),
-            wireless_capabilities: Property::new(unwrap_u32!(wireless_capabilities)),
-            last_scan: Property::new(unwrap_i64_or!(last_scan, -1)),
+            wireless_capabilities: Property::new(unwrap_dbus!(wireless_capabilities)),
+            last_scan: Property::new(unwrap_dbus_or!(last_scan, -1)),
         };
 
         Ok(device)

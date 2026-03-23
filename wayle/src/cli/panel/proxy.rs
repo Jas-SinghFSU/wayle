@@ -3,7 +3,7 @@
 use std::time::Duration;
 
 use futures::StreamExt;
-use wayle_common::shell::{APP_ID, GtkActionsProxy};
+use wayle_ipc::shell::{APP_ID, GtkActionsProxy};
 use zbus::{Connection, fdo::DBusProxy};
 
 const SHUTDOWN_TIMEOUT: Duration = Duration::from_secs(5);

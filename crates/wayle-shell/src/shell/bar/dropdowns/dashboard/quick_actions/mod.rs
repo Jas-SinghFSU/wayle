@@ -7,10 +7,11 @@ use std::sync::Arc;
 use gtk::prelude::*;
 use relm4::{gtk, prelude::*};
 use wayle_bluetooth::BluetoothService;
-use wayle_common::{Property, watchers::WatcherToken};
+use wayle_core::Property;
 use wayle_network::NetworkService;
 use wayle_notification::NotificationService;
 use wayle_power_profiles::{PowerProfilesService, types::profile::PowerProfile};
+use wayle_widgets::WatcherToken;
 
 pub(crate) use self::messages::QuickActionsInit;
 use self::messages::{QuickActionsCmd, QuickActionsInput};

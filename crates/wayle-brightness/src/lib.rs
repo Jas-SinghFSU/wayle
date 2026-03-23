@@ -1,6 +1,6 @@
 //! Backlight control for internal displays.
 //!
-//! All state is exposed via [`Property`](wayle_common::Property) fields that
+//! All state is exposed via [`Property`](wayle_core::Property) fields that
 //! update automatically when brightness changes.
 //!
 //! # Quick Start

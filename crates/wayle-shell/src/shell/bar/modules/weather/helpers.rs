@@ -39,7 +39,7 @@ pub(super) fn format_label(ctx: &FormatContext<'_>) -> String {
         "high": high,
         "low": low,
     });
-    wayle_common::template::render(ctx.format, template_ctx).unwrap_or_default()
+    crate::template::render(ctx.format, template_ctx).unwrap_or_default()
 }
 
 pub(crate) fn condition_label(condition: WeatherCondition) -> String {

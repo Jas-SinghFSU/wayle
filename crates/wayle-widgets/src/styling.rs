@@ -6,8 +6,7 @@
 use std::borrow::Cow;
 
 use gtk4 as gtk;
-use wayle_common::ConfigProperty;
-use wayle_config::schemas::styling::ColorValue;
+use wayle_config::{ConfigProperty, schemas::styling::ColorValue};
 
 /// Trait for components that inject CSS custom properties at runtime.
 ///

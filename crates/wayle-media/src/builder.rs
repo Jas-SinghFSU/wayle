@@ -5,7 +5,7 @@ use std::{collections::HashMap, sync::Arc, time::Duration};
 use tokio::sync::RwLock;
 use tokio_util::sync::CancellationToken;
 use tracing::info;
-use wayle_common::Property;
+use wayle_core::Property;
 use wayle_traits::ServiceMonitoring;
 use zbus::Connection;
 

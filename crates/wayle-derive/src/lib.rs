@@ -114,7 +114,7 @@ pub fn derive_apply_config_layer(input: TokenStream) -> TokenStream {
         });
 
     let expanded = quote! {
-        impl wayle_common::ApplyConfigLayer for #name {
+        impl wayle_config::ApplyConfigLayer for #name {
             fn apply_config_layer(&self, value: &toml::Value, path: &str) {
                 if let toml::Value::Table(table) = value {
                     #(#field_updates)*
@@ -169,7 +169,7 @@ pub fn derive_apply_runtime_layer(input: TokenStream) -> TokenStream {
         });
 
     let expanded = quote! {
-        impl wayle_common::ApplyRuntimeLayer for #name {
+        impl wayle_config::ApplyRuntimeLayer for #name {
             fn apply_runtime_layer(&self, value: &toml::Value, path: &str) -> Result<(), String> {
                 if let toml::Value::Table(table) = value {
                     #(#field_updates)*
@@ -221,7 +221,7 @@ pub fn derive_extract_runtime_values(input: TokenStream) -> TokenStream {
         });
 
     let expanded = quote! {
-        impl wayle_common::ExtractRuntimeValues for #name {
+        impl wayle_config::ExtractRuntimeValues for #name {
             fn extract_runtime_values(&self) -> Option<toml::Value> {
                 let mut table = toml::map::Map::new();
                 #(#field_extractions)*
@@ -271,7 +271,7 @@ pub fn derive_reset_config_layer(input: TokenStream) -> TokenStream {
         });
 
     let expanded = quote! {
-        impl wayle_common::ResetConfigLayer for #name {
+        impl wayle_config::ResetConfigLayer for #name {
             fn reset_config_layer(&self) {
                 #(#field_resets)*
             }
@@ -315,7 +315,7 @@ pub fn derive_reset_runtime_layer(input: TokenStream) -> TokenStream {
         });
 
     let expanded = quote! {
-        impl wayle_common::ResetRuntimeLayer for #name {
+        impl wayle_config::ResetRuntimeLayer for #name {
             fn reset_runtime_layer(&self) {
                 #(#field_resets)*
             }
@@ -361,7 +361,7 @@ pub fn derive_clear_runtime_by_path(input: TokenStream) -> TokenStream {
         });
 
     let expanded = quote! {
-        impl wayle_common::ClearRuntimeByPath for #name {
+        impl wayle_config::ClearRuntimeByPath for #name {
             fn clear_runtime_by_path(&self, path: &str) -> Result<bool, String> {
                 let (segment, rest) = match path.split_once('.') {
                     Some((seg, rest)) => (seg, rest),
@@ -414,7 +414,7 @@ pub fn derive_commit_config_reload(input: TokenStream) -> TokenStream {
         });
 
     let expanded = quote! {
-        impl wayle_common::CommitConfigReload for #name {
+        impl wayle_config::CommitConfigReload for #name {
             fn commit_config_reload(&self) {
                 #(#field_commits)*
             }
@@ -445,7 +445,7 @@ pub fn derive_commit_config_reload(input: TokenStream) -> TokenStream {
 /// # Example
 ///
 /// ```ignore
-/// use wayle_common::{Property, SubscribeChanges};
+/// use wayle_config::{Property, SubscribeChanges};
 /// use wayle_derive::SubscribeChanges;
 ///
 /// #[derive(SubscribeChanges)]
@@ -484,7 +484,7 @@ pub fn derive_subscribe_changes(input: TokenStream) -> TokenStream {
     };
 
     let expanded = quote! {
-        impl wayle_common::SubscribeChanges for #name {
+        impl wayle_config::SubscribeChanges for #name {
             fn subscribe_changes(&self, tx: tokio::sync::mpsc::UnboundedSender<()>) {
                 #subscribe_fields
             }
@@ -553,7 +553,7 @@ pub fn derive_subscribe_changes(input: TokenStream) -> TokenStream {
 /// # Example
 ///
 /// ```ignore
-/// use wayle_common::ConfigProperty;
+/// use wayle_config::ConfigProperty;
 /// use wayle_derive::wayle_config;
 ///
 /// // Standard config
@@ -750,7 +750,7 @@ fn process_fields(fields: &FieldsNamed) -> syn::Result<ProcessedFields> {
         struct_fields.push(struct_field);
 
         let initializer = match default_expr {
-            Some(expr) => quote! { #field_name: wayle_common::ConfigProperty::new(#expr) },
+            Some(expr) => quote! { #field_name: wayle_config::ConfigProperty::new(#expr) },
             None => quote! { #field_name: Default::default() },
         };
         default_initializers.push(initializer);

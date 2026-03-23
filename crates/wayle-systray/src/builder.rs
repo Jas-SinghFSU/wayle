@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex};
 use tokio::sync::broadcast;
 use tokio_util::sync::CancellationToken;
 use tracing::{info, instrument};
-use wayle_common::Property;
+use wayle_core::Property;
 use wayle_traits::ServiceMonitoring;
 use zbus::Connection;
 

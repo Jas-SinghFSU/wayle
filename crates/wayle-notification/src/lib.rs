@@ -8,7 +8,7 @@
 //!
 //! # Reactive Properties
 //!
-//! Service state is exposed through [`Property`](wayle_common::Property) fields:
+//! Service state is exposed through [`Property`](wayle_core::Property) fields:
 //! - `.get()` returns a snapshot of the current value
 //! - `.watch()` returns a stream that yields on changes
 //!
@@ -78,6 +78,7 @@ pub(crate) mod daemon;
 /// Error types.
 pub mod error;
 pub(crate) mod events;
+mod glob;
 pub(crate) mod image_cache;
 pub(crate) mod monitoring;
 pub(crate) mod persistence;

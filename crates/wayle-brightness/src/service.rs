@@ -4,7 +4,7 @@ use derive_more::Debug;
 use tokio::task::JoinHandle;
 use tokio_util::sync::CancellationToken;
 use tracing::instrument;
-use wayle_common::Property;
+use wayle_core::Property;
 
 use crate::{
     backend::types::{CommandSender, EventSender},

@@ -9,7 +9,7 @@
 //!
 //! # Reactive Pattern
 //!
-//! All tray item properties use [`Property<T>`](wayle_common::Property):
+//! All tray item properties use [`Property<T>`](wayle_core::Property):
 //! - `.get()` returns the current value snapshot
 //! - `.watch()` returns a stream of value changes
 //!

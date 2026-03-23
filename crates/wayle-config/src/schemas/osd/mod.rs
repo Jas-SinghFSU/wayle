@@ -1,10 +1,9 @@
 mod types;
 
 pub use types::{OsdMonitor, OsdPosition};
-use wayle_common::ConfigProperty;
 use wayle_derive::wayle_config;
 
-use crate::schemas::styling::Spacing;
+use crate::{ConfigProperty, schemas::styling::Spacing};
 
 /// On-screen display configuration.
 #[wayle_config]

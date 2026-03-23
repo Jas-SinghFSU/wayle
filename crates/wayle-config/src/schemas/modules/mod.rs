@@ -60,11 +60,12 @@ pub use storage::StorageConfig;
 pub use systray::{SystrayConfig, TrayItemOverride};
 pub use types::TimeFormat;
 pub use volume::{AppIconSource, VolumeConfig};
-use wayle_common::ConfigProperty;
 use wayle_derive::wayle_config;
 pub use weather::{TemperatureUnit, WeatherConfig, WeatherProvider};
 pub use window_title::{BUILTIN_MAPPINGS as WINDOW_TITLE_BUILTIN_MAPPINGS, WindowTitleConfig};
 pub use world_clock::WorldClockConfig;
+
+use crate::ConfigProperty;
 
 /// Configuration for all available Wayle modules.
 #[wayle_config]

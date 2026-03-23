@@ -1,8 +1,6 @@
 use std::sync::Arc;
 
-use wayle_common::glob::matches;
-
-use crate::{core::player::Player, types::PlaybackState};
+use crate::{core::player::Player, glob::matches, types::PlaybackState};
 
 /// Context for player selection decisions.
 pub struct SelectionContext<'a> {

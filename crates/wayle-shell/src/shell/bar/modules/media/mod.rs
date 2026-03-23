@@ -8,14 +8,17 @@ use std::{rc::Rc, sync::Arc};
 
 use gtk::prelude::WidgetExt;
 use relm4::prelude::*;
-use wayle_common::{ConfigProperty, WatcherToken};
 use wayle_config::{
-    ConfigService,
+    ConfigProperty, ConfigService,
     schemas::{modules::MediaIconType, styling::CssToken},
 };
 use wayle_media::{MediaService, types::PlaybackState};
-use wayle_widgets::prelude::{
-    BarButton, BarButtonBehavior, BarButtonColors, BarButtonInit, BarButtonInput, BarButtonOutput,
+use wayle_widgets::{
+    WatcherToken,
+    prelude::{
+        BarButton, BarButtonBehavior, BarButtonColors, BarButtonInit, BarButtonInput,
+        BarButtonOutput,
+    },
 };
 
 pub(crate) use self::{

@@ -1,4 +1,4 @@
-use wayle_common::idle_inhibit::IdleInhibitProxy;
+use wayle_ipc::idle_inhibit::IdleInhibitProxy;
 use zbus::{Connection, Error as ZbusError};
 
 use crate::cli::dbus;

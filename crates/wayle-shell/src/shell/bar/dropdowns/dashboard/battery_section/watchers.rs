@@ -2,8 +2,9 @@ use std::sync::Arc;
 
 use relm4::ComponentSender;
 use wayle_battery::{BatteryService, types::DeviceState};
-use wayle_common::{Property, watch};
+use wayle_core::Property;
 use wayle_power_profiles::PowerProfilesService;
+use wayle_widgets::watch;
 
 use super::{BatterySection, messages::BatterySectionCmd};
 
@@ -65,7 +66,7 @@ pub(super) fn spawn_active_profile_watcher(
 ) {
     let active_profile = service.power_profiles.active_profile.clone();
 
-    wayle_common::watch_cancellable!(sender, token, [active_profile.watch()], |out| {
+    wayle_widgets::watch_cancellable!(sender, token, [active_profile.watch()], |out| {
         let _ = out.send(BatterySectionCmd::PowerProfileChanged(active_profile.get()));
     });
 }

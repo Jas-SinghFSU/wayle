@@ -11,8 +11,8 @@ use relm4::{gtk, prelude::*};
 use tracing::debug;
 use wayle_audio::AudioService;
 use wayle_brightness::BrightnessService;
-use wayle_common::WatcherToken;
 use wayle_config::ConfigService;
+use wayle_widgets::WatcherToken;
 
 pub(crate) use self::messages::OsdInit;
 use self::{

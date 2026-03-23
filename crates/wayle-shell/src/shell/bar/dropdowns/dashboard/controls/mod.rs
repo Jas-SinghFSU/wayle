@@ -6,8 +6,10 @@ use std::sync::Arc;
 use gtk::{glib, prelude::*};
 use relm4::{gtk, prelude::*};
 use wayle_audio::{AudioService, volume::types::Volume};
-use wayle_common::WatcherToken;
-use wayle_widgets::prelude::{DebouncedSlider, GhostIconButton};
+use wayle_widgets::{
+    WatcherToken,
+    prelude::{DebouncedSlider, GhostIconButton},
+};
 
 pub(crate) use self::messages::ControlsInit;
 use self::messages::{ControlsCmd, ControlsInput};

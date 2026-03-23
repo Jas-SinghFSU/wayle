@@ -9,7 +9,7 @@ use derive_more::Debug;
 use futures::stream::Stream;
 use tokio_util::sync::CancellationToken;
 pub(crate) use types::{LiveTrackMetadataParams, TrackMetadataParams, TrackProperties};
-use wayle_common::{Property, watch_all};
+use wayle_core::{Property, watch_all};
 use wayle_traits::{ModelMonitoring, Reactive};
 use zbus::zvariant::OwnedValue;
 

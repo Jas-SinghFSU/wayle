@@ -9,7 +9,7 @@ use derive_more::Debug;
 use futures::{Stream, StreamExt};
 use tokio_util::sync::CancellationToken;
 pub(crate) use types::{ConnectionSettingsParams, LiveConnectionSettingsParams};
-use wayle_common::{Property, unwrap_bool, unwrap_string, unwrap_u32};
+use wayle_core::{Property, unwrap_dbus};
 use wayle_traits::{ModelMonitoring, Reactive};
 use zbus::{
     Connection,
@@ -277,9 +277,9 @@ impl ConnectionSettings {
         };
 
         Ok(SettingsConnectionProperties {
-            unsaved: unwrap_bool!(unsaved, path),
-            flags: unwrap_u32!(flags, path),
-            filename: unwrap_string!(filename, path),
+            unsaved: unwrap_dbus!(unsaved, path),
+            flags: unwrap_dbus!(flags, path),
+            filename: unwrap_dbus!(filename, path),
             id,
             uuid,
             connection_type,

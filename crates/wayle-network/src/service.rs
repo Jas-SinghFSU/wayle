@@ -4,7 +4,7 @@ use derive_more::Debug;
 use futures::{Stream, StreamExt};
 use tokio_util::sync::CancellationToken;
 use tracing::{instrument, warn};
-use wayle_common::Property;
+use wayle_core::Property;
 use wayle_traits::{Reactive, ServiceMonitoring, Static};
 use zbus::{Connection, zvariant::OwnedObjectPath};
 

@@ -138,8 +138,8 @@
 //! [`default_input`]: AudioService::default_input
 //! [`playback_streams`]: AudioService::playback_streams
 //! [`recording_streams`]: AudioService::recording_streams
-//! [`Property`]: wayle_common::Property
-//! [`Property<T>`]: wayle_common::Property
+//! [`Property`]: wayle_core::Property
+//! [`Property<T>`]: wayle_core::Property
 //! [`OutputDevice`]: core::device::output::OutputDevice
 //! [`InputDevice`]: core::device::input::InputDevice
 //! [`AudioStream`]: core::stream::AudioStream

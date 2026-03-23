@@ -1,9 +1,9 @@
 use schemars::{JsonSchema, schema_for};
 use serde::{Deserialize, Serialize};
-use wayle_common::{ConfigProperty, process::ClickAction};
 use wayle_derive::wayle_config;
 
 use crate::{
+    ClickAction, ConfigProperty,
     docs::{ModuleInfo, ModuleInfoProvider},
     schemas::{
         modules::TimeFormat,

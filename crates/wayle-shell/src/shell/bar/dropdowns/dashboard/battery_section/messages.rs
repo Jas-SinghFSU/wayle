@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use wayle_battery::{BatteryService, types::DeviceState};
-use wayle_common::Property;
+use wayle_core::Property;
 use wayle_power_profiles::{PowerProfilesService, types::profile::PowerProfile};
 
 pub(crate) struct BatterySectionInit {

@@ -6,8 +6,8 @@ use std::{
 use relm4::ComponentSender;
 use tokio::time::interval;
 use tokio_stream::wrappers::IntervalStream;
-use wayle_common::watch;
 use wayle_config::schemas::modules::WorldClockConfig;
+use wayle_widgets::watch;
 
 use super::{WorldClockModule, helpers::format_world_clock, messages::WorldClockCmd};
 

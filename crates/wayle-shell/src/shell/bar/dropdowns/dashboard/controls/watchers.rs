@@ -3,7 +3,7 @@ use std::sync::Arc;
 use relm4::ComponentSender;
 use tokio_util::sync::CancellationToken;
 use wayle_audio::AudioService;
-use wayle_common::{watch, watch_cancellable};
+use wayle_widgets::{watch, watch_cancellable};
 
 use super::{ControlsSection, messages::ControlsCmd};
 

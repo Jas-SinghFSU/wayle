@@ -7,7 +7,7 @@ use std::sync::Arc;
 use tokio::sync::broadcast::Sender;
 use tokio_util::sync::CancellationToken;
 use tracing::instrument;
-use wayle_common::Property;
+use wayle_core::Property;
 use wayle_traits::ServiceMonitoring;
 
 use crate::{

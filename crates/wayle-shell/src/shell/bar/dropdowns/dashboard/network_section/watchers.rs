@@ -2,7 +2,6 @@ use std::sync::Arc;
 
 use relm4::ComponentSender;
 use tokio_util::sync::CancellationToken;
-use wayle_common::watch_cancellable;
 use wayle_network::{
     NetworkService,
     types::{connectivity::ConnectionType, states::NetworkStatus},
@@ -10,6 +9,7 @@ use wayle_network::{
     wired::Wired,
 };
 use wayle_sysinfo::SysinfoService;
+use wayle_widgets::watch_cancellable;
 
 use super::{NetworkSection, helpers, messages::NetworkSectionCmd};
 

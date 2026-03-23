@@ -19,7 +19,7 @@
 //!
 //! # Reactive Properties
 //!
-//! All device properties are wrapped in [`Property<T>`](wayle_common::Property):
+//! All device properties are wrapped in [`Property<T>`](wayle_core::Property):
 //! - **Snapshot**: `.get()` returns the current value
 //! - **Stream**: `.watch()` yields on every change
 //!

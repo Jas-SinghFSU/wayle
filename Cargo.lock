@@ -4436,10 +4436,11 @@ dependencies = [
  "wayle-battery",
  "wayle-bluetooth",
  "wayle-cava",
- "wayle-common",
  "wayle-config",
+ "wayle-core",
  "wayle-hyprland",
  "wayle-icons",
+ "wayle-ipc",
  "wayle-media",
  "wayle-network",
  "wayle-notification",
@@ -4465,7 +4466,7 @@ dependencies = [
  "tokio-stream",
  "tokio-util",
  "tracing",
- "wayle-common",
+ "wayle-core",
  "wayle-traits",
  "zbus",
 ]
@@ -4483,7 +4484,7 @@ dependencies = [
  "tokio-stream",
  "tokio-util",
  "tracing",
- "wayle-common",
+ "wayle-core",
  "wayle-traits",
  "zbus",
 ]
@@ -4500,7 +4501,7 @@ dependencies = [
  "tokio-stream",
  "tokio-util",
  "tracing",
- "wayle-common",
+ "wayle-core",
  "wayle-traits",
  "zbus",
 ]
@@ -4517,7 +4518,7 @@ dependencies = [
  "tokio-util",
  "tracing",
  "udev",
- "wayle-common",
+ "wayle-core",
  "wayle-traits",
  "zbus",
 ]
@@ -4536,28 +4537,8 @@ dependencies = [
  "tokio",
  "tokio-util",
  "tracing",
- "wayle-common",
+ "wayle-core",
  "wayle-traits",
-]
-
-[[package]]
-name = "wayle-common"
-version = "0.1.0"
-dependencies = [
- "futures",
- "minijinja",
- "owo-colors",
- "schemars",
- "serde",
- "serde_json",
- "thiserror 2.0.18",
- "tokio",
- "tokio-stream",
- "tokio-util",
- "toml 0.9.11+spec-1.1.0",
- "tracing",
- "wildcard",
- "zbus",
 ]
 
 [[package]]
@@ -4565,18 +4546,36 @@ name = "wayle-config"
 version = "0.1.0"
 dependencies = [
  "dotenvy",
+ "futures",
  "glob",
  "notify",
+ "owo-colors",
  "schemars",
  "serde",
  "serde_json",
  "serde_json_path",
  "thiserror 2.0.18",
  "tokio",
+ "tokio-stream",
  "toml 0.9.11+spec-1.1.0",
  "tracing",
- "wayle-common",
+ "wayle-core",
  "wayle-derive",
+]
+
+[[package]]
+name = "wayle-core"
+version = "0.1.0"
+dependencies = [
+ "futures",
+ "schemars",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tokio-stream",
+ "toml 0.9.11+spec-1.1.0",
+ "tracing",
+ "zbus",
 ]
 
 [[package]]
@@ -4588,7 +4587,7 @@ dependencies = [
  "syn",
  "tokio",
  "toml 0.9.11+spec-1.1.0",
- "wayle-common",
+ "wayle-config",
 ]
 
 [[package]]
@@ -4605,7 +4604,7 @@ dependencies = [
  "tokio-stream",
  "tokio-util",
  "tracing",
- "wayle-common",
+ "wayle-core",
  "wayle-traits",
 ]
 
@@ -4646,6 +4645,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "wayle-ipc"
+version = "0.1.0"
+dependencies = [
+ "zbus",
+]
+
+[[package]]
 name = "wayle-media"
 version = "0.1.0"
 dependencies = [
@@ -4661,8 +4667,9 @@ dependencies = [
  "tokio-stream",
  "tokio-util",
  "tracing",
- "wayle-common",
+ "wayle-core",
  "wayle-traits",
+ "wildcard",
  "zbus",
 ]
 
@@ -4680,7 +4687,7 @@ dependencies = [
  "tokio-stream",
  "tokio-util",
  "tracing",
- "wayle-common",
+ "wayle-core",
  "wayle-traits",
  "zbus",
 ]
@@ -4702,8 +4709,9 @@ dependencies = [
  "tokio-stream",
  "tokio-util",
  "tracing",
- "wayle-common",
+ "wayle-core",
  "wayle-traits",
+ "wildcard",
  "zbus",
 ]
 
@@ -4720,7 +4728,7 @@ dependencies = [
  "tokio-stream",
  "tokio-util",
  "tracing",
- "wayle-common",
+ "wayle-core",
  "wayle-traits",
  "zbus",
 ]
@@ -4741,6 +4749,7 @@ dependencies = [
  "i18n-embed",
  "i18n-embed-fl",
  "indicatif",
+ "minijinja",
  "notify",
  "relm4",
  "rust-embed",
@@ -4758,11 +4767,12 @@ dependencies = [
  "wayle-bluetooth",
  "wayle-brightness",
  "wayle-cava",
- "wayle-common",
  "wayle-config",
+ "wayle-core",
  "wayle-hyprland",
  "wayle-icons",
  "wayle-idle-inhibit",
+ "wayle-ipc",
  "wayle-media",
  "wayle-network",
  "wayle-notification",
@@ -4773,6 +4783,7 @@ dependencies = [
  "wayle-wallpaper",
  "wayle-weather",
  "wayle-widgets",
+ "wildcard",
  "zbus",
 ]
 
@@ -4788,7 +4799,6 @@ dependencies = [
  "thiserror 2.0.18",
  "tokio",
  "tracing",
- "wayle-common",
  "wayle-config",
 ]
 
@@ -4803,7 +4813,7 @@ dependencies = [
  "tokio",
  "tokio-util",
  "tracing",
- "wayle-common",
+ "wayle-core",
 ]
 
 [[package]]
@@ -4824,7 +4834,7 @@ dependencies = [
  "tokio-stream",
  "tokio-util",
  "tracing",
- "wayle-common",
+ "wayle-core",
  "wayle-traits",
  "zbus",
 ]
@@ -4848,8 +4858,8 @@ dependencies = [
  "tokio-stream",
  "tokio-util",
  "tracing",
- "wayle-common",
  "wayle-config",
+ "wayle-core",
  "wayle-traits",
  "zbus",
 ]
@@ -4868,7 +4878,7 @@ dependencies = [
  "tokio-stream",
  "tokio-util",
  "tracing",
- "wayle-common",
+ "wayle-core",
  "wayle-traits",
 ]
 
@@ -4882,9 +4892,11 @@ dependencies = [
  "gtk4",
  "relm4",
  "tokio",
+ "tokio-stream",
+ "tokio-util",
  "tracing",
- "wayle-common",
  "wayle-config",
+ "wayle-core",
 ]
 
 [[package]]

@@ -1,21 +1,16 @@
-#[cfg(feature = "schema")]
-use std::borrow::Cow;
-use std::{fmt::Debug, sync::RwLock};
+use std::{borrow::Cow, fmt::Debug, sync::RwLock};
 
 use futures::{Stream, StreamExt};
-#[cfg(feature = "schema")]
 use schemars::{JsonSchema, Schema, SchemaGenerator};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use tokio::sync::mpsc;
+use wayle_core::Property;
 
 use super::{
-    Property,
-    traits::{
-        ApplyConfigLayer, ApplyRuntimeLayer, ClearRuntimeByPath, CommitConfigReload,
-        ExtractRuntimeValues, ResetConfigLayer, ResetRuntimeLayer, SubscribeChanges,
-    },
+    ApplyConfigLayer, ApplyRuntimeLayer, ClearRuntimeByPath, CommitConfigReload,
+    ExtractRuntimeValues, ResetConfigLayer, ResetRuntimeLayer, SubscribeChanges,
 };
-use crate::Diagnostic;
+use crate::diagnostic::Diagnostic;
 
 fn format_toml_value(value: &toml::Value) -> String {
     toml::to_string_pretty(value)
@@ -207,7 +202,6 @@ impl<'de, T: Clone + Send + Sync + PartialEq + Deserialize<'de> + 'static> Deser
     }
 }
 
-#[cfg(feature = "schema")]
 impl<T: Clone + Send + Sync + PartialEq + JsonSchema + 'static> JsonSchema for ConfigProperty<T> {
     fn schema_name() -> Cow<'static, str> {
         T::schema_name()

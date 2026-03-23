@@ -18,7 +18,6 @@ serde_json.workspace = true
 thiserror.workspace = true
 tokio.workspace = true
 tracing.workspace = true
-wayle-common.workspace = true
 wayle-config = { path = "../wayle-config" }
 
 [dev-dependencies]

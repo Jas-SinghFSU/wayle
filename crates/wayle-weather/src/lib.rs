@@ -64,7 +64,7 @@
 //!
 //! # Reactive Properties
 //!
-//! The `weather` field is a [`Property<Option<Arc<Weather>>>`](wayle_common::Property):
+//! The `weather` field is a [`Property<Option<Arc<Weather>>>`](wayle_core::Property):
 //! - `.get()` - Current value snapshot
 //! - `.watch()` - Stream yielding on changes
 //!

@@ -85,7 +85,7 @@
 //!
 //! # Reactive Properties
 //!
-//! All fields are [`Property<T>`](wayle_common::Property):
+//! All fields are [`Property<T>`](wayle_core::Property):
 //! - `.get()` - Current value snapshot
 //! - `.watch()` - Stream yielding on changes
 //!
@@ -108,6 +108,7 @@ mod builder;
 pub mod core;
 mod dbus;
 mod error;
+mod glob;
 mod monitoring;
 mod proxy;
 mod selection;

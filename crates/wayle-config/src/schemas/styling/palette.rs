@@ -1,8 +1,7 @@
-use wayle_common::ConfigProperty;
 use wayle_derive::wayle_config;
 
 use super::HexColor;
-use crate::infrastructure::themes::palettes::wayle_theme;
+use crate::{ConfigProperty, infrastructure::themes::palettes::wayle_theme};
 
 fn hex(s: &str) -> HexColor {
     HexColor::new(s).unwrap_or_else(|_| HexColor::new(wayle_theme::RED).unwrap_or_default())

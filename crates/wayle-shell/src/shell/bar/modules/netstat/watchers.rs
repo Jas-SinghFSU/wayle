@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
 use relm4::ComponentSender;
-use wayle_common::watch;
 use wayle_config::schemas::modules::NetstatConfig;
 use wayle_sysinfo::SysinfoService;
+use wayle_widgets::watch;
 
 use super::{NetstatModule, helpers, messages::NetstatCmd};
 

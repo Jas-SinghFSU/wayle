@@ -16,9 +16,8 @@ use gtk4::{
     CssProvider, STYLE_PROVIDER_PRIORITY_USER, glib, style_context_add_provider_for_display,
 };
 use relm4::{gtk, prelude::*};
-use wayle_common::WatcherToken;
 use wayle_media::{core::player::Player, types::*};
-use wayle_widgets::prelude::*;
+use wayle_widgets::{WatcherToken, prelude::*};
 
 pub(crate) use self::messages::*;
 use crate::{i18n::t, shell::bar::dropdowns::media::helpers};

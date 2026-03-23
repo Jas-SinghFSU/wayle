@@ -1,6 +1,6 @@
 use relm4::ComponentSender;
-use wayle_common::watch;
 use wayle_config::schemas::modules::PowerConfig;
+use wayle_widgets::watch;
 
 use super::{PowerModule, messages::PowerCmd};
 

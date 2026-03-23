@@ -7,7 +7,7 @@ use chrono::{DateTime, Utc};
 use tokio::sync::broadcast;
 use tokio_util::sync::CancellationToken;
 use tracing::{error, info};
-use wayle_common::Property;
+use wayle_core::Property;
 use wayle_traits::ServiceMonitoring;
 use zbus::{Connection, object_server::Interface};
 

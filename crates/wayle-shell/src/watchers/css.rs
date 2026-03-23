@@ -5,9 +5,9 @@ use futures::{
     stream::{self, BoxStream},
 };
 use relm4::ComponentSender;
-use wayle_common::{watch, watchers::changes_stream};
 use wayle_config::schemas::styling::ThemeProvider;
 use wayle_styling::{STATIC_CSS, theme_css};
+use wayle_widgets::{watch, watchers::changes_stream};
 
 use crate::shell::{Shell, ShellCmd, ShellInput, ShellServices};
 

@@ -5,12 +5,12 @@ use notify::{
 };
 use tokio::sync::{mpsc, watch};
 use tracing::{debug, error, info, instrument};
-use wayle_common::{
-    ApplyConfigLayer, ApplyRuntimeLayer, CommitConfigReload, ResetConfigLayer, ResetRuntimeLayer,
-};
 
 use super::{error::Error, paths::ConfigPaths, secrets, service::ConfigService};
-use crate::{Config, infrastructure::themes::utils::load_themes};
+use crate::{
+    ApplyConfigLayer, ApplyRuntimeLayer, CommitConfigReload, Config, ResetConfigLayer,
+    ResetRuntimeLayer, infrastructure::themes::utils::load_themes,
+};
 
 /// Hot-reloads configuration files on disk changes.
 ///

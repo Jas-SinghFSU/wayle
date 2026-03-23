@@ -4,8 +4,9 @@ pub use types::{
     CyclingInterval, CyclingMode, FitMode, MonitorWallpaperConfig, TransitionDuration,
     TransitionFps, TransitionType,
 };
-use wayle_common::ConfigProperty;
 use wayle_derive::wayle_config;
+
+use crate::ConfigProperty;
 
 /// Wallpaper management configuration.
 #[wayle_config]
