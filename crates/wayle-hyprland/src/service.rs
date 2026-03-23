@@ -44,7 +44,7 @@ impl HyprlandService {
         let (hyprland_tx, _) = broadcast::channel(100);
 
         let cancellation_token = CancellationToken::new();
-        let hypr_messenger = HyprMessenger::new()?;
+        let hypr_messenger = HyprMessenger::from_env()?;
 
         events::subscribe(event_tx.clone(), cancellation_token.clone()).await?;
 
