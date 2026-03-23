@@ -116,24 +116,26 @@ fn handle_poll_flags(
     event_tx: &EventSender,
     poll_flags: PollFlags,
 ) -> Result<(), Error> {
+    // sysfs sets POLLERR alongside POLLPRI for normal changes,
+    // so check POLLPRI first to avoid mistaking a change for removal.
+    if poll_flags.contains(PollFlags::POLLPRI) {
+        if let Err(err) = file.seek(SeekFrom::Start(0)) {
+            warn!(device = name, error = %err, "seek failed on brightness file");
+            return Ok(());
+        }
+
+        let _ = file.read_to_string(&mut String::new());
+
+        emit_brightness_change(name, event_tx);
+        return Ok(());
+    }
+
     if poll_flags.contains(PollFlags::POLLERR) {
         debug!(device = name, "POLLERR: device likely removed");
         let _ = event_tx.send(BrightnessEvent::DeviceRemoved(name.to_owned()));
         return Err(Error::NoDevices);
     }
 
-    if !poll_flags.contains(PollFlags::POLLPRI) {
-        return Ok(());
-    }
-
-    if let Err(err) = file.seek(SeekFrom::Start(0)) {
-        warn!(device = name, error = %err, "seek failed on brightness file");
-        return Ok(());
-    }
-
-    let _ = file.read_to_string(&mut String::new());
-
-    emit_brightness_change(name, event_tx);
     Ok(())
 }
 
