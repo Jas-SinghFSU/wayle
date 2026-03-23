@@ -99,7 +99,7 @@
 //! - **Path:** `/com/wayle/Wallpaper`
 //! - **Interface:** `com.wayle.Wallpaper1`
 //!
-//! See [`dbus.md`](https://github.com/Jas-SinghFSU/wayle/blob/master/crates/wayle-wallpaper/dbus.md) for the full interface specification.
+//! See [`dbus.md`](https://github.com/wayle-rs/wayle/blob/master/crates/wayle-wallpaper/dbus.md) for the full interface specification.
 
 mod backend;
 mod builder;

@@ -99,7 +99,7 @@
 //! - **Path:** `/com/wayle/PowerProfiles`
 //! - **Interface:** `com.wayle.PowerProfiles1`
 //!
-//! See [`dbus.md`](https://github.com/Jas-SinghFSU/wayle/blob/master/crates/wayle-power-profiles/dbus.md) for the full interface specification.
+//! See [`dbus.md`](https://github.com/wayle-rs/wayle/blob/master/crates/wayle-power-profiles/dbus.md) for the full interface specification.
 //!
 //! # Control Methods
 //!

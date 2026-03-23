@@ -81,7 +81,7 @@
 //! - **Path:** `/com/wayle/Media`
 //! - **Interface:** `com.wayle.Media1`
 //!
-//! See [`dbus.md`](https://github.com/Jas-SinghFSU/wayle/blob/master/crates/wayle-media/dbus.md) for the full interface specification.
+//! See [`dbus.md`](https://github.com/wayle-rs/wayle/blob/master/crates/wayle-media/dbus.md) for the full interface specification.
 //!
 //! # Reactive Properties
 //!

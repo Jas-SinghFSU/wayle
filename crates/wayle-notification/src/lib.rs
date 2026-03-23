@@ -69,7 +69,7 @@
 //! - **Path:** `/com/wayle/Notifications`
 //! - **Interface:** `com.wayle.Notifications1`
 //!
-//! See [`dbus.md`](https://github.com/Jas-SinghFSU/wayle/blob/master/crates/wayle-notification/dbus.md) for the full interface specification.
+//! See [`dbus.md`](https://github.com/wayle-rs/wayle/blob/master/crates/wayle-notification/dbus.md) for the full interface specification.
 
 mod builder;
 /// Notification data structures and operations.
