@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use wayle_bluetooth::BluetoothService;
-use wayle_common::Property;
+use wayle_core::Property;
 use wayle_network::NetworkService;
 use wayle_notification::NotificationService;
 use wayle_power_profiles::PowerProfilesService;

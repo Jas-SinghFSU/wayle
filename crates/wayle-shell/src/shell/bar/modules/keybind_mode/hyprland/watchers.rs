@@ -3,9 +3,9 @@ use std::sync::Arc;
 use futures::StreamExt;
 use relm4::ComponentSender;
 use tracing::warn;
-use wayle_common::watch;
 use wayle_config::schemas::modules::KeybindModeConfig;
 use wayle_hyprland::{HyprlandEvent, HyprlandService};
+use wayle_widgets::watch;
 
 use super::HyprlandKeybindMode;
 use crate::shell::bar::modules::keybind_mode::messages::KeybindModeCmd;
@@ -41,7 +41,7 @@ fn spawn_mode_watcher(
 
 async fn watch_mode_events(
     hyprland: Arc<HyprlandService>,
-    format: wayle_common::ConfigProperty<String>,
+    format: wayle_config::ConfigProperty<String>,
     out: relm4::Sender<KeybindModeCmd>,
     shutdown: relm4::ShutdownReceiver,
 ) {

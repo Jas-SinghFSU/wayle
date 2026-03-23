@@ -1,11 +1,13 @@
 //! CSS variable generation for bar button styling.
 
 use relm4::{ComponentSender, gtk};
-use wayle_common::watch;
 use wayle_config::schemas::styling::ThemeProvider;
 
 use super::component::{BarButton, BarButtonCmd};
-use crate::styling::{InlineStyling, resolve_color};
+use crate::{
+    styling::{InlineStyling, resolve_color},
+    watch,
+};
 
 impl InlineStyling for BarButton {
     type Sender = ComponentSender<Self>;

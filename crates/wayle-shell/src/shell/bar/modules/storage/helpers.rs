@@ -19,7 +19,7 @@ pub(super) fn format_label(format: &str, disk: &DiskData) -> String {
         "free_auto": auto(disk.available_bytes),
         "filesystem": &disk.filesystem,
     });
-    wayle_common::template::render(format, ctx).unwrap_or_default()
+    crate::template::render(format, ctx).unwrap_or_default()
 }
 
 fn tib(bytes: u64) -> String {

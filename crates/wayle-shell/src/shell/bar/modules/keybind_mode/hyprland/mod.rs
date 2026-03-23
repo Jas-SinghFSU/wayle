@@ -4,8 +4,7 @@ mod watchers;
 use std::{rc::Rc, sync::Arc};
 
 use relm4::{gtk::prelude::*, prelude::*};
-use wayle_common::ConfigProperty;
-use wayle_config::{ConfigService, schemas::styling::CssToken};
+use wayle_config::{ConfigProperty, ConfigService, schemas::styling::CssToken};
 use wayle_widgets::{
     prelude::{
         BarButton, BarButtonBehavior, BarButtonColors, BarButtonInit, BarButtonInput,

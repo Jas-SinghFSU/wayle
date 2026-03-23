@@ -2,9 +2,9 @@ use std::sync::Arc;
 
 use tokio::sync::mpsc;
 use tracing::{debug, error, info, instrument};
-use wayle_common::SubscribeChanges;
 
 use super::{error::Error, service::ConfigService};
+use crate::SubscribeChanges;
 
 /// Auto-saves configuration changes to disk.
 ///

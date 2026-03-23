@@ -4,14 +4,16 @@ members = [
     "crates/wayle-audio",
     "crates/wayle-battery",
     "crates/wayle-bluetooth",
+    "crates/wayle-brightness",
     "crates/wayle-cava",
-    "crates/wayle-common",
+    "crates/wayle-core",
     "crates/wayle-config",
     "crates/wayle-derive",
     "crates/wayle-hyprland",
     "crates/wayle-i18n",
     "crates/wayle-icons",
     "crates/wayle-idle-inhibit",
+    "crates/wayle-ipc",
     "crates/wayle-media",
     "crates/wayle-network",
     "crates/wayle-notification",
@@ -32,7 +34,7 @@ exclude = ["sandbox"]
 version = "0.1.0"
 edition = "2024"
 rust-version = "1.92"
-repository = "https://github.com/Jas-SinghFSU/wayle"
+repository = "https://github.com/wayle-rs/wayle"
 license = "MIT"
 
 [workspace.dependencies]
@@ -93,9 +95,11 @@ tracing-subscriber = { version = "0.3.20", features = ["env-filter", "json"] }
 unic-langid = "0.9"
 wayle-audio = { path = "crates/wayle-audio" }
 wayle-battery = { path = "crates/wayle-battery" }
+wayle-brightness = { path = "crates/wayle-brightness" }
 wayle-bluetooth = { path = "crates/wayle-bluetooth" }
 wayle-cava = { path = "crates/wayle-cava", features = ["vendored"] }
-wayle-common = { path = "crates/wayle-common" }
+wayle-ipc = { path = "crates/wayle-ipc" }
+wayle-core = { path = "crates/wayle-core" }
 wayle-config = { path = "crates/wayle-config" }
 wayle-derive = { path = "crates/wayle-derive" }
 wayle-hyprland = { path = "crates/wayle-hyprland" }

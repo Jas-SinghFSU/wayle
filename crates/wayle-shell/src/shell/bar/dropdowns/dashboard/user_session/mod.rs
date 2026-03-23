@@ -8,13 +8,12 @@ use gtk::{
     style_context_add_provider_for_display,
 };
 use relm4::{gtk, prelude::*};
-use wayle_common::process;
 use wayle_config::ConfigService;
 use wayle_widgets::prelude::IconButton;
 
 pub(crate) use self::messages::UserSessionInit;
 use self::messages::{UserSessionCmd, UserSessionInput};
-use crate::i18n::t;
+use crate::{i18n::t, process};
 
 pub(crate) struct UserSessionSection {
     username: String,

@@ -8,9 +8,8 @@ use std::{collections::HashSet, sync::Arc, time::Duration};
 use gtk::prelude::*;
 use relm4::{factory::FactoryVecDeque, gtk, prelude::*};
 use tracing::warn;
-use wayle_common::WatcherToken;
 use wayle_network::NetworkService;
-use wayle_widgets::prelude::*;
+use wayle_widgets::{WatcherToken, prelude::*};
 
 pub(crate) use self::messages::{
     AvailableNetworksInit, AvailableNetworksInput, AvailableNetworksOutput,

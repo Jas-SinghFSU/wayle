@@ -4,11 +4,13 @@ pub use types::{
     BarButtonVariant, BarGroup, BarItem, BarLayout, BarModule, BorderLocation, ClassedModule,
     IconPosition, Location, ModuleRef, ShadowPreset,
 };
-use wayle_common::ConfigProperty;
 use wayle_derive::wayle_config;
 
-use crate::schemas::styling::{
-    ColorValue, CssToken, FontWeightClass, Percentage, RoundingLevel, ScaleFactor, Spacing,
+use crate::{
+    ConfigProperty,
+    schemas::styling::{
+        ColorValue, CssToken, FontWeightClass, Percentage, RoundingLevel, ScaleFactor, Spacing,
+    },
 };
 
 /// Bar configuration.

@@ -4,7 +4,7 @@ use chrono::{DateTime, Utc};
 use derive_more::Debug;
 use tokio::sync::broadcast;
 use tracing::instrument;
-use wayle_common::Property;
+use wayle_core::Property;
 use zbus::Connection;
 
 use super::{

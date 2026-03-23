@@ -1,11 +1,13 @@
 //! CSS variable generation for bar container styling.
 
 use relm4::{ComponentSender, gtk};
-use wayle_common::watch;
 use wayle_config::schemas::styling::ThemeProvider;
 
 use super::component::{BarContainer, BarContainerCmd};
-use crate::styling::{InlineStyling, resolve_color};
+use crate::{
+    styling::{InlineStyling, resolve_color},
+    watch,
+};
 
 impl InlineStyling for BarContainer {
     type Sender = ComponentSender<Self>;

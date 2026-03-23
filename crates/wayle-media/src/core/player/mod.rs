@@ -7,7 +7,7 @@ use derive_more::Debug;
 use futures::{Stream, StreamExt};
 use tokio_util::sync::CancellationToken;
 pub(crate) use types::{LivePlayerParams, PlayerParams};
-use wayle_common::{NULL_PATH, Property, unwrap_bool, unwrap_string_or, watch_all};
+use wayle_core::{NULL_PATH, Property, unwrap_dbus, unwrap_dbus_or, watch_all};
 use wayle_traits::{ModelMonitoring, Reactive};
 use zbus::{
     fdo::PropertiesProxy,
@@ -116,7 +116,7 @@ impl Reactive for Player {
             .await
             .map_err(Error::Dbus)?;
 
-        let identity = unwrap_string_or!(
+        let identity = unwrap_dbus_or!(
             base_proxy.identity().await,
             String::from(params.player_id.bus_name())
         );
@@ -171,7 +171,7 @@ impl Reactive for Player {
             .await
             .map_err(Error::Dbus)?;
 
-        let identity = unwrap_string_or!(
+        let identity = unwrap_dbus_or!(
             base_proxy.identity().await,
             String::from(params.player_id.bus_name())
         );
@@ -270,11 +270,11 @@ impl Player {
             player.position.set(position);
         }
 
-        let can_control = unwrap_bool!(proxy.can_control().await);
-        let can_play = unwrap_bool!(proxy.can_play().await);
-        let can_go_next = unwrap_bool!(proxy.can_go_next().await);
-        let can_go_previous = unwrap_bool!(proxy.can_go_previous().await);
-        let can_seek = unwrap_bool!(proxy.can_seek().await);
+        let can_control = unwrap_dbus!(proxy.can_control().await);
+        let can_play = unwrap_dbus!(proxy.can_play().await);
+        let can_go_next = unwrap_dbus!(proxy.can_go_next().await);
+        let can_go_previous = unwrap_dbus!(proxy.can_go_previous().await);
+        let can_seek = unwrap_dbus!(proxy.can_seek().await);
         let can_loop = proxy.loop_status().await.is_ok();
         let can_shuffle = proxy.shuffle().await.is_ok();
 

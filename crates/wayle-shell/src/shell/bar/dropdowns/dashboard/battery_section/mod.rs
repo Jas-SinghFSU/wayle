@@ -7,9 +7,11 @@ use std::sync::Arc;
 use gtk::prelude::*;
 use relm4::{gtk, prelude::*};
 use wayle_battery::types::DeviceState;
-use wayle_common::WatcherToken;
 use wayle_power_profiles::{PowerProfilesService, types::profile::PowerProfile};
-use wayle_widgets::primitives::progress_bar::{ProgressBar, ProgressBarClass};
+use wayle_widgets::{
+    WatcherToken,
+    primitives::progress_bar::{ProgressBar, ProgressBarClass},
+};
 
 pub(crate) use self::messages::BatterySectionInit;
 use self::{

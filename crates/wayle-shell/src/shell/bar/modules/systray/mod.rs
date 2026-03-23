@@ -11,8 +11,7 @@ use std::sync::Arc;
 use gtk4::prelude::{OrientableExt, WidgetExt};
 use item::SystrayItem;
 use relm4::{ComponentParts, ComponentSender, factory::FactoryVecDeque, gtk, prelude::*};
-use wayle_common::ConfigProperty;
-use wayle_config::ConfigService;
+use wayle_config::{ConfigProperty, ConfigService};
 use wayle_widgets::prelude::{
     BarContainer, BarContainerBehavior, BarContainerColors, BarContainerInit, force_window_resize,
 };

@@ -8,9 +8,8 @@ use std::sync::Arc;
 use gtk::prelude::*;
 use relm4::{factory::FactoryVecDeque, gtk, prelude::*};
 use wayle_audio::core::stream::AudioStream;
-use wayle_common::WatcherToken;
 use wayle_config::ConfigService;
-use wayle_widgets::prelude::*;
+use wayle_widgets::{WatcherToken, prelude::*};
 
 pub(crate) use self::messages::AppVolumesInit;
 use self::{

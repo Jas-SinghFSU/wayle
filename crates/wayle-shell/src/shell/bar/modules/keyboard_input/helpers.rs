@@ -1,5 +1,6 @@
-use serde_json::json;
 use std::collections::HashMap;
+
+use serde_json::json;
 use wayle_hyprland::DeviceInfo;
 
 pub(super) fn format_label(
@@ -12,7 +13,7 @@ pub(super) fn format_label(
         .map(String::as_str)
         .unwrap_or(layout);
     let ctx = json!({ "layout": layout, "alias": alias });
-    wayle_common::template::render(format, ctx).unwrap_or_default()
+    crate::template::render(format, ctx).unwrap_or_default()
 }
 
 pub(super) fn main_keyboard_layout(devices: &DeviceInfo) -> Option<&str> {

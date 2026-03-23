@@ -7,9 +7,9 @@ use futures::{
 use relm4::ComponentSender;
 use tokio_util::sync::CancellationToken;
 use wayle_cava::CavaService;
-use wayle_common::{ConfigProperty, watch, watch_cancellable, watchers::changes_stream};
-use wayle_config::ConfigService;
+use wayle_config::{ConfigProperty, ConfigService};
 use wayle_wallpaper::WallpaperService;
+use wayle_widgets::{watch, watch_cancellable, watchers::changes_stream};
 
 use super::{CavaCmd, CavaModule};
 

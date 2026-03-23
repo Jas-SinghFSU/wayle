@@ -1,6 +1,6 @@
 use relm4::ComponentSender;
-use wayle_common::watch;
 use wayle_config::schemas::modules::DashboardConfig;
+use wayle_widgets::watch;
 
 use super::{DashboardModule, messages::DashboardCmd};
 

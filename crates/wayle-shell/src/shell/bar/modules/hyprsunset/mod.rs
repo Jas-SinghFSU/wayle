@@ -9,8 +9,7 @@ use std::{rc::Rc, sync::Arc};
 use gtk::prelude::*;
 use relm4::prelude::*;
 use tracing::debug;
-use wayle_common::{ConfigProperty, process::ClickAction};
-use wayle_config::{ConfigService, schemas::styling::CssToken};
+use wayle_config::{ClickAction, ConfigProperty, ConfigService, schemas::styling::CssToken};
 use wayle_widgets::prelude::{
     BarButton, BarButtonBehavior, BarButtonColors, BarButtonInit, BarButtonOutput,
 };

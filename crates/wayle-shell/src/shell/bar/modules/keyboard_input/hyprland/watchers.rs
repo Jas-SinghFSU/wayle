@@ -3,9 +3,9 @@ use std::sync::Arc;
 use futures::StreamExt;
 use relm4::ComponentSender;
 use tracing::warn;
-use wayle_common::watch;
 use wayle_config::schemas::modules::KeyboardInputConfig;
 use wayle_hyprland::{HyprlandEvent, HyprlandService};
+use wayle_widgets::watch;
 
 use super::HyprlandKeyboardInput;
 use crate::shell::bar::modules::keyboard_input::KeyboardInputCmd;

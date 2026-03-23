@@ -4,7 +4,7 @@ use futures::StreamExt;
 use tokio::sync::RwLock;
 use tokio_util::sync::CancellationToken;
 use tracing::{debug, instrument, warn};
-use wayle_common::{Property, RuntimeState};
+use wayle_core::Property;
 use wayle_traits::{Reactive, ServiceMonitoring};
 use zbus::{Connection, fdo::DBusProxy};
 
@@ -47,22 +47,6 @@ impl ServiceMonitoring for MediaService {
         };
 
         discover_existing_players(&ctx).await?;
-
-        if let Ok(Some(saved_player_id)) = RuntimeState::get_active_player().await {
-            let players_map = self.players.read().await;
-            if let Some(player_id) = players_map
-                .keys()
-                .find(|id| id.bus_name() == saved_player_id)
-            {
-                let pl = players_map
-                    .get(player_id)
-                    .cloned()
-                    .ok_or_else(|| Error::PlayerNotFound(player_id.clone()))?;
-                self.active_player.set(Some(pl));
-                debug!("Restored active player from state: {}", saved_player_id);
-            }
-        }
-
         spawn_name_monitoring(&ctx);
 
         Ok(())

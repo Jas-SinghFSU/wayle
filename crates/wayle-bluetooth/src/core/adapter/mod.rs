@@ -9,9 +9,7 @@ use derive_more::Debug;
 use tokio_util::sync::CancellationToken;
 use types::AdapterProperties;
 pub use types::{AdapterParams, LiveAdapterParams};
-use wayle_common::{
-    Property, unwrap_bool, unwrap_string, unwrap_u8, unwrap_u16, unwrap_u32, unwrap_vec,
-};
+use wayle_core::{Property, unwrap_dbus};
 use wayle_traits::{ModelMonitoring, Reactive};
 use zbus::{
     Connection,
@@ -449,25 +447,25 @@ impl Adapter {
         );
 
         Ok(AdapterProperties {
-            address: unwrap_string!(address),
-            address_type: unwrap_string!(address_type),
-            name: unwrap_string!(name),
-            alias: unwrap_string!(alias),
-            class: unwrap_u32!(class),
-            connectable: unwrap_bool!(connectable),
-            powered: unwrap_bool!(powered),
-            power_state: unwrap_string!(power_state),
-            discoverable: unwrap_bool!(discoverable),
-            discoverable_timeout: unwrap_u32!(discoverable_timeout),
-            discovering: unwrap_bool!(discovering),
-            pairable: unwrap_bool!(pairable),
-            pairable_timeout: unwrap_u32!(pairable_timeout),
-            uuids: unwrap_vec!(uuids),
+            address: unwrap_dbus!(address),
+            address_type: unwrap_dbus!(address_type),
+            name: unwrap_dbus!(name),
+            alias: unwrap_dbus!(alias),
+            class: unwrap_dbus!(class),
+            connectable: unwrap_dbus!(connectable),
+            powered: unwrap_dbus!(powered),
+            power_state: unwrap_dbus!(power_state),
+            discoverable: unwrap_dbus!(discoverable),
+            discoverable_timeout: unwrap_dbus!(discoverable_timeout),
+            discovering: unwrap_dbus!(discovering),
+            pairable: unwrap_dbus!(pairable),
+            pairable_timeout: unwrap_dbus!(pairable_timeout),
+            uuids: unwrap_dbus!(uuids),
             modalias: modalias.ok(),
-            roles: unwrap_vec!(roles),
-            experimental_features: unwrap_vec!(experimental_features),
-            manufacturer: unwrap_u16!(manufacturer),
-            version: unwrap_u8!(version),
+            roles: unwrap_dbus!(roles),
+            experimental_features: unwrap_dbus!(experimental_features),
+            manufacturer: unwrap_dbus!(manufacturer),
+            version: unwrap_dbus!(version),
         })
     }
 

@@ -5,7 +5,7 @@ use tokio::sync::broadcast::{self, Sender};
 use tokio_stream::{StreamExt, wrappers::BroadcastStream};
 use tokio_util::sync::CancellationToken;
 use tracing::{error, instrument};
-use wayle_common::Property;
+use wayle_core::Property;
 use wayle_traits::ServiceMonitoring;
 
 use crate::{

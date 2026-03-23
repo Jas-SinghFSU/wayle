@@ -1,9 +1,10 @@
 use gtk4::glib::{DateTime, TimeZone};
 use tracing::warn;
-use wayle_common::template::{ErrorKind, TemplateError, Value};
+
+use crate::template::{ErrorKind, TemplateError, Value};
 
 pub(super) fn format_world_clock(format: &str) -> String {
-    wayle_common::template::render_with(format, (), |env| {
+    crate::template::render_with(format, (), |env| {
         env.add_function("tz", tz_function);
     })
     .unwrap_or_default()

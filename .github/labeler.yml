@@ -1,0 +1,39 @@
+"area:shell":
+    - changed-files:
+          - any-glob-to-any-file: "crates/wayle-shell/**"
+
+"area:widgets":
+    - changed-files:
+          - any-glob-to-any-file: "crates/wayle-widgets/**"
+
+"area:styling":
+    - changed-files:
+          - any-glob-to-any-file: "crates/wayle-styling/**"
+
+"area:config":
+    - changed-files:
+          - any-glob-to-any-file: "crates/wayle-config/**"
+
+"area:icons":
+    - changed-files:
+          - any-glob-to-any-file: "crates/wayle-icons/**"
+
+"area:i18n":
+    - changed-files:
+          - any-glob-to-any-file: "crates/wayle-i18n/**"
+
+"area:ipc":
+    - changed-files:
+          - any-glob-to-any-file: "crates/wayle-ipc/**"
+
+"area:cli":
+    - changed-files:
+          - any-glob-to-any-file: "wayle/**"
+
+"area:derive":
+    - changed-files:
+          - any-glob-to-any-file: "crates/wayle-derive/**"
+
+"area:ci":
+    - changed-files:
+          - any-glob-to-any-file: ".github/**"

@@ -8,12 +8,15 @@ use std::rc::Rc;
 
 use gtk::prelude::*;
 use relm4::prelude::*;
-use wayle_common::{ConfigProperty, WatcherToken};
-use wayle_config::schemas::{
-    modules::{CustomModuleDefinition, ExecutionMode},
-    styling::{ColorValue, CssToken},
+use wayle_config::{
+    ConfigProperty,
+    schemas::{
+        modules::{CustomModuleDefinition, ExecutionMode},
+        styling::{ColorValue, CssToken},
+    },
 };
 use wayle_widgets::{
+    WatcherToken,
     prelude::{BarButton, BarButtonBehavior, BarButtonColors, BarButtonInit, BarButtonOutput},
     utils::force_window_resize,
 };

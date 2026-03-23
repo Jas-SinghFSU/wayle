@@ -4,7 +4,7 @@ use sysinfo::System;
 use tokio::time::interval;
 use tokio_util::sync::CancellationToken;
 use tracing::debug;
-use wayle_common::Property;
+use wayle_core::Property;
 
 use crate::types::MemoryData;
 

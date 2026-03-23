@@ -9,7 +9,7 @@ use futures::{Stream, StreamExt};
 use tokio_util::sync::CancellationToken;
 use tracing::instrument;
 use types::TrayItemProperties;
-use wayle_common::{Property, unwrap_bool, unwrap_i32, unwrap_string};
+use wayle_core::{Property, unwrap_dbus};
 use wayle_traits::{ModelMonitoring, Reactive};
 use zbus::{
     Connection,
@@ -34,7 +34,7 @@ struct ServiceIdentifier<'a> {
 
 /// Individual system tray item from org.kde.StatusNotifierItem.
 ///
-/// All properties are reactive via [`Property<T>`](wayle_common::Property).
+/// All properties are reactive via [`Property<T>`](wayle_core::Property).
 /// Field semantics follow the [StatusNotifierItem spec](https://freedesktop.org/wiki/Specifications/StatusNotifierItem/).
 #[derive(Debug, Clone)]
 pub struct TrayItem {
@@ -683,12 +683,12 @@ impl TrayItem {
             .ok();
 
         Ok(TrayItemProperties {
-            id: unwrap_string!(id),
-            title: unwrap_string!(title),
+            id: unwrap_dbus!(id),
+            title: unwrap_dbus!(title),
             category: Category::from(category.as_str()),
             status: Status::from(status.as_str()),
-            window_id: unwrap_i32!(window_id),
-            item_is_menu: unwrap_bool!(item_is_menu),
+            window_id: unwrap_dbus!(window_id),
+            item_is_menu: unwrap_dbus!(item_is_menu),
             icon_name,
             icon_pixmap: icon_pixmap
                 .unwrap_or_default()

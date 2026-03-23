@@ -1,8 +1,8 @@
 use schemars::schema_for;
-use wayle_common::ConfigProperty;
 use wayle_derive::wayle_config;
 
 use crate::{
+    ConfigProperty,
     docs::{ModuleInfo, ModuleInfoProvider},
     schemas::styling::{ColorValue, CssToken, Spacing},
 };

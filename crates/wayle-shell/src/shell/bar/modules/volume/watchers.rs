@@ -3,8 +3,8 @@ use std::{sync::Arc, time::Duration};
 use relm4::ComponentSender;
 use tokio_util::sync::CancellationToken;
 use wayle_audio::{AudioService, core::device::output::OutputDevice};
-use wayle_common::{watch, watch_cancellable_throttled};
 use wayle_config::schemas::modules::VolumeConfig;
+use wayle_widgets::{watch, watch_cancellable_throttled};
 
 const VOLUME_THROTTLE: Duration = Duration::from_millis(30);
 

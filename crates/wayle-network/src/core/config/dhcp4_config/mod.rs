@@ -3,7 +3,7 @@ mod types;
 use std::collections::HashMap;
 
 pub(crate) use types::Dhcp4ConfigParams;
-use wayle_common::Property;
+use wayle_core::Property;
 use wayle_traits::Static;
 use zbus::{
     Connection,

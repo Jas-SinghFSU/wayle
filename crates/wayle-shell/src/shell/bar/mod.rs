@@ -12,8 +12,10 @@ use factory::*;
 use gtk::prelude::*;
 use gtk4_layer_shell::{KeyboardMode, Layer, LayerShell};
 use relm4::{factory::FactoryVecDeque, gtk, gtk::gdk, prelude::*};
-use wayle_common::ConfigProperty;
-use wayle_config::schemas::bar::{BarItem, BarLayout};
+use wayle_config::{
+    ConfigProperty,
+    schemas::bar::{BarItem, BarLayout},
+};
 use wayle_widgets::{prelude::BarSettings, styling::InlineStyling};
 
 use self::dropdowns::DropdownRegistry;
@@ -110,7 +112,7 @@ impl Component for Bar {
 
         root.init_layer_shell();
         root.set_layer(Layer::Top);
-        root.set_keyboard_mode(KeyboardMode::OnDemand);
+        root.set_keyboard_mode(KeyboardMode::None);
         root.auto_exclusive_zone_enable();
         root.set_monitor(Some(&init.monitor));
         Self::apply_anchors(&root, location);

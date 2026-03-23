@@ -6,7 +6,7 @@ use std::{
 
 use tokio::time::Instant;
 use tokio_util::sync::CancellationToken;
-use wayle_common::Property;
+use wayle_core::Property;
 
 use crate::core::notification::Notification;
 

@@ -5,16 +5,6 @@ use wildcard::Wildcard;
 /// Checks if `text` matches a glob `pattern`.
 ///
 /// Patterns support `*` (zero or more characters) and `?` (exactly one character).
-///
-/// # Examples
-///
-/// ```
-/// use wayle_common::glob::matches;
-///
-/// assert!(matches("*spotify*", "org.mpris.MediaPlayer2.spotify"));
-/// assert!(matches("firefox*", "firefox.instance12345"));
-/// assert!(!matches("*chrome*", "firefox"));
-/// ```
 pub fn matches(pattern: &str, text: &str) -> bool {
     Wildcard::new(pattern.as_bytes())
         .ok()

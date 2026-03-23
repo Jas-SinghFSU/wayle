@@ -5,7 +5,7 @@ use futures::Stream;
 use tokio::sync::RwLock;
 use tokio_util::sync::CancellationToken;
 use tracing::instrument;
-use wayle_common::Property;
+use wayle_core::Property;
 use wayle_traits::Reactive;
 use zbus::Connection;
 

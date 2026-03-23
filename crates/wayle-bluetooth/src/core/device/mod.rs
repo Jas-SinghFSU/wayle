@@ -11,7 +11,7 @@ use tokio::sync::broadcast;
 use tokio_util::sync::CancellationToken;
 use types::{AdvertisingData, DeviceProperties, DeviceSet, ManufacturerData, ServiceData};
 pub use types::{DeviceParams, DisconnectedEvent, LiveDeviceParams};
-use wayle_common::{Property, unwrap_bool, unwrap_string};
+use wayle_core::{Property, unwrap_dbus};
 use wayle_traits::{ModelMonitoring, Reactive};
 use zbus::{Connection, zvariant::OwnedObjectPath};
 
@@ -538,30 +538,30 @@ impl Device {
         );
 
         Ok(DeviceProperties {
-            address: unwrap_string!(address),
-            address_type: unwrap_string!(address_type),
+            address: unwrap_dbus!(address),
+            address_type: unwrap_dbus!(address_type),
             name: name.ok(),
             icon: icon.ok(),
             battery_percentage: battery_percentage.ok(),
             class: class.ok(),
             appearance: appearance.ok(),
             uuids: uuids.ok(),
-            paired: unwrap_bool!(paired),
-            bonded: unwrap_bool!(bonded),
-            connected: unwrap_bool!(connected),
-            trusted: unwrap_bool!(trusted),
-            blocked: unwrap_bool!(blocked),
-            wake_allowed: unwrap_bool!(wake_allowed),
-            alias: unwrap_string!(alias),
+            paired: unwrap_dbus!(paired),
+            bonded: unwrap_dbus!(bonded),
+            connected: unwrap_dbus!(connected),
+            trusted: unwrap_dbus!(trusted),
+            blocked: unwrap_dbus!(blocked),
+            wake_allowed: unwrap_dbus!(wake_allowed),
+            alias: unwrap_dbus!(alias),
             adapter: adapter.unwrap_or_default(),
-            legacy_pairing: unwrap_bool!(legacy_pairing),
-            cable_pairing: unwrap_bool!(cable_pairing),
+            legacy_pairing: unwrap_dbus!(legacy_pairing),
+            cable_pairing: unwrap_dbus!(cable_pairing),
             modalias: modalias.ok(),
             rssi: rssi.ok(),
             tx_power: tx_power.ok(),
             manufacturer_data: manufacturer_data.ok(),
             service_data: service_data.ok(),
-            services_resolved: unwrap_bool!(services_resolved),
+            services_resolved: unwrap_dbus!(services_resolved),
             advertising_flags: advertising_flags.unwrap_or_default(),
             advertising_data: advertising_data.unwrap_or_default(),
             sets: sets

@@ -1,7 +1,7 @@
 use std::{collections::HashMap, sync::Arc};
 
 use tracing::info;
-use wayle_common::Property;
+use wayle_core::Property;
 use wayle_traits::{ModelMonitoring, ServiceMonitoring};
 
 use crate::{
@@ -226,7 +226,7 @@ mod tests {
     use std::collections::HashMap;
 
     use tokio::sync::mpsc;
-    use wayle_common::Property;
+    use wayle_core::Property;
 
     use super::*;
     use crate::{

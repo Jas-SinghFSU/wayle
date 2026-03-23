@@ -84,8 +84,8 @@ experience. A successor to HyprPanel without the pain or dependency on Hyprland.
 ### Additional Features
 
 - [x] **Notifications**
-- [ ] **OSD (WIP)**
-- [ ] **Settings Dialog**
+- [x] **OSD**
+- [ ] **Settings Dialog (WIP)**
 
 ## Configuration
 
@@ -167,7 +167,7 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 Clone the repository recursively and build:
 
 ```bash
-git clone --recursive https://github.com/Jas-SinghFSU/wayle
+git clone --recursive https://github.com/wayle-rs/wayle
 cd wayle
 cargo install --path crates/wayle-shell
 cargo install --path wayle

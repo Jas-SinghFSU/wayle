@@ -4,11 +4,11 @@ use std::collections::HashMap;
 
 use schemars::{JsonSchema, schema_for};
 use serde::{Deserialize, Serialize};
-use wayle_common::{ConfigProperty, process::ClickAction};
 use wayle_derive::wayle_config;
 
 pub use self::icons::BUILTIN_MAPPINGS;
 use crate::{
+    ClickAction, ConfigProperty,
     docs::{ModuleInfo, ModuleInfoProvider},
     schemas::styling::{ColorValue, CssToken},
 };
