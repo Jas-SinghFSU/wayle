@@ -4,7 +4,7 @@ use zbus::Connection;
 use crate::{
     error::Error,
     types::{
-        ClosedReason, Signal,
+        Signal,
         dbus::{SERVICE_INTERFACE, SERVICE_PATH},
     },
 };
@@ -12,21 +12,6 @@ use crate::{
 pub(super) struct NotificationControls;
 
 impl NotificationControls {
-    #[instrument(skip(connection), fields(notification_id = %id), err)]
-    pub(super) async fn dismiss(connection: &Connection, id: &u32) -> Result<(), Error> {
-        connection
-            .emit_signal(
-                None::<()>,
-                SERVICE_PATH,
-                SERVICE_INTERFACE,
-                Signal::NotificationClosed.as_str(),
-                &(id, ClosedReason::DismissedByUser as u32),
-            )
-            .await?;
-
-        Ok(())
-    }
-
     #[instrument(skip(connection), fields(notification_id = %id, action = %action_key), err)]
     pub(super) async fn invoke(
         connection: &Connection,

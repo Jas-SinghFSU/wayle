@@ -60,6 +60,7 @@ impl Component for CalendarDropdown {
                 DropdownHeader {
                     #[template_child]
                     icon {
+                        set_visible: true,
                         set_icon_name: Some("tb-calendar-time-symbolic"),
                     },
                     #[template_child]
@@ -78,10 +79,11 @@ impl Component for CalendarDropdown {
                         gtk::Box {
                             set_halign: gtk::Align::Center,
                             #[watch]
-                            set_css_classes: if model.show_seconds {
-                                &["clock-time-row", "show-seconds"]
-                            } else {
-                                &["clock-time-row"]
+                            set_css_classes: match (model.show_seconds, model.use_12h) {
+                                (true, true) => &["clock-time-row", "show-seconds", "use-12h"],
+                                (true, false) => &["clock-time-row", "show-seconds"],
+                                (false, true) => &["clock-time-row", "use-12h"],
+                                (false, false) => &["clock-time-row"],
                             },
 
                             gtk::Label {

@@ -1,4 +1,4 @@
-use wayle_common::NULL_PATH;
+use wayle_core::NULL_PATH;
 use zbus::{Connection, zvariant::OwnedObjectPath};
 
 use super::{

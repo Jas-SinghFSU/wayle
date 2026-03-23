@@ -43,7 +43,7 @@ pub(super) fn build_label(format: &str, ctx: &LabelContext) -> String {
         "remaining": remaining,
         "duration": duration,
     });
-    wayle_common::template::render(format, template_ctx).unwrap_or_default()
+    crate::template::render(format, template_ctx).unwrap_or_default()
 }
 
 /// Selects icon based on active state.

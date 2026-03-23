@@ -128,6 +128,8 @@ dropdown-bluetooth-no-devices-title = No Devices Found
 dropdown-bluetooth-no-devices-description = Make sure your device is in pairing mode
 dropdown-bluetooth-off-title = Bluetooth is Off
 dropdown-bluetooth-off-description = Turn on Bluetooth to connect devices
+dropdown-bluetooth-no-adapter-title = No Bluetooth Adapter
+dropdown-bluetooth-no-adapter-description = No Bluetooth adapter was detected
 dropdown-bluetooth-no-nearby = No other devices nearby
 dropdown-bluetooth-no-new = No new devices found
 

@@ -3,8 +3,8 @@ use std::sync::Arc;
 use relm4::ComponentSender;
 use tokio_util::sync::CancellationToken;
 use wayle_bluetooth::BluetoothService;
-use wayle_common::{watch, watch_cancellable};
 use wayle_config::ConfigService;
+use wayle_widgets::{watch, watch_cancellable};
 
 use super::{BluetoothDropdown, messages::BluetoothDropdownCmd};
 

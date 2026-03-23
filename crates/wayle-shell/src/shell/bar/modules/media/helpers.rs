@@ -3,12 +3,11 @@ use std::collections::HashMap;
 use gtk::{gio::prelude::AppInfoExt, glib::prelude::Cast as _, prelude::IconExt};
 use relm4::gtk;
 use serde_json::json;
-use wayle_common::glob;
 use wayle_config::schemas::modules::{BUILTIN_MAPPINGS, MediaConfig, MediaIconType};
 use wayle_media::{core::player::Player, types::PlaybackState};
 use wayle_widgets::icons::icon_exists;
 
-use crate::i18n::t;
+use crate::{glob, i18n::t};
 
 pub(crate) const PLAY_ICON: &str = "󰐊";
 pub(crate) const PAUSE_ICON: &str = "󰏤";
@@ -42,7 +41,7 @@ pub(crate) fn format_label(ctx: &FormatContext<'_>) -> String {
         "status": status_text,
         "status_icon": status_icon,
     });
-    wayle_common::template::render(ctx.format, template_ctx).unwrap_or_default()
+    crate::template::render(ctx.format, template_ctx).unwrap_or_default()
 }
 
 pub(crate) struct IconContext<'a> {

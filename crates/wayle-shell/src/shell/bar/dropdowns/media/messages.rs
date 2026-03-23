@@ -14,6 +14,7 @@ pub(crate) struct MediaDropdownInit {
 pub(crate) enum MediaDropdownMsg {
     PlayerView(PlayerViewOutput),
     SourcePicker(SourcePickerOutput),
+    VisibilityChanged(bool),
 }
 
 #[derive(Debug)]

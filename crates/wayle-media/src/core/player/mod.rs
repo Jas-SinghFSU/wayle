@@ -7,12 +7,12 @@ use derive_more::Debug;
 use futures::{Stream, StreamExt};
 use tokio_util::sync::CancellationToken;
 pub(crate) use types::{LivePlayerParams, PlayerParams};
-use wayle_common::{NULL_PATH, Property, unwrap_bool, unwrap_string_or, watch_all};
+use wayle_core::{NULL_PATH, Property, unwrap_dbus, unwrap_dbus_or, watch_all};
 use wayle_traits::{ModelMonitoring, Reactive};
 use zbus::{
-    Connection,
     fdo::PropertiesProxy,
     names::{InterfaceName, MemberName, OwnedBusName},
+    proxy::CacheProperties,
     zvariant::ObjectPath,
 };
 
@@ -40,7 +40,11 @@ pub struct Player {
     #[debug(skip)]
     pub(crate) proxy: MediaPlayer2PlayerProxy<'static>,
     #[debug(skip)]
+    pub(crate) position_proxy: PropertiesProxy<'static>,
+    #[debug(skip)]
     pub(crate) cancellation_token: Option<CancellationToken>,
+    #[debug(skip)]
+    pub(crate) position_poll_interval: Duration,
 
     /// D-Bus bus name identifier.
     pub id: PlayerId,
@@ -57,6 +61,8 @@ pub struct Player {
     pub shuffle_mode: Property<ShuffleMode>,
     /// Volume level (0.0 to 1.0).
     pub volume: Property<Volume>,
+    /// Current playback position.
+    pub position: Property<Duration>,
 
     /// Current track information.
     pub metadata: Arc<TrackMetadata>,
@@ -93,6 +99,16 @@ impl Reactive for Player {
             .await
             .map_err(Error::Dbus)?;
 
+        let position_proxy = PropertiesProxy::builder(params.connection)
+            .destination(bus_name.clone())
+            .map_err(Error::Dbus)?
+            .path("/org/mpris/MediaPlayer2")
+            .map_err(Error::Dbus)?
+            .cache_properties(CacheProperties::No)
+            .build()
+            .await
+            .map_err(Error::Dbus)?;
+
         let player_proxy = MediaPlayer2PlayerProxy::builder(params.connection)
             .destination(bus_name)
             .map_err(Error::Dbus)?
@@ -100,7 +116,7 @@ impl Reactive for Player {
             .await
             .map_err(Error::Dbus)?;
 
-        let identity = unwrap_string_or!(
+        let identity = unwrap_dbus_or!(
             base_proxy.identity().await,
             String::from(params.player_id.bus_name())
         );
@@ -115,8 +131,10 @@ impl Reactive for Player {
             params.player_id,
             identity,
             player_proxy.clone(),
+            position_proxy,
             Arc::new(metadata),
             None,
+            Duration::from_secs(1),
         );
         player.desktop_entry.set(desktop_entry);
 
@@ -136,6 +154,16 @@ impl Reactive for Player {
             .await
             .map_err(Error::Dbus)?;
 
+        let position_proxy = PropertiesProxy::builder(params.connection)
+            .destination(bus_name.clone())
+            .map_err(Error::Dbus)?
+            .path("/org/mpris/MediaPlayer2")
+            .map_err(Error::Dbus)?
+            .cache_properties(CacheProperties::No)
+            .build()
+            .await
+            .map_err(Error::Dbus)?;
+
         let player_proxy = MediaPlayer2PlayerProxy::builder(params.connection)
             .destination(bus_name)
             .map_err(Error::Dbus)?
@@ -143,7 +171,7 @@ impl Reactive for Player {
             .await
             .map_err(Error::Dbus)?;
 
-        let identity = unwrap_string_or!(
+        let identity = unwrap_dbus_or!(
             base_proxy.identity().await,
             String::from(params.player_id.bus_name())
         );
@@ -160,8 +188,10 @@ impl Reactive for Player {
             params.player_id.clone(),
             identity,
             player_proxy.clone(),
+            position_proxy,
             metadata,
             Some(params.cancellation_token.child_token()),
+            params.position_poll_interval,
         );
         player.desktop_entry.set(desktop_entry);
 
@@ -185,12 +215,16 @@ impl Player {
         id: PlayerId,
         identity: String,
         proxy: MediaPlayer2PlayerProxy<'static>,
+        position_proxy: PropertiesProxy<'static>,
         metadata: Arc<TrackMetadata>,
         cancellation_token: Option<CancellationToken>,
+        position_poll_interval: Duration,
     ) -> Self {
         Self {
             proxy,
+            position_proxy,
             cancellation_token,
+            position_poll_interval,
             id,
             identity: Property::new(identity),
             desktop_entry: Property::new(None),
@@ -199,6 +233,7 @@ impl Player {
             loop_mode: Property::new(LoopMode::None),
             shuffle_mode: Property::new(ShuffleMode::Off),
             volume: Property::new(Volume::default()),
+            position: Property::new(Duration::ZERO),
 
             metadata,
 
@@ -231,11 +266,15 @@ impl Player {
             player.volume.set(Volume::from(volume));
         }
 
-        let can_control = unwrap_bool!(proxy.can_control().await);
-        let can_play = unwrap_bool!(proxy.can_play().await);
-        let can_go_next = unwrap_bool!(proxy.can_go_next().await);
-        let can_go_previous = unwrap_bool!(proxy.can_go_previous().await);
-        let can_seek = unwrap_bool!(proxy.can_seek().await);
+        if let Ok(position) = player.position().await {
+            player.position.set(position);
+        }
+
+        let can_control = unwrap_dbus!(proxy.can_control().await);
+        let can_play = unwrap_dbus!(proxy.can_play().await);
+        let can_go_next = unwrap_dbus!(proxy.can_go_next().await);
+        let can_go_previous = unwrap_dbus!(proxy.can_go_previous().await);
+        let can_seek = unwrap_dbus!(proxy.can_seek().await);
         let can_loop = proxy.loop_status().await.is_ok();
         let can_shuffle = proxy.shuffle().await.is_ok();
 
@@ -289,17 +328,18 @@ impl Player {
         Ok(())
     }
 
-    /// Seek by offset (relative position change).
+    /// Seeks forward or backward by the given offset in microseconds.
+    ///
+    /// Positive values seek forward, negative values seek backward.
     ///
     /// # Errors
     ///
-    /// Returns `Error::Control` if the D-Bus operation fails
-    pub async fn seek(&self, offset: Duration) -> Result<(), Error> {
-        let offset_micros = offset.as_micros() as i64;
+    /// Returns `Error::Control` if the D-Bus operation fails.
+    pub async fn seek(&self, offset_micros: i64) -> Result<(), Error> {
         self.proxy
             .seek(offset_micros)
             .await
-            .map_err(|e| Error::Control(format!("seek: {e}")))?;
+            .map_err(|err| Error::Control(format!("seek: {err}")))?;
         Ok(())
     }
 
@@ -319,6 +359,7 @@ impl Player {
             .set_position(&track_object_path, position_micros)
             .await
             .map_err(|e| Error::Control(format!("set position: {e}")))?;
+        self.position.set(position);
         Ok(())
     }
 
@@ -328,25 +369,13 @@ impl Player {
     ///
     /// Returns error if the D-Bus operation fails
     pub async fn position(&self) -> Result<Duration, Error> {
-        let connection = Connection::session().await.map_err(Error::Dbus)?;
-        let destination = self.proxy.inner().destination().to_owned();
-        let path = self.proxy.inner().path().to_owned();
-
-        let proxy = PropertiesProxy::builder(&connection)
-            .destination(destination)
-            .map_err(|e| Error::Control(format!("create properties proxy: {e}")))?
-            .path(path)
-            .map_err(|e| Error::Control(format!("set path: {e}")))?
-            .build()
-            .await
-            .map_err(|e| Error::Control(format!("build properties proxy: {e}")))?;
-
         let interface = InterfaceName::try_from("org.mpris.MediaPlayer2.Player")
             .map_err(|e| Error::Control(format!("invalid interface name: {e}")))?;
         let property = MemberName::try_from("Position")
             .map_err(|e| Error::Control(format!("invalid property name: {e}")))?;
 
-        let value = proxy
+        let value = self
+            .position_proxy
             .get(interface, &property)
             .await
             .map_err(|e| Error::Control(format!("get position: {e}")))?;
@@ -355,40 +384,6 @@ impl Player {
             i64::try_from(&value).map_err(|e| Error::Control(format!("parse position: {e}")))?;
 
         Ok(Duration::from_micros(micros.max(0) as u64))
-    }
-
-    /// Watch position changes for this player.
-    ///
-    /// Polls position every second. For custom intervals, see `watch_position_with_interval`.
-    pub fn watch_position(&self) -> impl Stream<Item = Duration> + Send {
-        self.watch_position_with_interval(Duration::from_secs(1))
-    }
-
-    /// Watch position changes with a specified polling interval.
-    ///
-    /// Returns a stream that emits the current position at the specified interval.
-    /// Only emits when position actually changes to avoid redundant updates.
-    pub fn watch_position_with_interval(
-        &self,
-        interval: Duration,
-    ) -> impl Stream<Item = Duration> + Send {
-        let player = self.clone();
-        async_stream::stream! {
-            let mut last_position: Option<Duration> = None;
-
-            loop {
-                match player.position().await {
-                    Ok(position) => {
-                        if last_position != Some(position) {
-                            last_position = Some(position);
-                            yield position;
-                        }
-                    }
-                    Err(_) => break,
-                }
-                tokio::time::sleep(interval).await;
-            }
-        }
     }
 
     /// Signal emitted when playback position changes

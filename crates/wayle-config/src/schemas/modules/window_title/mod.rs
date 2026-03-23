@@ -3,11 +3,11 @@ mod icons;
 use std::collections::HashMap;
 
 use schemars::schema_for;
-use wayle_common::{ConfigProperty, process::ClickAction};
 use wayle_derive::wayle_config;
 
 pub use self::icons::BUILTIN_MAPPINGS;
 use crate::{
+    ClickAction, ConfigProperty,
     docs::{ModuleInfo, ModuleInfoProvider},
     schemas::styling::{ColorValue, CssToken},
 };

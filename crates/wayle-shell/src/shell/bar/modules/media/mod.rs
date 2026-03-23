@@ -1,20 +1,24 @@
 mod factory;
 mod helpers;
 mod messages;
+mod methods;
 mod watchers;
 
 use std::{rc::Rc, sync::Arc};
 
 use gtk::prelude::WidgetExt;
 use relm4::prelude::*;
-use wayle_common::{ConfigProperty, WatcherToken};
 use wayle_config::{
-    ConfigService,
+    ConfigProperty, ConfigService,
     schemas::{modules::MediaIconType, styling::CssToken},
 };
 use wayle_media::{MediaService, types::PlaybackState};
-use wayle_widgets::prelude::{
-    BarButton, BarButtonBehavior, BarButtonColors, BarButtonInit, BarButtonInput, BarButtonOutput,
+use wayle_widgets::{
+    WatcherToken,
+    prelude::{
+        BarButton, BarButtonBehavior, BarButtonColors, BarButtonInit, BarButtonInput,
+        BarButtonOutput,
+    },
 };
 
 pub(crate) use self::{
@@ -172,27 +176,6 @@ impl Component for MediaModule {
                     let state = player.playback_state.get();
                     Self::update_spinning_state(root, state);
                 }
-            }
-        }
-    }
-}
-
-impl MediaModule {
-    fn update_disc_mode(root: &gtk::Box, enabled: bool) {
-        if enabled {
-            root.add_css_class("media-disc");
-        } else {
-            root.remove_css_class("media-disc");
-        }
-    }
-
-    fn update_spinning_state(root: &gtk::Box, state: PlaybackState) {
-        match state {
-            PlaybackState::Playing => {
-                root.add_css_class("media-spinning");
-            }
-            PlaybackState::Paused | PlaybackState::Stopped => {
-                root.remove_css_class("media-spinning");
             }
         }
     }

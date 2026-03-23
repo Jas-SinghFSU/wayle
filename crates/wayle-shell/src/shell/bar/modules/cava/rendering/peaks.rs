@@ -1,7 +1,7 @@
 use gtk4::cairo;
 use wayle_config::schemas::modules::CavaDirection;
 
-use super::{DrawConfig, MIN_BAR_HEIGHT, apply_color, draw_directed_bar};
+use super::{MIN_BAR_HEIGHT, RenderParams, apply_color, fill_bar_rect};
 
 const PEAK_CAP_HEIGHT: f64 = 2.0;
 const PEAK_GRAVITY: f64 = 0.015;
@@ -15,31 +15,31 @@ pub(crate) fn draw_peak_bars(
     peaks: &mut PeakState,
     canvas_height: f64,
     direction: CavaDirection,
-    config: &DrawConfig,
+    params: &RenderParams,
 ) {
-    apply_color(cr, config);
+    apply_color(cr, params);
 
-    let step = config.bar_width + config.bar_gap;
+    let bar_stride = params.bar_width + params.bar_spacing;
 
     peaks.resize(values.len(), 0.0);
 
-    for (index, &value) in values.iter().enumerate() {
-        let x = index as f64 * step;
-        let bar_height = (value * canvas_height).clamp(MIN_BAR_HEIGHT, canvas_height);
+    for (bar_idx, &amplitude) in values.iter().enumerate() {
+        let x = bar_idx as f64 * bar_stride;
+        let bar_height = (amplitude * canvas_height).clamp(MIN_BAR_HEIGHT, canvas_height);
 
-        draw_directed_bar(
+        fill_bar_rect(
             cr,
             x,
             bar_height,
             canvas_height,
             direction,
-            config.bar_width,
+            params.bar_width,
         );
         let _ = cr.fill();
 
-        update_peak(&mut peaks[index], value);
+        update_peak(&mut peaks[bar_idx], amplitude);
 
-        let peak_height = peaks[index] * canvas_height;
+        let peak_height = peaks[bar_idx] * canvas_height;
         draw_peak_cap(
             cr,
             x,
@@ -47,7 +47,7 @@ pub(crate) fn draw_peak_bars(
             bar_height,
             canvas_height,
             direction,
-            config.bar_width,
+            params.bar_width,
         );
     }
 }

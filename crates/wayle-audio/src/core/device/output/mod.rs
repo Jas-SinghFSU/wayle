@@ -10,7 +10,7 @@ use libpulse_binding::time::MicroSeconds;
 use tokio::sync::oneshot;
 use tokio_util::sync::CancellationToken;
 pub(crate) use types::{LiveOutputDeviceParams, OutputDeviceParams};
-use wayle_common::Property;
+use wayle_core::Property;
 use wayle_traits::{ModelMonitoring, Reactive};
 
 use crate::{
@@ -39,7 +39,7 @@ use crate::{
 /// - [`set_port`](Self::set_port) - Switch output port (e.g., headphone jack vs speakers)
 /// - [`set_as_default`](Self::set_as_default) - Make this the default output
 ///
-/// [`Property`]: wayle_common::Property
+/// [`Property`]: wayle_core::Property
 /// [`AudioService`]: crate::AudioService
 /// [`AudioService::output_device`]: crate::AudioService::output_device
 #[derive(Clone, Debug)]

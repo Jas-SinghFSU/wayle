@@ -43,9 +43,7 @@ pub(super) fn for_event(event: &HyprlandEvent) -> SyncPlan {
             workspaces: true,
             ..SyncPlan::default()
         },
-        HyprlandEvent::ChangeFloatingMode { .. }
-        | HyprlandEvent::ToggleGroup { .. }
-        | HyprlandEvent::MoveIntoGroup { .. }
+        HyprlandEvent::MoveIntoGroup { .. }
         | HyprlandEvent::MoveOutOfGroup { .. }
         | HyprlandEvent::Pin { .. }
         | HyprlandEvent::Minimized { .. } => SyncPlan {

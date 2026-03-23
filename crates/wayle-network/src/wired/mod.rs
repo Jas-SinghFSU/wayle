@@ -4,7 +4,7 @@ mod types;
 use std::sync::Arc;
 
 pub(crate) use types::{LiveWiredParams, WiredParams};
-use wayle_common::Property;
+use wayle_core::Property;
 use wayle_traits::{ModelMonitoring, Reactive};
 
 use super::{

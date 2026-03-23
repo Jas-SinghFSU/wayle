@@ -1,6 +1,6 @@
 use relm4::ComponentSender;
-use wayle_common::watch;
 use wayle_config::schemas::modules::IdleInhibitConfig;
+use wayle_widgets::watch;
 
 use super::{IdleInhibitModule, messages::IdleInhibitCmd};
 use crate::services::idle_inhibit::IdleInhibitState;

@@ -1,5 +1,6 @@
 use std::sync::{Arc, Weak};
 
+use tokio::time::{Duration, Instant, sleep};
 use tokio_stream::StreamExt;
 use tokio_util::sync::CancellationToken;
 use tracing::{debug, error, instrument};
@@ -15,6 +16,14 @@ use crate::{
         menu::MenuItem,
     },
 };
+
+const MENU_DEBOUNCE: Duration = Duration::from_millis(100);
+
+const UNKNOWN_PROPERTY_ERROR: &str = "org.freedesktop.DBus.Error.UnknownProperty";
+
+fn is_unknown_property_error(error: &zbus::Error) -> bool {
+    matches!(error, zbus::Error::MethodError(name, _, _) if name.as_str() == UNKNOWN_PROPERTY_ERROR)
+}
 
 impl ModelMonitoring for TrayItem {
     type Error = Error;
@@ -110,6 +119,14 @@ async fn monitor_properties(
         }
     };
 
+    let mut new_menu = match item_proxy.receive_new_menu().await {
+        Ok(stream) => stream,
+        Err(error) => {
+            error!(error = %error, "cannot subscribe to NewMenu signal");
+            return;
+        }
+    };
+
     let mut layout_updated = match menu_proxy.receive_layout_updated().await {
         Ok(layout) => layout,
         Err(error) => {
@@ -126,6 +143,11 @@ async fn monitor_properties(
         }
     };
 
+    let mut new_icon_has_name_property = true;
+    let mut menu_dirty = false;
+    let menu_debounce = sleep(MENU_DEBOUNCE);
+    tokio::pin!(menu_debounce);
+
     loop {
         let Some(tray_item) = weak_item.upgrade() else {
             return;
@@ -135,6 +157,22 @@ async fn monitor_properties(
             _ = cancellation_token.cancelled() => {
                 debug!("Tray item '{bus_name}' monitor received cancellation, stopping");
                 return;
+            }
+
+            _ = &mut menu_debounce, if menu_dirty => {
+                debug!("menu debounce fired, fetching layout");
+                menu_dirty = false;
+
+                match menu_proxy.get_layout(0, -1, vec![]).await {
+                    Ok(layout) => {
+                        let menu_item = MenuItem::from(layout);
+                        tray_item.menu.set(Some(menu_item));
+                    }
+                    Err(error) => {
+                        tray_item.menu.set(None);
+                        error!(error = %error, "cannot update menu layout");
+                    }
+                }
             }
 
             Some(change) = category_changed.next() => {
@@ -264,39 +302,40 @@ async fn monitor_properties(
                 }
             }
 
+            Some(_) = new_menu.next() => {
+                debug!("new_menu signal received, scheduling debounced refresh");
+                menu_dirty = true;
+                menu_debounce.as_mut().reset(Instant::now() + MENU_DEBOUNCE);
+            }
+
             Some(_) = layout_updated.next() => {
-                debug!("layout_updated signal received");
-                match menu_proxy.get_layout(0, -1, vec![]).await {
-                    Ok(layout) => {
-                        let menu_item = MenuItem::from(layout);
-                        tray_item.menu.set(Some(menu_item));
-                    }
-                    Err(error) => {
-                        tray_item.menu.set(None);
-                        error!(error = %error, "cannot update menu layout");
-                    }
-                }
+                debug!("layout_updated signal received, scheduling debounced refresh");
+                menu_dirty = true;
+                menu_debounce.as_mut().reset(Instant::now() + MENU_DEBOUNCE);
             }
 
             Some(_) = items_properties_updated.next() => {
-                debug!("items_properties_updated signal received");
-                match menu_proxy.get_layout(0, -1, vec![]).await {
-                    Ok(layout) => {
-                        let menu_item = MenuItem::from(layout);
-                        tray_item.menu.set(Some(menu_item));
-                    }
-                    Err(error) => {
-                        tray_item.menu.set(None);
-                        error!(error = %error, "cannot update menu layout after properties change");
-                    }
-                }
+                debug!("items_properties_updated signal received, scheduling debounced refresh");
+                menu_dirty = true;
+                menu_debounce.as_mut().reset(Instant::now() + MENU_DEBOUNCE);
             }
 
             Some(_) = new_icon.next() => {
                 debug!("NewIcon signal received");
-                if let Ok(name) = item_proxy.icon_name().await {
-                    let icon_name = if name.is_empty() { None } else { Some(name) };
-                    tray_item.icon_name.set(icon_name);
+                if new_icon_has_name_property {
+                    match item_proxy.icon_name().await {
+                        Ok(name) => {
+                            let icon_name = if name.is_empty() { None } else { Some(name) };
+                            tray_item.icon_name.set(icon_name);
+                        }
+                        Err(error) => {
+                            if is_unknown_property_error(&error) {
+                                debug!("IconName property is unsupported for this tray item; skipping future refreshes");
+                                new_icon_has_name_property = false;
+                                tray_item.icon_name.set(None);
+                            }
+                        }
+                    }
                 }
                 if let Ok(pixmaps) = item_proxy.icon_pixmap().await {
                     let pixmaps: Vec<IconPixmap> = pixmaps.into_iter().map(Into::into).collect();

@@ -3,8 +3,8 @@ use std::sync::Arc;
 use futures::StreamExt;
 use relm4::ComponentSender;
 use tokio_util::sync::CancellationToken;
-use wayle_common::{watch, watch_cancellable};
 use wayle_media::{MediaService, core::player::Player};
+use wayle_widgets::{watch, watch_cancellable};
 
 use super::{PlayerView, PlayerViewCmd};
 
@@ -24,12 +24,6 @@ pub(super) fn spawn_player(
     let metadata_token = token.clone();
     watch_cancellable!(sender, metadata_token, [metadata.watch()], |out| {
         let _ = out.send(PlayerViewCmd::MetadataChanged);
-    });
-
-    let cover_art = player.metadata.cover_art.clone();
-    let cover_art_token = token.clone();
-    watch_cancellable!(sender, cover_art_token, [cover_art.watch()], |out| {
-        let _ = out.send(PlayerViewCmd::CoverArtChanged(cover_art.get()));
     });
 
     let playback_state = player.playback_state.clone();
@@ -75,7 +69,7 @@ pub(super) fn spawn_player(
     sender.command(move |out, shutdown| async move {
         let shutdown_fut = shutdown.wait();
         tokio::pin!(shutdown_fut);
-        let mut stream = Box::pin(position_player.watch_position());
+        let mut stream = Box::pin(position_player.position.watch());
         loop {
             tokio::select! {
                 () = &mut shutdown_fut => break,

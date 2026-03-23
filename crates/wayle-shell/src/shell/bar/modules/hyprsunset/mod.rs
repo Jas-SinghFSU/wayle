@@ -1,6 +1,7 @@
 mod factory;
 mod helpers;
 mod messages;
+mod methods;
 mod watchers;
 
 use std::{rc::Rc, sync::Arc};
@@ -8,13 +9,11 @@ use std::{rc::Rc, sync::Arc};
 use gtk::prelude::*;
 use relm4::prelude::*;
 use tracing::debug;
-use wayle_common::{ConfigProperty, process::ClickAction};
-use wayle_config::{ConfigService, schemas::styling::CssToken};
+use wayle_config::{ClickAction, ConfigProperty, ConfigService, schemas::styling::CssToken};
 use wayle_widgets::prelude::{
-    BarButton, BarButtonBehavior, BarButtonColors, BarButtonInit, BarButtonInput, BarButtonOutput,
+    BarButton, BarButtonBehavior, BarButtonColors, BarButtonInit, BarButtonOutput,
 };
 
-use self::helpers::LabelContext;
 pub(crate) use self::{
     factory::Factory,
     messages::{HyprsunsetCmd, HyprsunsetInit, HyprsunsetMsg},
@@ -152,47 +151,5 @@ impl Component for HyprsunsetModule {
                 }
             }
         }
-    }
-}
-
-impl HyprsunsetModule {
-    fn toggle_filter(
-        &self,
-        sender: &ComponentSender<Self>,
-        config: &wayle_config::schemas::modules::HyprsunsetConfig,
-    ) {
-        let enabled = self.enabled;
-        let temp = config.temperature.get();
-        let gamma = config.gamma.get();
-
-        debug!(current_enabled = enabled, "toggle_filter called");
-
-        sender.oneshot_command(async move {
-            if enabled {
-                debug!("stopping hyprsunset");
-                let _ = helpers::stop().await;
-                HyprsunsetCmd::StateChanged(None)
-            } else {
-                debug!(temp, gamma, "starting hyprsunset");
-                let _ = helpers::start(temp, gamma).await;
-                HyprsunsetCmd::StateChanged(Some(helpers::HyprsunsetState { temp, gamma }))
-            }
-        });
-    }
-
-    fn update_display(&self, config: &wayle_config::schemas::modules::HyprsunsetConfig) {
-        let icon =
-            helpers::select_icon(self.enabled, &config.icon_off.get(), &config.icon_on.get());
-        self.bar_button.emit(BarButtonInput::SetIcon(icon));
-
-        let label = helpers::build_label(&LabelContext {
-            format: &config.format.get(),
-            temp: self.current_temp,
-            gamma: self.current_gamma,
-            config_temp: config.temperature.get(),
-            config_gamma: config.gamma.get(),
-            enabled: self.enabled,
-        });
-        self.bar_button.emit(BarButtonInput::SetLabel(label));
     }
 }

@@ -1,14 +1,15 @@
-use std::sync::Arc;
+mod methods;
+
+use std::{collections::HashSet, mem, sync::Arc};
 
 use gtk::prelude::*;
 use relm4::{factory::FactoryComponent, prelude::*};
 use wayle_config::schemas::modules::{ActiveIndicator, DisplayMode, HyprlandWorkspacesConfig};
-use wayle_hyprland::{Client, WorkspaceId};
+use wayle_hyprland::{Address, Client, WorkspaceId};
 
 use crate::shell::bar::modules::hyprland_workspaces::helpers::{
-    IconContext, WorkspaceState, collect_button_css_classes, compute_static_css_classes,
-    determine_workspace_state, format_workspace_label, resolve_workspace_icons,
-    should_show_divider, workspace_id_css_class,
+    IconContext, WorkspaceState, compute_static_css_classes, determine_workspace_state,
+    resolve_workspace_icons, workspace_id_css_class,
 };
 
 const WORKSPACE_LABEL_CSS: &str = "workspace-label";
@@ -31,6 +32,12 @@ pub(crate) struct ButtonBuildContext<'a> {
 }
 
 #[derive(Debug, Clone)]
+pub(crate) struct AppIconInit {
+    pub icon_name: String,
+    pub addresses: Vec<Address>,
+}
+
+#[derive(Debug, Clone)]
 pub(crate) struct WorkspaceButtonInit {
     pub id: WorkspaceId,
     pub display_id: WorkspaceId,
@@ -39,34 +46,46 @@ pub(crate) struct WorkspaceButtonInit {
     pub is_active: bool,
     pub is_urgent: bool,
     pub is_vertical: bool,
+
     pub display_mode: DisplayMode,
     pub active_indicator: ActiveIndicator,
     pub label_use_name: bool,
     pub mapped_icon: Option<String>,
     pub divider: String,
+
     pub show_app_icons: bool,
-    pub app_icons: Vec<String>,
+    pub app_icons: Vec<AppIconInit>,
+    pub urgent_addresses: HashSet<Address>,
     pub empty_icon: String,
     pub icon_gap_px: i32,
 }
 
+pub(super) struct AppIcon {
+    pub addresses: Vec<Address>,
+    pub widget: gtk::Image,
+}
+
 pub(crate) struct WorkspaceButton {
     id: WorkspaceId,
-    state: WorkspaceState,
-    is_urgent: bool,
-    css_id_class: String,
-    static_classes: Vec<&'static str>,
-    display_id: WorkspaceId,
-    name: String,
-    display_mode: DisplayMode,
-    label_use_name: bool,
-    mapped_icon: Option<String>,
-    divider: String,
-    show_app_icons: bool,
-    app_icons: Vec<String>,
-    empty_icon: String,
-    icon_gap_px: i32,
-    is_vertical: bool,
+    pub(super) state: WorkspaceState,
+    pub(super) is_urgent: bool,
+    pub(super) css_id_class: String,
+    pub(super) static_classes: Vec<&'static str>,
+
+    pub(super) display_id: WorkspaceId,
+    pub(super) name: String,
+    pub(super) display_mode: DisplayMode,
+    pub(super) label_use_name: bool,
+    pub(super) mapped_icon: Option<String>,
+    pub(super) divider: String,
+    pub(super) is_vertical: bool,
+
+    pub(super) show_app_icons: bool,
+    app_icon_inits: Vec<AppIconInit>,
+    pub(super) app_icons: Vec<AppIcon>,
+    initial_urgent_addrs: HashSet<Address>,
+    pub(super) empty_icon: String,
+    pub(super) icon_gap_px: i32,
 }
 
 #[derive(Debug)]
@@ -75,6 +94,7 @@ pub(crate) enum WorkspaceButtonInput {
         windows: u16,
         is_active: bool,
         is_urgent: bool,
+        urgent_addresses: HashSet<Address>,
     },
 }
 
@@ -164,17 +184,21 @@ impl FactoryComponent for WorkspaceButton {
             is_urgent: init.is_urgent,
             css_id_class: workspace_id_css_class(init.id),
             static_classes,
+
             display_id: init.display_id,
             name: init.name,
             display_mode: init.display_mode,
             label_use_name: init.label_use_name,
             mapped_icon: init.mapped_icon,
             divider: init.divider,
+            is_vertical: init.is_vertical,
+
             show_app_icons: init.show_app_icons,
-            app_icons: init.app_icons,
+            app_icon_inits: init.app_icons,
+            app_icons: Vec::new(),
+            initial_urgent_addrs: init.urgent_addresses,
             empty_icon: init.empty_icon,
             icon_gap_px: init.icon_gap_px,
-            is_vertical: init.is_vertical,
         }
     }
 
@@ -204,7 +228,8 @@ impl FactoryComponent for WorkspaceButton {
         root.add_controller(scroll_controller);
 
         self.populate_identity(&widgets.identity);
-        self.populate_app_icons(&widgets.app_icons_container);
+        let urgent_addrs = mem::take(&mut self.initial_urgent_addrs);
+        self.populate_app_icons(&widgets.app_icons_container, &urgent_addrs);
 
         widgets
     }
@@ -215,123 +240,10 @@ impl FactoryComponent for WorkspaceButton {
                 windows,
                 is_active,
                 is_urgent,
+                urgent_addresses,
             } => {
                 self.state = determine_workspace_state(is_active, windows);
-                self.is_urgent = is_urgent;
-            }
-        }
-    }
-}
-
-impl WorkspaceButton {
-    pub fn id(&self) -> WorkspaceId {
-        self.id
-    }
-
-    fn current_css_classes(&self) -> Vec<&str> {
-        collect_button_css_classes(
-            &self.static_classes,
-            &self.css_id_class,
-            self.state,
-            self.is_urgent,
-        )
-    }
-
-    fn orientation(&self) -> gtk::Orientation {
-        if self.is_vertical {
-            gtk::Orientation::Vertical
-        } else {
-            gtk::Orientation::Horizontal
-        }
-    }
-
-    fn content_halign(&self) -> gtk::Align {
-        if self.is_vertical {
-            gtk::Align::Fill
-        } else {
-            gtk::Align::Center
-        }
-    }
-
-    fn content_valign(&self) -> gtk::Align {
-        if self.is_vertical {
-            gtk::Align::Center
-        } else {
-            gtk::Align::Fill
-        }
-    }
-
-    fn icons_halign(&self) -> gtk::Align {
-        if self.is_vertical {
-            gtk::Align::Center
-        } else {
-            gtk::Align::Fill
-        }
-    }
-
-    fn show_divider(&self) -> bool {
-        should_show_divider(self.show_app_icons, &self.divider, self.display_mode)
-    }
-
-    fn populate_identity(&self, container: &gtk::Box) {
-        match self.display_mode {
-            DisplayMode::Label => {
-                let label_text = format_workspace_label(
-                    self.display_id,
-                    self.id,
-                    &self.name,
-                    self.label_use_name,
-                );
-                let label = gtk::Label::builder()
-                    .label(&label_text)
-                    .css_classes([WORKSPACE_LABEL_CSS])
-                    .valign(gtk::Align::Center)
-                    .build();
-                container.append(&label);
-            }
-            DisplayMode::Icon => {
-                if let Some(ref icon_name) = self.mapped_icon {
-                    let image = gtk::Image::builder()
-                        .icon_name(icon_name)
-                        .css_classes([WORKSPACE_CUSTOM_ICON_CSS])
-                        .valign(gtk::Align::Center)
-                        .build();
-                    container.append(&image);
-                } else {
-                    let label_text = format_workspace_label(
-                        self.display_id,
-                        self.id,
-                        &self.name,
-                        self.label_use_name,
-                    );
-                    let label = gtk::Label::builder()
-                        .label(&label_text)
-                        .css_classes([WORKSPACE_LABEL_CSS])
-                        .valign(gtk::Align::Center)
-                        .build();
-                    container.append(&label);
-                }
-            }
-            DisplayMode::None => {}
-        }
-    }
-
-    fn populate_app_icons(&self, container: &gtk::Box) {
-        if self.app_icons.is_empty() {
-            let image = gtk::Image::builder()
-                .icon_name(&self.empty_icon)
-                .css_classes([WORKSPACE_ICON_CSS, WORKSPACE_ICON_EMPTY_CSS])
-                .valign(gtk::Align::Center)
-                .build();
-            container.append(&image);
-        } else {
-            for icon_name in &self.app_icons {
-                let image = gtk::Image::builder()
-                    .icon_name(icon_name)
-                    .css_classes([WORKSPACE_ICON_CSS])
-                    .valign(gtk::Align::Center)
-                    .build();
-                container.append(&image);
+                self.apply_urgency(is_urgent, &urgent_addresses);
             }
         }
     }
@@ -341,6 +253,7 @@ pub(crate) fn build_button_init(
     ctx: &ButtonBuildContext<'_>,
     config: &HyprlandWorkspacesConfig,
     clients: &[Arc<Client>],
+    urgent_addresses: HashSet<Address>,
 ) -> WorkspaceButtonInit {
     let workspace_map = config.workspace_map.get();
     let mapped_icon = i32::try_from(ctx.id)
@@ -355,7 +268,15 @@ pub(crate) fn build_button_init(
             user_map: &user_map,
             fallback: &fallback,
         };
-        resolve_workspace_icons(ctx.id, clients, &icon_ctx, config.app_icons_dedupe.get())
+        let resolved =
+            resolve_workspace_icons(ctx.id, clients, &icon_ctx, config.app_icons_dedupe.get());
+        resolved
+            .into_iter()
+            .map(|resolved| AppIconInit {
+                icon_name: resolved.icon_name,
+                addresses: resolved.addresses,
+            })
+            .collect()
     } else {
         Vec::new()
     };
@@ -370,13 +291,16 @@ pub(crate) fn build_button_init(
         is_active: ctx.is_active,
         is_urgent: ctx.is_urgent,
         is_vertical: ctx.is_vertical,
+
         display_mode: config.display_mode.get(),
         active_indicator: config.active_indicator.get(),
         label_use_name: config.label_use_name.get(),
         mapped_icon,
         divider: config.divider.get(),
+
         show_app_icons: config.app_icons_show.get(),
         app_icons,
+        urgent_addresses,
         empty_icon: config.app_icons_empty.get(),
         icon_gap_px,
     }

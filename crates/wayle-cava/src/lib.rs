@@ -96,8 +96,8 @@
 //! [`low_cutoff`]: CavaService::low_cutoff
 //! [`high_cutoff`]: CavaService::high_cutoff
 //! [`samplerate`]: CavaService::samplerate
-//! [`Property`]: wayle_common::Property
-//! [`Property<T>`]: wayle_common::Property
+//! [`Property`]: wayle_core::Property
+//! [`Property<T>`]: wayle_core::Property
 //!
 //! # Building
 //!

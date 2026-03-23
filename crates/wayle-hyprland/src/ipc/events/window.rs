@@ -142,42 +142,6 @@ pub(crate) fn handle_move_window_v2(
     Ok(())
 }
 
-pub(crate) fn handle_change_floating_mode(
-    event: &str,
-    data: &str,
-    hyprland_tx: Sender<HyprlandEvent>,
-) -> Result<()> {
-    let event_data = format!("{event}>>{data}");
-    let Some((address, floating)) = data.split_once(',') else {
-        return Err(Error::EventParseError {
-            event_data,
-            field: "floating_mode_data",
-            expected: "comma-separated address,floating",
-            value: data.to_string(),
-        });
-    };
-    let floating = match floating {
-        "0" => false,
-        "1" => true,
-        _ => {
-            return Err(Error::EventParseError {
-                event_data,
-                field: "floating",
-                expected: "0 or 1",
-                value: floating.to_string(),
-            });
-        }
-    };
-
-    let address = Address::new(address.to_string());
-    hyprland_tx.send(HyprlandEvent::ChangeFloatingMode {
-        address: address.clone(),
-        floating,
-    })?;
-
-    Ok(())
-}
-
 pub(crate) fn handle_urgent(data: &str, hyprland_tx: Sender<HyprlandEvent>) -> Result<()> {
     let address = Address::new(data.to_string());
     hyprland_tx.send(HyprlandEvent::Urgent { address })?;
@@ -212,45 +176,6 @@ pub(crate) fn handle_window_title_v2(
     hyprland_tx.send(HyprlandEvent::WindowTitleV2 {
         address: address.clone(),
         title: title.to_string(),
-    })?;
-
-    Ok(())
-}
-
-pub(crate) fn handle_toggle_group(
-    event: &str,
-    data: &str,
-    hyprland_tx: Sender<HyprlandEvent>,
-) -> Result<()> {
-    let event_data = format!("{event}>>{data}");
-    let Some((state, addresses_str)) = data.split_once(',') else {
-        return Err(Error::EventParseError {
-            event_data,
-            field: "toggle_group_data",
-            expected: "comma-separated state,addresses",
-            value: data.to_string(),
-        });
-    };
-    let state = match state {
-        "0" => false,
-        "1" => true,
-        _ => {
-            return Err(Error::EventParseError {
-                event_data,
-                field: "state",
-                expected: "0 or 1",
-                value: state.to_string(),
-            });
-        }
-    };
-    let addresses: Vec<Address> = addresses_str
-        .split(',')
-        .map(|addr| Address::new(addr.to_string()))
-        .collect();
-
-    hyprland_tx.send(HyprlandEvent::ToggleGroup {
-        state,
-        addresses: addresses.clone(),
     })?;
 
     Ok(())

@@ -93,15 +93,14 @@ impl From<bool> for ShuffleMode {
 pub struct Volume(f64);
 
 impl Volume {
-    /// Create a new instance of a volume with safeguarded values
+    /// Creates a volume, floored at 0.0. Values above 1.0 are valid (amplification).
     pub fn new(value: f64) -> Self {
-        Self(value.clamp(0.0, 1.0))
+        Self(value.max(0.0))
     }
 
-    /// Get the volume as a percentage
+    /// Volume as a percentage (1.0 = 100%). Can exceed 100% for amplified players.
     pub fn as_percentage(&self) -> f64 {
-        let clamped_volume = self.0.clamp(0.0, 1.0);
-        clamped_volume * 100.0
+        self.0 * 100.0
     }
 }
 
@@ -190,9 +189,9 @@ mod tests {
     }
 
     #[test]
-    fn volume_new_clamps_above_one_to_one() {
+    fn volume_new_allows_above_one() {
         let volume = Volume::new(1.5);
-        assert_eq!(*volume, 1.0);
+        assert_eq!(*volume, 1.5);
     }
 
     #[test]

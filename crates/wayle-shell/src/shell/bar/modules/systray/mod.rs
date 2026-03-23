@@ -2,18 +2,16 @@ mod factory;
 mod helpers;
 mod item;
 mod messages;
+mod methods;
 mod styling;
 mod watchers;
 
 use std::sync::Arc;
 
 use gtk4::prelude::{OrientableExt, WidgetExt};
-use helpers::is_blacklisted;
-use item::{SystrayItem, SystrayItemInit};
+use item::SystrayItem;
 use relm4::{ComponentParts, ComponentSender, factory::FactoryVecDeque, gtk, prelude::*};
-use wayle_common::ConfigProperty;
-use wayle_config::ConfigService;
-use wayle_systray::core::item::TrayItem;
+use wayle_config::{ConfigProperty, ConfigService};
 use wayle_widgets::prelude::{
     BarContainer, BarContainerBehavior, BarContainerColors, BarContainerInit, force_window_resize,
 };
@@ -134,26 +132,5 @@ impl Component for SystrayModule {
                 force_window_resize(root);
             }
         }
-    }
-}
-
-impl SystrayModule {
-    fn update_items(&mut self, items: Vec<Arc<TrayItem>>) {
-        let config = &self.config.config().modules.systray;
-
-        let mut guard = self.items.guard();
-        guard.clear();
-
-        for item in items {
-            if is_blacklisted(&item, config) {
-                continue;
-            }
-            guard.push_back(SystrayItemInit {
-                item,
-                config: self.config.clone(),
-            });
-        }
-
-        self.visible.set(!guard.is_empty());
     }
 }

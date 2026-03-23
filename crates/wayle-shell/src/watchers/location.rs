@@ -1,5 +1,5 @@
 use relm4::ComponentSender;
-use wayle_common::{watch, watchers::changes_stream};
+use wayle_widgets::{watch, watchers::changes_stream};
 
 use crate::shell::{Shell, ShellCmd, ShellServices};
 

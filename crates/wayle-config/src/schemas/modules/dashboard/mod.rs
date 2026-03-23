@@ -1,8 +1,8 @@
 use schemars::schema_for;
-use wayle_common::{ConfigProperty, process::ClickAction};
 use wayle_derive::wayle_config;
 
 use crate::{
+    ClickAction, ConfigProperty,
     docs::{ModuleInfo, ModuleInfoProvider},
     schemas::styling::{ColorValue, CssToken},
 };
@@ -57,8 +57,28 @@ pub struct DashboardConfig {
 
     /// Action on left click.
     #[serde(rename = "left-click")]
-    #[default(ClickAction::None)]
+    #[default(ClickAction::Dropdown(String::from("dashboard")))]
     pub left_click: ConfigProperty<ClickAction>,
+
+    /// Shell command for the lock button in the dashboard dropdown.
+    #[serde(rename = "dropdown-lock-command")]
+    #[default(String::from("loginctl lock-session"))]
+    pub dropdown_lock_command: ConfigProperty<String>,
+
+    /// Shell command for the logout button in the dashboard dropdown.
+    #[serde(rename = "dropdown-logout-command")]
+    #[default(String::from("loginctl terminate-session $XDG_SESSION_ID"))]
+    pub dropdown_logout_command: ConfigProperty<String>,
+
+    /// Shell command for the reboot button in the dashboard dropdown.
+    #[serde(rename = "dropdown-reboot-command")]
+    #[default(String::from("systemctl reboot"))]
+    pub dropdown_reboot_command: ConfigProperty<String>,
+
+    /// Shell command for the power-off button in the dashboard dropdown.
+    #[serde(rename = "dropdown-poweroff-command")]
+    #[default(String::from("systemctl poweroff"))]
+    pub dropdown_poweroff_command: ConfigProperty<String>,
 
     /// Hidden: icon always shown.
     #[serde(skip)]

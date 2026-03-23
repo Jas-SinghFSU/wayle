@@ -10,7 +10,7 @@ pub(crate) struct TrayItemProperties {
     pub title: String,
     pub category: Category,
     pub status: Status,
-    pub window_id: u32,
+    pub window_id: i32,
     pub item_is_menu: bool,
     pub icon_name: Option<String>,
     pub icon_pixmap: Vec<IconPixmap>,

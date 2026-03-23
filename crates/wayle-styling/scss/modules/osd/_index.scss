@@ -1,0 +1,64 @@
+@use "../../primitives/progress_bar/mixins" as pb;
+
+window.background.osd-host {
+    background: none;
+}
+
+.osd {
+    all: unset;
+    background: var(--bg-elevated);
+    border-radius: var(--rounding-element);
+    box-shadow: 0 calc(0.25rem * var(--global-scale)) calc(1rem * var(--global-scale))
+        rgba(0, 0, 0, 0.3);
+    margin: var(--space-md);
+    padding: var(--space-md);
+    min-width: calc(var(--space-lg) * 12);
+}
+
+image.osd-icon {
+    -gtk-icon-size: var(--icon-lg);
+    color: var(--accent);
+    margin-right: var(--space-sm);
+}
+
+label.osd-label {
+    font-size: var(--text-md);
+    font-weight: var(--weight-bold);
+    color: var(--fg-muted);
+    margin-right: var(--space-sm);
+}
+
+label.osd-value {
+    font-size: var(--text-md);
+    font-weight: var(--weight-bold2);
+    color: var(--fg-default);
+    min-width: calc(var(--space-xl) * 2);
+    margin-right: calc(var(--space-sm) * -1.5);
+}
+
+progressbar.osd-bar {
+    @include pb.progress-bar-base;
+    margin-top: var(--space-md);
+    min-width: calc(var(--space-lg) * 12);
+}
+
+.osd.muted {
+    image.osd-icon {
+        color: var(--fg-subtle);
+    }
+
+    progressbar.osd-bar trough progress {
+        background: var(--fg-subtle);
+    }
+}
+
+.osd.toggle-off {
+    image.osd-icon,
+    label.osd-label {
+        color: var(--fg-subtle);
+    }
+}
+
+.osd.bordered {
+    border: 1px solid var(--border-default);
+}

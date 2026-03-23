@@ -8,7 +8,7 @@ use libpulse_binding::{
 
 use crate::{
     backend::{
-        conversion::{create_stream_info_from_sink_input, create_stream_info_from_source_output},
+        conversion::stream::{from_sink_input, from_source_output},
         types::{EventSender, StreamStore},
     },
     events::AudioEvent,
@@ -22,7 +22,7 @@ pub(crate) fn trigger_discovery(context: &Context, streams: &StreamStore, events
     let events_tx_clone = events_tx.clone();
     introspect.get_sink_input_info_list(move |sink_input_list| {
         if let ListResult::Item(sink_input) = sink_input_list {
-            let stream_info = create_stream_info_from_sink_input(sink_input);
+            let stream_info = from_sink_input(sink_input);
             let stream_key = stream_info.key();
             process_stream_update(stream_key, stream_info, &streams_clone, &events_tx_clone);
         }
@@ -32,7 +32,7 @@ pub(crate) fn trigger_discovery(context: &Context, streams: &StreamStore, events
     let events_tx_clone = events_tx.clone();
     introspect.get_source_output_info_list(move |source_output_list| {
         if let ListResult::Item(source_output) = source_output_list {
-            let stream_info = create_stream_info_from_source_output(source_output);
+            let stream_info = from_source_output(source_output);
             let stream_key = stream_info.key();
             process_stream_update(stream_key, stream_info, &streams_clone, &events_tx_clone);
         }
@@ -54,7 +54,7 @@ pub(crate) fn trigger_refresh(
         Facility::SinkInput => {
             introspect.get_sink_input_info(stream_key.index, move |input_list| {
                 if let ListResult::Item(input) = input_list {
-                    let stream_info = create_stream_info_from_sink_input(input);
+                    let stream_info = from_sink_input(input);
                     process_stream_update(
                         stream_key,
                         stream_info,
@@ -67,7 +67,7 @@ pub(crate) fn trigger_refresh(
         Facility::SourceOutput => {
             introspect.get_source_output_info(stream_key.index, move |output_list| {
                 if let ListResult::Item(output) = output_list {
-                    let stream_info = create_stream_info_from_source_output(output);
+                    let stream_info = from_source_output(output);
                     process_stream_update(
                         stream_key,
                         stream_info,

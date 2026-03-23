@@ -6,8 +6,7 @@ use relm4::{
 };
 use tokio::sync::mpsc;
 use tracing::{debug, warn};
-use wayle_common::SubscribeChanges;
-use wayle_config::{ConfigService, schemas::bar::BarLayout};
+use wayle_config::{ConfigService, SubscribeChanges, schemas::bar::BarLayout};
 
 use crate::shell::bar::{Bar, BarCmd};
 

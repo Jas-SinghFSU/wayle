@@ -1,6 +1,6 @@
 #![allow(missing_docs)]
 
-use wayle_common::{ApplyConfigLayer, ConfigProperty};
+use wayle_config::{ApplyConfigLayer, ConfigProperty};
 use wayle_derive::ApplyConfigLayer;
 
 #[derive(ApplyConfigLayer)]

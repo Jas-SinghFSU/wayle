@@ -2,11 +2,13 @@
 
 use std::fmt::{Debug, Formatter, Result as FmtResult};
 
-use wayle_common::ConfigProperty;
 pub use wayle_config::schemas::bar::BarButtonVariant;
-use wayle_config::schemas::{
-    bar::{BorderLocation, IconPosition},
-    styling::{ColorValue, CssToken, ThemeProvider},
+use wayle_config::{
+    ConfigProperty,
+    schemas::{
+        bar::{BorderLocation, IconPosition},
+        styling::{ColorValue, CssToken, ThemeProvider},
+    },
 };
 
 /// Colors for bar buttons (shared across all variants).

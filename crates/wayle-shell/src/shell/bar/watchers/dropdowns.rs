@@ -2,8 +2,7 @@ use std::sync::Arc;
 
 use relm4::ComponentSender;
 use tokio::sync::mpsc;
-use wayle_common::SubscribeChanges;
-use wayle_config::ConfigService;
+use wayle_config::{ConfigService, SubscribeChanges};
 
 use crate::shell::bar::{Bar, BarCmd};
 

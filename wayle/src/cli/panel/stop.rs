@@ -3,7 +3,7 @@
 use std::collections::HashMap;
 
 use tracing::info;
-use wayle_common::shell::actions;
+use wayle_ipc::shell::actions;
 
 use super::proxy::{actions_proxy, connect, is_running, wait_for_shutdown};
 use crate::cli::CliAction;

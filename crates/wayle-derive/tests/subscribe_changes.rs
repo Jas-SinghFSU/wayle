@@ -1,6 +1,6 @@
 #![allow(missing_docs)]
 
-use wayle_common::{ConfigProperty, SubscribeChanges};
+use wayle_config::{ConfigProperty, SubscribeChanges};
 use wayle_derive::SubscribeChanges;
 
 #[derive(SubscribeChanges)]

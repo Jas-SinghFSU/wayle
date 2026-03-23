@@ -41,7 +41,7 @@ pub(super) fn build_label(ctx: &LabelContext<'_>) -> String {
         "config_temp": ctx.config_temp.to_string(),
         "config_gamma": ctx.config_gamma.to_string(),
     });
-    wayle_common::template::render(ctx.format, template_ctx).unwrap_or_default()
+    crate::template::render(ctx.format, template_ctx).unwrap_or_default()
 }
 
 pub(super) fn select_icon(enabled: bool, icon_off: &str, icon_on: &str) -> String {

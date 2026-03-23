@@ -99,7 +99,7 @@
     }
 
     &.urgent {
-        animation: workspace-pulse 1s infinite;
+        opacity: 0.5;
     }
 
     &.special {
@@ -127,6 +127,10 @@
 
 .workspace-icon {
     -gtk-icon-size: calc(var(--ws-icon-size-px) * 1px);
+
+    &.urgent {
+        opacity: 0.5;
+    }
 }
 
 .workspace-divider {
@@ -135,12 +139,3 @@
     font-weight: var(--weight-bold);
 }
 
-@keyframes workspace-pulse {
-    0%,
-    100% {
-        opacity: 1;
-    }
-    50% {
-        opacity: 0.5;
-    }
-}

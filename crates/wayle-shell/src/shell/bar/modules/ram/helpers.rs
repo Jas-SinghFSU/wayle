@@ -12,7 +12,7 @@ pub(super) fn format_label(format: &str, mem: &MemoryData) -> String {
         "swap_used_gib": gib(mem.swap_used_bytes),
         "swap_total_gib": gib(mem.swap_total_bytes),
     });
-    wayle_common::template::render(format, ctx).unwrap_or_default()
+    crate::template::render(format, ctx).unwrap_or_default()
 }
 
 fn gib(bytes: u64) -> String {
@@ -110,7 +110,7 @@ mod tests {
 
     #[test]
     fn format_label_with_multiple_placeholders() {
-        let mem = mem_data(12 * GIB, 32 * GIB, 20 * GIB, 37.5, 1 * GIB, 8 * GIB, 12.5);
+        let mem = mem_data(12 * GIB, 32 * GIB, 20 * GIB, 37.5, GIB, 8 * GIB, 12.5);
         let result = format_label("{{ used_gib }}/{{ total_gib }}G ({{ percent }}%)", &mem);
         assert_eq!(result, "12.0/32.0G (38%)");
     }

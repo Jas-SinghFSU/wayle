@@ -7,6 +7,19 @@ use super::{PlayerView, PlayerViewCmd};
 use crate::{i18n::t, shell::bar::dropdowns::media::helpers};
 
 impl PlayerView {
+    pub(super) fn set_active(&mut self, active: bool, sender: &ComponentSender<PlayerView>) {
+        if self.is_active == active {
+            return;
+        }
+
+        self.is_active = active;
+        let _ = self.player_watcher.reset();
+
+        if active {
+            self.update_player(self.player.clone(), sender);
+        }
+    }
+
     pub(super) fn fire_player_command<F, Fut>(
         &self,
         sender: &ComponentSender<PlayerView>,
@@ -43,7 +56,10 @@ impl PlayerView {
         self.refresh_from_player(&player);
 
         let token = self.player_watcher.reset();
-        super::watchers::spawn_player(sender, &player, token);
+        if self.is_active {
+            super::watchers::spawn_player(sender, &player, token);
+            self.refresh_position_now(sender);
+        }
     }
 
     pub(super) fn refresh_metadata(&mut self) {
@@ -56,6 +72,8 @@ impl PlayerView {
         self.artist = metadata.artist.get();
         self.album = metadata.album.get();
         self.length = metadata.length.get();
+        self.cover_art = metadata.cover_art.get();
+        self.update_artwork_css();
     }
 
     pub(super) fn refresh_capabilities(&mut self) {
@@ -103,8 +121,13 @@ impl PlayerView {
 
     pub(super) fn update_artwork_css(&self) {
         let css = match self.cover_art.as_deref() {
-            Some(path) => format!(".media-artwork {{ background-image: url(\"file://{path}\"); }}"),
-            None => String::from(".media-artwork { background-image: none; }"),
+            Some(path) => {
+                format!(
+                    ".{} {{ background-image: url(\"file://{path}\"); }}",
+                    self.art_css_class
+                )
+            }
+            None => format!(".{} {{ background-image: none; }}", self.art_css_class),
         };
         self.art_css_provider.load_from_string(&css);
     }
@@ -137,11 +160,24 @@ impl PlayerView {
 
         self.source_icon = helpers::resolve_source_icon(player);
         self.refresh_metadata();
+        self.position = player.position.get();
+        self.seek_slider.set_value(self.progress_fraction() * 100.0);
+    }
 
-        self.cover_art = player.metadata.cover_art.get();
-        self.update_artwork_css();
-        self.position = Duration::ZERO;
-        self.seek_slider.set_value(0.0);
+    fn refresh_position_now(&self, sender: &ComponentSender<PlayerView>) {
+        let Some(player) = self.player.clone() else {
+            return;
+        };
+
+        sender.oneshot_command(async move {
+            match player.position().await {
+                Ok(position) => PlayerViewCmd::PositionTick(position),
+                Err(error) => {
+                    tracing::debug!(error = %error, "immediate position refresh failed");
+                    PlayerViewCmd::Noop
+                }
+            }
+        });
     }
 
     fn clear_fields(&mut self) {

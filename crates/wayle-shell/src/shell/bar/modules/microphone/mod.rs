@@ -1,23 +1,20 @@
 mod factory;
 mod helpers;
 mod messages;
+mod methods;
 mod watchers;
 
 use std::{rc::Rc, sync::Arc};
 
 use gtk::prelude::*;
 use relm4::prelude::*;
-use wayle_audio::{AudioService, core::device::input::InputDevice};
-use wayle_common::{ConfigProperty, WatcherToken};
-use wayle_config::{
-    ConfigService,
-    schemas::{modules::MicrophoneConfig, styling::CssToken},
-};
-use wayle_widgets::prelude::{
-    BarButton, BarButtonBehavior, BarButtonColors, BarButtonInit, BarButtonInput, BarButtonOutput,
+use wayle_audio::AudioService;
+use wayle_config::{ConfigProperty, ConfigService, schemas::styling::CssToken};
+use wayle_widgets::{
+    WatcherToken,
+    prelude::{BarButton, BarButtonBehavior, BarButtonColors, BarButtonInit, BarButtonOutput},
 };
 
-use self::helpers::{IconContext, format_label, select_icon};
 pub(crate) use self::{
     factory::Factory,
     messages::{MicrophoneCmd, MicrophoneInit, MicrophoneMsg},
@@ -140,24 +137,5 @@ impl Component for MicrophoneModule {
                 }
             }
         }
-    }
-}
-
-impl MicrophoneModule {
-    fn update_display(&self, config: &MicrophoneConfig, device: &InputDevice) {
-        let muted = device.muted.get();
-        let percentage = device.volume.get().average_percentage().round() as u16;
-
-        let label = format_label(percentage);
-        self.bar_button.emit(BarButtonInput::SetLabel(label));
-
-        let icon_active = config.icon_active.get();
-        let icon_muted = config.icon_muted.get();
-        let icon = select_icon(&IconContext {
-            muted,
-            icon_active: &icon_active,
-            icon_muted: &icon_muted,
-        });
-        self.bar_button.emit(BarButtonInput::SetIcon(icon));
     }
 }

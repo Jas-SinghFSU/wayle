@@ -2,6 +2,8 @@ mod color_extractor;
 mod css;
 mod location;
 mod monitors;
+mod notification;
+mod osd;
 mod scss_dev;
 mod sysinfo;
 mod wallpaper;
@@ -18,7 +20,9 @@ pub(crate) fn init(sender: &ComponentSender<Shell>, services: &ShellServices) {
     css::spawn(sender, services);
     location::spawn(sender, services);
     monitors::spawn(sender);
+    osd::spawn(sender, services);
     color_extractor::spawn(services);
+    notification::spawn(services);
     sysinfo::spawn(services);
     wallpaper::spawn(services);
     weather::spawn(services);

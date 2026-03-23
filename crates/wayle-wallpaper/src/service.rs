@@ -9,7 +9,7 @@ use tokio::sync::broadcast;
 use tokio_stream::wrappers::BroadcastStream;
 use tokio_util::sync::CancellationToken;
 use tracing::{info, instrument, warn};
-use wayle_common::Property;
+use wayle_core::Property;
 use zbus::Connection;
 
 use crate::{

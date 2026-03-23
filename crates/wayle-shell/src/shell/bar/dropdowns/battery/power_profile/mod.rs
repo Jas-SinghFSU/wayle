@@ -6,14 +6,17 @@ use std::sync::Arc;
 
 use gtk::prelude::*;
 use relm4::{gtk, prelude::*};
+use wayle_core::Property;
 use wayle_power_profiles::{PowerProfilesService, types::profile::PowerProfile};
+use wayle_widgets::WatcherToken;
 
 pub(crate) use self::messages::PowerProfileInit;
 use self::messages::{PowerProfileCmd, PowerProfileInput};
 use crate::i18n::t;
 
 pub(crate) struct PowerProfileSection {
-    power_profiles: Option<Arc<PowerProfilesService>>,
+    power_profiles: Property<Option<Arc<PowerProfilesService>>>,
+    profile_token: WatcherToken,
     active_profile: PowerProfile,
 
     has_saver: bool,
@@ -103,7 +106,7 @@ impl Component for PowerProfileSection {
 
                         gtk::Image {
                             add_css_class: "profile-seg-icon",
-                            set_icon_name: Some("ld-activity-symbolic"),
+                            set_icon_name: Some("ld-scale-symbolic"),
                         },
 
                         gtk::Label {
@@ -170,14 +173,14 @@ impl Component for PowerProfileSection {
         _root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
-        let active_profile = init
-            .power_profiles
+        let current_service = init.power_profiles.get();
+
+        let active_profile = current_service
             .as_ref()
             .map(|service| service.power_profiles.active_profile.get())
             .unwrap_or(PowerProfile::Balanced);
 
-        let available_profiles: Vec<PowerProfile> = init
-            .power_profiles
+        let available_profiles: Vec<PowerProfile> = current_service
             .as_ref()
             .map(|service| {
                 service
@@ -190,12 +193,17 @@ impl Component for PowerProfileSection {
             })
             .unwrap_or_default();
 
-        if let Some(service) = &init.power_profiles {
-            watchers::spawn(&sender, service);
+        watchers::spawn_availability(&sender, &init.power_profiles);
+
+        let mut profile_token = WatcherToken::new();
+        if let Some(service) = &current_service {
+            let token = profile_token.reset();
+            watchers::spawn_profile_watchers(&sender, service, token);
         }
 
         let model = Self {
             power_profiles: init.power_profiles,
+            profile_token,
             active_profile,
             has_saver: available_profiles.contains(&PowerProfile::PowerSaver),
             has_balanced: available_profiles.contains(&PowerProfile::Balanced),
@@ -217,7 +225,7 @@ impl Component for PowerProfileSection {
     fn update_cmd(
         &mut self,
         msg: Self::CommandOutput,
-        _sender: ComponentSender<Self>,
+        sender: ComponentSender<Self>,
         _root: &Self::Root,
     ) {
         match msg {
@@ -229,6 +237,18 @@ impl Component for PowerProfileSection {
                 self.has_saver = profiles.contains(&PowerProfile::PowerSaver);
                 self.has_balanced = profiles.contains(&PowerProfile::Balanced);
                 self.has_performance = profiles.contains(&PowerProfile::Performance);
+            }
+
+            PowerProfileCmd::ServiceAvailable(service) => {
+                self.apply_service(&sender, &service);
+            }
+
+            PowerProfileCmd::ServiceUnavailable => {
+                self.profile_token = WatcherToken::new();
+                self.active_profile = PowerProfile::Balanced;
+                self.has_saver = false;
+                self.has_balanced = false;
+                self.has_performance = false;
             }
         }
     }

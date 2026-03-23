@@ -72,18 +72,6 @@ impl From<&str> for DisconnectReason {
     }
 }
 
-impl From<u8> for DisconnectReason {
-    fn from(code: u8) -> Self {
-        match code {
-            0x08 => Self::ConnectionTimeout,
-            0x16 => Self::ConnectionTerminatedLocal,
-            0x13 => Self::ConnectionTerminatedRemote,
-            0x05 => Self::AuthenticationFailure,
-            _ => Self::Unknown,
-        }
-    }
-}
-
 impl Display for DisconnectReason {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         match self {
@@ -149,32 +137,5 @@ mod tests {
     fn disconnect_reason_from_str_defaults_to_unknown() {
         assert_eq!(DisconnectReason::from("unknown"), DisconnectReason::Unknown);
         assert_eq!(DisconnectReason::from(""), DisconnectReason::Unknown);
-    }
-
-    #[test]
-    fn disconnect_reason_from_u8_handles_hci_error_codes() {
-        assert_eq!(
-            DisconnectReason::from(0x08),
-            DisconnectReason::ConnectionTimeout
-        );
-        assert_eq!(
-            DisconnectReason::from(0x16),
-            DisconnectReason::ConnectionTerminatedLocal
-        );
-        assert_eq!(
-            DisconnectReason::from(0x13),
-            DisconnectReason::ConnectionTerminatedRemote
-        );
-        assert_eq!(
-            DisconnectReason::from(0x05),
-            DisconnectReason::AuthenticationFailure
-        );
-    }
-
-    #[test]
-    fn disconnect_reason_from_u8_defaults_to_unknown() {
-        assert_eq!(DisconnectReason::from(0xFF), DisconnectReason::Unknown);
-        assert_eq!(DisconnectReason::from(0x00), DisconnectReason::Unknown);
-        assert_eq!(DisconnectReason::from(0x42), DisconnectReason::Unknown);
     }
 }

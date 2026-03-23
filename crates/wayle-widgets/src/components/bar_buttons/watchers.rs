@@ -1,13 +1,13 @@
 //! Async stream subscriptions for bar button.
 
 use relm4::ComponentSender;
-use wayle_common::{ConfigProperty, watch};
-use wayle_config::schemas::bar::IconPosition;
+use wayle_config::{ConfigProperty, schemas::bar::IconPosition};
 
 use super::{
     component::{BarButton, BarButtonCmd},
     types::BarButtonVariant,
 };
+use crate::watch;
 
 pub(super) fn spawn_variant_watcher(
     variant: &ConfigProperty<BarButtonVariant>,

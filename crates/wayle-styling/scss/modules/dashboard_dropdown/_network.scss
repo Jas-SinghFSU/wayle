@@ -1,0 +1,58 @@
+.dashboard-dropdown {
+    .network-connection {
+        border-spacing: var(--space-xs);
+
+        &.disconnected image.network-connection-icon {
+            color: var(--fg-subtle);
+        }
+
+        &.disconnected .network-name {
+            color: var(--fg-subtle);
+        }
+    }
+
+    image.network-connection-icon {
+        -gtk-icon-size: var(--icon-sm);
+        color: var(--accent);
+    }
+
+    .network-name {
+        font-size: var(--text-2xs);
+        font-weight: var(--weight-medium);
+        color: var(--fg-default);
+    }
+
+    image.speed-arrow {
+        -gtk-icon-size: var(--icon-md);
+    }
+
+    .speed-stat {
+        &.up image.speed-arrow {
+            color: var(--status-success);
+        }
+
+        &.down image.speed-arrow {
+            color: var(--status-info);
+        }
+
+        &.muted image.speed-arrow {
+            color: var(--fg-subtle);
+        }
+    }
+
+    .speed-value {
+        font-size: var(--text-lg);
+        font-weight: var(--weight-bold);
+        color: var(--fg-default);
+
+        &.muted {
+            color: var(--fg-subtle);
+        }
+    }
+
+    .speed-unit {
+        font-size: var(--text-lg);
+        font-weight: var(--weight-medium);
+        color: var(--fg-subtle);
+    }
+}

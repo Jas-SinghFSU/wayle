@@ -1,23 +1,31 @@
 mod bar;
 mod helpers;
+mod notification_popup;
+mod osd;
 pub(crate) mod services;
 
 use std::time::Instant;
 
 use console::style;
 use gdk4::Display;
-use gtk4::{CssProvider, glib};
+use gtk4::{CssProvider, glib::idle_add_local_once};
 use gtk4_layer_shell::{Layer, LayerShell};
-use relm4::{gtk::prelude::*, prelude::*};
+use relm4::{gtk, gtk::prelude::*, prelude::*};
 pub(crate) use services::ShellServices;
-use tracing::info;
+use tracing::{debug, info};
 
+use self::{
+    notification_popup::{NotificationPopupHost, PopupHostInit},
+    osd::{Osd, OsdInit},
+};
 use crate::{startup::StartupTimer, watchers};
 
 pub(crate) struct Shell {
     css_provider: CssProvider,
     bars: helpers::monitors::BarMap,
     services: ShellServices,
+    _notification_popup: Option<Controller<NotificationPopupHost>>,
+    _osd: Option<Controller<Osd>>,
 }
 
 pub(crate) struct ShellInit {
@@ -34,6 +42,7 @@ pub(crate) enum ShellInput {
 pub(crate) enum ShellCmd {
     CssRecompiled(String),
     LocationChanged,
+    OsdEnabledChanged(bool),
     SyncMonitors { expected_count: u32, attempt: u32 },
 }
 
@@ -85,10 +94,23 @@ impl Component for Shell {
 
         init.timer.finish();
 
+        let notification_popup = init.services.notification.as_ref().map(|notification| {
+            NotificationPopupHost::builder()
+                .launch(PopupHostInit {
+                    notification: notification.clone(),
+                    config: init.services.config.clone(),
+                })
+                .detach()
+        });
+
+        let osd = create_osd(&init.services);
+
         let model = Shell {
             css_provider,
             bars,
             services: init.services,
+            _notification_popup: notification_popup,
+            _osd: osd,
         };
         let widgets = view_output!();
 
@@ -102,7 +124,8 @@ impl Component for Shell {
 
                 for bar in self.bars.values() {
                     let window = bar.widget().clone();
-                    glib::idle_add_local_once(move || {
+
+                    idle_add_local_once(move || {
                         trigger_layer_shell_reconfigure(&window);
                     });
                 }
@@ -117,9 +140,15 @@ impl Component for Shell {
             ShellCmd::CssRecompiled(css) => {
                 sender.input(ShellInput::ReloadCss(css));
             }
+
             ShellCmd::LocationChanged => {
                 self.recreate_bars();
             }
+
+            ShellCmd::OsdEnabledChanged(enabled) => {
+                self.toggle_osd(enabled);
+            }
+
             ShellCmd::SyncMonitors {
                 expected_count,
                 attempt,
@@ -147,13 +176,38 @@ impl Shell {
         self.bars = helpers::monitors::create_bars(&self.services);
         info!("Bars recreated for location change");
     }
+
+    fn toggle_osd(&mut self, enabled: bool) {
+        if enabled && self._osd.is_none() {
+            self._osd = create_osd(&self.services);
+            debug!("OSD enabled");
+        } else if !enabled && let Some(controller) = self._osd.take() {
+            controller.widget().destroy();
+            debug!("OSD disabled");
+        }
+    }
+}
+
+fn create_osd(services: &ShellServices) -> Option<Controller<Osd>> {
+    let osd_enabled = services.config.config().osd.enabled.get();
+
+    if !osd_enabled {
+        return None;
+    }
+
+    Some(
+        Osd::builder()
+            .launch(OsdInit {
+                config: services.config.clone(),
+                audio: services.audio.clone(),
+                brightness: services.brightness.clone(),
+            })
+            .detach(),
+    )
 }
 
 /// Resets a layer-shell window's cached size so GTK recalculates from content.
-///
-/// The exclusive zone is managed separately via a tick callback on each bar,
-/// so this poke does not cause compositor flicker.
-fn trigger_layer_shell_reconfigure(window: &gtk4::Window) {
+fn trigger_layer_shell_reconfigure(window: &gtk::Window) {
     window.set_default_size(1, 1);
     window.set_default_size(0, 0);
 }

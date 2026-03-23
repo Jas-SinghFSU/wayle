@@ -6,7 +6,7 @@ use std::sync::Arc;
 
 use types::SpeedMbps;
 pub(crate) use types::{DeviceWiredParams, LiveDeviceWiredParams, WiredProperties};
-use wayle_common::{Property, unwrap_string, unwrap_u32, unwrap_vec};
+use wayle_core::{Property, unwrap_dbus};
 use wayle_traits::{ModelMonitoring, Reactive};
 use zbus::{Connection, zvariant::OwnedObjectPath};
 
@@ -102,9 +102,9 @@ impl DeviceWired {
         );
 
         Ok(WiredProperties {
-            perm_hw_address: unwrap_string!(perm_hw_address, device_path),
-            speed: unwrap_u32!(speed, device_path),
-            s390_subchannels: unwrap_vec!(s390_subchannels, device_path),
+            perm_hw_address: unwrap_dbus!(perm_hw_address, device_path),
+            speed: unwrap_dbus!(speed, device_path),
+            s390_subchannels: unwrap_dbus!(s390_subchannels, device_path),
         })
     }
 

@@ -16,7 +16,8 @@ mod media;
 mod microphone;
 mod netstat;
 mod network;
-mod notification;
+/// Notification module configuration and popup types.
+pub mod notification;
 mod power;
 mod ram;
 mod separator;
@@ -38,7 +39,7 @@ pub use cpu::CpuConfig;
 pub use custom::{CustomModuleDefinition, ExecutionMode, RestartDelay, RestartPolicy};
 pub use dashboard::DashboardConfig;
 pub use hyprland_workspaces::{
-    ActiveIndicator, DisplayMode, HyprlandWorkspacesConfig, Numbering, WorkspaceStyle,
+    ActiveIndicator, DisplayMode, HyprlandWorkspacesConfig, Numbering, UrgentMode, WorkspaceStyle,
 };
 pub use hyprsunset::HyprsunsetConfig;
 pub use idle_inhibit::IdleInhibitConfig;
@@ -48,7 +49,10 @@ pub use media::{BUILTIN_MAPPINGS, MediaConfig, MediaIconType};
 pub use microphone::MicrophoneConfig;
 pub use netstat::NetstatConfig;
 pub use network::NetworkConfig;
-pub use notification::NotificationConfig;
+pub use notification::{
+    IconSource, NotificationConfig, PopupCloseBehavior, PopupMonitor, PopupPosition, StackingOrder,
+    UrgencyBarThreshold,
+};
 pub use power::PowerConfig;
 pub use ram::RamConfig;
 pub use separator::SeparatorConfig;
@@ -56,11 +60,12 @@ pub use storage::StorageConfig;
 pub use systray::{SystrayConfig, TrayItemOverride};
 pub use types::TimeFormat;
 pub use volume::{AppIconSource, VolumeConfig};
-use wayle_common::ConfigProperty;
 use wayle_derive::wayle_config;
 pub use weather::{TemperatureUnit, WeatherConfig, WeatherProvider};
 pub use window_title::{BUILTIN_MAPPINGS as WINDOW_TITLE_BUILTIN_MAPPINGS, WindowTitleConfig};
 pub use world_clock::WorldClockConfig;
+
+use crate::ConfigProperty;
 
 /// Configuration for all available Wayle modules.
 #[wayle_config]

@@ -56,6 +56,7 @@
 //! | `with_daemon()` | Control playback from scripts or other processes |
 //! | `with_art_cache()` | Download and cache HTTP album art to disk |
 //! | `ignore_player(pattern)` | Skip players matching the pattern |
+//! | `position_poll_interval(dur)` | How often to refresh playback position (default: 1s) |
 //!
 //! ```rust,no_run
 //! use wayle_media::MediaService;
@@ -80,11 +81,11 @@
 //! - **Path:** `/com/wayle/Media`
 //! - **Interface:** `com.wayle.Media1`
 //!
-//! See [`dbus.md`](https://github.com/Jas-SinghFSU/wayle/blob/master/crates/wayle-media/dbus.md) for the full interface specification.
+//! See [`dbus.md`](https://github.com/wayle-rs/wayle/blob/master/crates/wayle-media/dbus.md) for the full interface specification.
 //!
 //! # Reactive Properties
 //!
-//! All fields are [`Property<T>`](wayle_common::Property):
+//! All fields are [`Property<T>`](wayle_core::Property):
 //! - `.get()` - Current value snapshot
 //! - `.watch()` - Stream yielding on changes
 //!
@@ -107,6 +108,7 @@ mod builder;
 pub mod core;
 mod dbus;
 mod error;
+mod glob;
 mod monitoring;
 mod proxy;
 mod selection;

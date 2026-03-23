@@ -8,8 +8,9 @@ use controls::SettingsController;
 use derive_more::Debug;
 use futures::{Stream, StreamExt, future::join_all};
 use tokio_util::sync::CancellationToken;
+use tracing::warn;
 pub(crate) use types::{LiveSettingsParams, SettingsParams};
-use wayle_common::{Property, unwrap_bool, unwrap_string, unwrap_u64, unwrap_vec};
+use wayle_core::{Property, unwrap_dbus};
 use wayle_traits::{ModelMonitoring, Reactive};
 use zbus::{
     Connection,
@@ -254,6 +255,18 @@ impl Settings {
             .collect()
     }
 
+    /// Deletes all saved connection profiles for the given SSID.
+    ///
+    /// Individual profile deletion errors are logged but do not stop
+    /// remaining deletions.
+    pub async fn delete_connections_for_ssid(&self, ssid: &Ssid) {
+        for connection in self.connections_for_ssid(ssid) {
+            if let Err(err) = connection.delete().await {
+                warn!(error = %err, "failed to delete saved wifi profile");
+            }
+        }
+    }
+
     /// Reactive stream of saved connections for the given SSID.
     ///
     /// Emits whenever connections are added, removed, or modified
@@ -283,7 +296,7 @@ impl Settings {
             settings_proxy.version_id()
         );
 
-        let connection_paths = unwrap_vec!(connections);
+        let connection_paths = unwrap_dbus!(connections);
 
         let connection_futures = connection_paths.into_iter().map(|path| {
             ConnectionSettings::get(ConnectionSettingsParams {
@@ -302,9 +315,9 @@ impl Settings {
             zbus_connection: zbus_connection.clone(),
             cancellation_token,
             connections: Property::new(connection_list),
-            hostname: Property::new(unwrap_string!(hostname)),
-            can_modify: Property::new(unwrap_bool!(can_modify)),
-            version_id: Property::new(unwrap_u64!(version_id)),
+            hostname: Property::new(unwrap_dbus!(hostname)),
+            can_modify: Property::new(unwrap_dbus!(can_modify)),
+            version_id: Property::new(unwrap_dbus!(version_id)),
         })
     }
 

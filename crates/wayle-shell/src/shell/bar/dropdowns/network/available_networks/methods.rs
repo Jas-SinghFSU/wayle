@@ -1,6 +1,6 @@
 use relm4::prelude::*;
 use tracing::warn;
-use wayle_network::core::access_point::SecurityType;
+use wayle_network::core::access_point::{SecurityType, Ssid};
 
 use crate::{
     i18n::t,
@@ -215,6 +215,17 @@ impl AvailableNetworks {
             }
         }
     }
+
+    pub(super) fn forget_network(&self, ssid: String, sender: &ComponentSender<Self>) {
+        let network = self.network.clone();
+
+        sender.oneshot_command(async move {
+            let ssid = Ssid::new(ssid.into_bytes());
+            network.settings.delete_connections_for_ssid(&ssid).await;
+
+            AvailableNetworksCmd::AccessPointsChanged
+        });
+    }
 }
 
 pub(super) fn translate_security_type(security: SecurityType) -> String {
@@ -235,5 +246,7 @@ pub(super) fn forward_network_item_output(
         NetworkItemOutput::Selected(index) => {
             AvailableNetworksInput::NetworkSelected(index.current_index())
         }
+
+        NetworkItemOutput::ForgetRequested(ssid) => AvailableNetworksInput::ForgetNetwork(ssid),
     }
 }

@@ -1,6 +1,10 @@
-use std::sync::{Arc, Weak};
+use std::{
+    sync::{Arc, Weak},
+    time::Duration,
+};
 
 use futures::StreamExt;
+use tokio::time::{MissedTickBehavior, interval};
 use tokio_util::sync::CancellationToken;
 use tracing::{debug, instrument};
 use wayle_traits::ModelMonitoring;
@@ -23,14 +27,20 @@ impl ModelMonitoring for Player {
         };
 
         let cancel_token = cancellation_token.clone();
+        let position_token = cancellation_token.clone();
         let proxy = self.proxy.clone();
         let player_id = self.id.clone();
+        let position_interval = self.position_poll_interval;
         let weak_self = Arc::downgrade(&self);
+        let weak_for_position = Arc::downgrade(&self);
 
         debug!("Starting property monitoring for player: {}", player_id);
 
         tokio::spawn(async move {
             monitor_properties(player_id, weak_self, proxy, cancel_token).await;
+        });
+        tokio::spawn(async move {
+            monitor_position(weak_for_position, position_interval, position_token).await;
         });
 
         Ok(())
@@ -132,4 +142,39 @@ async fn monitor_properties(
         "Property monitoring fully terminated for player {}",
         player_id
     );
+}
+
+async fn monitor_position(
+    weak_player: Weak<Player>,
+    interval_duration: Duration,
+    cancellation_token: CancellationToken,
+) {
+    let mut ticker = interval(interval_duration);
+    ticker.set_missed_tick_behavior(MissedTickBehavior::Delay);
+    ticker.tick().await;
+
+    loop {
+        tokio::select! {
+            _ = cancellation_token.cancelled() => return,
+            _ = ticker.tick() => {
+                let Some(player) = weak_player.upgrade() else {
+                    return;
+                };
+
+                if !player.position.has_subscribers() {
+                    continue;
+                }
+
+                if player.playback_state.get() != PlaybackState::Playing {
+                    continue;
+                }
+
+                if let Ok(position) = player.position().await
+                    && player.position.get() != position
+                {
+                    player.position.set(position);
+                }
+            }
+        }
+    }
 }

@@ -1,7 +1,7 @@
 use gtk4::cairo;
 use wayle_config::schemas::modules::CavaDirection;
 
-use super::{DrawConfig, apply_color};
+use super::{RenderParams, apply_color};
 
 const MIN_WAVE_HEIGHT: f64 = 2.0;
 
@@ -11,35 +11,40 @@ pub(crate) fn draw_wave(
     canvas_width: f64,
     canvas_height: f64,
     direction: CavaDirection,
-    config: &DrawConfig,
+    params: &RenderParams,
 ) {
     if values.is_empty() {
         return;
     }
 
-    apply_color(cr, config);
+    apply_color(cr, params);
 
-    let count = values.len();
-    let step = canvas_width / count as f64;
-    let min_ratio = MIN_WAVE_HEIGHT / canvas_height;
+    let num_points = values.len();
+    let point_spacing = if num_points > 1 {
+        canvas_width / (num_points - 1) as f64
+    } else {
+        canvas_width
+    };
 
-    let value_to_y = |value: f64| -> f64 {
-        let clamped = value.max(min_ratio);
+    let min_amplitude = MIN_WAVE_HEIGHT / canvas_height;
+
+    let amplitude_to_y = |amplitude: f64| -> f64 {
+        let clamped_amplitude = amplitude.max(min_amplitude);
         match direction {
-            CavaDirection::Normal => canvas_height * (1.0 - clamped),
-            CavaDirection::Reverse => canvas_height * clamped,
-            CavaDirection::Mirror => canvas_height * (1.0 - clamped) / 2.0,
+            CavaDirection::Normal => canvas_height * (1.0 - clamped_amplitude),
+            CavaDirection::Reverse => canvas_height * clamped_amplitude,
+            CavaDirection::Mirror => canvas_height * (1.0 - clamped_amplitude) / 2.0,
         }
     };
 
-    trace_wave_curve(cr, values, step, &value_to_y);
+    trace_wave_curve(cr, values, point_spacing, &amplitude_to_y);
     close_wave_path(
         cr,
         values,
         canvas_width,
         canvas_height,
-        step,
-        min_ratio,
+        point_spacing,
+        min_amplitude,
         direction,
     );
 
@@ -50,23 +55,23 @@ pub(crate) fn draw_wave(
 fn trace_wave_curve(
     cr: &cairo::Context,
     values: &[f64],
-    step: f64,
-    value_to_y: &dyn Fn(f64) -> f64,
+    point_spacing: f64,
+    amplitude_to_y: &dyn Fn(f64) -> f64,
 ) {
-    cr.move_to(0.0, value_to_y(values[0]));
+    cr.move_to(0.0, amplitude_to_y(values[0]));
 
-    for i in 1..values.len() {
-        let x = i as f64 * step;
-        let prev_x = (i - 1) as f64 * step;
-        let control_x = (prev_x + x) / 2.0;
+    for point_idx in 1..values.len() {
+        let point_x = point_idx as f64 * point_spacing;
+        let prev_point_x = (point_idx - 1) as f64 * point_spacing;
+        let bezier_control_x = (prev_point_x + point_x) / 2.0;
 
         cr.curve_to(
-            control_x,
-            value_to_y(values[i - 1]),
-            control_x,
-            value_to_y(values[i]),
-            x,
-            value_to_y(values[i]),
+            bezier_control_x,
+            amplitude_to_y(values[point_idx - 1]),
+            bezier_control_x,
+            amplitude_to_y(values[point_idx]),
+            point_x,
+            amplitude_to_y(values[point_idx]),
         );
     }
 }
@@ -76,8 +81,8 @@ fn close_wave_path(
     values: &[f64],
     canvas_width: f64,
     canvas_height: f64,
-    step: f64,
-    min_ratio: f64,
+    point_spacing: f64,
+    min_amplitude: f64,
     direction: CavaDirection,
 ) {
     match direction {
@@ -90,7 +95,7 @@ fn close_wave_path(
             cr.line_to(0.0, 0.0);
         }
         CavaDirection::Mirror => {
-            trace_mirror_bottom(cr, values, step, min_ratio, canvas_height);
+            trace_mirror_bottom(cr, values, point_spacing, min_amplitude, canvas_height);
         }
     }
 }
@@ -98,28 +103,35 @@ fn close_wave_path(
 fn trace_mirror_bottom(
     cr: &cairo::Context,
     values: &[f64],
-    step: f64,
-    min_ratio: f64,
+    point_spacing: f64,
+    min_amplitude: f64,
     canvas_height: f64,
 ) {
-    let count = values.len();
+    let num_points = values.len();
     let center = canvas_height / 2.0;
 
-    for i in (0..count).rev() {
-        let x = i as f64 * step;
-        let clamped = values[i].max(min_ratio);
-        let mirror_y = center + clamped * canvas_height / 2.0;
+    for point_idx in (0..num_points).rev() {
+        let point_x = point_idx as f64 * point_spacing;
+        let clamped_amplitude = values[point_idx].max(min_amplitude);
+        let mirror_y = center + clamped_amplitude * canvas_height / 2.0;
 
-        if i == count - 1 {
-            cr.line_to(x, mirror_y);
+        if point_idx == num_points - 1 {
+            cr.line_to(point_x, mirror_y);
             continue;
         }
 
-        let next_x = (i + 1) as f64 * step;
-        let control_x = (x + next_x) / 2.0;
-        let next_clamped = values[i + 1].max(min_ratio);
-        let next_mirror_y = center + next_clamped * canvas_height / 2.0;
+        let next_point_x = (point_idx + 1) as f64 * point_spacing;
+        let bezier_control_x = (point_x + next_point_x) / 2.0;
+        let next_clamped_amplitude = values[point_idx + 1].max(min_amplitude);
+        let next_mirror_y = center + next_clamped_amplitude * canvas_height / 2.0;
 
-        cr.curve_to(control_x, next_mirror_y, control_x, mirror_y, x, mirror_y);
+        cr.curve_to(
+            bezier_control_x,
+            next_mirror_y,
+            bezier_control_x,
+            mirror_y,
+            point_x,
+            mirror_y,
+        );
     }
 }

@@ -9,7 +9,7 @@ use futures::{Stream, StreamExt};
 use tokio_util::sync::CancellationToken;
 use tracing::instrument;
 use types::TrayItemProperties;
-use wayle_common::{Property, unwrap_bool, unwrap_string, unwrap_u32};
+use wayle_core::{Property, unwrap_dbus};
 use wayle_traits::{ModelMonitoring, Reactive};
 use zbus::{
     Connection,
@@ -34,7 +34,7 @@ struct ServiceIdentifier<'a> {
 
 /// Individual system tray item from org.kde.StatusNotifierItem.
 ///
-/// All properties are reactive via [`Property<T>`](wayle_common::Property).
+/// All properties are reactive via [`Property<T>`](wayle_core::Property).
 /// Field semantics follow the [StatusNotifierItem spec](https://freedesktop.org/wiki/Specifications/StatusNotifierItem/).
 #[derive(Debug, Clone)]
 pub struct TrayItem {
@@ -59,7 +59,7 @@ pub struct TrayItem {
 
     /// It's the windowing-system dependent identifier for a window, the application can chose one
     /// of its windows to be available trough this property or just set 0 if it's not interested.
-    pub window_id: Property<u32>,
+    pub window_id: Property<i32>,
 
     /// The item only support the context menu, the visualization should prefer showing the menu
     /// or sending `ContextMenu()` instead of `Activate()`
@@ -158,6 +158,25 @@ impl Reactive for TrayItem {
 }
 
 impl TrayItem {
+    /// Passes an XDG activation token before calling Activate or ContextMenu.
+    /// Required on Wayland for the item to raise its window.
+    ///
+    /// # Errors
+    ///
+    /// Returns error if the D-Bus call fails or the item doesn't support it.
+    #[instrument(skip(self), fields(bus_name = %self.bus_name.get()), err)]
+    pub async fn provide_xdg_activation_token(&self, token: &str) -> Result<(), Error> {
+        let bus_name = self.bus_name.get();
+        let id = Self::parse_service_identifier(&bus_name);
+        TrayItemController::provide_xdg_activation_token(
+            &self.zbus_connection,
+            id.service,
+            id.path,
+            token,
+        )
+        .await
+    }
+
     /// Asks the status notifier item to show a context menu, this is typically a consequence of
     /// user input, such as mouse right click over the graphical representation of the item.
     ///
@@ -570,6 +589,23 @@ impl TrayItem {
         }))
     }
 
+    /// The item's menu object path changed.
+    ///
+    /// # Errors
+    /// Returns error if D-Bus proxy creation fails.
+    pub async fn new_menu_signal(&self) -> Result<impl Stream<Item = ()>, Error> {
+        let bus_name = &self.bus_name.get();
+        let id = Self::parse_service_identifier(bus_name);
+        let proxy = StatusNotifierItemProxy::builder(&self.zbus_connection)
+            .destination(id.service)?
+            .path(id.path)?
+            .build()
+            .await?;
+        let stream = proxy.receive_new_menu().await?;
+
+        Ok(stream.filter_map(|_signal| async move { Some(()) }))
+    }
+
     /// Parse a service identifier into service name and object path.
     ///
     /// Handles two formats:
@@ -608,14 +644,26 @@ impl TrayItem {
         let status = item_proxy.status().await.unwrap_or_default();
         let window_id = item_proxy.window_id().await;
         let item_is_menu = item_proxy.item_is_menu().await;
-        let icon_name = item_proxy.icon_name().await.ok();
+        let icon_name = item_proxy.icon_name().await.ok().filter(|s| !s.is_empty());
         let icon_pixmap = item_proxy.icon_pixmap().await;
-        let overlay_icon_name = item_proxy.overlay_icon_name().await.ok();
+        let overlay_icon_name = item_proxy
+            .overlay_icon_name()
+            .await
+            .ok()
+            .filter(|s| !s.is_empty());
         let overlay_icon_pixmap = item_proxy.overlay_icon_pixmap().await;
-        let attention_icon_name = item_proxy.attention_icon_name().await.ok();
+        let attention_icon_name = item_proxy
+            .attention_icon_name()
+            .await
+            .ok()
+            .filter(|s| !s.is_empty());
         let attention_icon_pixmap = item_proxy.attention_icon_pixmap().await;
         let attention_movie_name = item_proxy.attention_movie_name().await.ok();
-        let icon_theme_path = item_proxy.icon_theme_path().await.ok();
+        let icon_theme_path = item_proxy
+            .icon_theme_path()
+            .await
+            .ok()
+            .filter(|s| !s.is_empty());
         let tooltip = item_proxy.tool_tip().await;
         let menu_path = item_proxy.menu().await.unwrap_or_default();
 
@@ -635,12 +683,12 @@ impl TrayItem {
             .ok();
 
         Ok(TrayItemProperties {
-            id: unwrap_string!(id),
-            title: unwrap_string!(title),
+            id: unwrap_dbus!(id),
+            title: unwrap_dbus!(title),
             category: Category::from(category.as_str()),
             status: Status::from(status.as_str()),
-            window_id: unwrap_u32!(window_id),
-            item_is_menu: unwrap_bool!(item_is_menu),
+            window_id: unwrap_dbus!(window_id),
+            item_is_menu: unwrap_dbus!(item_is_menu),
             icon_name,
             icon_pixmap: icon_pixmap
                 .unwrap_or_default()

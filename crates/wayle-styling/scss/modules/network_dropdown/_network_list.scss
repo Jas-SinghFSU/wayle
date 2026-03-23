@@ -44,3 +44,24 @@
     font-weight: var(--weight-semibold);
     color: var(--fg-subtle);
 }
+
+.network-item-trailing {
+    margin-left: var(--space-xs);
+}
+
+.network-item-actions {
+    margin-right: var(--space-sm);
+
+    button {
+        font-size: var(--text-sm);
+        font-weight: var(--weight-bold);
+
+        > box {
+            margin: var(--space-xs) var(--space-sm);
+        }
+    }
+}
+
+button.network-item-forget:hover {
+    color: var(--status-error);
+}

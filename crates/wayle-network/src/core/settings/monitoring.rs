@@ -3,7 +3,7 @@ use std::sync::{Arc, Weak};
 use futures::StreamExt;
 use tokio_util::sync::CancellationToken;
 use tracing::{debug, warn};
-use wayle_common::remove_and_cancel;
+use wayle_core::remove_and_cancel;
 use wayle_traits::{ModelMonitoring, Reactive};
 use zbus::zvariant::OwnedObjectPath;
 

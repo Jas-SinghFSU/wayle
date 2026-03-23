@@ -5,7 +5,7 @@ use tokio::sync::broadcast::{self, Sender};
 use tokio_stream::{StreamExt, wrappers::BroadcastStream};
 use tokio_util::sync::CancellationToken;
 use tracing::{error, instrument};
-use wayle_common::Property;
+use wayle_core::Property;
 use wayle_traits::ServiceMonitoring;
 
 use crate::{
@@ -308,15 +308,6 @@ impl HyprlandService {
     #[instrument(skip(self), err)]
     pub async fn devices(&self) -> Result<DeviceInfo> {
         self.hypr_messenger.devices().await
-    }
-
-    /// Returns all available keyboard layouts.
-    ///
-    /// # Errors
-    /// Returns error if IPC communication fails.
-    #[instrument(skip(self), err)]
-    pub async fn layouts(&self) -> Result<Vec<String>> {
-        self.hypr_messenger.layouts().await
     }
 
     /// Returns the currently active submap name.

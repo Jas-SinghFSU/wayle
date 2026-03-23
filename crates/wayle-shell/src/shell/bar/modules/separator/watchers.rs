@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
 use relm4::ComponentSender;
-use wayle_common::{ConfigProperty, watch};
-use wayle_config::ConfigService;
+use wayle_config::{ConfigProperty, ConfigService};
+use wayle_widgets::watch;
 
 use super::{SeparatorCmd, SeparatorModule};
 

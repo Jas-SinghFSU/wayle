@@ -1,11 +1,11 @@
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 use derive_more::Debug;
 use futures::{Stream, StreamExt};
 use tokio::sync::broadcast;
 use tokio_util::sync::CancellationToken;
 use tracing::instrument;
-use wayle_common::Property;
+use wayle_core::Property;
 use zbus::Connection;
 
 use super::{
@@ -26,6 +26,8 @@ pub struct SystemTrayService {
     pub(crate) cancellation_token: CancellationToken,
     #[debug(skip)]
     pub(crate) event_tx: broadcast::Sender<TrayEvent>,
+    #[debug(skip)]
+    pub(crate) event_rx: Mutex<Option<broadcast::Receiver<TrayEvent>>>,
     #[debug(skip)]
     pub(crate) connection: Connection,
 

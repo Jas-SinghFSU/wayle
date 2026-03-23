@@ -1,9 +1,9 @@
 use std::{sync::Arc, time::Duration};
 
 use relm4::ComponentSender;
-use wayle_common::watch;
 use wayle_config::schemas::modules::CpuConfig;
 use wayle_sysinfo::SysinfoService;
+use wayle_widgets::watch;
 
 use super::{CpuModule, helpers::format_label, messages::CpuCmd};
 

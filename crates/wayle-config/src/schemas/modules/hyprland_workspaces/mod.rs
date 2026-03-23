@@ -2,10 +2,10 @@ use std::{collections::HashMap, ops::Deref};
 
 use schemars::{JsonSchema, schema_for};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use wayle_common::ConfigProperty;
 use wayle_derive::wayle_config;
 
 use crate::{
+    ConfigProperty,
     docs::{ModuleInfo, ModuleInfoProvider},
     schemas::styling::{ColorValue, CssToken, ScaleFactor, Spacing},
 };
@@ -35,6 +35,19 @@ pub enum Numbering {
     /// If monitor has workspaces 4, 5, 6 assigned, they display as 1, 2, 3.
     /// Useful when keybinds use per-monitor numbering (Shift+1 for ws 4, etc.).
     Relative,
+}
+
+/// Where the urgent pulse animation is applied.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
+pub enum UrgentMode {
+    /// Pulse the entire workspace.
+    #[default]
+    Workspace,
+    /// Pulse only the app icon(s) belonging to the urgent window.
+    ///
+    /// Falls back to `workspace` when app icons are disabled.
+    Application,
 }
 
 /// Visual indicator style for the active workspace.
@@ -155,6 +168,15 @@ pub struct HyprlandWorkspacesConfig {
     #[serde(rename = "urgent-show")]
     #[default(true)]
     pub urgent_show: ConfigProperty<bool>,
+
+    /// Where the urgent pulse is applied.
+    ///
+    /// - `workspace`: Entire workspace pulses (default)
+    /// - `application`: Only the app icon(s) belonging to the urgent window
+    ///   pulse, falling back to `workspace` when app icons are disabled
+    #[serde(rename = "urgent-mode")]
+    #[default(UrgentMode::Workspace)]
+    pub urgent_mode: ConfigProperty<UrgentMode>,
 
     /// What identifies each workspace button.
     ///

@@ -15,7 +15,9 @@ gtk4 = { workspace = true, features = ["v4_10"] }
 relm4.workspace = true
 tokio.workspace = true
 tracing.workspace = true
-wayle-common.workspace = true
+tokio-stream.workspace = true
+tokio-util.workspace = true
+wayle-core.workspace = true
 wayle-config.workspace = true
 
 [lints]

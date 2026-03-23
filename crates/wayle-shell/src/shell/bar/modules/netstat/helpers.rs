@@ -14,7 +14,7 @@ pub(super) fn format_label(format: &str, net: &NetworkData) -> String {
         "up_auto": auto(net.tx_bytes_per_sec),
         "interface": &net.interface,
     });
-    wayle_common::template::render(format, ctx).unwrap_or_default()
+    crate::template::render(format, ctx).unwrap_or_default()
 }
 
 fn kib(bytes: u64) -> String {

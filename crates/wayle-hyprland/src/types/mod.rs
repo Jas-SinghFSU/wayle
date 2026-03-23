@@ -28,6 +28,9 @@ pub type ProcessId = i32;
 pub type FocusHistoryId = i32;
 
 /// The type of screencopy share.
+///
+/// Also accepts `"0"`, `"1"`, `"2"` for older Hyprland builds that
+/// emitted raw integers before the string formatter was added.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ScreencastOwner {
     /// Monitor share.
@@ -43,9 +46,9 @@ impl TryFrom<&str> for ScreencastOwner {
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         match value {
-            "0" | "monitor" => Ok(Self::Monitor),
-            "1" | "window" => Ok(Self::Window),
-            "region" => Ok(Self::Region),
+            "monitor" | "0" => Ok(Self::Monitor),
+            "window" | "1" => Ok(Self::Window),
+            "region" | "2" => Ok(Self::Region),
             _ => Err(Error::InvalidEnumValue {
                 type_name: "ScreencastOwner",
                 value: value.to_string(),
@@ -175,14 +178,22 @@ mod tests {
     }
 
     #[test]
-    fn screencast_owner_try_from_fails_for_invalid_value() {
+    fn screencast_owner_try_from_region() {
         let result = ScreencastOwner::try_from("2");
+
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), ScreencastOwner::Region);
+    }
+
+    #[test]
+    fn screencast_owner_try_from_fails_for_invalid_value() {
+        let result = ScreencastOwner::try_from("99");
 
         assert!(result.is_err());
         let error = result.unwrap_err();
         if let Error::InvalidEnumValue { type_name, value } = error {
             assert_eq!(type_name, "ScreencastOwner");
-            assert_eq!(value, "2");
+            assert_eq!(value, "99");
         } else {
             panic!("Expected InvalidEnumValue error");
         }

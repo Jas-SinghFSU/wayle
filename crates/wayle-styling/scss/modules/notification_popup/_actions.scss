@@ -1,0 +1,24 @@
+.notification-popup-actions {
+    border-top: 1px solid var(--border-subtle);
+}
+
+.notification-popup-action-row + .notification-popup-action-row {
+    border-top: 1px solid var(--border-subtle);
+}
+
+.notification-popup-action-btn {
+    padding: var(--space-sm) var(--space-md);
+    font-size: var(--text-base);
+    font-weight: var(--weight-medium);
+    color: var(--fg-muted);
+    transition: background var(--duration-fast);
+
+    &:hover {
+        background: var(--bg-overlay);
+        color: var(--fg-default);
+    }
+
+    & + & {
+        border-left: 1px solid var(--border-subtle);
+    }
+}

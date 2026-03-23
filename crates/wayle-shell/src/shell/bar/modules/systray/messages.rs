@@ -1,7 +1,6 @@
 use std::sync::Arc;
 
-use wayle_common::ConfigProperty;
-use wayle_config::ConfigService;
+use wayle_config::{ConfigProperty, ConfigService};
 use wayle_systray::{SystemTrayService, core::item::TrayItem};
 
 pub(crate) struct SystrayInit {

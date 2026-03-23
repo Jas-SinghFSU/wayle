@@ -4,12 +4,12 @@ use futures::StreamExt;
 use relm4::ComponentSender;
 use tokio_util::sync::CancellationToken;
 use tracing::{debug, warn};
-use wayle_common::{watch_async, watch_cancellable};
 use wayle_network::{
     core::{device::DeviceStateChangedEvent, settings::Settings},
     types::states::{NMDeviceState, NMDeviceStateReason},
     wifi::Wifi,
 };
+use wayle_widgets::{watch_async, watch_cancellable};
 
 use crate::{
     i18n::t,

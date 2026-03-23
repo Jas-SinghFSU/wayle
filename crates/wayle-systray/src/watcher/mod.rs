@@ -1,4 +1,5 @@
 #![allow(missing_docs)]
+pub(crate) mod discovery;
 mod monitoring;
 
 use std::sync::Arc;
@@ -6,11 +7,15 @@ use std::sync::Arc;
 use derive_more::Debug;
 use tokio::sync::{RwLock, broadcast};
 use tokio_util::sync::CancellationToken;
-use tracing::{info, instrument};
+use tracing::{error, info, instrument};
 use wayle_traits::ServiceMonitoring;
 use zbus::{Connection, fdo, message::Header, object_server::SignalEmitter};
 
-use super::{error::Error, events::TrayEvent, types::PROTOCOL_VERSION};
+use super::{
+    error::Error,
+    events::TrayEvent,
+    types::{PROTOCOL_VERSION, WATCHER_INTERFACE, WATCHER_OBJECT_PATH},
+};
 
 #[derive(Debug)]
 pub(crate) struct StatusNotifierWatcher {
@@ -25,12 +30,46 @@ pub(crate) struct StatusNotifierWatcher {
     pub registered_hosts: Arc<RwLock<Vec<String>>>,
 }
 
+pub(crate) async fn register_item(
+    service: &str,
+    registered_items: &Arc<RwLock<Vec<String>>>,
+    event_tx: &broadcast::Sender<TrayEvent>,
+    connection: &Connection,
+) -> bool {
+    let service = service.to_string();
+
+    {
+        let mut items = registered_items.write().await;
+        if items.contains(&service) {
+            return false;
+        }
+        items.push(service.clone());
+    }
+
+    let _ = event_tx.send(TrayEvent::ItemRegistered(service.clone()));
+
+    connection
+        .emit_signal(
+            None::<()>,
+            WATCHER_OBJECT_PATH,
+            WATCHER_INTERFACE,
+            "StatusNotifierItemRegistered",
+            &service,
+        )
+        .await
+        .unwrap_or_else(|err| {
+            error!(error = %err, service = %service, "cannot emit item registered signal");
+        });
+
+    true
+}
+
 #[zbus::interface(name = "org.kde.StatusNotifierWatcher")]
 impl StatusNotifierWatcher {
-    #[instrument(skip(self, ctx, header), fields(service = %service))]
+    #[instrument(skip(self, _ctx, header), fields(service = %service))]
     async fn register_status_notifier_item(
         &mut self,
-        #[zbus(signal_context)] ctx: SignalEmitter<'_>,
+        #[zbus(signal_context)] _ctx: SignalEmitter<'_>,
         #[zbus(header)] header: Header<'_>,
         service: String,
     ) -> fdo::Result<()> {
@@ -43,18 +82,16 @@ impl StatusNotifierWatcher {
             service
         };
 
-        info!("Registering StatusNotifierItem: {}", full_service);
+        info!(service = %full_service, "registering StatusNotifierItem");
 
-        let mut items = self.registered_items.write().await;
-        if !items.contains(&full_service) {
-            items.push(full_service.clone());
-            drop(items);
+        register_item(
+            &full_service,
+            &self.registered_items,
+            &self.event_tx,
+            &self.zbus_connection,
+        )
+        .await;
 
-            let _ = self
-                .event_tx
-                .send(TrayEvent::ItemRegistered(full_service.clone()));
-            Self::status_notifier_item_registered(&ctx, full_service).await?;
-        }
         Ok(())
     }
 
@@ -64,19 +101,24 @@ impl StatusNotifierWatcher {
         #[zbus(signal_context)] ctx: SignalEmitter<'_>,
         service: String,
     ) -> fdo::Result<()> {
-        info!("Registering StatusNotifierHost: {}", service);
+        info!(service = %service, "registering StatusNotifierHost");
 
-        let mut hosts = self.registered_hosts.write().await;
-        let was_empty = hosts.is_empty();
+        let should_signal = {
+            let mut hosts = self.registered_hosts.write().await;
+            let was_empty = hosts.is_empty();
 
-        if !hosts.contains(&service) {
-            hosts.push(service.clone());
-            drop(hosts);
-
-            if was_empty {
-                Self::status_notifier_host_registered(&ctx).await?;
+            if hosts.contains(&service) {
+                false
+            } else {
+                hosts.push(service.clone());
+                was_empty
             }
+        };
+
+        if should_signal {
+            Self::status_notifier_host_registered(&ctx).await?;
         }
+
         Ok(())
     }
 

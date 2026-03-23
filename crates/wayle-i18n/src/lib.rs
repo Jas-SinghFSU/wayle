@@ -56,8 +56,6 @@ macro_rules! t {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     #[test]
     fn keys_from_both_files_work() {
         let _ = t!("app-name");

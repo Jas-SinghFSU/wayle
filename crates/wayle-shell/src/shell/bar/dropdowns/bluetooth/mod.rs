@@ -11,8 +11,7 @@ use std::{sync::Arc, time::Duration};
 use gtk::prelude::*;
 use relm4::{gtk, prelude::*};
 use wayle_bluetooth::BluetoothService;
-use wayle_common::WatcherToken;
-use wayle_widgets::prelude::*;
+use wayle_widgets::{WatcherToken, prelude::*};
 
 pub(super) use self::factory::Factory;
 use self::{
@@ -292,6 +291,31 @@ impl Component for BluetoothDropdown {
                                 description {
                                     set_label: &t!(
                                         "dropdown-bluetooth-off-description"
+                                    ),
+                                },
+                            },
+
+                            #[name = "empty_no_adapter"]
+                            #[template]
+                            EmptyState {
+                                #[watch]
+                                set_visible: !model.available,
+                                #[template_child]
+                                icon {
+                                    set_icon_name: Some(
+                                        "ld-bluetooth-off-symbolic"
+                                    ),
+                                },
+                                #[template_child]
+                                title {
+                                    set_label: &t!(
+                                        "dropdown-bluetooth-no-adapter-title"
+                                    ),
+                                },
+                                #[template_child]
+                                description {
+                                    set_label: &t!(
+                                        "dropdown-bluetooth-no-adapter-description"
                                     ),
                                 },
                             },

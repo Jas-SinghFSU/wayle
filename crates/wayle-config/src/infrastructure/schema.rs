@@ -2,7 +2,7 @@
 
 use std::{fs, io, path::Path};
 
-use schemars::generate::{SchemaGenerator, SchemaSettings};
+use schemars::generate::SchemaGenerator;
 use tracing::{debug, info};
 
 use super::paths::ConfigPaths;
@@ -13,14 +13,10 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 /// Generates the JSON Schema for Wayle's configuration.
 ///
 /// The schema includes the package version in the `$id` field for version tracking.
-/// Uses `inline_subschemas` to ensure field descriptions are visible in TOML editors.
 ///
-/// Returns `None` if schema serialization fails (should never occur).
+/// Returns `None` if schema serialization fails.
 pub fn generate_schema() -> Option<String> {
-    let settings = SchemaSettings::default().with(|s| {
-        s.inline_subschemas = true;
-    });
-    let generator = SchemaGenerator::new(settings);
+    let generator = SchemaGenerator::default();
     let schema = generator.into_root_schema_for::<Config>();
 
     let mut json: serde_json::Value = match serde_json::to_value(&schema) {
@@ -38,7 +34,7 @@ pub fn generate_schema() -> Option<String> {
         );
     }
 
-    match serde_json::to_string_pretty(&json) {
+    match serde_json::to_string(&json) {
         Ok(s) => Some(s),
         Err(e) => {
             tracing::error!(error = %e, "failed to serialize JSON to string");

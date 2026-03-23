@@ -64,12 +64,16 @@ pub struct DeviceInfo {
 }
 
 /// Graphics tablet device from Hyprland.
+///
+/// The `tablets` array mixes actual tablets, tablet pads, and tablet tools.
+/// Only actual tablets have a `name` field; pads and tools omit it.
 #[derive(Debug, Deserialize, Clone, PartialEq)]
 pub struct TabletDevice {
     /// Unique memory address identifying this device.
     pub address: Address,
-    /// Human-readable device name.
-    pub name: String,
+    /// Human-readable device name (absent for tablet pads and tools).
+    #[serde(default)]
+    pub name: Option<String>,
 }
 
 /// Touchscreen device from Hyprland.

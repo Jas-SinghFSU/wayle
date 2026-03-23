@@ -4,8 +4,8 @@ use relm4::ComponentSender;
 use tokio::time::{Instant, MissedTickBehavior, interval_at};
 use tokio_stream::wrappers::IntervalStream;
 use tokio_util::sync::CancellationToken;
-use wayle_common::{ConfigProperty, watch, watch_cancellable};
-use wayle_config::schemas::modules::CustomModuleDefinition;
+use wayle_config::{ConfigProperty, schemas::modules::CustomModuleDefinition};
+use wayle_widgets::{watch, watch_cancellable};
 
 use super::super::{CustomModule, helpers, messages::CustomCmd};
 

@@ -6,9 +6,8 @@ use std::sync::Arc;
 
 use gtk::prelude::*;
 use relm4::{gtk, prelude::*};
-use wayle_common::WatcherToken;
 use wayle_network::{NetworkService, types::states::NetworkStatus};
-use wayle_widgets::prelude::*;
+use wayle_widgets::{WatcherToken, prelude::*};
 
 use self::messages::{ActiveConnectionsCmd, ConnectionProgress, WifiState, WiredState};
 pub(crate) use self::messages::{ActiveConnectionsInit, ActiveConnectionsInput};
@@ -180,20 +179,6 @@ impl Component for ActiveConnections {
                         set_transition_duration: 150,
                         set_valign: gtk::Align::Center,
                         set_hexpand: false,
-                        #[watch]
-                        set_visible_child_name:
-                            if model.wifi.hovered
-                                && model.wifi.connected
-                            {
-                                "actions"
-                            } else if model.wifi.hovered
-                                && model.has_wifi_error()
-                            {
-                                "error-actions"
-                            } else {
-                                "status"
-                            },
-
                         add_named[Some("status")] = &gtk::Box {
                             set_halign: gtk::Align::End,
                             set_valign: gtk::Align::Center,
@@ -279,6 +264,20 @@ impl Component for ActiveConnections {
                                     ActiveConnectionsInput::DismissError,
                             },
                         },
+
+                        #[watch]
+                        set_visible_child_name:
+                            if model.wifi.hovered
+                                && model.wifi.connected
+                            {
+                                "actions"
+                            } else if model.wifi.hovered
+                                && model.has_wifi_error()
+                            {
+                                "error-actions"
+                            } else {
+                                "status"
+                            },
                     },
                 },
             },

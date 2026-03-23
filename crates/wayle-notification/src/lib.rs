@@ -8,7 +8,7 @@
 //!
 //! # Reactive Properties
 //!
-//! Service state is exposed through [`Property`](wayle_common::Property) fields:
+//! Service state is exposed through [`Property`](wayle_core::Property) fields:
 //! - `.get()` returns a snapshot of the current value
 //! - `.watch()` returns a stream that yields on changes
 //!
@@ -69,7 +69,7 @@
 //! - **Path:** `/com/wayle/Notifications`
 //! - **Interface:** `com.wayle.Notifications1`
 //!
-//! See [`dbus.md`](https://github.com/Jas-SinghFSU/wayle/blob/master/crates/wayle-notification/dbus.md) for the full interface specification.
+//! See [`dbus.md`](https://github.com/wayle-rs/wayle/blob/master/crates/wayle-notification/dbus.md) for the full interface specification.
 
 mod builder;
 /// Notification data structures and operations.
@@ -78,8 +78,11 @@ pub(crate) mod daemon;
 /// Error types.
 pub mod error;
 pub(crate) mod events;
+mod glob;
+pub(crate) mod image_cache;
 pub(crate) mod monitoring;
 pub(crate) mod persistence;
+pub(crate) mod popup_timer;
 pub(crate) mod proxy;
 /// Service implementation.
 pub mod service;

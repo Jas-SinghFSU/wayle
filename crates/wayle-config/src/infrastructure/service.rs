@@ -2,7 +2,6 @@ use std::sync::{Arc, RwLock};
 
 use tokio::fs;
 use tracing::{info, instrument, warn};
-use wayle_common::{ApplyConfigLayer, ApplyRuntimeLayer, ClearRuntimeByPath, ExtractRuntimeValues};
 
 use super::{
     error::{Error, InvalidFieldReason, IoOperation},
@@ -10,7 +9,10 @@ use super::{
     secrets, toml_path,
     watcher::FileWatcher,
 };
-use crate::{Config, infrastructure::themes::utils::load_themes};
+use crate::{
+    ApplyConfigLayer, ApplyRuntimeLayer, ClearRuntimeByPath, Config, ExtractRuntimeValues,
+    infrastructure::themes::utils::load_themes,
+};
 
 /// Reactive configuration service.
 ///

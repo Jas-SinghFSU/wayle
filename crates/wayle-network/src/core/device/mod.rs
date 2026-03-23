@@ -15,10 +15,7 @@ use tokio_util::sync::CancellationToken;
 pub use types::DeviceStateChangedEvent;
 use types::{AppliedConnection, DeviceProperties};
 pub(crate) use types::{DeviceParams, LiveDeviceParams};
-use wayle_common::{
-    Property, unwrap_bool, unwrap_bool_or, unwrap_path, unwrap_string, unwrap_u32, unwrap_u32_or,
-    unwrap_vec,
-};
+use wayle_core::{Property, unwrap_dbus, unwrap_dbus_or};
 use wayle_traits::{ModelMonitoring, Reactive};
 use zbus::{
     Connection,
@@ -30,7 +27,7 @@ use crate::{
     proxy::devices::DeviceProxy,
     types::{
         connectivity::{NMConnectivityState, NMMetered},
-        device::{LldpNeighbor, NMDeviceType},
+        device::{LldpNeighbor, NMDeviceManaged, NMDeviceManagedFlags, NMDeviceType},
         flags::{NMDeviceCapabilities, NMDeviceInterfaceFlags},
         states::{NMDeviceState, NMDeviceStateReason},
     },
@@ -300,45 +297,45 @@ impl Device {
         let device_path = path.clone().unwrap_or_default();
 
         let available_connections: Vec<OwnedObjectPath> =
-            unwrap_vec!(available_connections, device_path)
+            unwrap_dbus!(available_connections, device_path)
                 .into_iter()
                 .map(|p| OwnedObjectPath::try_from(p.to_string()).unwrap_or_default())
                 .collect();
 
-        let ports: Vec<OwnedObjectPath> = unwrap_vec!(ports, device_path)
+        let ports: Vec<OwnedObjectPath> = unwrap_dbus!(ports, device_path)
             .into_iter()
             .map(|p| OwnedObjectPath::try_from(p.to_string()).unwrap_or_default())
             .collect();
 
         Ok(DeviceProperties {
-            udi: unwrap_string!(udi, device_path),
-            interface: unwrap_string!(interface, device_path),
-            ip_interface: unwrap_string!(ip_interface, device_path),
-            driver: unwrap_string!(driver, device_path),
-            driver_version: unwrap_string!(driver_version, device_path),
-            firmware_version: unwrap_string!(firmware_version, device_path),
-            capabilities: unwrap_u32!(capabilities, device_path),
-            state: unwrap_u32!(state, device_path),
+            udi: unwrap_dbus!(udi, device_path),
+            interface: unwrap_dbus!(interface, device_path),
+            ip_interface: unwrap_dbus!(ip_interface, device_path),
+            driver: unwrap_dbus!(driver, device_path),
+            driver_version: unwrap_dbus!(driver_version, device_path),
+            firmware_version: unwrap_dbus!(firmware_version, device_path),
+            capabilities: unwrap_dbus!(capabilities, device_path),
+            state: unwrap_dbus!(state, device_path),
             state_reason: state_reason.unwrap_or((0, 0)),
-            active_connection: unwrap_path!(active_connection, device_path),
-            ip4_config: unwrap_path!(ip4_config, device_path),
-            dhcp4_config: unwrap_path!(dhcp4_config, device_path),
-            ip6_config: unwrap_path!(ip6_config, device_path),
-            dhcp6_config: unwrap_path!(dhcp6_config, device_path),
-            managed: unwrap_bool_or!(managed, device_path, true),
-            autoconnect: unwrap_bool!(autoconnect, device_path),
-            firmware_missing: unwrap_bool!(firmware_missing, device_path),
-            nm_plugin_missing: unwrap_bool!(nm_plugin_missing, device_path),
-            device_type: unwrap_u32!(device_type, device_path),
+            active_connection: unwrap_dbus!(active_connection, device_path),
+            ip4_config: unwrap_dbus!(ip4_config, device_path),
+            dhcp4_config: unwrap_dbus!(dhcp4_config, device_path),
+            ip6_config: unwrap_dbus!(ip6_config, device_path),
+            dhcp6_config: unwrap_dbus!(dhcp6_config, device_path),
+            managed: unwrap_dbus_or!(managed, device_path, true),
+            autoconnect: unwrap_dbus!(autoconnect, device_path),
+            firmware_missing: unwrap_dbus!(firmware_missing, device_path),
+            nm_plugin_missing: unwrap_dbus!(nm_plugin_missing, device_path),
+            device_type: unwrap_dbus!(device_type, device_path),
             available_connections,
-            physical_port_id: unwrap_string!(physical_port_id, device_path),
-            mtu: unwrap_u32_or!(mtu, device_path, 1500),
-            metered: unwrap_u32!(metered, device_path),
-            real: unwrap_bool_or!(real, device_path, true),
-            ip4_connectivity: unwrap_u32!(ip4_connectivity, device_path),
-            ip6_connectivity: unwrap_u32!(ip6_connectivity, device_path),
-            interface_flags: unwrap_u32!(interface_flags, device_path),
-            hw_address: unwrap_string!(hw_address, device_path),
+            physical_port_id: unwrap_dbus!(physical_port_id, device_path),
+            mtu: unwrap_dbus_or!(mtu, device_path, 1500),
+            metered: unwrap_dbus!(metered, device_path),
+            real: unwrap_dbus_or!(real, device_path, true),
+            ip4_connectivity: unwrap_dbus!(ip4_connectivity, device_path),
+            ip6_connectivity: unwrap_dbus!(ip6_connectivity, device_path),
+            interface_flags: unwrap_dbus!(interface_flags, device_path),
+            hw_address: unwrap_dbus!(hw_address, device_path),
             ports,
             udev_path: device_path,
         })
@@ -467,6 +464,18 @@ impl Device {
     /// Returns error if the delete operation fails.
     pub async fn delete(&self) -> Result<(), Error> {
         DeviceControls::delete(&self.connection, &self.object_path).await
+    }
+
+    /// Sets the managed state with optional persistence. Since: NM 1.58.
+    ///
+    /// # Errors
+    /// Returns error if the operation fails.
+    pub async fn set_managed_ext(
+        &self,
+        managed: NMDeviceManaged,
+        flags: NMDeviceManagedFlags,
+    ) -> Result<(), Error> {
+        DeviceControls::set_managed_ext(&self.connection, &self.object_path, managed, flags).await
     }
 
     /// Emitted when the device's state changes.

@@ -10,6 +10,28 @@ use crate::{
 pub(super) struct TrayItemController;
 
 impl TrayItemController {
+    #[instrument(skip(connection), fields(service = %service, path = %path), err)]
+    pub async fn provide_xdg_activation_token(
+        connection: &Connection,
+        service: &str,
+        path: &str,
+        token: &str,
+    ) -> Result<(), Error> {
+        let proxy = StatusNotifierItemProxy::builder(connection)
+            .destination(service)?
+            .path(path)?
+            .build()
+            .await?;
+
+        proxy
+            .provide_xdg_activation_token(token)
+            .await
+            .map_err(|source| Error::Operation {
+                operation: "provide_xdg_activation_token",
+                source,
+            })
+    }
+
     #[instrument(skip(connection), fields(service = %service, path = %path, x, y), err)]
     pub async fn context_menu(
         connection: &Connection,

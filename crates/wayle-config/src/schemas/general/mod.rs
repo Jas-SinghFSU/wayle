@@ -1,5 +1,6 @@
-use wayle_common::ConfigProperty;
 use wayle_derive::wayle_config;
+
+use crate::ConfigProperty;
 
 /// General Wayle configuration.
 #[wayle_config]

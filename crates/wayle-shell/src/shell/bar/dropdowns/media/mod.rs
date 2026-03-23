@@ -12,7 +12,7 @@ use wayle_widgets::prelude::*;
 pub(super) use self::factory::Factory;
 use self::{
     messages::{MediaDropdownCmd, MediaDropdownInit, MediaDropdownMsg},
-    player_view::{PlayerView, PlayerViewInit, PlayerViewOutput},
+    player_view::{PlayerView, PlayerViewInit, PlayerViewInput, PlayerViewOutput},
     source_picker::{SourcePicker, SourcePickerInit, SourcePickerOutput},
 };
 use crate::shell::bar::dropdowns::scaled_dimension;
@@ -67,14 +67,14 @@ impl Component for MediaDropdown {
                     set_vexpand: true,
                     set_transition_type: gtk::StackTransitionType::SlideLeftRight,
                     set_transition_duration: 200,
-                    #[watch]
-                    set_visible_child_name: model.active_page.name(),
-
                     #[local_ref]
                     add_named[Some("main")] = player_view_widget -> gtk::Box {},
 
                     #[local_ref]
                     add_named[Some("sources")] = source_picker_widget -> gtk::Box {},
+
+                    #[watch]
+                    set_visible_child_name: model.active_page.name(),
                 },
             },
         }
@@ -82,7 +82,7 @@ impl Component for MediaDropdown {
 
     fn init(
         init: Self::Init,
-        _root: Self::Root,
+        root: Self::Root,
         sender: ComponentSender<Self>,
     ) -> ComponentParts<Self> {
         let player_view = PlayerView::builder()
@@ -108,6 +108,15 @@ impl Component for MediaDropdown {
             source_picker,
         };
 
+        let input_sender = sender.input_sender().clone();
+        root.connect_visible_notify(move |popover| {
+            input_sender.emit(MediaDropdownMsg::VisibilityChanged(popover.is_visible()));
+        });
+
+        model
+            .player_view
+            .emit(PlayerViewInput::SetActive(root.is_visible()));
+
         let player_view_widget = model.player_view.widget();
         let source_picker_widget = model.source_picker.widget();
         let widgets = view_output!();
@@ -123,6 +132,10 @@ impl Component for MediaDropdown {
 
             MediaDropdownMsg::SourcePicker(SourcePickerOutput::NavigateBack) => {
                 self.active_page = MediaPage::Main;
+            }
+
+            MediaDropdownMsg::VisibilityChanged(visible) => {
+                self.player_view.emit(PlayerViewInput::SetActive(visible));
             }
         }
     }

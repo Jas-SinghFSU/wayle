@@ -6,12 +6,12 @@ use std::{
 };
 
 use gtk::prelude::*;
+use gtk4_layer_shell::{KeyboardMode, LayerShell};
 use relm4::{gtk, prelude::*};
-use wayle_common::process::{self, ClickAction};
-use wayle_config::schemas::bar::Location;
+use wayle_config::{ClickAction, schemas::bar::Location};
 use wayle_widgets::prelude::{BarButton, BarButtonInput};
 
-use crate::shell::services::ShellServices;
+use crate::{process, shell::services::ShellServices};
 
 /// Shared dropdown instance for a dropdown name.
 ///
@@ -32,9 +32,12 @@ impl DropdownInstance {
             if let Some(sender) = thaw.take() {
                 sender.emit(BarButtonInput::ThawSize);
             }
+
             if let Some(parent) = popover.parent() {
                 parent.set_size_request(-1, -1);
             }
+
+            set_bar_keyboard_mode(popover, KeyboardMode::None);
         });
 
         Self {
@@ -86,6 +89,7 @@ impl DropdownInstance {
         self.apply_position();
         self.apply_margins(style.margins);
         self.apply_style(&style);
+        set_bar_keyboard_mode(&self.popover, KeyboardMode::OnDemand);
         self.popover.popup();
     }
 
@@ -125,6 +129,7 @@ impl DropdownInstance {
         self.apply_margins(style.margins);
         self.apply_style(&style);
         self.lock_parent_size();
+        set_bar_keyboard_mode(&self.popover, KeyboardMode::OnDemand);
         self.popover.popup();
     }
 
@@ -298,6 +303,12 @@ impl DropdownRegistry {
         }
     }
 
+    pub(crate) fn warm_all(&self) {
+        for name in super::DROPDOWN_NAMES {
+            let _ = self.get_or_create(name);
+        }
+    }
+
     fn get_or_create(&self, name: &str) -> Option<Rc<DropdownInstance>> {
         let mut cache = self.cache.borrow_mut();
         if let Some(instance) = cache.get(name) {
@@ -347,6 +358,21 @@ fn dispatch_action(
         ClickAction::Shell(cmd) => process::run_if_set(cmd),
         ClickAction::None => {}
     }
+}
+
+fn set_bar_keyboard_mode(popover: &gtk::Popover, mode: KeyboardMode) {
+    let Some(parent) = popover.parent() else {
+        return;
+    };
+
+    let Some(window) = parent
+        .root()
+        .and_then(|root| root.downcast::<gtk::Window>().ok())
+    else {
+        return;
+    };
+
+    window.set_keyboard_mode(mode);
 }
 
 fn dropdown_style(registry: &DropdownRegistry) -> DropdownStyle {

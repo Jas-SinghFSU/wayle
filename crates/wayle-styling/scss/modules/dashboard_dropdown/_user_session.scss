@@ -1,0 +1,67 @@
+.dashboard-dropdown {
+    .dashboard-user-session {
+        border-spacing: var(--space-sm);
+    }
+
+    .user-info {
+        border-spacing: var(--space-md);
+    }
+
+    .user-avatar {
+        border-radius: var(--rounding-element);
+        background-color: var(--bg-overlay);
+        background-size: cover;
+        background-position: center;
+        min-width: calc(2.5rem * var(--global-scale));
+        min-height: calc(2.5rem * var(--global-scale));
+
+        image {
+            -gtk-icon-size: var(--icon-md);
+            color: var(--fg-muted);
+        }
+    }
+
+    .user-name {
+        font-size: var(--text-base);
+        color: var(--fg-default);
+        font-weight: var(--weight-semibold);
+        text-transform: capitalize;
+    }
+
+    .user-session-time {
+        font-size: var(--text-xs);
+        color: var(--fg-subtle);
+    }
+
+    .session-actions {
+        border-spacing: var(--space-xs);
+    }
+
+    button.icon.session-btn {
+        > image {
+            -gtk-icon-size: var(--icon-md);
+            color: var(--fg-muted);
+        }
+
+        &:hover {
+            background: var(--bg-hover);
+
+            > image {
+                color: var(--fg-default);
+            }
+        }
+
+        &.danger {
+            > image {
+                color: var(--fg-on-accent);
+            }
+        }
+        &.danger:hover {
+            background: var(--status-error-subtle);
+
+            > image {
+                color: var(--status-error);
+            }
+        }
+    }
+}

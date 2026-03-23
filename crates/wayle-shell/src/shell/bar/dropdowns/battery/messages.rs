@@ -2,11 +2,12 @@ use std::sync::Arc;
 
 use wayle_battery::BatteryService;
 use wayle_config::ConfigService;
+use wayle_core::Property;
 use wayle_power_profiles::PowerProfilesService;
 
 pub(crate) struct BatteryDropdownInit {
     pub battery: Arc<BatteryService>,
-    pub power_profiles: Option<Arc<PowerProfilesService>>,
+    pub power_profiles: Property<Option<Arc<PowerProfilesService>>>,
     pub config: Arc<ConfigService>,
 }
 

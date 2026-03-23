@@ -3,7 +3,7 @@ use std::sync::Arc;
 use tokio_stream::StreamExt;
 use tokio_util::sync::CancellationToken;
 use tracing::{debug, info, instrument, warn};
-use wayle_common::Property;
+use wayle_core::Property;
 use wayle_traits::{Reactive, ServiceMonitoring};
 use zbus::{Connection, fdo::DBusProxy};
 
@@ -31,7 +31,12 @@ impl ServiceMonitoring for SystemTrayService {
 
 #[instrument(skip_all)]
 async fn handle_watcher_mode(service: &SystemTrayService) -> Result<(), Error> {
-    let mut event_receiver = service.event_tx.subscribe();
+    let mut event_receiver = service
+        .event_rx
+        .lock()
+        .ok()
+        .and_then(|mut guard| guard.take())
+        .unwrap_or_else(|| service.event_tx.subscribe());
     let items = service.items.clone();
     let cancellation_token = service.cancellation_token.clone();
     let connection = service.connection.clone();
@@ -121,7 +126,7 @@ async fn handle_host_mode(service: &SystemTrayService) -> Result<(), Error> {
     fields(bus_name = %bus_name),
     err
 )]
-async fn handle_item_registered(
+pub(crate) async fn handle_item_registered(
     bus_name: &str,
     items: &Property<Vec<Arc<TrayItem>>>,
     connection: &Connection,

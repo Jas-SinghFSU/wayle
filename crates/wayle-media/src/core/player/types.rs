@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use tokio_util::sync::CancellationToken;
 use zbus::Connection;
 
@@ -15,4 +17,5 @@ pub struct LivePlayerParams<'a> {
     pub(crate) player_id: PlayerId,
     pub(crate) cancellation_token: &'a CancellationToken,
     pub(crate) art_resolver: Option<ArtResolver>,
+    pub(crate) position_poll_interval: Duration,
 }

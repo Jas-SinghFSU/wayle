@@ -91,10 +91,6 @@ impl FactoryComponent for BarItemFactory {
             root.add_css_class("bar-group");
         }
 
-        if self.modules.is_empty() {
-            root.set_visible(false);
-        }
-
         for instance in &self.modules {
             let widget = instance.controller.widget();
             widget.add_css_class("module");
@@ -102,8 +98,25 @@ impl FactoryComponent for BarItemFactory {
                 widget.add_css_class(class);
             }
             root.append(widget);
+
+            let container = root.clone();
+            widget.connect_notify_local(Some("visible"), move |_, _| {
+                sync_container_visibility(&container);
+            });
         }
+
+        sync_container_visibility(&root);
 
         widgets
     }
+}
+
+fn sync_container_visibility(container: &gtk::Box) {
+    let has_visible_child = container
+        .observe_children()
+        .into_iter()
+        .filter_map(|obj| obj.ok()?.downcast::<gtk::Widget>().ok())
+        .any(|child| child.get_visible());
+
+    container.set_visible(has_visible_child);
 }

@@ -96,9 +96,6 @@ impl Component for WeatherDropdown {
                         set_transition_type: gtk::StackTransitionType::Crossfade,
                         set_vhomogeneous: true,
                         set_hhomogeneous: true,
-                        #[watch]
-                        set_visible_child_name: model.page.name(),
-
                         #[name = "loaded_page"]
                         add_named[Some("loaded")] = &gtk::Box {
                             set_orientation: gtk::Orientation::Vertical,
@@ -174,6 +171,9 @@ impl Component for WeatherDropdown {
                                 connect_clicked => WeatherDropdownInput::Retry,
                             },
                         },
+
+                        #[watch]
+                        set_visible_child_name: model.page.name(),
                     },
                 },
             },

@@ -1,22 +1,42 @@
 use std::sync::Arc;
 
 use relm4::ComponentSender;
-use wayle_common::watch;
+use tokio_util::sync::CancellationToken;
+use wayle_core::Property;
 use wayle_power_profiles::PowerProfilesService;
+use wayle_widgets::{watch, watch_cancellable};
 
 use super::{PowerProfileSection, messages::PowerProfileCmd};
 
-pub(super) fn spawn(
+pub(super) fn spawn_availability(
     sender: &ComponentSender<PowerProfileSection>,
-    power_profiles: &Arc<PowerProfilesService>,
+    property: &Property<Option<Arc<PowerProfilesService>>>,
 ) {
-    let active_profile = power_profiles.power_profiles.active_profile.clone();
-    watch!(sender, [active_profile.watch()], |out| {
+    let property = property.clone();
+    watch!(sender, [property.watch()], |out| {
+        match property.get() {
+            Some(service) => {
+                let _ = out.send(PowerProfileCmd::ServiceAvailable(service));
+            }
+            None => {
+                let _ = out.send(PowerProfileCmd::ServiceUnavailable);
+            }
+        }
+    });
+}
+
+pub(super) fn spawn_profile_watchers(
+    sender: &ComponentSender<PowerProfileSection>,
+    service: &Arc<PowerProfilesService>,
+    token: CancellationToken,
+) {
+    let active_profile = service.power_profiles.active_profile.clone();
+    watch_cancellable!(sender, token.clone(), [active_profile.watch()], |out| {
         let _ = out.send(PowerProfileCmd::ProfileChanged(active_profile.get()));
     });
 
-    let profiles = power_profiles.power_profiles.profiles.clone();
-    watch!(sender, [profiles.watch()], |out| {
+    let profiles = service.power_profiles.profiles.clone();
+    watch_cancellable!(sender, token, [profiles.watch()], |out| {
         let available: Vec<_> = profiles
             .get()
             .into_iter()

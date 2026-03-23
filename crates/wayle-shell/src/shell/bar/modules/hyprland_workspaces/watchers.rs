@@ -3,13 +3,15 @@ use std::sync::Arc;
 use futures::StreamExt;
 use relm4::ComponentSender;
 use tracing::warn;
-use wayle_common::{ConfigProperty, watch};
-use wayle_config::schemas::{
-    modules::HyprlandWorkspacesConfig,
-    styling::{ScaleFactor, ThemeProvider},
+use wayle_config::{
+    ConfigProperty,
+    schemas::{
+        modules::HyprlandWorkspacesConfig,
+        styling::{ScaleFactor, ThemeProvider},
+    },
 };
 use wayle_hyprland::{HyprlandEvent, HyprlandService};
-use wayle_widgets::prelude::BarSettings;
+use wayle_widgets::{prelude::BarSettings, watch};
 
 use super::HyprlandWorkspaces;
 use crate::shell::bar::modules::hyprland_workspaces::messages::WorkspacesCmd;

@@ -1,0 +1,33 @@
+.notification-dropdown .dropdown-content {
+    padding: 0;
+    min-height: 200px;
+}
+
+.notification-dropdown-scroll {
+    min-height: 200px;
+    margin: var(--space-sm) 0;
+    background: transparent;
+
+    undershoot,
+    overshoot {
+        background: transparent;
+    }
+}
+
+.notification-dropdown-dnd-row {
+    padding: var(--space-sm) var(--space-md);
+    margin: var(--space-sm) var(--space-sm) 0;
+    background: var(--bg-elevated);
+    border-radius: var(--rounding-element);
+}
+
+.notification-dropdown-dnd-label {
+    font-size: var(--text-md);
+    font-weight: var(--weight-bold);
+    color: var(--fg-default);
+}
+
+.notification-dropdown-content .empty-state .description {
+    font-size: var(--text-md);
+    font-weight: var(--weight-semibold);
+}

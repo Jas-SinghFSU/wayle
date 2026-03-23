@@ -39,6 +39,10 @@ pub(crate) trait AccessPoint {
     #[zbus(property)]
     fn max_bitrate(&self) -> zbus::Result<u32>;
 
+    /// The bandwidth announced by the access point in MHz.
+    #[zbus(property)]
+    fn bandwidth(&self) -> zbus::Result<u32>;
+
     /// The current signal quality of the access point, in percent.
     #[zbus(property)]
     fn strength(&self) -> zbus::Result<u8>;

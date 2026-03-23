@@ -7,10 +7,13 @@ use tokio::runtime::Runtime;
 use tracing::info;
 
 mod bootstrap;
+mod glob;
 mod i18n;
+mod process;
 mod services;
 mod shell;
 mod startup;
+mod template;
 mod tracing_init;
 mod wallpaper_map;
 mod watchers;
