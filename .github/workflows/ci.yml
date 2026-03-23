@@ -52,7 +52,7 @@ jobs:
 
     test:
         name: Test
-        needs: lint
+
         runs-on: ubuntu-latest
         container:
             image: archlinux:base-devel
@@ -84,7 +84,7 @@ jobs:
 
     build:
         name: Build
-        needs: lint
+
         runs-on: ubuntu-latest
         container:
             image: archlinux:base-devel
