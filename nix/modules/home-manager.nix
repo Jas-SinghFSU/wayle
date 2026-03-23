@@ -7,7 +7,7 @@
 let
   inherit (builtins) elem;
   inherit (lib.attrsets) recursiveUpdate;
-  inherit (lib) lists mkDefault getExe';
+  inherit (lib) lists getExe';
   inherit (lib.modules) mkIf;
   inherit (lib.options) mkEnableOption mkOption mkPackageOption;
 
@@ -16,11 +16,24 @@ let
   tomlFormat = pkgs.formats.toml { };
 in
 {
-  meta.maintainers = with lib.maintainers; [ isaacST08 ];
+  meta.maintainers = with lib.maintainers; [
+    isaacST08
+    PerchunPak
+  ];
 
   options.services.wayle = {
     enable = mkEnableOption "wayle shell";
     package = mkPackageOption pkgs "wayle" { };
+
+    autoInstallDependencies = mkOption {
+      type = lib.types.bool;
+      default = true;
+      example = false;
+      description = ''
+        Whether to automatically install soft dependencies used by wayle that
+        will be required based on your config.
+      '';
+    };
 
     settings = mkOption {
       type = tomlFormat.type;
@@ -92,17 +105,19 @@ in
           ''
         ))
         # Install the appropriate theme-provider, if set.
-        ++ (lists.optional (elem settings.styling.theme-provider [
-          "matugen"
-          "wallust"
-          "pywal"
-        ]) pkgs.${settings.styling.theme-provider})
+        ++ (lists.optional (
+          cfg.autoInstallDependencies
+          && elem settings.styling.theme-provider [
+            "matugen"
+            "wallust"
+            "pywal"
+          ]
+        ) pkgs.${settings.styling.theme-provider})
       );
 
       # Main config file.
       xdg.configFile."wayle/config.toml" = mkIf (cfg.settings != { }) {
         source = tomlFormat.generate "wayle-config" cfg.settings;
-        force = mkDefault true; # Wayle aggressively produces its own config file.
       };
 
       # Systemd service for main wayle shell.
@@ -117,28 +132,6 @@ in
 
       # Wallpaper-engine dependency.
       services.swww.enable = mkIf settings.wallpaper.engine-enabled (lib.mkDefault true);
-
-      # If wallust or pywal is the theme-provider and is enabled globally,
-      # ensure the theme gets sourced for new terminals.
-      programs.bash.bashrcExtra =
-        with settings.styling;
-        let
-          sequenceFile = "${config.xdg.cacheHome}/${
-            if (theme-provider == "wallust") then "wallust" else "wal"
-          }/sequences";
-        in
-        mkIf
-          (
-            elem theme-provider [
-              "wallust"
-              "pywal"
-            ]
-            && settings.styling."${theme-provider}-apply-globally"
-          )
-          # bash
-          ''
-            [[ -f ${sequenceFile} ]] && ${getExe' pkgs.coreutils "cat"} ${sequenceFile}
-          '';
     }
   );
 }
