@@ -6,8 +6,8 @@
 }:
 let
   inherit (builtins) elem;
-  inherit (lib) lists;
-  inherit (lib.attrsets) attrByPath hasAttrByPath;
+  inherit (lib.attrsets) recursiveUpdate;
+  inherit (lib) lists mkDefault getExe';
   inherit (lib.modules) mkIf;
   inherit (lib.options) mkEnableOption mkOption mkPackageOption;
 
@@ -20,12 +20,7 @@ in
 
   options.services.wayle = {
     enable = mkEnableOption "wayle shell";
-    package = mkPackageOption pkgs "wayle" { nullable = true; };
-
-    systemd.enable = (mkEnableOption "wayle systemd service") // {
-      default = true;
-      example = false;
-    };
+    package = mkPackageOption pkgs "wayle" { };
 
     settings = mkOption {
       type = tomlFormat.type;
@@ -71,77 +66,79 @@ in
     };
   };
 
-  config = mkIf cfg.enable {
-    assertions = [
-      (lib.hm.assertions.assertPlatform "services.wayle" pkgs lib.platforms.linux)
-    ];
+  config = mkIf cfg.enable (
+    let
+      # Define default settings.
+      settings = recursiveUpdate {
+        wallpaper.engine-enabled = false;
+        styling = {
+          theme-provider = "wayle";
+          wallust-apply-globally = true;
+          pywal-apply-globally = true;
+        };
+      } cfg.settings;
+    in
+    {
+      assertions = [
+        (lib.hm.assertions.assertPlatform "services.wayle" pkgs lib.platforms.linux)
+      ];
 
-    home.packages = (
-      (lib.lists.optional (cfg.package != null) cfg.package)
-      # Install the appropriate theme-provider, if set.
-      ++ (
-        let
-          themeProvider = attrByPath [ "styling" "theme-provider" ] "wayle" cfg.settings;
-        in
-        (lists.optional (elem themeProvider [
+      home.packages = (
+        [ cfg.package ]
+        # Alias awww to swww.
+        ++ (lists.optional settings.wallpaper.engine-enabled (
+          pkgs.writeShellScriptBin "awww" ''
+            exec swww "$@"
+          ''
+        ))
+        # Install the appropriate theme-provider, if set.
+        ++ (lists.optional (elem settings.styling.theme-provider [
           "matugen"
           "wallust"
           "pywal"
-        ]) pkgs.${themeProvider})
-      )
-    );
+        ]) pkgs.${settings.styling.theme-provider})
+      );
 
-    # Main config file.
-    xdg.configFile."wayle/config.toml" = mkIf (cfg.settings != { }) {
-      source = tomlFormat.generate "wayle-config" cfg.settings;
-      force = true; # Wayle aggressively produces its own config file.
-    };
+      # Main config file.
+      xdg.configFile."wayle/config.toml" = mkIf (cfg.settings != { }) {
+        source = tomlFormat.generate "wayle-config" cfg.settings;
+        force = mkDefault true; # Wayle aggressively produces its own config file.
+      };
 
-    systemd.user.services = mkIf (cfg.systemd.enable && cfg.package != null) {
       # Systemd service for main wayle shell.
-      wayle = {
+      systemd.user.services.wayle = {
         Unit.Description = "Wayle - Shell";
         Install.WantedBy = [ "graphical-session.target" ];
         Service = {
-          ExecStart = "${lib.getExe' cfg.package "wayle-shell"}";
+          ExecStart = "${getExe' cfg.package "wayle-shell"}";
           Restart = "on-failure";
         };
       };
 
-      # Systemd service to run the wallpaper cycling.
-      wayle-wallpaper =
+      # Wallpaper-engine dependency.
+      services.swww.enable = mkIf settings.wallpaper.engine-enabled (lib.mkDefault true);
+
+      # If wallust or pywal is the theme-provider and is enabled globally,
+      # ensure the theme gets sourced for new terminals.
+      programs.bash.bashrcExtra =
+        with settings.styling;
+        let
+          sequenceFile = "${config.xdg.cacheHome}/${
+            if (theme-provider == "wallust") then "wallust" else "wal"
+          }/sequences";
+        in
         mkIf
           (
-            attrByPath [ "wallpaper" "cycling-enabled" ] false cfg.settings
-            && "" != attrByPath [ "wallpaper" "cycling-directory" ] "" cfg.settings
+            elem theme-provider [
+              "wallust"
+              "pywal"
+            ]
+            && settings.styling."${theme-provider}-apply-globally"
           )
-          {
-            Unit.Description = "Wayle - Wallpaper Cycling";
-            Install.WantedBy = [ "graphical-session.target" ];
-            Service = {
-              ExecStart =
-                let
-                  optionalFlag =
-                    settingPath: fn:
-                    if (hasAttrByPath settingPath cfg.settings) then
-                      fn (attrByPath settingPath null cfg.settings)
-                    else
-                      "";
-                in
-                ''
-                  ${lib.getExe' cfg.package "wayle"} wallpaper cycle \
-                    ${optionalFlag [ "wallpaper" "cycling-interval-mins" ] (x: "-i ${toString (x * 60)}")} \
-                    ${optionalFlag [ "wallpaper" "cycling-mode" ] (x: "-m ${x}")} \
-                    "${cfg.settings.wallpaper.cycling-directory}"
-                '';
-              Restart = "on-failure";
-            };
-          };
-    };
-
-    # Wallpaper-engine dependency.
-    services.swww.enable = mkIf (attrByPath [ "wallpaper" "engine-enabled" ] false cfg.settings) (
-      lib.mkDefault true
-    );
-  };
+          # bash
+          ''
+            [[ -f ${sequenceFile} ]] && ${getExe' pkgs.coreutils "cat"} ${sequenceFile}
+          '';
+    }
+  );
 }
