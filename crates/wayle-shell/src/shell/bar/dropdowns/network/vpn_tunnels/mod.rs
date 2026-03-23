@@ -481,11 +481,17 @@ fn build_tunnel_card(
 
     card.append(&info_box);
 
-    // Toggle switch
+    // Toggle switch — disabled for externally managed tunnels (e.g. wg-quick)
+    // to prevent NM from corrupting their config files.
     let switch = gtk::Switch::new();
     switch.set_active(tunnel.active);
     switch.set_valign(gtk::Align::Center);
     switch.add_css_class("network-vpn-toggle");
+    switch.set_sensitive(!tunnel.externally_managed);
+
+    if tunnel.externally_managed {
+        switch.set_tooltip_text(Some("Managed externally (e.g. wg-quick)"));
+    }
 
     let toggle_sender = sender.input_sender().clone();
     switch.connect_state_set(move |s, active| {

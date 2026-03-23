@@ -10,6 +10,10 @@ pub(crate) struct TunnelState {
     pub uuid: String,
     pub name: String,
     pub active: bool,
+    /// Whether this tunnel is managed externally (e.g. by wg-quick)
+    /// rather than by NetworkManager. Externally managed tunnels
+    /// should not be toggled via NM as it can corrupt their config.
+    pub externally_managed: bool,
     pub ip4_address: Option<String>,
     pub interface_name: Option<String>,
     pub connection_path: OwnedObjectPath,

@@ -2,7 +2,7 @@
 
 use std::sync::Arc;
 
-use wayle_network::NetworkService;
+use wayle_network::{NetworkService, types::flags::NMConnectionSettingsFlags};
 
 use super::messages::{TunnelState, VpnProviderConfig};
 use crate::i18n::t;
@@ -30,10 +30,12 @@ pub(super) fn wireguard_tunnels(network: &Arc<NetworkService>) -> Vec<TunnelStat
         .get()
         .iter()
         .map(|t| {
+            let flags = t.profile.flags.get();
             tunnel_state(
                 t.profile.uuid.get(),
                 t.profile.id.get(),
                 t.active.get(),
+                flags.contains(NMConnectionSettingsFlags::EXTERNAL),
                 t.ip4_address.get(),
                 t.interface_name.get(),
                 t.profile.object_path.clone(),
@@ -57,6 +59,7 @@ fn tunnel_state(
     uuid: String,
     id: String,
     active: bool,
+    externally_managed: bool,
     ip4_address: Option<String>,
     interface_name: Option<String>,
     connection_path: zbus::zvariant::OwnedObjectPath,
@@ -74,6 +77,7 @@ fn tunnel_state(
         uuid,
         name,
         active,
+        externally_managed,
         ip4_address,
         interface_name,
         connection_path,
