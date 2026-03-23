@@ -110,7 +110,7 @@ impl Component for Bar {
 
         root.init_layer_shell();
         root.set_layer(Layer::Top);
-        root.set_keyboard_mode(KeyboardMode::OnDemand);
+        root.set_keyboard_mode(KeyboardMode::None);
         root.auto_exclusive_zone_enable();
         root.set_monitor(Some(&init.monitor));
         Self::apply_anchors(&root, location);

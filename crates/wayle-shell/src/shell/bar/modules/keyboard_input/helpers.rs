@@ -1,5 +1,6 @@
-use serde_json::json;
 use std::collections::HashMap;
+
+use serde_json::json;
 use wayle_hyprland::DeviceInfo;
 
 pub(super) fn format_label(

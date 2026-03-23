@@ -3,6 +3,7 @@ use std::sync::Arc;
 use wayle_audio::AudioService;
 use wayle_battery::BatteryService;
 use wayle_bluetooth::BluetoothService;
+use wayle_brightness::BrightnessService;
 use wayle_common::Property;
 use wayle_config::ConfigService;
 use wayle_hyprland::HyprlandService;
@@ -32,6 +33,7 @@ pub(crate) struct ShellServices {
     pub audio: Option<Arc<AudioService>>,
     pub battery: Option<Arc<BatteryService>>,
     pub bluetooth: Option<Arc<BluetoothService>>,
+    pub brightness: Option<Arc<BrightnessService>>,
     pub config: Arc<ConfigService>,
     pub hyprland: Option<Arc<HyprlandService>>,
     pub idle_inhibit: Arc<IdleInhibitService>,

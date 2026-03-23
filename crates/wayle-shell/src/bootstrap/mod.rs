@@ -10,6 +10,7 @@ use tracing::{debug, info, warn};
 use wayle_audio::AudioService;
 use wayle_battery::BatteryService;
 use wayle_bluetooth::BluetoothService;
+use wayle_brightness::BrightnessService;
 use wayle_common::{Property, shell::APP_ID};
 use wayle_config::{ConfigService, infrastructure::schema};
 use wayle_hyprland::HyprlandService;
@@ -58,6 +59,7 @@ macro_rules! try_service {
 
 struct CoreServices {
     battery: Option<Arc<BatteryService>>,
+    brightness: Option<Arc<BrightnessService>>,
     idle_inhibit: Arc<IdleInhibitService>,
     network: Option<Arc<NetworkService>>,
     sysinfo: Arc<SysinfoService>,
@@ -136,6 +138,7 @@ pub async fn init_services() -> Result<(StartupTimer, ShellServices), Box<dyn Er
         audio: daemons.audio,
         battery: core.battery,
         bluetooth: optional.bluetooth,
+        brightness: core.brightness,
         config: config_service,
         hyprland: optional.hyprland,
         power_profiles,
@@ -182,6 +185,7 @@ async fn init_core_services(
     let startup_duration = modules.idle_inhibit.startup_duration.get();
 
     let battery_task = tokio::spawn(BatteryService::new());
+    let brightness_task = tokio::spawn(BrightnessService::new());
     let network_task = tokio::spawn(NetworkService::new());
     let wallpaper_cfg = config.wallpaper.clone();
     let wallpaper_task = tokio::spawn(async move {
@@ -189,8 +193,9 @@ async fn init_core_services(
     });
     let idle_inhibit_task = tokio::spawn(IdleInhibitService::new(startup_duration));
 
-    let (battery, network, wallpaper, idle_inhibit) = tokio::join!(
+    let (battery, brightness, network, wallpaper, idle_inhibit) = tokio::join!(
         async { try_service!(timer, "Battery", spawned(battery_task)) },
+        async { try_service!(timer, "Brightness", spawned(brightness_task), no_wrap) },
         async { try_service!(timer, "Network", spawned(network_task)) },
         async { try_service!(timer, "Wallpaper", spawned(wallpaper_task), no_wrap) },
         timer.time("IdleInhibit", spawned(idle_inhibit_task)),
@@ -198,6 +203,7 @@ async fn init_core_services(
 
     Ok(CoreServices {
         battery,
+        brightness: brightness.flatten(),
         idle_inhibit: Arc::new(idle_inhibit?),
         network,
         sysinfo,

@@ -1,5 +1,5 @@
 [package]
-name = "wayle-common"
+name = "wayle-brightness"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -7,25 +7,20 @@ repository.workspace = true
 license.workspace = true
 
 [dependencies]
+derive_more.workspace = true
 futures.workspace = true
-minijinja.workspace = true
-owo-colors = "4.2.3"
-schemars = { workspace = true, optional = true }
-serde.workspace = true
-serde_json.workspace = true
+nix = { version = "0.30", features = ["poll", "fs"] }
+udev = "0.9"
 thiserror.workspace = true
 tokio.workspace = true
-tokio-stream.workspace = true
 tokio-util.workspace = true
-toml.workspace = true
 tracing.workspace = true
-wildcard.workspace = true
+wayle-common.workspace = true
+wayle-traits.workspace = true
 zbus.workspace = true
 
-
-[features]
-default = []
-schema = ["schemars"]
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt-multi-thread", "time"] }
 
 [lints]
 workspace = true
