@@ -3,11 +3,7 @@ use std::sync::Arc;
 use wayle_cava::{CavaService, InputMethod};
 use wayle_config::{ConfigService, schemas::modules::CavaInput};
 
-const REM_BASE: f32 = 16.0;
-
-pub(super) fn rem_to_px(rem: f32, scale: f32) -> f64 {
-    f64::from(rem * scale * REM_BASE)
-}
+pub(super) use crate::shell::bar::modules::shared::rem_to_px;
 
 pub(super) fn map_input(input: CavaInput) -> InputMethod {
     match input {
