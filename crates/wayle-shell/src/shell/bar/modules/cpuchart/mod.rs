@@ -144,10 +144,15 @@ impl Component for CpuChartModule {
 
     fn update_cmd(&mut self, msg: CpuChartCmd, _sender: ComponentSender<Self>, _root: &Self::Root) {
         match msg {
-            CpuChartCmd::UpdateChart(core_values) => {
-                let num_cores = core_values.len();
+            CpuChartCmd::Update(core_values) => {
+                self.core_values.set(core_values);
+                self.drawing_area.queue_draw();
+            }
+            CpuChartCmd::Resize => {
+                let current_values = self.core_values.take();
+                let num_cores = current_values.len();
+                self.core_values.set(current_values);
 
-                // Always resize when we have data (handles both initial sizing and config changes)
                 if num_cores > 0 {
                     update_size(
                         &self.drawing_area,
@@ -156,8 +161,6 @@ impl Component for CpuChartModule {
                         self.is_vertical,
                     );
                 }
-
-                self.core_values.set(core_values);
                 self.drawing_area.queue_draw();
             }
         }

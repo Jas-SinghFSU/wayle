@@ -24,5 +24,6 @@ pub(crate) enum CpuChartMsg {
 
 #[derive(Debug)]
 pub(crate) enum CpuChartCmd {
-    UpdateChart(Vec<f64>),
+    Update(Vec<f64>),
+    Resize,
 }
