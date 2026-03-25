@@ -4,10 +4,7 @@ use wayle_derive::wayle_config;
 use crate::{
     ClickAction, ConfigProperty,
     docs::{ModuleInfo, ModuleInfoProvider},
-    schemas::{
-        barchart::BarDirection,
-        styling::{ColorValue, CssToken},
-    },
+    schemas::styling::{ColorValue, CssToken},
 };
 
 /// CPU module configuration.
@@ -37,7 +34,6 @@ pub struct CpuConfig {
     /// - `{{ max_freq_ghz }}` - Maximum frequency among cores
     /// - `{{ temp_c }}` - Temperature in Celsius (if available)
     /// - `{{ temp_f }}` - Temperature in Fahrenheit (if available)
-    /// - `{{ barchart }}` - Barchart (per-core CPU utilization)
     ///
     /// ## Examples
     ///
@@ -97,31 +93,6 @@ pub struct CpuConfig {
     #[serde(rename = "button-bg-color")]
     #[default(ColorValue::Token(CssToken::BgSurfaceElevated))]
     pub button_bg_color: ConfigProperty<ColorValue>,
-
-    /// Width of each bar in the barchart (when using {{ barchart }} directive).
-    #[serde(rename = "barchart-bar-width")]
-    #[default(6)]
-    pub barchart_bar_width: ConfigProperty<u32>,
-
-    /// Gap between bars in the barchart (when using {{ barchart }} directive).
-    #[serde(rename = "barchart-bar-gap")]
-    #[default(1)]
-    pub barchart_bar_gap: ConfigProperty<u32>,
-
-    /// Bar growth direction (when using {{ barchart }} directive).
-    #[serde(rename = "barchart-direction")]
-    #[default(BarDirection::Normal)]
-    pub barchart_direction: ConfigProperty<BarDirection>,
-
-    /// Bar color (when using {{ barchart }} directive).
-    #[serde(rename = "barchart-color")]
-    #[default(ColorValue::Token(CssToken::Accent))]
-    pub barchart_color: ConfigProperty<ColorValue>,
-
-    /// Padding at the ends of the barchart (when using {{ barchart }} directive).
-    #[serde(rename = "barchart-internal-padding")]
-    #[default(crate::schemas::styling::Spacing::new(0.5))]
-    pub barchart_internal_padding: ConfigProperty<crate::schemas::styling::Spacing>,
 
     /// Action on left click.
     #[serde(rename = "left-click")]

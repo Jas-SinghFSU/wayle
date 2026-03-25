@@ -6,15 +6,15 @@ use wayle_widgets::prelude::BarSettings;
 
 use crate::shell::bar::dropdowns::DropdownRegistry;
 
-pub(crate) struct CpuInit {
-    pub settings: BarSettings,
-    pub sysinfo: Arc<SysinfoService>,
+pub(crate) struct CpuChartInit {
     pub config: Arc<ConfigService>,
+    pub sysinfo: Arc<SysinfoService>,
+    pub settings: BarSettings,
     pub dropdowns: Rc<DropdownRegistry>,
 }
 
 #[derive(Debug)]
-pub(crate) enum CpuMsg {
+pub(crate) enum CpuChartMsg {
     LeftClick,
     RightClick,
     MiddleClick,
@@ -23,7 +23,6 @@ pub(crate) enum CpuMsg {
 }
 
 #[derive(Debug)]
-pub(crate) enum CpuCmd {
-    UpdateLabel(String),
-    UpdateIcon(String),
+pub(crate) enum CpuChartCmd {
+    UpdateChart(Vec<f64>),
 }

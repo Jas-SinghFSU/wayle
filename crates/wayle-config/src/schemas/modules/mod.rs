@@ -5,6 +5,7 @@ mod bluetooth;
 mod cava;
 mod clock;
 mod cpu;
+mod cpuchart;
 mod custom;
 mod dashboard;
 mod hyprland_workspaces;
@@ -37,6 +38,7 @@ pub use cava::{
 };
 pub use clock::ClockConfig;
 pub use cpu::CpuConfig;
+pub use cpuchart::CpuChartConfig;
 pub use custom::{CustomModuleDefinition, ExecutionMode, RestartDelay, RestartPolicy};
 pub use dashboard::DashboardConfig;
 pub use hyprland_workspaces::{
@@ -81,6 +83,9 @@ pub struct ModulesConfig {
     pub clock: ClockConfig,
     /// CPU usage module.
     pub cpu: CpuConfig,
+    /// CPU usage chart module.
+    #[serde(rename = "cpu-chart")]
+    pub cpuchart: CpuChartConfig,
     /// Dashboard module.
     pub dashboard: DashboardConfig,
     /// Hyprland workspace switcher module.
