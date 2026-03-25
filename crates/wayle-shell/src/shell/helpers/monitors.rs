@@ -60,6 +60,8 @@ pub(crate) fn create_bars(services: &ShellServices) -> BarMap {
     }
 
     info!(count = bars.len(), "Bars created");
+    sync_ipc_state(services, &bars);
+
     bars
 }
 
@@ -176,5 +178,22 @@ fn reconcile_bars(
         entry.insert(bar);
     }
 
+    sync_ipc_state(services, bars);
+
     debug!(bar_count = bars.len(), "Bar reconciliation complete");
+}
+
+fn sync_ipc_state(services: &ShellServices, bars: &BarMap) {
+    let connectors: Vec<String> = bars.keys().cloned().collect();
+    let ipc = services.shell_ipc.state();
+
+    let mut hidden = ipc.hidden_bars.get();
+    let before = hidden.len();
+    hidden.retain(|connector| connectors.contains(connector));
+
+    if hidden.len() < before {
+        ipc.hidden_bars.set(hidden);
+    }
+
+    ipc.connectors.set(connectors);
 }
