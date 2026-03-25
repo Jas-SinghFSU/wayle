@@ -30,17 +30,29 @@ pub(super) fn wireguard_tunnels(network: &Arc<NetworkService>) -> Vec<TunnelStat
         .get()
         .iter()
         .map(|t| {
-            let flags = t.profile.flags.get();
-            tunnel_state(
-                t.profile.uuid.get(),
-                t.profile.id.get(),
-                t.active.get(),
-                flags.contains(NMConnectionSettingsFlags::EXTERNAL),
-                t.ip4_address.get(),
-                t.interface_name.get(),
-                t.profile.object_path.clone(),
-                config.fallback_name,
-            )
+            let id = t.profile.id.get();
+            let interface_name = t.interface_name.get();
+            let name = if id.is_empty() {
+                interface_name
+                    .clone()
+                    .unwrap_or_else(|| String::from(config.fallback_name))
+            } else {
+                id
+            };
+
+            TunnelState {
+                uuid: t.profile.uuid.get(),
+                name,
+                active: t.active.get(),
+                externally_managed: t
+                    .profile
+                    .flags
+                    .get()
+                    .contains(NMConnectionSettingsFlags::EXTERNAL),
+                ip4_address: t.ip4_address.get(),
+                interface_name,
+                connection_path: t.profile.object_path.clone(),
+            }
         })
         .collect();
 
@@ -51,35 +63,4 @@ pub(super) fn wireguard_tunnels(network: &Arc<NetworkService>) -> Vec<TunnelStat
 /// Checks whether the WireGuard backend service is available.
 pub(super) fn wireguard_available(network: &Arc<NetworkService>) -> bool {
     network.wireguard.get().is_some()
-}
-
-/// Builds a `TunnelState` with a fallback name chain:
-/// connection ID → interface name → provider fallback.
-fn tunnel_state(
-    uuid: String,
-    id: String,
-    active: bool,
-    externally_managed: bool,
-    ip4_address: Option<String>,
-    interface_name: Option<String>,
-    connection_path: zbus::zvariant::OwnedObjectPath,
-    fallback_name: &str,
-) -> TunnelState {
-    let name = if id.is_empty() {
-        interface_name
-            .clone()
-            .unwrap_or_else(|| String::from(fallback_name))
-    } else {
-        id
-    };
-
-    TunnelState {
-        uuid,
-        name,
-        active,
-        externally_managed,
-        ip4_address,
-        interface_name,
-        connection_path,
-    }
 }

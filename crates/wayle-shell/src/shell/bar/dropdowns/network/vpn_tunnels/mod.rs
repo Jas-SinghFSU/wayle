@@ -35,19 +35,22 @@ impl Component for VpnTunnels {
         gtk::Box {
             set_orientation: gtk::Orientation::Vertical,
             #[watch]
-            set_visible: model.service_available
-                && !model.tunnels.is_empty(),
+            set_visible: model.service_available,
 
             #[name = "section_label"]
             gtk::Label {
                 add_css_class: "section-label",
                 set_halign: gtk::Align::Start,
+                #[watch]
+                set_visible: !model.tunnels.is_empty(),
             },
 
             #[template]
             Card {
                 add_css_class: "network-connections-group",
                 set_orientation: gtk::Orientation::Vertical,
+                #[watch]
+                set_visible: !model.tunnels.is_empty(),
 
                 #[name = "tunnels_box"]
                 gtk::Box {
@@ -235,18 +238,10 @@ impl VpnTunnels {
                 wg.activate(&connection_path).await.map(|_| ())
             };
 
-            let success = result.is_ok();
-
             let _ = out.send(VpnTunnelsCmd::ToggleResult(
                 index,
                 result.map_err(|e| e.to_string()),
             ));
-
-            if success {
-                let _ = out.send(VpnTunnelsCmd::TunnelsChanged(
-                    providers::wireguard_tunnels(&network),
-                ));
-            }
         });
     }
 
@@ -494,8 +489,7 @@ fn build_tunnel_card(
     }
 
     let toggle_sender = sender.input_sender().clone();
-    switch.connect_state_set(move |s, active| {
-        s.set_state(active);
+    switch.connect_state_set(move |_s, _active| {
         toggle_sender.emit(VpnTunnelsInput::ToggleTunnel(index));
         gtk::glib::Propagation::Stop
     });
