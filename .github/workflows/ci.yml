@@ -50,6 +50,9 @@ jobs:
             - name: Clippy
               run: cargo clippy --workspace --all-targets -- -D warnings
 
+            - name: Check icons exist
+              run: ./scripts/ci/check-icons.sh
+
     test:
         name: Test
 
