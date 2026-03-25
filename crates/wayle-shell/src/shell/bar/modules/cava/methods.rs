@@ -7,7 +7,8 @@ use wayle_widgets::{
     primitives::barchart::calculate_widget_length, primitives::barchart::draw_barchart,
 };
 
-use super::{CavaModule, color, helpers, messages::CavaMsg, rendering};
+use super::{CavaModule, helpers, messages::CavaMsg, rendering};
+use crate::shell::bar::modules::shared;
 
 impl CavaModule {
     pub(super) fn attach_click_gesture(widget: &gtk::Box, sender: &ComponentSender<Self>) {
@@ -68,7 +69,7 @@ impl CavaModule {
         let bar_width = cava_config.bar_width.get() as f64;
         let bar_spacing = cava_config.bar_gap.get() as f64;
         let bar_scale = full_config.bar.scale.get().value();
-        let fill_color = color::resolve_rgba(&cava_config.color.get(), config);
+        let fill_color = shared::resolve_rgba(&cava_config.color.get(), config);
         let padding_rem = cava_config.internal_padding.get().value();
         let horizontal_padding = helpers::rem_to_px(padding_rem, bar_scale);
 

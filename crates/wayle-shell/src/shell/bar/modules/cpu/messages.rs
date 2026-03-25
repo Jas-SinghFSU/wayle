@@ -26,4 +26,5 @@ pub(crate) enum CpuMsg {
 pub(crate) enum CpuCmd {
     UpdateLabel(String),
     UpdateIcon(String),
+    UpdateBarchart(Vec<f64>),
 }

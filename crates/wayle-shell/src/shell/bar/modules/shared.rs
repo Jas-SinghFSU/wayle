@@ -3,7 +3,10 @@
 //! This module contains common functionality used across multiple bar modules,
 //! such as color resolution and unit conversion.
 
-use wayle_config::{ConfigService, schemas::styling::{ColorValue, CssToken}};
+use wayle_config::{
+    ConfigService,
+    schemas::styling::{ColorValue, CssToken},
+};
 use wayle_styling::resolve_palette;
 use wayle_widgets::primitives::barchart::Rgba;
 

@@ -20,6 +20,7 @@ mod power;
 mod ram;
 mod registry;
 mod separator;
+mod shared;
 mod storage;
 mod systray;
 mod volume;

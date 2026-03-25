@@ -1,5 +1,90 @@
+use std::{cell::Cell, rc::Rc, sync::Arc};
+
+use gtk4::prelude::*;
 use serde_json::json;
+use wayle_config::ConfigService;
 use wayle_sysinfo::types::CpuData;
+use wayle_widgets::primitives::barchart::{self, BarchartParams};
+
+use super::super::shared;
+
+/// Checks if the format string contains the barchart directive.
+pub(super) fn has_barchart_directive(format: &str) -> bool {
+    format.contains("{{ barchart }}")
+}
+
+pub(super) fn setup_barchart_draw_func(
+    drawing_area: &gtk4::DrawingArea,
+    core_values: &Rc<Cell<Vec<f64>>>,
+    config: &Arc<ConfigService>,
+) {
+    let values = core_values.clone();
+    let config_clone = config.clone();
+
+    drawing_area.set_draw_func(move |_area, cr: &gtk4::cairo::Context, _width, height| {
+        let pixel_height = height as f64;
+
+        let core_data = values.take();
+        if core_data.is_empty() {
+            values.set(core_data);
+            return;
+        }
+
+        // Read config values fresh on each draw
+        let full_config = config_clone.config();
+        let cpu_config = &full_config.modules.cpu;
+
+        let bar_width = cpu_config.barchart_bar_width.get() as f64;
+        let bar_spacing = cpu_config.barchart_bar_gap.get() as f64;
+        let bar_scale = full_config.bar.scale.get().value();
+        let padding_rem = cpu_config.barchart_internal_padding.get().value();
+        let horizontal_padding = shared::rem_to_px(padding_rem, bar_scale);
+        let direction = cpu_config.barchart_direction.get();
+        let color = cpu_config.barchart_color.get();
+
+        cr.translate(horizontal_padding, 0.0);
+
+        let fill_color = shared::resolve_rgba(&color, &config_clone);
+
+        let params = BarchartParams {
+            bar_width,
+            bar_spacing,
+            fill_color,
+        };
+
+        barchart::draw_barchart(cr, &core_data, pixel_height, direction, &params);
+
+        values.set(core_data);
+    });
+}
+
+pub(super) fn update_barchart_size(
+    drawing_area: &gtk4::DrawingArea,
+    num_cores: usize,
+    config: &Arc<ConfigService>,
+    is_vertical: bool,
+) {
+    let full_config = config.config();
+    let cpu_config = &full_config.modules.cpu;
+    let bar_width = cpu_config.barchart_bar_width.get();
+    let bar_gap = cpu_config.barchart_bar_gap.get();
+    let bar_scale = full_config.bar.scale.get().value();
+    let padding_rem = cpu_config.barchart_internal_padding.get().value();
+    let padding_px = shared::rem_to_px(padding_rem, bar_scale);
+
+    let length =
+        barchart::calculate_widget_length(num_cores as u16, bar_width, bar_gap, padding_px);
+
+    if is_vertical {
+        drawing_area.set_size_request(-1, length);
+        drawing_area.set_hexpand(true);
+        drawing_area.set_vexpand(false);
+    } else {
+        drawing_area.set_size_request(length, -1);
+        drawing_area.set_vexpand(true);
+        drawing_area.set_hexpand(false);
+    }
+}
 
 /// Formats a CPU label using Jinja2 template syntax.
 ///
