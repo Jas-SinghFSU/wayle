@@ -28,11 +28,12 @@ mod weather;
 mod window_title;
 mod world_clock;
 
+pub use super::barchart::BarDirection;
 pub use battery::BatteryConfig;
 pub use bluetooth::BluetoothConfig;
 pub use cava::{
-    BarCount as CavaBarCount, CavaConfig, CavaDirection, CavaInput, CavaStyle,
-    Framerate as CavaFramerate, FrequencyHz,
+    BarCount as CavaBarCount, CavaConfig, CavaInput, CavaStyle, Framerate as CavaFramerate,
+    FrequencyHz,
 };
 pub use clock::ClockConfig;
 pub use cpu::CpuConfig;

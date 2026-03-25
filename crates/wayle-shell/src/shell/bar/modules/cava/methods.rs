@@ -3,6 +3,9 @@ use std::{cell::Cell, rc::Rc, sync::Arc};
 use gtk::{glib::Propagation, prelude::*};
 use relm4::prelude::*;
 use wayle_config::{ConfigService, schemas::modules::CavaStyle};
+use wayle_widgets::{
+    primitives::barchart::calculate_widget_length, primitives::barchart::draw_barchart,
+};
 
 use super::{CavaModule, color, helpers, messages::CavaMsg, rendering};
 
@@ -103,7 +106,7 @@ impl CavaModule {
 
             match style {
                 CavaStyle::Bars => {
-                    rendering::draw_bars(cr, &values, canvas_height, direction, &render_params);
+                    draw_barchart(cr, &values, canvas_height, direction, &render_params);
                 }
                 CavaStyle::Wave => {
                     rendering::draw_wave(
@@ -142,7 +145,7 @@ impl CavaModule {
         let bar_scale = full_config.bar.scale.get().value();
         let padding_rem = cava_config.internal_padding.get().value();
         let padding_px = helpers::rem_to_px(padding_rem, bar_scale);
-        let length = helpers::calculate_widget_length(bars, bar_width, bar_gap, padding_px);
+        let length = calculate_widget_length(bars, bar_width, bar_gap, padding_px);
 
         if self.is_vertical {
             self.drawing_area.set_size_request(-1, length);

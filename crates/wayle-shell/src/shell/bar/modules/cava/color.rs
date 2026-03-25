@@ -3,14 +3,7 @@ use wayle_config::{
     schemas::styling::{ColorValue, CssToken},
 };
 use wayle_styling::resolve_palette;
-
-/// RGBA color with components normalized to `[0.0, 1.0]`.
-pub(crate) struct Rgba {
-    pub red: f64,
-    pub green: f64,
-    pub blue: f64,
-    pub alpha: f64,
-}
+use wayle_widgets::primitives::barchart::Rgba;
 
 pub(super) fn resolve_rgba(color: &ColorValue, config: &ConfigService) -> Rgba {
     let hex = match color {
