@@ -84,8 +84,8 @@ experience. A successor to HyprPanel without the pain or dependency on Hyprland.
 ### Additional Features
 
 - [x] **Notifications**
-- [ ] **OSD (WIP)**
-- [ ] **Settings Dialog**
+- [x] **OSD**
+- [ ] **Settings Dialog (WIP)**
 
 ## Configuration
 

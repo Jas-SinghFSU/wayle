@@ -1,7 +1,6 @@
 //! Common utilities and types shared across Wayle services.
 //!
-//! Provides reusable components including property watchers, macros,
-//! and runtime state management.
+//! Provides reusable components including property watchers and macros.
 
 mod diagnostic;
 /// Glob pattern matching utilities.
@@ -16,7 +15,6 @@ pub mod process;
 mod property;
 /// Shared constants for wayle-shell IPC.
 pub mod shell;
-mod state;
 /// Format string rendering with Jinja2 syntax and JSONPath support.
 pub mod template;
 /// Ergonomic watcher utilities for Relm4 components.
@@ -28,7 +26,6 @@ pub use property::{
     ConfigProperty, ExtractRuntimeValues, Property, PropertyStream, ResetConfigLayer,
     ResetRuntimeLayer, SubscribeChanges, ValueSource,
 };
-pub use state::RuntimeState;
 pub use watchers::WatcherToken;
 
 /// Root path for service object paths in D-Bus hierarchy.
