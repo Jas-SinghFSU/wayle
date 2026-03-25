@@ -24,6 +24,7 @@ pub(super) fn spawn_watchers(
                 .iter()
                 .map(|core| (core.usage_percent as f64) / 100.0)
                 .collect();
+            println!("DEBUG: CPU cores detected: {}, core_values: {:?}", cpu.cores.len(), core_values);
             let _ = out.send(CpuCmd::UpdateBarchart(core_values));
         } else {
             let label = format_label(&format.get(), &cpu);

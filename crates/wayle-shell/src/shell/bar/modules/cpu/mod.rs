@@ -22,8 +22,6 @@ pub(crate) struct CpuModule {
     bar_button: Controller<BarButton>,
     drawing_area: Option<gtk4::DrawingArea>,
     core_values: Rc<Cell<Vec<f64>>>,
-    #[allow(dead_code)]
-    has_barchart: bool,
     config: Arc<ConfigService>,
     dropdowns: Rc<DropdownRegistry>,
 }
@@ -112,7 +110,6 @@ impl Component for CpuModule {
             bar_button,
             drawing_area: drawing_area.clone(),
             core_values,
-            has_barchart,
             config: init.config,
             dropdowns: init.dropdowns,
         };
@@ -163,6 +160,8 @@ impl Component for CpuModule {
             }
             CpuCmd::UpdateBarchart(core_values) => {
                 if let Some(ref area) = self.drawing_area {
+                    // print all core values to stdout:
+                    println!("{:?}", core_values);
                     self.core_values.set(core_values);
                     area.queue_draw();
                 }

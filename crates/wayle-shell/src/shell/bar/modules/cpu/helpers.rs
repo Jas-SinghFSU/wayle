@@ -74,7 +74,7 @@ pub(super) fn update_barchart_size(
 
     let length =
         barchart::calculate_widget_length(num_cores as u16, bar_width, bar_gap, padding_px);
-
+println!("REQUESTING SIZE length {}", length);
     if is_vertical {
         drawing_area.set_size_request(-1, length);
         drawing_area.set_hexpand(true);
@@ -82,7 +82,7 @@ pub(super) fn update_barchart_size(
     } else {
         drawing_area.set_size_request(length, -1);
         drawing_area.set_vexpand(true);
-        drawing_area.set_hexpand(false);
+        drawing_area.set_hexpand(true);
     }
 }
 
