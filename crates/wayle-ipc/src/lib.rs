@@ -5,3 +5,6 @@ pub mod shell;
 
 /// Idle inhibit D-Bus client proxy.
 pub mod idle_inhibit;
+
+/// Shell IPC D-Bus client proxy.
+pub mod shell_ipc;

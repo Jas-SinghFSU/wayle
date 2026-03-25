@@ -1,7 +1,7 @@
 mod dropdowns;
 mod factory;
 pub(crate) mod icons;
-mod layout;
+mod methods;
 mod modules;
 mod styling;
 mod watchers;
@@ -12,10 +12,7 @@ use factory::*;
 use gtk::prelude::*;
 use gtk4_layer_shell::{KeyboardMode, Layer, LayerShell};
 use relm4::{factory::FactoryVecDeque, gtk, gtk::gdk, prelude::*};
-use wayle_config::{
-    ConfigProperty,
-    schemas::bar::{BarItem, BarLayout},
-};
+use wayle_config::{ConfigProperty, schemas::bar::BarLayout};
 use wayle_widgets::{prelude::BarSettings, styling::InlineStyling};
 
 use self::dropdowns::DropdownRegistry;
@@ -99,6 +96,17 @@ impl Component for Bar {
 
         let monitor_name = init.monitor.connector().map(|s| s.to_string());
 
+        let ipc_state = init.services.shell_ipc.state();
+
+        let visible_on_startup = {
+            let connector = monitor_name.as_deref().unwrap_or("unknown");
+            let layouts = config.bar.layout.get();
+            let config_visible = watchers::layout::find_layout(&layouts, connector)
+                .is_some_and(|layout| layout.show);
+
+            config_visible && !ipc_state.hidden_bars.get().contains(connector)
+        };
+
         let settings = BarSettings {
             variant: config.bar.button_variant.clone(),
             theme_provider: config.styling.theme_provider.clone(),
@@ -142,7 +150,7 @@ impl Component for Bar {
         root.style_context()
             .add_provider(&css_provider, gtk::STYLE_PROVIDER_PRIORITY_USER);
 
-        watchers::layout::spawn(&sender, &init.monitor, &init.services.config);
+        watchers::layout::spawn(&sender, &init.monitor, &init.services.config, &ipc_state);
         watchers::dropdowns::spawn(&sender, &init.services.config);
 
         let dropdowns = Rc::new(DropdownRegistry::new(&init.services));
@@ -155,6 +163,7 @@ impl Component for Bar {
             layout: BarLayout {
                 monitor: String::new(),
                 extends: None,
+                show: true,
                 left: Vec::new(),
                 center: Vec::new(),
                 right: Vec::new(),
@@ -188,15 +197,17 @@ impl Component for Bar {
         widgets.middle_box.append(model.center.widget());
         widgets.right_box.append(model.right.widget());
 
-        root.present();
+        if visible_on_startup {
+            root.present();
+        }
 
         ComponentParts { model, widgets }
     }
 
-    fn update_cmd(&mut self, msg: BarCmd, _sender: ComponentSender<Self>, _root: &Self::Root) {
+    fn update_cmd(&mut self, msg: BarCmd, _sender: ComponentSender<Self>, root: &Self::Root) {
         match msg {
             BarCmd::LayoutLoaded(layout) => {
-                self.apply_layout(layout);
+                self.apply_layout(layout, root);
             }
             BarCmd::StyleChanged => {
                 let new_css = self.build_css();
@@ -208,82 +219,6 @@ impl Component for Bar {
             BarCmd::DropdownAutohideChanged(autohide) => {
                 self.dropdowns.set_all_autohide(autohide);
             }
-        }
-    }
-}
-
-impl Bar {
-    fn suppress_alt_focus(window: &gtk::Window) {
-        use gtk::prelude::GtkWindowExt;
-        window.connect_focus_visible_notify(|window| {
-            if window.gets_focus_visible() {
-                window.set_focus_visible(false);
-            }
-        });
-        window.connect_mnemonics_visible_notify(|window| {
-            if window.is_mnemonics_visible() {
-                window.set_mnemonics_visible(false);
-            }
-        });
-    }
-
-    fn apply_layout(&mut self, new_layout: BarLayout) {
-        if self.layout == new_layout {
-            return;
-        }
-
-        let settings = &self.settings;
-        let services = &self.services;
-        let dropdowns = &self.dropdowns;
-
-        if self.layout.left != new_layout.left {
-            Self::rebuild_section(
-                &mut self.left,
-                &new_layout.left,
-                settings,
-                services,
-                dropdowns,
-            );
-        }
-        if self.layout.center != new_layout.center {
-            Self::rebuild_section(
-                &mut self.center,
-                &new_layout.center,
-                settings,
-                services,
-                dropdowns,
-            );
-        }
-        if self.layout.right != new_layout.right {
-            Self::rebuild_section(
-                &mut self.right,
-                &new_layout.right,
-                settings,
-                services,
-                dropdowns,
-            );
-        }
-
-        self.layout = new_layout;
-    }
-
-    fn rebuild_section(
-        factory: &mut FactoryVecDeque<BarItemFactory>,
-        items: &[BarItem],
-        settings: &BarSettings,
-        services: &ShellServices,
-        dropdowns: &Rc<DropdownRegistry>,
-    ) {
-        let mut guard = factory.guard();
-        guard.clear();
-
-        for item in items {
-            guard.push_back(BarItemFactoryInit {
-                item: item.clone(),
-                settings: settings.clone(),
-                services: services.clone(),
-                dropdowns: dropdowns.clone(),
-            });
         }
     }
 }
