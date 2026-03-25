@@ -134,7 +134,7 @@ impl Component for AvailableNetworks {
                     #[template_child]
                     icon {
                         add_css_class: "sm",
-                        set_icon_name: Some("tb-fake-icon-for-testing-symbolic"),
+                        set_icon_name: Some("tb-wifi-off-symbolic"),
                     },
                     #[template_child]
                     title {
