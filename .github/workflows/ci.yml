@@ -3,7 +3,21 @@ name: CI
 on:
     push:
         branches: [master]
+        paths:
+            - "crates/**"
+            - "wayle/**"
+            - "resources/**"
+            - "scripts/**"
+            - "Cargo.*"
+            - ".github/workflows/ci.yml"
     pull_request:
+        paths:
+            - "crates/**"
+            - "wayle/**"
+            - "resources/**"
+            - "scripts/**"
+            - "Cargo.*"
+            - ".github/workflows/ci.yml"
 
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
