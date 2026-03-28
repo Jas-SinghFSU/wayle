@@ -20,6 +20,7 @@ pub(crate) struct VpnTunnels {
     config: Arc<ConfigService>,
     provider: VpnProviderConfig,
     tunnels: Vec<TunnelState>,
+    tunnels_box: gtk::Box,
     service_available: bool,
 }
 
@@ -88,11 +89,12 @@ impl Component for VpnTunnels {
 
         watchers::spawn(&sender, &init.network, &init.config);
 
-        let model = Self {
+        let mut model = Self {
             network: init.network.clone(),
             config: init.config,
             provider: init.provider,
             tunnels,
+            tunnels_box: gtk::Box::default(),
             service_available,
         };
 
@@ -101,10 +103,13 @@ impl Component for VpnTunnels {
         // Set provider-specific section label
         widgets.section_label.set_label(&model.provider.section_label);
 
+        // Store a reference to the tunnels container for reliable rebuilds
+        model.tunnels_box = widgets.tunnels_box.clone();
+
         rebuild_tunnel_cards(
             &model.tunnels,
             &model.provider,
-            &widgets.tunnels_box,
+            &model.tunnels_box,
             &sender,
         );
 
@@ -115,27 +120,20 @@ impl Component for VpnTunnels {
         &mut self,
         msg: Self::Input,
         sender: ComponentSender<Self>,
-        root: &Self::Root,
+        _root: &Self::Root,
     ) {
         match msg {
-            VpnTunnelsInput::ToggleTunnel(index) => {
-                self.toggle_tunnel(index, &sender);
+            VpnTunnelsInput::ToggleTunnel(index, desired_active) => {
+                self.toggle_tunnel(index, desired_active, &sender);
             }
             VpnTunnelsInput::RenameTunnel(index, new_name) => {
                 self.rename_tunnel(index, &new_name);
-                // Rebuild cards to reflect the updated name
-                if let Some(card) =
-                    root.last_child().and_then(|c| c.prev_sibling())
-                    && let Some(tunnels_box) = card.first_child()
-                    && let Ok(bx) = tunnels_box.downcast::<gtk::Box>()
-                {
-                    rebuild_tunnel_cards(
-                        &self.tunnels,
-                        &self.provider,
-                        &bx,
-                        &sender,
-                    );
-                }
+                rebuild_tunnel_cards(
+                    &self.tunnels,
+                    &self.provider,
+                    &self.tunnels_box,
+                    &sender,
+                );
             }
             VpnTunnelsInput::ImportConfig => {
                 self.open_import_dialog(&sender);
@@ -150,25 +148,19 @@ impl Component for VpnTunnels {
         &mut self,
         msg: VpnTunnelsCmd,
         sender: ComponentSender<Self>,
-        root: &Self::Root,
+        _root: &Self::Root,
     ) {
         match msg {
             VpnTunnelsCmd::TunnelsChanged(mut tunnels) => {
                 apply_aliases(&mut tunnels, &self.config);
                 self.tunnels = tunnels;
 
-                // Find the tunnels_box child widget to rebuild
-                if let Some(card) = root.last_child().and_then(|c| c.prev_sibling())
-                    && let Some(tunnels_box) = card.first_child()
-                    && let Ok(bx) = tunnels_box.downcast::<gtk::Box>()
-                {
-                    rebuild_tunnel_cards(
-                        &self.tunnels,
-                        &self.provider,
-                        &bx,
-                        &sender,
-                    );
-                }
+                rebuild_tunnel_cards(
+                    &self.tunnels,
+                    &self.provider,
+                    &self.tunnels_box,
+                    &sender,
+                );
             }
             VpnTunnelsCmd::ServiceChanged => {
                 self.service_available =
@@ -199,14 +191,19 @@ impl Component for VpnTunnels {
 }
 
 impl VpnTunnels {
-    fn toggle_tunnel(&self, index: usize, sender: &ComponentSender<Self>) {
+    fn toggle_tunnel(
+        &self,
+        index: usize,
+        desired_active: bool,
+        sender: &ComponentSender<Self>,
+    ) {
         let Some(tunnel) = self.tunnels.get(index) else {
             return;
         };
 
         let network = self.network.clone();
         let connection_path = tunnel.connection_path.clone();
-        let active = tunnel.active;
+        let uuid = tunnel.uuid.clone();
 
         // Currently dispatches to WireGuard. When adding new providers,
         // this should dispatch based on self.provider or connection type.
@@ -219,23 +216,14 @@ impl VpnTunnels {
                 return;
             };
 
-            let result = if active {
-                let tunnel = wg
-                    .tunnels
-                    .get()
-                    .into_iter()
-                    .find(|t| t.profile.object_path == connection_path);
-
-                if let Some(tunnel) = tunnel {
-                    wg.deactivate(&tunnel).await
-                } else {
-                    Err(wayle_network::Error::OperationFailed {
-                        operation: "find tunnel",
-                        source: "tunnel not found".into(),
-                    })
-                }
-            } else {
+            // Use the switch's desired state rather than any cached active
+            // flag, which may be stale if NM monitoring hasn't refreshed yet.
+            let result = if desired_active {
                 wg.activate(&connection_path).await.map(|_| ())
+            } else {
+                // Query NM directly for the active connection path to avoid
+                // stale cached state on the tunnel objects.
+                wg.deactivate_by_uuid(&uuid).await
             };
 
             let _ = out.send(VpnTunnelsCmd::ToggleResult(
@@ -489,8 +477,9 @@ fn build_tunnel_card(
     }
 
     let toggle_sender = sender.input_sender().clone();
-    switch.connect_state_set(move |_s, _active| {
-        toggle_sender.emit(VpnTunnelsInput::ToggleTunnel(index));
+    switch.connect_state_set(move |s, active| {
+        s.set_state(active);
+        toggle_sender.emit(VpnTunnelsInput::ToggleTunnel(index, active));
         gtk::glib::Propagation::Stop
     });
 

@@ -45,7 +45,8 @@ pub(crate) struct VpnTunnelsInit {
 
 #[derive(Debug)]
 pub(crate) enum VpnTunnelsInput {
-    ToggleTunnel(usize),
+    /// Toggle tunnel (index, desired_active_state).
+    ToggleTunnel(usize, bool),
     RenameTunnel(usize, String),
     ImportConfig,
     FileSelected(String, String),

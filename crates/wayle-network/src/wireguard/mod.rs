@@ -139,6 +139,56 @@ impl WireGuard {
         WireGuardControls::deactivate(&self.zbus_connection, active_path).await
     }
 
+    /// Deactivate a WireGuard tunnel by its connection UUID.
+    ///
+    /// Queries NetworkManager's active connections directly to find the
+    /// active connection path, avoiding stale cached state.
+    ///
+    /// Returns `Ok(())` if the tunnel is not currently active.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Error::OperationFailed` if the deactivation fails.
+    pub async fn deactivate_by_uuid(&self, uuid: &str) -> Result<(), Error> {
+        use crate::proxy::{
+            active_connection::ConnectionActiveProxy,
+            manager::NetworkManagerProxy,
+        };
+
+        let nm_proxy = NetworkManagerProxy::new(&self.zbus_connection)
+            .await
+            .map_err(Error::DbusError)?;
+
+        let active_paths = nm_proxy
+            .active_connections()
+            .await
+            .unwrap_or_default();
+
+        for path in &active_paths {
+            let Ok(proxy) =
+                ConnectionActiveProxy::new(&self.zbus_connection, path.clone())
+                    .await
+            else {
+                continue;
+            };
+
+            let Ok(active_uuid) = proxy.uuid().await else {
+                continue;
+            };
+
+            if active_uuid == uuid {
+                return WireGuardControls::deactivate(
+                    &self.zbus_connection,
+                    path,
+                )
+                .await;
+            }
+        }
+
+        // Not currently active — nothing to do
+        Ok(())
+    }
+
     /// Import a WireGuard `.conf` file as a new connection.
     ///
     /// # Arguments

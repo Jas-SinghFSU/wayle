@@ -41,7 +41,7 @@ dropdown-network-step-verifying = Verifying connection...
 ## WireGuard
 
 dropdown-network-wireguard-tunnels = WireGuard Tunnels
-dropdown-network-wireguard-import = Import Configuration
+dropdown-network-wireguard-import = Import WireGuard Configuration
 dropdown-network-wireguard-active = Active
 dropdown-network-wireguard-inactive = Inactive
 dropdown-network-wireguard-delete = Delete
