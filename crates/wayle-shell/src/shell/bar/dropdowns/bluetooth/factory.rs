@@ -10,10 +10,10 @@ pub(crate) struct Factory;
 
 impl DropdownFactory for Factory {
     fn create(services: &ShellServices) -> Option<DropdownInstance> {
-        let bluetooth = services.bluetooth.clone()?;
-        let config = services.config.clone();
-
-        let init = BluetoothDropdownInit { bluetooth, config };
+        let init = BluetoothDropdownInit {
+            bluetooth: services.bluetooth.clone(),
+            config: services.config.clone(),
+        };
         let controller = BluetoothDropdown::builder().launch(init).detach();
 
         let popover = controller.widget().clone();

@@ -2,10 +2,11 @@ use std::sync::Arc;
 
 use wayle_bluetooth::{BluetoothService, types::agent::PairingRequest};
 use wayle_config::ConfigService;
+use wayle_core::DeferredService;
 use zbus::zvariant::OwnedObjectPath;
 
 pub(crate) struct BluetoothDropdownInit {
-    pub bluetooth: Arc<BluetoothService>,
+    pub bluetooth: DeferredService<BluetoothService>,
     pub config: Arc<ConfigService>,
 }
 
@@ -39,6 +40,7 @@ pub(crate) enum PairingCardOutput {
 
 #[derive(Debug)]
 pub(crate) enum BluetoothDropdownCmd {
+    ServiceReady(Arc<BluetoothService>),
     ScaleChanged(f32),
     EnabledChanged(bool),
     AvailableChanged(bool),
