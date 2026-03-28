@@ -1,26 +1,18 @@
 mod helpers;
+mod methods;
 mod watchers;
 
 use std::sync::Arc;
 
-#[allow(deprecated)]
-use gtk4::prelude::StyleContextExt;
-use gtk4::{gdk, gio::SimpleActionGroup};
-use helpers::{create_texture_from_pixmap, load_icon_from_theme_path, select_best_pixmap};
+use gtk4::gio::SimpleActionGroup;
 use relm4::{
     gtk::{self, prelude::*},
     prelude::*,
 };
 use tokio_util::sync::CancellationToken;
-use tracing::debug;
+use tracing::{debug, warn};
 use wayle_config::ConfigService;
-use wayle_systray::{
-    adapters::gtk4::{Adapter, TrayMenuModel},
-    core::item::TrayItem,
-    types::Coordinates,
-};
-
-use super::helpers::find_override;
+use wayle_systray::{core::item::TrayItem, types::Coordinates};
 
 pub(super) struct SystrayItemInit {
     pub(super) item: Arc<TrayItem>,
@@ -45,6 +37,7 @@ pub(super) enum SystrayItemMsg {
     LeftClick,
     RightClick,
     MiddleClick,
+    ShowMenu,
     MenuUpdated,
     IconUpdated,
 }
@@ -154,7 +147,7 @@ impl FactoryComponent for SystrayItem {
                         item.activate(Coordinates::new(0, 0)).await
                     };
                     if let Err(error) = result {
-                        tracing::warn!(
+                        warn!(
                             id = %item.id.get(),
                             bus_name = %item.bus_name.get(),
                             error = %error,
@@ -164,13 +157,17 @@ impl FactoryComponent for SystrayItem {
                 });
             }
             SystrayItemMsg::RightClick => {
+                self.request_menu_show(&_sender);
+            }
+
+            SystrayItemMsg::ShowMenu => {
                 self.toggle_menu();
             }
             SystrayItemMsg::MiddleClick => {
                 let item = self.item.clone();
                 tokio::spawn(async move {
                     if let Err(error) = item.secondary_activate(Coordinates::new(0, 0)).await {
-                        tracing::warn!(
+                        warn!(
                             id = %item.id.get(),
                             bus_name = %item.bus_name.get(),
                             error = %error,
@@ -188,198 +185,6 @@ impl FactoryComponent for SystrayItem {
                 }
             }
         }
-    }
-}
-
-impl SystrayItem {
-    fn toggle_menu(&mut self) {
-        if let Some(popover) = self.popover.as_ref()
-            && popover.is_visible()
-        {
-            debug!(item_id = %self.item.id.get(), "hiding popover");
-            popover.popdown();
-            return;
-        }
-
-        self.show_menu();
-    }
-
-    #[allow(clippy::cognitive_complexity)]
-    fn show_menu(&mut self) {
-        let item_id = self.item.id.get();
-        debug!(item_id = %item_id, title = %self.item.title.get(), "show_menu called");
-
-        let menu_data = self.item.menu.get();
-        let Some(root_menu) = menu_data else {
-            debug!("no menu data, falling back");
-            self.spawn_context_menu_fallback();
-            return;
-        };
-
-        if root_menu.children.is_empty() {
-            debug!("empty menu, falling back");
-            self.spawn_context_menu_fallback();
-            return;
-        }
-
-        let model = Adapter::build_model(&self.item);
-        debug!(
-            item_id = %item_id,
-            menu_n_items = model.menu.n_items(),
-            accelerators = model.accelerators.len(),
-            "built menu model"
-        );
-
-        let popover = self.ensure_popover(&model.menu);
-        self.apply_menu_model(&popover, model);
-        popover.popup();
-    }
-
-    fn ensure_popover(&mut self, menu: &gtk4::gio::Menu) -> gtk::PopoverMenu {
-        if let Some(popover) = self.popover.clone() {
-            return popover;
-        }
-
-        let popover = gtk::PopoverMenu::from_model_full(menu, gtk::PopoverMenuFlags::NESTED);
-        popover.add_css_class("systray-menu");
-        popover.set_has_arrow(false);
-
-        if let Some(parent) = self.button.as_ref() {
-            popover.set_parent(parent);
-        }
-
-        self.popover = Some(popover.clone());
-        popover
-    }
-
-    fn apply_menu_model(&mut self, popover: &gtk::PopoverMenu, model: TrayMenuModel) {
-        self.clear_accelerators();
-        popover.set_menu_model(Some(&model.menu));
-        popover.insert_action_group("app", Some(&model.actions));
-        self.register_accelerators(popover, &model.accelerators);
-        self.action_group = Some(model.actions);
-    }
-
-    fn register_accelerators(
-        &mut self,
-        popover: &gtk::PopoverMenu,
-        accelerators: &[(String, String)],
-    ) {
-        let Some(app) = popover
-            .root()
-            .and_then(|r| r.downcast::<gtk::Window>().ok())
-            .and_then(|w| w.application())
-        else {
-            return;
-        };
-
-        for (action_name, accel) in accelerators {
-            app.set_accels_for_action(action_name, &[accel.as_str()]);
-            self.registered_accels.push(action_name.clone());
-        }
-    }
-
-    fn clear_accelerators(&mut self) {
-        let Some(popover) = self.popover.as_ref() else {
-            return;
-        };
-
-        let Some(app) = popover
-            .root()
-            .and_then(|r| r.downcast::<gtk::Window>().ok())
-            .and_then(|w| w.application())
-        else {
-            return;
-        };
-
-        for action_name in self.registered_accels.drain(..) {
-            app.set_accels_for_action(&action_name, &[]);
-        }
-    }
-
-    fn spawn_context_menu_fallback(&self) {
-        let item = self.item.clone();
-        tokio::spawn(async move {
-            let _ = item.context_menu(Coordinates::new(0, 0)).await;
-        });
-    }
-
-    fn update_icon(&mut self, image: &gtk::Image) {
-        let overrides = self.config.config().modules.systray.overrides.get();
-        let override_match = find_override(&self.item, &overrides);
-
-        let icon_name = override_match
-            .and_then(|m| m.icon.clone())
-            .or_else(|| self.item.icon_name.get());
-
-        self.apply_icon(image, icon_name.as_deref());
-
-        if let Some(color) = override_match.and_then(|m| m.color.clone()) {
-            self.apply_icon_color(image, &color.to_css());
-        } else {
-            self.clear_icon_color(image);
-        }
-    }
-
-    fn apply_icon_color(&mut self, image: &gtk::Image, css_color: &str) {
-        let provider = self
-            .icon_color_provider
-            .get_or_insert_with(gtk::CssProvider::new);
-
-        let css = format!("image {{ color: {css_color}; }}");
-        provider.load_from_string(&css);
-
-        #[allow(deprecated)]
-        image
-            .style_context()
-            .add_provider(provider, gtk::STYLE_PROVIDER_PRIORITY_USER + 1);
-    }
-
-    fn clear_icon_color(&mut self, image: &gtk::Image) {
-        if let Some(provider) = self.icon_color_provider.take() {
-            #[allow(deprecated)]
-            image.style_context().remove_provider(&provider);
-        }
-    }
-
-    fn apply_icon(&self, image: &gtk::Image, icon_name: Option<&str>) {
-        if let Some(name) = icon_name {
-            let theme_path = self.item.icon_theme_path.get();
-            if let Some(texture) = theme_path
-                .as_deref()
-                .and_then(|p| load_icon_from_theme_path(p, name))
-            {
-                image.set_paintable(Some(&texture));
-                return;
-            }
-            if let Ok(texture) = gdk::Texture::from_filename(name) {
-                image.set_paintable(Some(&texture));
-                return;
-            }
-            image.set_icon_name(Some(name));
-            return;
-        }
-
-        let pixmaps = self.item.icon_pixmap.get();
-        if let Some(texture) = select_best_pixmap(&pixmaps).and_then(create_texture_from_pixmap) {
-            image.set_paintable(Some(&texture));
-            return;
-        }
-
-        image.set_icon_name(Some("application-x-executable-symbolic"));
-    }
-
-    fn rebuild_menu_if_visible(&mut self) {
-        let Some(popover) = self.popover.clone() else {
-            return;
-        };
-
-        if !popover.is_visible() {
-            return;
-        }
-
-        let model = Adapter::build_model(&self.item);
-        self.apply_menu_model(&popover, model);
     }
 }
 
