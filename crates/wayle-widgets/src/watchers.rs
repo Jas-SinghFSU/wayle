@@ -315,6 +315,29 @@ macro_rules! watch_cancellable_throttled {
     }};
 }
 
+/// Watches a [`DeferredService`] and sends a command when the service becomes
+/// available. Ignores the initial `None` state and any `None` transitions.
+///
+/// # Example
+///
+/// ```ignore
+/// watch_deferred!(sender, &services.bluetooth, BluetoothCmd::ServiceReady);
+/// ```
+///
+/// [`DeferredService`]: wayle_core::DeferredService
+#[macro_export]
+macro_rules! watch_deferred {
+    ($sender:expr, $property:expr, $cmd:expr) => {{
+        let property = $property.clone();
+
+        $crate::watch!($sender, [property.watch()], |out| {
+            if let Some(service) = property.get() {
+                let _ = out.send($cmd(service));
+            }
+        });
+    }};
+}
+
 /// Watches streams with an async handler.
 ///
 /// Like [`watch!`], but the handler is async, allowing `.await` inside the

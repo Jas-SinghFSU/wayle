@@ -25,7 +25,13 @@
 mod macros;
 mod property;
 
+use std::sync::Arc;
+
 pub use property::{Property, PropertyStream};
+
+/// A [`Property`] holding a service that initializes in the background.
+/// Starts `None`, becomes `Some` once the service is ready.
+pub type DeferredService<T> = Property<Option<Arc<T>>>;
 
 /// D-Bus root object path.
 pub const ROOT_PATH: &str = "/";
