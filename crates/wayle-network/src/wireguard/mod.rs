@@ -9,7 +9,7 @@ use std::sync::Arc;
 use controls::WireGuardControls;
 use derive_more::Debug;
 pub(crate) use types::{LiveWireGuardParams, WireGuardParams};
-use wayle_common::Property;
+use wayle_core::Property;
 use wayle_traits::{ModelMonitoring, Reactive};
 use zbus::{Connection, zvariant::OwnedObjectPath};
 
