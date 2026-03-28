@@ -1,10 +1,9 @@
 use std::collections::HashMap;
 
 use serde_json::json;
-use wayle_common::glob;
 use wayle_config::schemas::modules::WINDOW_TITLE_BUILTIN_MAPPINGS;
 
-use crate::i18n::t;
+use crate::{glob, i18n::t};
 
 const TITLE_PREFIX: &str = "title:";
 
@@ -13,7 +12,7 @@ pub(super) fn format_label(format: &str, title: &str, app: &str) -> String {
         "title": title,
         "app": app,
     });
-    let label = wayle_common::template::render(format, ctx).unwrap_or_default();
+    let label = crate::template::render(format, ctx).unwrap_or_default();
     if label.trim().is_empty() {
         t!("bar-window-title-empty")
     } else {

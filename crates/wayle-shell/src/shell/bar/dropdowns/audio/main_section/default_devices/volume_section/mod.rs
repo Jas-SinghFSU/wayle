@@ -7,8 +7,7 @@ use std::sync::Arc;
 use gtk::{glib, prelude::*};
 use relm4::{gtk, prelude::*};
 use wayle_audio::AudioService;
-use wayle_common::WatcherToken;
-use wayle_widgets::prelude::DebouncedSlider;
+use wayle_widgets::{WatcherToken, prelude::DebouncedSlider};
 
 pub(crate) use self::messages::*;
 use crate::i18n::t;

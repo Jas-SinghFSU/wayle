@@ -4,8 +4,10 @@ use std::time::Duration;
 
 use relm4::{ComponentSender, gtk};
 use tokio::sync::mpsc;
-use wayle_common::SubscribeChanges;
-use wayle_config::schemas::{bar::BorderLocation, styling::ThemeProvider};
+use wayle_config::{
+    SubscribeChanges,
+    schemas::{bar::BorderLocation, styling::ThemeProvider},
+};
 use wayle_widgets::styling::{InlineStyling, resolve_color};
 
 use super::{Bar, BarCmd};

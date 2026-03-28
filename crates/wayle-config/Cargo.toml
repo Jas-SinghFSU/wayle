@@ -9,17 +9,20 @@ license.workspace = true
 
 [dependencies]
 dotenvy.workspace = true
+futures.workspace = true
 glob.workspace = true
 notify.workspace = true
+owo-colors = "4.2.3"
 schemars.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 serde_json_path.workspace = true
 thiserror.workspace = true
 tokio.workspace = true
+tokio-stream.workspace = true
 toml.workspace = true
 tracing.workspace = true
-wayle-common = { workspace = true, features = ["schema"] }
+wayle-core.workspace = true
 wayle-derive.workspace = true
 
 [features]

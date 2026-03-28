@@ -1,9 +1,9 @@
 use std::{path::Path, sync::Arc};
 
 use relm4::ComponentSender;
-use wayle_common::watch;
 use wayle_config::schemas::modules::StorageConfig;
 use wayle_sysinfo::SysinfoService;
+use wayle_widgets::watch;
 
 use super::{StorageModule, helpers::format_label, messages::StorageCmd};
 

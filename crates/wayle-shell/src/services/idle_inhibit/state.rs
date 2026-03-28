@@ -7,7 +7,7 @@ use std::{
 
 use tokio::time::interval;
 use tokio_util::sync::CancellationToken;
-use wayle_common::Property;
+use wayle_core::Property;
 
 /// Reactive state for idle inhibition.
 ///

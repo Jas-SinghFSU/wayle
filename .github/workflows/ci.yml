@@ -1,0 +1,132 @@
+name: CI
+
+on:
+    push:
+        branches: [master]
+        paths:
+            - "crates/**"
+            - "wayle/**"
+            - "resources/**"
+            - "scripts/**"
+            - "Cargo.*"
+            - ".github/workflows/ci.yml"
+    pull_request:
+        paths:
+            - "crates/**"
+            - "wayle/**"
+            - "resources/**"
+            - "scripts/**"
+            - "Cargo.*"
+            - ".github/workflows/ci.yml"
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+env:
+    CARGO_TERM_COLOR: always
+
+jobs:
+    lint:
+        name: Lint
+        runs-on: ubuntu-latest
+        container:
+            image: archlinux:base-devel
+        steps:
+            - name: Install dependencies
+              run: |
+                  pacman --noconfirm --needed -Syu \
+                    git \
+                    rustup \
+                    clang \
+                    gtk4 \
+                    gtk4-layer-shell \
+                    libpulse \
+                    fftw \
+                    libpipewire \
+                    systemd-libs
+
+            - name: Setup Rust
+              run: |
+                  rustup default stable
+                  rustup toolchain install nightly --component rustfmt
+                  rustup component add clippy
+
+            - uses: actions/checkout@v4
+              with:
+                  submodules: recursive
+
+            - uses: Swatinem/rust-cache@v2
+
+            - name: Check formatting
+              run: cargo +nightly fmt --all --check
+
+            - name: Clippy
+              run: cargo clippy --workspace --all-targets -- -D warnings
+
+            - name: Check icons exist
+              run: ./scripts/ci/check-icons.sh
+
+    test:
+        name: Test
+
+        runs-on: ubuntu-latest
+        container:
+            image: archlinux:base-devel
+        steps:
+            - name: Install dependencies
+              run: |
+                  pacman --noconfirm --needed -Syu \
+                    git \
+                    rustup \
+                    clang \
+                    gtk4 \
+                    gtk4-layer-shell \
+                    libpulse \
+                    fftw \
+                    libpipewire \
+                    systemd-libs
+
+            - name: Setup Rust
+              run: rustup default stable
+
+            - uses: actions/checkout@v4
+              with:
+                  submodules: recursive
+
+            - uses: Swatinem/rust-cache@v2
+
+            - name: Run tests
+              run: cargo test --workspace
+
+    build:
+        name: Build
+
+        runs-on: ubuntu-latest
+        container:
+            image: archlinux:base-devel
+        steps:
+            - name: Install dependencies
+              run: |
+                  pacman --noconfirm --needed -Syu \
+                    git \
+                    rustup \
+                    clang \
+                    gtk4 \
+                    gtk4-layer-shell \
+                    libpulse \
+                    fftw \
+                    libpipewire \
+                    systemd-libs
+
+            - name: Setup Rust
+              run: rustup default stable
+
+            - uses: actions/checkout@v4
+              with:
+                  submodules: recursive
+
+            - uses: Swatinem/rust-cache@v2
+
+            - name: Build workspace
+              run: cargo build --workspace

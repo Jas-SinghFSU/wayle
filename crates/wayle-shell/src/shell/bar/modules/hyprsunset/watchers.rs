@@ -3,8 +3,8 @@ use std::time::Duration;
 use relm4::ComponentSender;
 use tokio::time::interval;
 use tokio_stream::wrappers::IntervalStream;
-use wayle_common::{watch, watch_async};
 use wayle_config::schemas::modules::HyprsunsetConfig;
+use wayle_widgets::{watch, watch_async};
 
 use super::{HyprsunsetModule, helpers, messages::HyprsunsetCmd};
 

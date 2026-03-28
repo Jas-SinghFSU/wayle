@@ -3,7 +3,7 @@ use std::{collections::HashMap, sync::Arc};
 use tokio::sync::broadcast::error::RecvError;
 use tokio_util::sync::CancellationToken;
 use tracing::{info, warn};
-use wayle_common::Property;
+use wayle_core::Property;
 use wayle_traits::{ModelMonitoring, ServiceMonitoring};
 
 use crate::{

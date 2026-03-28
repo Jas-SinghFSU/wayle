@@ -1,8 +1,8 @@
 use std::{sync::Arc, time::Duration};
 
 use relm4::ComponentSender;
-use wayle_common::watch;
 use wayle_config::ConfigService;
+use wayle_widgets::watch;
 
 use super::{CalendarDropdown, helpers, messages::CalendarDropdownCmd};
 

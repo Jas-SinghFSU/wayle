@@ -3,7 +3,7 @@ mod monitoring;
 use derive_more::Debug;
 use tokio::sync::oneshot;
 use tokio_util::sync::CancellationToken;
-use wayle_common::Property;
+use wayle_core::Property;
 
 use crate::{
     Error,

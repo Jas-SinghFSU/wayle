@@ -3,7 +3,7 @@ use std::sync::Arc;
 use tokio::sync::{Mutex, mpsc};
 use tokio_util::sync::CancellationToken;
 use tracing::{debug, info};
-use wayle_common::Property;
+use wayle_core::Property;
 
 use crate::{
     Error,

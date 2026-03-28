@@ -45,9 +45,11 @@ wayle-battery.workspace = true
 wayle-bluetooth.workspace = true
 wayle-brightness.workspace = true
 wayle-cava.workspace = true
-# Common dependencies
-wayle-common = { workspace = true, features = ["schema"] }
 wayle-config.workspace = true
+wayle-core.workspace = true
+wayle-ipc.workspace = true
+minijinja.workspace = true
+wildcard.workspace = true
 wayle-hyprland.workspace = true
 wayle-icons.workspace = true
 wayle-idle-inhibit.workspace = true

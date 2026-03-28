@@ -9,7 +9,7 @@ use tokio_util::sync::CancellationToken;
 use tracing::warn;
 pub(crate) use types::{ActiveConnectionParams, LiveActiveConnectionParams};
 pub use types::{ActiveConnectionStateChangedEvent, VpnConnectionStateChangedEvent};
-use wayle_common::{Property, unwrap_bool, unwrap_path, unwrap_string, unwrap_u32, unwrap_vec};
+use wayle_core::{Property, unwrap_dbus};
 use wayle_traits::{ModelMonitoring, Reactive};
 use zbus::{Connection, zvariant::OwnedObjectPath};
 
@@ -180,23 +180,23 @@ impl ActiveConnection {
             connection_proxy.controller(),
         );
 
-        let connection_path = unwrap_path!(connection_path, path);
-        let specific_object = unwrap_path!(specific_object, path);
-        let id = unwrap_string!(id, path);
-        let uuid = unwrap_string!(uuid, path);
-        let type_ = unwrap_string!(type_, path);
-        let devices = unwrap_vec!(devices, path);
-        let state = NMActiveConnectionState::from_u32(unwrap_u32!(state, path));
+        let connection_path = unwrap_dbus!(connection_path, path);
+        let specific_object = unwrap_dbus!(specific_object, path);
+        let id = unwrap_dbus!(id, path);
+        let uuid = unwrap_dbus!(uuid, path);
+        let type_ = unwrap_dbus!(type_, path);
+        let devices = unwrap_dbus!(devices, path);
+        let state = NMActiveConnectionState::from_u32(unwrap_dbus!(state, path));
         let state_flags =
-            NMActivationStateFlags::from_bits_truncate(unwrap_u32!(state_flags, path));
-        let default = unwrap_bool!(default, path);
-        let ip4_config = unwrap_path!(ip4_config, path);
-        let dhcp4_config = unwrap_path!(dhcp4_config, path);
-        let default6 = unwrap_bool!(default6, path);
-        let ip6_config = unwrap_path!(ip6_config, path);
-        let dhcp6_config = unwrap_path!(dhcp6_config, path);
-        let vpn = unwrap_bool!(vpn, path);
-        let controller = unwrap_path!(controller, path);
+            NMActivationStateFlags::from_bits_truncate(unwrap_dbus!(state_flags, path));
+        let default = unwrap_dbus!(default, path);
+        let ip4_config = unwrap_dbus!(ip4_config, path);
+        let dhcp4_config = unwrap_dbus!(dhcp4_config, path);
+        let default6 = unwrap_dbus!(default6, path);
+        let ip6_config = unwrap_dbus!(ip6_config, path);
+        let dhcp6_config = unwrap_dbus!(dhcp6_config, path);
+        let vpn = unwrap_dbus!(vpn, path);
+        let controller = unwrap_dbus!(controller, path);
 
         Ok(Self {
             connection_path: Property::new(connection_path),

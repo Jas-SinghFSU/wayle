@@ -109,7 +109,7 @@ impl ParsedOutput {
 }
 
 fn render_format(template: &str, parsed: &ParsedOutput) -> String {
-    wayle_common::template::render(template, parsed.template_context()).unwrap_or_default()
+    crate::template::render(template, parsed.template_context()).unwrap_or_default()
 }
 
 /// Finds a custom module definition by ID.

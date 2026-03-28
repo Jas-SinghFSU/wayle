@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use relm4::ComponentSender;
 use wayle_audio::AudioService;
-use wayle_common::watch;
+use wayle_widgets::watch;
 
 use super::{
     DevicePicker,

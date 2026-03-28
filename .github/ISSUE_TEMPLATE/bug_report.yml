@@ -1,0 +1,103 @@
+name: Bug Report
+description: Report a bug with Wayle.
+type: Bug
+body:
+    - type: checkboxes
+      attributes:
+          label: Quick check
+          options:
+              - label: I searched existing issues first.
+                required: true
+
+    - type: textarea
+      id: description
+      attributes:
+          label: Description
+      validations:
+          required: true
+
+    - type: textarea
+      id: repro
+      attributes:
+          label: Steps to reproduce
+          placeholder: |
+              1.
+              2.
+              3.
+      validations:
+          required: true
+
+    - type: textarea
+      id: expected
+      attributes:
+          label: Expected behavior
+      validations:
+          required: true
+
+    - type: input
+      id: wayle-version
+      attributes:
+          label: Wayle version
+          description: "`wayle --version`"
+          placeholder: "0.1.0"
+      validations:
+          required: true
+
+    - type: input
+      id: distro
+      attributes:
+          label: Distro
+          placeholder: "Arch Linux, Fedora 41, Ubuntu 24.04, NixOS 24.11, etc."
+      validations:
+          required: true
+
+    - type: input
+      id: compositor
+      attributes:
+          label: Compositor and version
+          placeholder: "Hyprland 0.45.0, Sway 1.10, etc."
+      validations:
+          required: true
+
+    - type: input
+      id: display-setup
+      attributes:
+          label: Display setup
+          description: Monitor count, resolution, and scale.
+          placeholder: "1x 2560x1440 @ scale 1, dual 1920x1080 @ scale 1, etc."
+      validations:
+          required: false
+
+    - type: textarea
+      id: config
+      attributes:
+          label: Relevant config
+          description: The relevant section of `~/.config/wayle/config.toml`, if applicable.
+          render: toml
+      validations:
+          required: false
+
+    - type: textarea
+      id: logs
+      attributes:
+          label: Logs
+          description: Run with `RUST_LOG=debug wayle-shell` for verbose output.
+          render: shell
+      validations:
+          required: false
+
+    - type: dropdown
+      id: area
+      attributes:
+          label: Affected area
+          options:
+              - Bar
+              - Dropdowns (volume, network, bluetooth, etc.)
+              - Notifications
+              - OSD
+              - Theming / Appearance
+              - Configuration
+              - CLI
+              - Not sure
+      validations:
+          required: true

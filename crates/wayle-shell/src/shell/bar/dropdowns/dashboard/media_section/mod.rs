@@ -16,9 +16,8 @@ use gtk::{
     style_context_add_provider_for_display,
 };
 use relm4::{gtk, prelude::*};
-use wayle_common::WatcherToken;
 use wayle_media::{MediaService, core::player::Player, types::PlaybackState};
-use wayle_widgets::prelude::*;
+use wayle_widgets::{WatcherToken, prelude::*};
 
 use self::messages::MediaSectionCmd;
 pub(crate) use self::messages::{MediaSectionInit, MediaSectionInput};

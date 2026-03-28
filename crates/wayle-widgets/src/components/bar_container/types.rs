@@ -2,10 +2,12 @@
 
 use std::fmt::{Debug, Formatter, Result as FmtResult};
 
-use wayle_common::ConfigProperty;
-use wayle_config::schemas::{
-    bar::BorderLocation,
-    styling::{ColorValue, ThemeProvider},
+use wayle_config::{
+    ConfigProperty,
+    schemas::{
+        bar::BorderLocation,
+        styling::{ColorValue, ThemeProvider},
+    },
 };
 
 /// Colors for bar containers.

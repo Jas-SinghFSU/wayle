@@ -6,9 +6,9 @@ use std::sync::Arc;
 
 use gtk::prelude::*;
 use relm4::{gtk, prelude::*};
-use wayle_common::WatcherToken;
 use wayle_network::NetworkService;
 use wayle_sysinfo::SysinfoService;
+use wayle_widgets::WatcherToken;
 
 use self::messages::NetworkSectionCmd;
 pub(crate) use self::messages::{NetworkSectionInit, NetworkSectionInput};

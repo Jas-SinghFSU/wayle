@@ -22,6 +22,9 @@ pub mod icons;
 pub mod primitives;
 pub mod styling;
 pub mod utils;
+pub mod watchers;
+
+pub use watchers::WatcherToken;
 
 /// Convenient re-exports of all widget templates and class constants.
 pub mod prelude {

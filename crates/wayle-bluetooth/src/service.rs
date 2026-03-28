@@ -7,7 +7,7 @@ use tokio::{
 };
 use tokio_util::sync::CancellationToken;
 use tracing::{error, instrument};
-use wayle_common::Property;
+use wayle_core::Property;
 use wayle_traits::{Reactive, ServiceMonitoring};
 use zbus::{Connection, zvariant::OwnedObjectPath};
 

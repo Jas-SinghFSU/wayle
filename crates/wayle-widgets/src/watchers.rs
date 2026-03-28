@@ -14,8 +14,7 @@ use futures::stream::Stream;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::UnboundedReceiverStream;
 use tokio_util::sync::CancellationToken;
-
-use crate::SubscribeChanges;
+use wayle_config::SubscribeChanges;
 
 /// Manages a cancellable watcher lifecycle.
 ///
@@ -187,7 +186,10 @@ macro_rules! watch {
                 () = shutdown.wait() => {}
                 () = async {
                     while merged.next().await.is_some() {
-                        (|| { $body })();
+                        {
+                            #[allow(clippy::redundant_closure_call)]
+                            (|| { $body })();
+                        }
                     }
                 } => {}
             }
@@ -246,7 +248,10 @@ macro_rules! watch_cancellable {
                 () = token.cancelled() => {}
                 () = async {
                     while merged.next().await.is_some() {
-                        (|| { $body })();
+                        {
+                            #[allow(clippy::redundant_closure_call)]
+                            (|| { $body })();
+                        }
                     }
                 } => {}
             }
@@ -298,7 +303,10 @@ macro_rules! watch_cancellable_throttled {
                 () = token.cancelled() => {}
                 () = async {
                     while merged.next().await.is_some() {
-                        (|| { $body })();
+                        {
+                            #[allow(clippy::redundant_closure_call)]
+                            (|| { $body })();
+                        }
                         ::tokio::time::sleep(cooldown).await;
                     }
                 } => {}

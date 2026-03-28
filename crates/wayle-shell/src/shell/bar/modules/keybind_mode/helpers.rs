@@ -9,7 +9,7 @@ pub(super) fn format_label(format: &str, mode: &str) -> String {
         mode.to_string()
     };
     let ctx = json!({ "mode": display_mode });
-    wayle_common::template::render(format, ctx).unwrap_or_default()
+    crate::template::render(format, ctx).unwrap_or_default()
 }
 
 pub(super) fn compute_visibility(mode: &str, auto_hide: bool) -> bool {

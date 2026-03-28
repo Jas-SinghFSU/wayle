@@ -4,7 +4,7 @@ use std::{collections::HashMap, net::Ipv4Addr};
 
 use tracing::{debug, warn};
 pub(crate) use types::Ip4ConfigParams;
-use wayle_common::{Property, unwrap_i32, unwrap_string, unwrap_vec};
+use wayle_core::{Property, unwrap_dbus};
 use wayle_traits::Static;
 use zbus::{
     Connection,
@@ -156,15 +156,15 @@ impl Ip4Config {
         );
 
         Ok(Ip4ConfigProperties {
-            address_data: Self::parse_address_data(unwrap_vec!(address_data, path)),
-            gateway: Self::parse_gateway(unwrap_string!(gateway, path)),
-            nameserver_data: Self::parse_nameserver_data(unwrap_vec!(nameserver_data, path)),
-            domains: unwrap_vec!(domains, path),
-            searches: unwrap_vec!(searches, path),
-            dns_options: unwrap_vec!(dns_options, path),
-            dns_priority: unwrap_i32!(dns_priority, path),
-            route_data: Self::parse_route_data(unwrap_vec!(route_data, path)),
-            wins_server_data: unwrap_vec!(wins_server_data, path)
+            address_data: Self::parse_address_data(unwrap_dbus!(address_data, path)),
+            gateway: Self::parse_gateway(unwrap_dbus!(gateway, path)),
+            nameserver_data: Self::parse_nameserver_data(unwrap_dbus!(nameserver_data, path)),
+            domains: unwrap_dbus!(domains, path),
+            searches: unwrap_dbus!(searches, path),
+            dns_options: unwrap_dbus!(dns_options, path),
+            dns_priority: unwrap_dbus!(dns_priority, path),
+            route_data: Self::parse_route_data(unwrap_dbus!(route_data, path)),
+            wins_server_data: unwrap_dbus!(wins_server_data, path)
                 .into_iter()
                 .filter_map(|s| s.parse().ok())
                 .collect(),

@@ -9,10 +9,13 @@ use std::{rc::Rc, sync::Arc};
 use gtk::prelude::*;
 use relm4::prelude::*;
 use wayle_bluetooth::BluetoothService;
-use wayle_common::{ConfigProperty, WatcherToken};
-use wayle_config::{ConfigService, schemas::styling::CssToken};
-use wayle_widgets::prelude::{
-    BarButton, BarButtonBehavior, BarButtonColors, BarButtonInit, BarButtonInput, BarButtonOutput,
+use wayle_config::{ConfigProperty, ConfigService, schemas::styling::CssToken};
+use wayle_widgets::{
+    WatcherToken,
+    prelude::{
+        BarButton, BarButtonBehavior, BarButtonColors, BarButtonInit, BarButtonInput,
+        BarButtonOutput,
+    },
 };
 
 pub(crate) use self::{

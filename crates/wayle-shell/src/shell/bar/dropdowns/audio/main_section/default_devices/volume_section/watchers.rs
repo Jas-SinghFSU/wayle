@@ -3,7 +3,7 @@ use std::{sync::Arc, time::Duration};
 use relm4::ComponentSender;
 use tokio_util::sync::CancellationToken;
 use wayle_audio::AudioService;
-use wayle_common::{watch, watch_cancellable_throttled};
+use wayle_widgets::{watch, watch_cancellable_throttled};
 
 use crate::shell::bar::dropdowns::audio::main_section::default_devices::volume_section::{
     VolumeSection,

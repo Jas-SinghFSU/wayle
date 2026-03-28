@@ -1,0 +1,14 @@
+[package]
+name = "wayle-ipc"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+description = "D-Bus interface definitions for Wayle CLI and shell communication"
+repository.workspace = true
+license.workspace = true
+
+[dependencies]
+zbus.workspace = true
+
+[lints]
+workspace = true

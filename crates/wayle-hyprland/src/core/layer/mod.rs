@@ -2,7 +2,7 @@ pub(crate) mod types;
 
 use tracing::instrument;
 use types::LayerParams;
-use wayle_common::Property;
+use wayle_core::Property;
 use wayle_traits::Static;
 
 use crate::{Address, Error, LayerData, LayerLevel, ProcessId};

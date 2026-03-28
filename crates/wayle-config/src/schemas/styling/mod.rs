@@ -8,10 +8,9 @@ pub use types::{
     RadiusClass, RoundingLevel, ScaleFactor, SignedNormalizedF64, Spacing, TextSizeClass,
     ThemeEntry, ThemeProvider, WallustBackend, WallustColorspace, WallustPalette,
 };
-use wayle_common::ConfigProperty;
 use wayle_derive::wayle_config;
 
-use crate::infrastructure::themes::Palette;
+use crate::{ConfigProperty, infrastructure::themes::Palette};
 
 /// Styling configuration. Changes trigger stylesheet recompilation.
 #[wayle_config]

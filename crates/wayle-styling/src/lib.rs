@@ -174,6 +174,7 @@ mod tests {
     use super::*;
 
     #[test]
+    #[ignore = "requires display server"]
     fn css_loads_into_gtk4() {
         gtk4::init().unwrap();
 

@@ -12,9 +12,8 @@ use std::sync::Arc;
 
 use gtk::prelude::*;
 use relm4::{gtk, prelude::*};
-use wayle_common::WatcherToken;
 use wayle_network::NetworkService;
-use wayle_widgets::prelude::*;
+use wayle_widgets::{WatcherToken, prelude::*};
 
 pub(super) use self::factory::Factory;
 use self::{

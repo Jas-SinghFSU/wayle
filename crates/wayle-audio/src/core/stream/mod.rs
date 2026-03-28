@@ -9,7 +9,7 @@ use derive_more::Debug;
 use tokio::sync::oneshot;
 use tokio_util::sync::CancellationToken;
 pub(crate) use types::{AudioStreamParams, LiveAudioStreamParams};
-use wayle_common::Property;
+use wayle_core::Property;
 use wayle_traits::{ModelMonitoring, Reactive};
 
 use crate::{

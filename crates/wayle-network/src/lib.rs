@@ -67,7 +67,7 @@
 //!
 //! # Reactive Properties
 //!
-//! All fields are [`Property<T>`](wayle_common::Property):
+//! All fields are [`Property<T>`](wayle_core::Property):
 //! - `.get()` - Current value snapshot
 //! - `.watch()` - Stream yielding on changes
 //!

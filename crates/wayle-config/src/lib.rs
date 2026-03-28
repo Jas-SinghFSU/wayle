@@ -3,8 +3,21 @@
 //! Handles schema definitions, configuration loading/saving, and file watching
 //! for Wayle and its applets.
 
+extern crate self as wayle_config;
+
+pub mod click_action;
+mod diagnostic;
+mod property;
+
 /// Documentation and metadata types for configuration schemas.
 pub mod docs;
+
+pub use click_action::ClickAction;
+pub use diagnostic::Diagnostic;
+pub use property::{
+    ApplyConfigLayer, ApplyRuntimeLayer, ClearRuntimeByPath, CommitConfigReload, ConfigProperty,
+    ExtractRuntimeValues, ResetConfigLayer, ResetRuntimeLayer, SubscribeChanges, ValueSource,
+};
 
 /// Configuration schema definitions.
 pub mod schemas {

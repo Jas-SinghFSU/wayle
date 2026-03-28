@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
 use relm4::ComponentSender;
-use wayle_common::watch;
 use wayle_config::ConfigService;
 use wayle_weather::WeatherService;
+use wayle_widgets::watch;
 
 use super::{StatsGrid, messages::StatsGridCmd};
 

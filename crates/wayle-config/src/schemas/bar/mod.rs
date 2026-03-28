@@ -4,11 +4,13 @@ pub use types::{
     BarButtonVariant, BarGroup, BarItem, BarLayout, BarModule, BorderLocation, ClassedModule,
     IconPosition, Location, ModuleRef, ShadowPreset,
 };
-use wayle_common::ConfigProperty;
 use wayle_derive::wayle_config;
 
-use crate::schemas::styling::{
-    ColorValue, CssToken, FontWeightClass, Percentage, RoundingLevel, ScaleFactor, Spacing,
+use crate::{
+    ConfigProperty,
+    schemas::styling::{
+        ColorValue, CssToken, FontWeightClass, Percentage, RoundingLevel, ScaleFactor, Spacing,
+    },
 };
 
 /// Bar configuration.
@@ -224,4 +226,12 @@ pub struct BarConfig {
     #[serde(rename = "dropdown-autohide")]
     #[default(true)]
     pub dropdown_autohide: ConfigProperty<bool>,
+
+    /// Freeze the bar button label while its dropdown is open.
+    ///
+    /// Prevents the button from resizing mid-interaction, which keeps the
+    /// dropdown anchored in place.
+    #[serde(rename = "dropdown-freeze-label")]
+    #[default(true)]
+    pub dropdown_freeze_label: ConfigProperty<bool>,
 }

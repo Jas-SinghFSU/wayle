@@ -4,8 +4,8 @@ use wayle_audio::AudioService;
 use wayle_battery::BatteryService;
 use wayle_bluetooth::BluetoothService;
 use wayle_brightness::BrightnessService;
-use wayle_common::Property;
 use wayle_config::ConfigService;
+use wayle_core::Property;
 use wayle_hyprland::HyprlandService;
 use wayle_media::MediaService;
 use wayle_network::NetworkService;
@@ -16,18 +16,12 @@ use wayle_systray::SystemTrayService;
 use wayle_wallpaper::WallpaperService;
 use wayle_weather::WeatherService;
 
-use crate::services::IdleInhibitService;
+use crate::services::{IdleInhibitService, ShellIpcService};
 
 /// Container for services used by shell components.
 ///
-/// Services are injected at the composition root (bootstrap) and flow through
-/// the component hierarchy. Optional services may be `None` when hardware,
-/// compositor, or D-Bus daemons are unavailable - components gracefully
-/// degrade in these cases.
-///
-/// Deferred services use `Property<Option<Arc<T>>>` and resolve
-/// asynchronously after shell startup. It's up to services to handle
-/// their resolution asyncronously.
+/// Optional services are `None` when hardware, compositor, or D-Bus
+/// daemons are unavailable.
 #[derive(Clone)]
 pub(crate) struct ShellServices {
     pub audio: Option<Arc<AudioService>>,
@@ -45,4 +39,5 @@ pub(crate) struct ShellServices {
     pub systray: Option<Arc<SystemTrayService>>,
     pub wallpaper: Option<Arc<WallpaperService>>,
     pub weather: Arc<WeatherService>,
+    pub shell_ipc: Arc<ShellIpcService>,
 }

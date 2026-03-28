@@ -117,7 +117,7 @@
 //! - **Path:** `/com/wayle/Audio`
 //! - **Interface:** `com.wayle.Audio1`
 //!
-//! See [`dbus.md`](https://github.com/Jas-SinghFSU/wayle/blob/master/crates/wayle-audio/dbus.md) for the full interface specification.
+//! See [`dbus.md`](https://github.com/wayle-rs/wayle/blob/master/crates/wayle-audio/dbus.md) for the full interface specification.
 //!
 //! # Service Fields
 //!
@@ -138,8 +138,8 @@
 //! [`default_input`]: AudioService::default_input
 //! [`playback_streams`]: AudioService::playback_streams
 //! [`recording_streams`]: AudioService::recording_streams
-//! [`Property`]: wayle_common::Property
-//! [`Property<T>`]: wayle_common::Property
+//! [`Property`]: wayle_core::Property
+//! [`Property<T>`]: wayle_core::Property
 //! [`OutputDevice`]: core::device::output::OutputDevice
 //! [`InputDevice`]: core::device::input::InputDevice
 //! [`AudioStream`]: core::stream::AudioStream

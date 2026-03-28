@@ -3,10 +3,11 @@ use std::sync::Arc;
 use relm4::ComponentSender;
 use tokio_util::sync::CancellationToken;
 use wayle_bluetooth::BluetoothService;
-use wayle_common::{Property, watch, watch_cancellable};
+use wayle_core::Property;
 use wayle_network::{NetworkService, wifi::Wifi};
 use wayle_notification::NotificationService;
 use wayle_power_profiles::{PowerProfilesService, types::profile::PowerProfile};
+use wayle_widgets::{watch, watch_cancellable};
 
 use super::{QuickActionsSection, messages::QuickActionsCmd};
 use crate::services::IdleInhibitService;

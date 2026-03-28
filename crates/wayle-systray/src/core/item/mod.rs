@@ -9,7 +9,7 @@ use futures::{Stream, StreamExt};
 use tokio_util::sync::CancellationToken;
 use tracing::instrument;
 use types::TrayItemProperties;
-use wayle_common::{Property, unwrap_bool, unwrap_i32, unwrap_string};
+use wayle_core::{Property, unwrap_dbus};
 use wayle_traits::{ModelMonitoring, Reactive};
 use zbus::{
     Connection,
@@ -34,7 +34,7 @@ struct ServiceIdentifier<'a> {
 
 /// Individual system tray item from org.kde.StatusNotifierItem.
 ///
-/// All properties are reactive via [`Property<T>`](wayle_common::Property).
+/// All properties are reactive via [`Property<T>`](wayle_core::Property).
 /// Field semantics follow the [StatusNotifierItem spec](https://freedesktop.org/wiki/Specifications/StatusNotifierItem/).
 #[derive(Debug, Clone)]
 pub struct TrayItem {
@@ -289,26 +289,41 @@ impl TrayItem {
         .await
     }
 
-    /// Refreshes the root menu by calling AboutToShow on the menu root.
+    /// Pokes the app with `AboutToShow` and grabs a fresh menu layout.
     ///
-    /// This should be called before displaying a menu to ensure applications
-    /// can populate dynamic content. Part of the DBusMenu protocol for lazy menu population.
+    /// Some apps (like EasyEffects) lazily populate menu items such as device
+    /// names only after receiving this signal. Updates the `menu` property
+    /// before returning.
     ///
     /// # Errors
     ///
-    /// Returns error if the D-Bus call fails or the menu is unreachable.
-    #[instrument(skip(self), fields(bus_name = %self.bus_name.get()), err)]
-    pub async fn refresh_menu(&self) -> Result<bool, Error> {
-        const MENU_ID: i32 = 0;
+    /// Returns error if either the `AboutToShow` or `GetLayout` D-Bus call fails.
+    #[instrument(skip(self), fields(bus_name = %self.bus_name.get()))]
+    pub async fn refresh_menu(&self) -> Result<(), Error> {
         let bus_name = self.bus_name.get();
         let service_id = Self::parse_service_identifier(&bus_name);
+        let service = service_id.service.to_string();
+        let menu_path = self.menu_path.get();
+
         TrayItemController::menu_about_to_show(
             &self.zbus_connection,
-            service_id.service,
-            self.menu_path.get().as_str(),
-            MENU_ID,
+            &service,
+            menu_path.as_str(),
+            0,
         )
-        .await
+        .await?;
+
+        let menu_proxy = DBusMenuProxy::builder(&self.zbus_connection)
+            .destination(service)?
+            .path(menu_path.as_str())?
+            .cache_properties(CacheProperties::No)
+            .build()
+            .await?;
+
+        let layout = menu_proxy.get_layout(0, -1, vec![]).await?;
+        self.menu.set(Some(MenuItem::from(layout)));
+
+        Ok(())
     }
 
     /// Notifies the application that a menu or submenu is about to be shown.
@@ -683,12 +698,12 @@ impl TrayItem {
             .ok();
 
         Ok(TrayItemProperties {
-            id: unwrap_string!(id),
-            title: unwrap_string!(title),
+            id: unwrap_dbus!(id),
+            title: unwrap_dbus!(title),
             category: Category::from(category.as_str()),
             status: Status::from(status.as_str()),
-            window_id: unwrap_i32!(window_id),
-            item_is_menu: unwrap_bool!(item_is_menu),
+            window_id: unwrap_dbus!(window_id),
+            item_is_menu: unwrap_dbus!(item_is_menu),
             icon_name,
             icon_pixmap: icon_pixmap
                 .unwrap_or_default()

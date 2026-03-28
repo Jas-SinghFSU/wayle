@@ -19,7 +19,7 @@ tracing.workspace = true
 zbus.workspace = true
 smithay-client-toolkit.workspace = true
 
-wayle-common.workspace = true
+wayle-core.workspace = true
 wayle-config.workspace = true
 wayle-traits.workspace = true
 

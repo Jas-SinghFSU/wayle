@@ -10,7 +10,7 @@ use chrono::Utc;
 use derive_more::Debug;
 use tokio::sync::broadcast;
 use tracing::{debug, instrument};
-use wayle_common::{Property, glob};
+use wayle_core::Property;
 use zbus::{
     Connection, fdo,
     zvariant::{OwnedValue, Str},
@@ -22,7 +22,7 @@ use crate::{
         types::{BorrowedImageData, IncomingHints, NotificationHints, NotificationProps},
     },
     events::NotificationEvent,
-    image_cache,
+    glob, image_cache,
     types::{Capabilities, ClosedReason, Name, SpecVersion, Vendor, Version},
 };
 

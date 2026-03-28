@@ -4,8 +4,10 @@
 use gtk4::prelude::StyleContextExt;
 use gtk4::prelude::{OrientableExt, WidgetExt};
 use relm4::{ComponentParts, ComponentSender, gtk, prelude::*};
-use wayle_common::ConfigProperty;
-use wayle_config::schemas::{bar::BorderLocation, styling::ThemeProvider};
+use wayle_config::{
+    ConfigProperty,
+    schemas::{bar::BorderLocation, styling::ThemeProvider},
+};
 
 use super::{
     helpers::{compute_css_classes, compute_orientation},

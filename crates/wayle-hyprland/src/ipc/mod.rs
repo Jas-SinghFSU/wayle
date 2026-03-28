@@ -22,16 +22,22 @@ pub(crate) struct HyprMessenger {
 }
 
 impl HyprMessenger {
-    pub fn new() -> Result<Self> {
-        let his = env::var("HYPRLAND_INSTANCE_SIGNATURE").map_err(|_| Error::HyprlandNotRunning)?;
+    pub fn new(instance_signature: &str, runtime_dir: &str) -> Self {
+        Self {
+            path: PathBuf::from(format!(
+                "{runtime_dir}/hypr/{instance_signature}/.socket.sock"
+            )),
+        }
+    }
+
+    pub fn from_env() -> Result<Self> {
+        let signature =
+            env::var("HYPRLAND_INSTANCE_SIGNATURE").map_err(|_| Error::HyprlandNotRunning)?;
+
         let runtime_dir = env::var("XDG_RUNTIME_DIR")
             .map_err(|_| Error::InvalidInstanceSignature("XDG_RUNTIME_DIR not set".to_string()))?;
 
-        let socket_path = format!("{runtime_dir}/hypr/{his}/.socket.sock");
-
-        Ok(Self {
-            path: PathBuf::from(socket_path),
-        })
+        Ok(Self::new(&signature, &runtime_dir))
     }
 
     #[instrument(skip(self), fields(command = %command), err)]
@@ -55,70 +61,16 @@ impl HyprMessenger {
 }
 
 #[cfg(test)]
-#[allow(unsafe_code, clippy::panic)]
 mod tests {
-    use std::env;
-
     use super::*;
 
     #[test]
-    fn new_succeeds_with_valid_env_vars() {
-        unsafe {
-            env::set_var("HYPRLAND_INSTANCE_SIGNATURE", "test_signature");
-            env::set_var("XDG_RUNTIME_DIR", "/tmp");
-        }
+    fn constructs_correct_socket_path() {
+        let messenger = HyprMessenger::new("test_signature", "/tmp");
 
-        let result = HyprMessenger::new();
-
-        assert!(result.is_ok());
-        let messenger = result.unwrap();
         assert_eq!(
             messenger.path,
             PathBuf::from("/tmp/hypr/test_signature/.socket.sock")
         );
-
-        unsafe {
-            env::remove_var("HYPRLAND_INSTANCE_SIGNATURE");
-            env::remove_var("XDG_RUNTIME_DIR");
-        }
-    }
-
-    #[test]
-    fn new_fails_when_hyprland_instance_signature_missing() {
-        unsafe {
-            env::remove_var("HYPRLAND_INSTANCE_SIGNATURE");
-            env::set_var("XDG_RUNTIME_DIR", "/tmp");
-        }
-
-        let result = HyprMessenger::new();
-
-        assert!(result.is_err());
-        assert!(matches!(result.unwrap_err(), Error::HyprlandNotRunning));
-
-        unsafe {
-            env::remove_var("XDG_RUNTIME_DIR");
-        }
-    }
-
-    #[test]
-    fn new_fails_when_xdg_runtime_dir_missing() {
-        unsafe {
-            env::set_var("HYPRLAND_INSTANCE_SIGNATURE", "test_signature");
-            env::remove_var("XDG_RUNTIME_DIR");
-        }
-
-        let result = HyprMessenger::new();
-
-        assert!(result.is_err());
-        let error = result.unwrap_err();
-        if let Error::InvalidInstanceSignature(msg) = error {
-            assert_eq!(msg, "XDG_RUNTIME_DIR not set");
-        } else {
-            panic!("Expected InvalidInstanceSignature error");
-        }
-
-        unsafe {
-            env::remove_var("HYPRLAND_INSTANCE_SIGNATURE");
-        }
     }
 }

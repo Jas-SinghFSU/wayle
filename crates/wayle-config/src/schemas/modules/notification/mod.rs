@@ -4,10 +4,10 @@ use schemars::schema_for;
 pub use types::{
     IconSource, PopupCloseBehavior, PopupMonitor, PopupPosition, StackingOrder, UrgencyBarThreshold,
 };
-use wayle_common::{ConfigProperty, process::ClickAction};
 use wayle_derive::wayle_config;
 
 use crate::{
+    ClickAction, ConfigProperty,
     docs::{ModuleInfo, ModuleInfoProvider},
     schemas::styling::{ColorValue, CssToken, Spacing},
 };

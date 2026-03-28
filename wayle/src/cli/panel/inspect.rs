@@ -2,7 +2,7 @@
 
 use std::collections::HashMap;
 
-use wayle_common::shell::actions;
+use wayle_ipc::shell::actions;
 
 use super::proxy::{actions_proxy, connect, is_running};
 use crate::cli::CliAction;

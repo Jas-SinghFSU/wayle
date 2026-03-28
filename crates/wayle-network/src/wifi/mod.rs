@@ -8,7 +8,7 @@ use controls::WifiControls;
 use derive_more::Debug;
 use futures::stream::Stream;
 pub(crate) use types::{LiveWifiParams, WifiParams};
-use wayle_common::{Property, unwrap_bool, watch_all};
+use wayle_core::{Property, unwrap_dbus, watch_all};
 use wayle_traits::{ModelMonitoring, Reactive};
 use zbus::{Connection, zvariant::OwnedObjectPath};
 
@@ -163,7 +163,7 @@ impl Wifi {
     ) -> Result<Self, Error> {
         let nm_proxy = NetworkManagerProxy::new(connection).await?;
 
-        let enabled_state = unwrap_bool!(nm_proxy.wireless_enabled().await);
+        let enabled_state = unwrap_dbus!(nm_proxy.wireless_enabled().await);
         let device_state = &device.core.state.get();
 
         let active_ap_path = &device.active_access_point.get();

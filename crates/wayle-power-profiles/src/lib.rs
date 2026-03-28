@@ -59,7 +59,7 @@
 //!
 //! # Reactive Properties
 //!
-//! All fields are [`Property<T>`](wayle_common::Property):
+//! All fields are [`Property<T>`](wayle_core::Property):
 //! - `.get()` - Current value snapshot
 //! - `.watch()` - Stream yielding on changes
 //!
@@ -99,7 +99,7 @@
 //! - **Path:** `/com/wayle/PowerProfiles`
 //! - **Interface:** `com.wayle.PowerProfiles1`
 //!
-//! See [`dbus.md`](https://github.com/Jas-SinghFSU/wayle/blob/master/crates/wayle-power-profiles/dbus.md) for the full interface specification.
+//! See [`dbus.md`](https://github.com/wayle-rs/wayle/blob/master/crates/wayle-power-profiles/dbus.md) for the full interface specification.
 //!
 //! # Control Methods
 //!

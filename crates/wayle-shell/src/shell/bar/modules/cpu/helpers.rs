@@ -26,7 +26,7 @@ pub(super) fn format_label(format: &str, cpu: &CpuData) -> String {
         "temp_c": format!("{temp_c:02.0}"),
         "temp_f": format!("{temp_f:02.0}"),
     });
-    wayle_common::template::render(format, ctx).unwrap_or_default()
+    crate::template::render(format, ctx).unwrap_or_default()
 }
 
 #[cfg(test)]

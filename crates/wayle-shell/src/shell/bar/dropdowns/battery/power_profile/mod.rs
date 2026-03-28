@@ -6,8 +6,9 @@ use std::sync::Arc;
 
 use gtk::prelude::*;
 use relm4::{gtk, prelude::*};
-use wayle_common::{Property, watchers::WatcherToken};
+use wayle_core::Property;
 use wayle_power_profiles::{PowerProfilesService, types::profile::PowerProfile};
+use wayle_widgets::WatcherToken;
 
 pub(crate) use self::messages::PowerProfileInit;
 use self::messages::{PowerProfileCmd, PowerProfileInput};

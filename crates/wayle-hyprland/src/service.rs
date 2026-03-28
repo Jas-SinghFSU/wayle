@@ -5,7 +5,7 @@ use tokio::sync::broadcast::{self, Sender};
 use tokio_stream::{StreamExt, wrappers::BroadcastStream};
 use tokio_util::sync::CancellationToken;
 use tracing::{error, instrument};
-use wayle_common::Property;
+use wayle_core::Property;
 use wayle_traits::ServiceMonitoring;
 
 use crate::{
@@ -44,7 +44,7 @@ impl HyprlandService {
         let (hyprland_tx, _) = broadcast::channel(100);
 
         let cancellation_token = CancellationToken::new();
-        let hypr_messenger = HyprMessenger::new()?;
+        let hypr_messenger = HyprMessenger::from_env()?;
 
         events::subscribe(event_tx.clone(), cancellation_token.clone()).await?;
 

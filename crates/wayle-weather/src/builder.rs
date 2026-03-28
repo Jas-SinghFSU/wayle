@@ -2,7 +2,7 @@ use std::{sync::RwLock, time::Duration};
 
 use tokio_util::sync::CancellationToken;
 use tracing::instrument;
-use wayle_common::Property;
+use wayle_core::Property;
 
 use crate::{
     model::{LocationQuery, TemperatureUnit, WeatherProviderKind},

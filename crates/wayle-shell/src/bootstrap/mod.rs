@@ -3,7 +3,12 @@
 mod wallpaper;
 mod weather;
 
-use std::{error::Error, fmt::Display, sync::Arc, time::Duration};
+use std::{
+    error::Error,
+    fmt::Display,
+    sync::Arc,
+    time::{Duration, Instant},
+};
 
 use tokio::task::JoinHandle;
 use tracing::{debug, info, warn};
@@ -11,9 +16,10 @@ use wayle_audio::AudioService;
 use wayle_battery::BatteryService;
 use wayle_bluetooth::BluetoothService;
 use wayle_brightness::BrightnessService;
-use wayle_common::{Property, shell::APP_ID};
 use wayle_config::{ConfigService, infrastructure::schema};
+use wayle_core::Property;
 use wayle_hyprland::HyprlandService;
+use wayle_ipc::shell::APP_ID;
 use wayle_media::MediaService;
 use wayle_network::NetworkService;
 use wayle_notification::NotificationService;
@@ -24,7 +30,9 @@ use wayle_wallpaper::WallpaperService;
 use zbus::{Connection, fdo::DBusProxy};
 
 use crate::{
-    services::IdleInhibitService, shell::ShellServices, startup::StartupTimer,
+    services::{IdleInhibitService, ShellIpcService},
+    shell::ShellServices,
+    startup::StartupTimer,
     watchers::build_extractor_config,
 };
 
@@ -79,7 +87,7 @@ struct OptionalServices {
 }
 
 pub async fn is_already_running() -> bool {
-    let start = std::time::Instant::now();
+    let start = Instant::now();
 
     let Ok(connection) = Connection::session().await else {
         return false;
@@ -132,6 +140,14 @@ pub async fn init_services() -> Result<(StartupTimer, ShellServices), Box<dyn Er
 
     spawn_deferred_power_profiles(power_profiles.clone());
 
+    let shell_ipc = match ShellIpcService::new().await {
+        Ok(service) => Arc::new(service),
+        Err(err) => {
+            warn!(error = %err, "Shell IPC service unavailable");
+            return Err(err.into());
+        }
+    };
+
     timer.mark_services_done();
 
     let services = ShellServices {
@@ -150,6 +166,7 @@ pub async fn init_services() -> Result<(StartupTimer, ShellServices), Box<dyn Er
         systray: daemons.systray,
         wallpaper: core.wallpaper,
         weather,
+        shell_ipc,
     };
 
     Ok((timer, services))
@@ -228,7 +245,7 @@ async fn init_optional_services(timer: &StartupTimer) -> OptionalServices {
 
 fn spawn_deferred_power_profiles(property: Property<Option<Arc<PowerProfilesService>>>) {
     tokio::spawn(async move {
-        let start = std::time::Instant::now();
+        let start = Instant::now();
 
         match PowerProfilesService::builder().with_daemon().build().await {
             Ok(service) => {

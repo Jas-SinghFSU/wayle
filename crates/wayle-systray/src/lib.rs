@@ -9,7 +9,7 @@
 //!
 //! # Reactive Pattern
 //!
-//! All tray item properties use [`Property<T>`](wayle_common::Property):
+//! All tray item properties use [`Property<T>`](wayle_core::Property):
 //! - `.get()` returns the current value snapshot
 //! - `.watch()` returns a stream of value changes
 //!
@@ -74,7 +74,7 @@
 //! - **Path:** `/com/wayle/SystemTray`
 //! - **Interface:** `com.wayle.SystemTray1`
 //!
-//! See [`dbus.md`](https://github.com/Jas-SinghFSU/wayle/blob/master/crates/wayle-systray/dbus.md) for the full interface specification.
+//! See [`dbus.md`](https://github.com/wayle-rs/wayle/blob/master/crates/wayle-systray/dbus.md) for the full interface specification.
 //!
 //! # Service Fields
 //!

@@ -15,7 +15,7 @@ thiserror.workspace = true
 tokio.workspace = true
 tokio-util.workspace = true
 tracing.workspace = true
-wayle-common.workspace = true
+wayle-core.workspace = true
 wayle-traits.workspace = true
 zbus.workspace = true
 

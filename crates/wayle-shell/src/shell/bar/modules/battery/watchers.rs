@@ -2,8 +2,8 @@ use std::sync::Arc;
 
 use relm4::ComponentSender;
 use wayle_battery::BatteryService;
-use wayle_common::watch;
 use wayle_config::schemas::modules::BatteryConfig;
+use wayle_widgets::watch;
 
 use super::{
     BatteryModule,

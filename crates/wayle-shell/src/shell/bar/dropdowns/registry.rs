@@ -8,11 +8,10 @@ use std::{
 use gtk::prelude::*;
 use gtk4_layer_shell::{KeyboardMode, LayerShell};
 use relm4::{gtk, prelude::*};
-use wayle_common::process::{self, ClickAction};
-use wayle_config::schemas::bar::Location;
+use wayle_config::{ClickAction, schemas::bar::Location};
 use wayle_widgets::prelude::{BarButton, BarButtonInput};
 
-use crate::shell::services::ShellServices;
+use crate::{process, shell::services::ShellServices};
 
 /// Shared dropdown instance for a dropdown name.
 ///
@@ -30,11 +29,15 @@ impl DropdownInstance {
 
         let thaw = thaw_target.clone();
         popover.connect_closed(move |popover| {
-            if let Some(sender) = thaw.take() {
+            let frozen_sender = thaw.take();
+
+            if let Some(sender) = &frozen_sender {
                 sender.emit(BarButtonInput::ThawSize);
             }
 
-            if let Some(parent) = popover.parent() {
+            if frozen_sender.is_some()
+                && let Some(parent) = popover.parent()
+            {
                 parent.set_size_request(-1, -1);
             }
 
@@ -123,13 +126,15 @@ impl DropdownInstance {
     }
 
     fn freeze_and_show(&self, bar_button: &Controller<BarButton>, style: DropdownStyle) {
-        self.thaw_target.set(Some(bar_button.sender().clone()));
-        bar_button.emit(BarButtonInput::FreezeSize);
+        if style.freeze_label {
+            self.thaw_target.set(Some(bar_button.sender().clone()));
+            bar_button.emit(BarButtonInput::FreezeSize);
+            self.lock_parent_size();
+        }
 
         self.apply_position();
         self.apply_margins(style.margins);
         self.apply_style(&style);
-        self.lock_parent_size();
         set_bar_keyboard_mode(&self.popover, KeyboardMode::OnDemand);
         self.popover.popup();
     }
@@ -216,6 +221,7 @@ struct DropdownStyle {
     opacity: f64,
     shadow_enabled: bool,
     autohide: bool,
+    freeze_label: bool,
 }
 
 const REM_PX: f32 = 16.0;
@@ -385,5 +391,6 @@ fn dropdown_style(registry: &DropdownRegistry) -> DropdownStyle {
         opacity: f64::from(bar.dropdown_opacity.get().value()) / 100.0,
         shadow_enabled: bar.dropdown_shadow.get(),
         autohide: bar.dropdown_autohide.get(),
+        freeze_label: bar.dropdown_freeze_label.get(),
     }
 }

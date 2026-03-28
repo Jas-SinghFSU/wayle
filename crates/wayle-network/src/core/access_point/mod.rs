@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use derive_more::Debug;
 use tokio_util::sync::CancellationToken;
-use wayle_common::{Property, unwrap_i32_or, unwrap_string, unwrap_u8, unwrap_u32, unwrap_vec};
+use wayle_core::{Property, unwrap_dbus, unwrap_dbus_or};
 use wayle_traits::{ModelMonitoring, Reactive};
 use zbus::{Connection, zvariant::OwnedObjectPath};
 
@@ -174,17 +174,17 @@ impl AccessPoint {
             ap_proxy.last_seen(),
         );
 
-        let flags = NM80211ApFlags::from_bits_truncate(unwrap_u32!(flags, path));
-        let wpa_flags = NM80211ApSecurityFlags::from_bits_truncate(unwrap_u32!(wpa_flags, path));
-        let rsn_flags = NM80211ApSecurityFlags::from_bits_truncate(unwrap_u32!(rsn_flags, path));
-        let ssid = Ssid::new(unwrap_vec!(ssid, path));
-        let frequency = unwrap_u32!(frequency, path);
-        let hw_address = Bssid::new(unwrap_string!(hw_address, path).into_bytes());
-        let mode = NM80211Mode::from_u32(unwrap_u32!(mode, path));
-        let max_bitrate = unwrap_u32!(max_bitrate, path);
-        let bandwidth = unwrap_u32!(bandwidth, path);
-        let strength = unwrap_u8!(strength, path);
-        let last_seen = unwrap_i32_or!(last_seen, path, -1);
+        let flags = NM80211ApFlags::from_bits_truncate(unwrap_dbus!(flags, path));
+        let wpa_flags = NM80211ApSecurityFlags::from_bits_truncate(unwrap_dbus!(wpa_flags, path));
+        let rsn_flags = NM80211ApSecurityFlags::from_bits_truncate(unwrap_dbus!(rsn_flags, path));
+        let ssid = Ssid::new(unwrap_dbus!(ssid, path));
+        let frequency = unwrap_dbus!(frequency, path);
+        let hw_address = Bssid::new(unwrap_dbus!(hw_address, path).into_bytes());
+        let mode = NM80211Mode::from_u32(unwrap_dbus!(mode, path));
+        let max_bitrate = unwrap_dbus!(max_bitrate, path);
+        let bandwidth = unwrap_dbus!(bandwidth, path);
+        let strength = unwrap_dbus!(strength, path);
+        let last_seen = unwrap_dbus_or!(last_seen, path, -1);
 
         let security = SecurityType::from_flags(flags, wpa_flags, rsn_flags);
         let is_hidden = ssid.is_empty();

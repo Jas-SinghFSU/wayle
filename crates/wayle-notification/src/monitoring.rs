@@ -3,7 +3,7 @@ use std::{sync::Arc, time::Duration};
 use chrono::Utc;
 use tokio::sync::broadcast;
 use tracing::{debug, info, instrument, warn};
-use wayle_common::Property;
+use wayle_core::Property;
 use wayle_traits::ServiceMonitoring;
 use zbus::Connection;
 

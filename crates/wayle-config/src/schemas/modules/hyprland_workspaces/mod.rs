@@ -2,10 +2,10 @@ use std::{collections::HashMap, ops::Deref};
 
 use schemars::{JsonSchema, schema_for};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use wayle_common::ConfigProperty;
 use wayle_derive::wayle_config;
 
 use crate::{
+    ConfigProperty,
     docs::{ModuleInfo, ModuleInfoProvider},
     schemas::styling::{ColorValue, CssToken, ScaleFactor, Spacing},
 };
