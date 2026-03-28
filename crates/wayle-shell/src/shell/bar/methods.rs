@@ -119,6 +119,7 @@ impl Bar {
         if self.layout.left != new_layout.left {
             rebuild_section(
                 &mut self.left,
+                &self.layout.left,
                 &new_layout.left,
                 settings,
                 services,
@@ -129,6 +130,7 @@ impl Bar {
         if self.layout.center != new_layout.center {
             rebuild_section(
                 &mut self.center,
+                &self.layout.center,
                 &new_layout.center,
                 settings,
                 services,
@@ -139,6 +141,7 @@ impl Bar {
         if self.layout.right != new_layout.right {
             rebuild_section(
                 &mut self.right,
+                &self.layout.right,
                 &new_layout.right,
                 settings,
                 services,
@@ -150,22 +153,69 @@ impl Bar {
     }
 }
 
+/// Updates a bar section to match a new layout, only touching modules
+/// that actually changed. Modules that stay in the config are left alone
+/// (not destroyed and recreated), so they keep their widgets and state.
+///
+/// Two passes:
+///
+/// 1. **Remove** - walk the old list, drop anything not in the new list.
+///    Uses a shrinking copy of the new list to handle duplicates correctly.
+///
+/// 2. **Place** - walk the new list by position. Skip if the right module
+///    is already there, move it if it exists at a wrong position, or
+///    create it if it's new.
 fn rebuild_section(
     factory: &mut FactoryVecDeque<BarItemFactory>,
-    items: &[BarItem],
+    old_layout: &[BarItem],
+    new_layout: &[BarItem],
     settings: &BarSettings,
     services: &ShellServices,
     dropdowns: &Rc<DropdownRegistry>,
 ) {
     let mut guard = factory.guard();
-    guard.clear();
 
-    for item in items {
-        guard.push_back(BarItemFactoryInit {
-            item: item.clone(),
-            settings: settings.clone(),
-            services: services.clone(),
-            dropdowns: dropdowns.clone(),
+    let mut remaining: Vec<&BarItem> = new_layout.iter().collect();
+    let mut removal_cursor = 0;
+
+    for old_item in old_layout {
+        if let Some(matched) = remaining.iter().position(|item| *item == old_item) {
+            remaining.remove(matched);
+            removal_cursor += 1;
+        } else {
+            guard.remove(removal_cursor);
+        }
+    }
+
+    for (target_position, target_item) in new_layout.iter().enumerate() {
+        let already_correct = guard
+            .get(target_position)
+            .is_some_and(|module| module.matches(target_item));
+
+        if already_correct {
+            continue;
+        }
+
+        let current_position = (target_position..guard.len()).find(|&position| {
+            guard
+                .get(position)
+                .is_some_and(|module| module.matches(target_item))
         });
+
+        match current_position {
+            Some(position) => guard.move_to(position, target_position),
+
+            None => {
+                guard.insert(
+                    target_position,
+                    BarItemFactoryInit {
+                        item: target_item.clone(),
+                        settings: settings.clone(),
+                        services: services.clone(),
+                        dropdowns: dropdowns.clone(),
+                    },
+                );
+            }
+        }
     }
 }
