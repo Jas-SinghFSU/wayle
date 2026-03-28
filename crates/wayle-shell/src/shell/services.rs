@@ -5,7 +5,7 @@ use wayle_battery::BatteryService;
 use wayle_bluetooth::BluetoothService;
 use wayle_brightness::BrightnessService;
 use wayle_config::ConfigService;
-use wayle_core::Property;
+use wayle_core::DeferredService;
 use wayle_hyprland::HyprlandService;
 use wayle_media::MediaService;
 use wayle_network::NetworkService;
@@ -26,7 +26,7 @@ use crate::services::{IdleInhibitService, ShellIpcService};
 pub(crate) struct ShellServices {
     pub audio: Option<Arc<AudioService>>,
     pub battery: Option<Arc<BatteryService>>,
-    pub bluetooth: Option<Arc<BluetoothService>>,
+    pub bluetooth: DeferredService<BluetoothService>,
     pub brightness: Option<Arc<BrightnessService>>,
     pub config: Arc<ConfigService>,
     pub hyprland: Option<Arc<HyprlandService>>,
@@ -34,7 +34,7 @@ pub(crate) struct ShellServices {
     pub media: Option<Arc<MediaService>>,
     pub network: Option<Arc<NetworkService>>,
     pub notification: Option<Arc<NotificationService>>,
-    pub power_profiles: Property<Option<Arc<PowerProfilesService>>>,
+    pub power_profiles: DeferredService<PowerProfilesService>,
     pub sysinfo: Arc<SysinfoService>,
     pub systray: Option<Arc<SystemTrayService>>,
     pub wallpaper: Option<Arc<WallpaperService>>,

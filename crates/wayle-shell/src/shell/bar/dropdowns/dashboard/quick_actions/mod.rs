@@ -7,7 +7,7 @@ use std::sync::Arc;
 use gtk::prelude::*;
 use relm4::{gtk, prelude::*};
 use wayle_bluetooth::BluetoothService;
-use wayle_core::Property;
+use wayle_core::DeferredService;
 use wayle_network::NetworkService;
 use wayle_notification::NotificationService;
 use wayle_power_profiles::{PowerProfilesService, types::profile::PowerProfile};
@@ -19,9 +19,9 @@ use crate::{i18n::t, services::IdleInhibitService};
 
 pub(crate) struct QuickActionsSection {
     network: Option<Arc<NetworkService>>,
-    bluetooth: Option<Arc<BluetoothService>>,
+    bluetooth: DeferredService<BluetoothService>,
     notification: Option<Arc<NotificationService>>,
-    power_profiles: Property<Option<Arc<PowerProfilesService>>>,
+    power_profiles: DeferredService<PowerProfilesService>,
     idle_inhibit: Arc<IdleInhibitService>,
 
     power_profile_token: WatcherToken,
@@ -282,10 +282,15 @@ impl Component for QuickActionsSection {
             .as_ref()
             .is_some_and(|network| network.wifi.get().is_some());
 
-        let has_bluetooth = init
-            .bluetooth
+        let current_bt = init.bluetooth.get();
+
+        let has_bluetooth = current_bt
             .as_ref()
             .is_some_and(|bluetooth| bluetooth.available.get());
+
+        let bluetooth_active = current_bt
+            .as_ref()
+            .is_some_and(|bluetooth| bluetooth.enabled.get());
 
         let has_notification = init.notification.is_some();
 
@@ -332,7 +337,7 @@ impl Component for QuickActionsSection {
             wifi_enabled_token,
 
             wifi_active,
-            bluetooth_active: false,
+            bluetooth_active,
             airplane_active: false,
             dnd_active: false,
             idle_inhibit_active: false,
@@ -398,19 +403,20 @@ impl Component for QuickActionsSection {
             QuickActionsCmd::IdleInhibitChanged(active) => self.idle_inhibit_active = active,
             QuickActionsCmd::PowerSaverChanged(active) => self.power_saver_active = active,
 
-            QuickActionsCmd::PowerProfilesAvailable(service) => {
+            QuickActionsCmd::BluetoothReady(service) => {
+                self.has_bluetooth = service.available.get();
+                self.bluetooth_active = service.enabled.get();
+
+                watchers::spawn_bluetooth_watchers(&sender, &service);
+            }
+
+            QuickActionsCmd::PowerProfilesReady(service) => {
                 self.has_power_profiles = true;
                 self.power_saver_active =
                     service.power_profiles.active_profile.get() == PowerProfile::PowerSaver;
 
                 let token = self.power_profile_token.reset();
                 watchers::spawn_power_profile_watcher(&sender, &service, token);
-            }
-
-            QuickActionsCmd::PowerProfilesUnavailable => {
-                self.power_profile_token = WatcherToken::new();
-                self.has_power_profiles = false;
-                self.power_saver_active = false;
             }
         }
     }

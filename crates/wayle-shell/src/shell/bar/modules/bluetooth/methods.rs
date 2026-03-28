@@ -1,5 +1,9 @@
+use std::sync::Arc;
+
+use relm4::ComponentController;
 use wayle_bluetooth::BluetoothService;
 use wayle_config::schemas::modules::BluetoothConfig;
+use wayle_widgets::prelude::BarButtonInput;
 
 use super::{
     BluetoothModule,
@@ -9,8 +13,18 @@ use super::{
 impl BluetoothModule {
     pub(super) fn compute_display(
         config: &BluetoothConfig,
-        bt: &BluetoothService,
+        bt: &Option<Arc<BluetoothService>>,
     ) -> (String, String) {
+        let Some(bt) = bt else {
+            let ctx = BluetoothContext {
+                available: false,
+                enabled: false,
+                discovering: false,
+                connected_devices: &[],
+            };
+            return (select_icon(config, &ctx), format_label(&ctx));
+        };
+
         let available = bt.available.get();
         let enabled = bt.enabled.get();
         let devices = bt.devices.get();
@@ -19,12 +33,12 @@ impl BluetoothModule {
         let discovering = bt
             .primary_adapter
             .get()
-            .map(|a| a.discovering.get())
+            .map(|adapter| adapter.discovering.get())
             .unwrap_or(false);
 
         let connected_devices: Vec<_> = devices
             .iter()
-            .filter(|d| connected_addresses.contains(&d.address.get()))
+            .filter(|device| connected_addresses.contains(&device.address.get()))
             .cloned()
             .collect();
 
@@ -36,5 +50,15 @@ impl BluetoothModule {
         };
 
         (select_icon(config, &ctx), format_label(&ctx))
+    }
+
+    pub(super) fn update_display(
+        &self,
+        config: &BluetoothConfig,
+        bt: &Option<Arc<BluetoothService>>,
+    ) {
+        let (icon, label) = Self::compute_display(config, bt);
+        self.bar_button.emit(BarButtonInput::SetIcon(icon));
+        self.bar_button.emit(BarButtonInput::SetLabel(label));
     }
 }

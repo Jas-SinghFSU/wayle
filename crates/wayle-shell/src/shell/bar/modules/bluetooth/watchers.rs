@@ -4,12 +4,21 @@ use relm4::ComponentSender;
 use tokio_util::sync::CancellationToken;
 use wayle_bluetooth::BluetoothService;
 use wayle_config::schemas::modules::BluetoothConfig;
-use wayle_widgets::{watch, watch_cancellable};
+use wayle_core::DeferredService;
+use wayle_widgets::{watch_cancellable, watch_deferred};
 
 use super::{BluetoothModule, messages::BluetoothCmd};
 
+pub(super) fn spawn_service_watcher(
+    sender: &ComponentSender<BluetoothModule>,
+    bluetooth: &DeferredService<BluetoothService>,
+) {
+    watch_deferred!(sender, bluetooth, BluetoothCmd::ServiceReady);
+}
+
 pub(super) fn spawn_watchers(
     sender: &ComponentSender<BluetoothModule>,
+    token: CancellationToken,
     config: &BluetoothConfig,
     bt: &Arc<BluetoothService>,
 ) {
@@ -18,8 +27,9 @@ pub(super) fn spawn_watchers(
     let connected = bt.connected.clone();
     let devices = bt.devices.clone();
 
-    watch!(
+    watch_cancellable!(
         sender,
+        token.clone(),
         [
             available.watch(),
             enabled.watch(),
@@ -32,7 +42,8 @@ pub(super) fn spawn_watchers(
     );
 
     let primary_adapter = bt.primary_adapter.clone();
-    watch!(sender, [primary_adapter.watch()], |out| {
+
+    watch_cancellable!(sender, token.clone(), [primary_adapter.watch()], |out| {
         let _ = out.send(BluetoothCmd::AdapterChanged);
     });
 
@@ -41,8 +52,9 @@ pub(super) fn spawn_watchers(
     let connected_icon = config.connected_icon.clone();
     let searching_icon = config.searching_icon.clone();
 
-    watch!(
+    watch_cancellable!(
         sender,
+        token,
         [
             disabled_icon.watch(),
             disconnected_icon.watch(),
