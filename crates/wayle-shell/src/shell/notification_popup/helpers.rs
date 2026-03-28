@@ -1,4 +1,5 @@
 use chrono::{DateTime, Utc};
+use relm4::gtk::{glib, pango};
 use wayle_config::schemas::modules::notification::{IconSource, UrgencyBarThreshold};
 use wayle_notification::types::Urgency;
 
@@ -6,6 +7,18 @@ use crate::shell::bar::icons::lookup_app_icon;
 
 const FALLBACK_ICON: &str = "ld-bell-symbolic";
 const MINUTES_PER_HOUR: i64 = 60;
+
+/// Some apps send notification bodies with bare `&` or other broken XML
+/// that Pango chokes on. If the text parses cleanly we leave it alone,
+/// otherwise we escape the whole thing so the label at least shows
+/// something instead of blowing up.
+pub(crate) fn sanitize_markup(text: &str) -> String {
+    if pango::parse_markup(text, '\0').is_ok() {
+        return text.to_owned();
+    }
+
+    glib::markup_escape_text(text).into()
+}
 
 /// Resolved notification icon.
 #[derive(Debug, Clone)]
@@ -245,5 +258,29 @@ mod tests {
     fn try_icon_string_theme_name() {
         let result = try_icon_string(&Some("firefox".into()));
         assert!(matches!(result, Some(ResolvedIcon::Named(name)) if name == "firefox"));
+    }
+
+    #[test]
+    fn sanitize_markup_preserves_valid_markup() {
+        let valid = "<b>bold</b> and <i>italic</i>";
+        assert_eq!(sanitize_markup(valid), valid);
+    }
+
+    #[test]
+    fn sanitize_markup_escapes_bare_ampersand() {
+        let raw = "NixOS Package & Module";
+        assert_eq!(sanitize_markup(raw), "NixOS Package &amp; Module");
+    }
+
+    #[test]
+    fn sanitize_markup_passes_plain_text() {
+        let plain = "Hello world";
+        assert_eq!(sanitize_markup(plain), plain);
+    }
+
+    #[test]
+    fn sanitize_markup_escapes_mixed_invalid() {
+        let raw = "<b>bold</b> & more";
+        assert_eq!(sanitize_markup(raw), "&lt;b&gt;bold&lt;/b&gt; &amp; more");
     }
 }

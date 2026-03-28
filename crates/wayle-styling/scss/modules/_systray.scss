@@ -61,6 +61,12 @@
                 opacity: 0.5;
             }
 
+            image {
+                -gtk-icon-size: var(--icon-sm);
+                margin-right: var(--space-sm);
+                color: var(--fg-subtle);
+            }
+
             label {
                 font-size: var(--text-md);
                 font-weight: var(--weight-semibold);
