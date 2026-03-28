@@ -226,4 +226,12 @@ pub struct BarConfig {
     #[serde(rename = "dropdown-autohide")]
     #[default(true)]
     pub dropdown_autohide: ConfigProperty<bool>,
+
+    /// Freeze the bar button label while its dropdown is open.
+    ///
+    /// Prevents the button from resizing mid-interaction, which keeps the
+    /// dropdown anchored in place.
+    #[serde(rename = "dropdown-freeze-label")]
+    #[default(true)]
+    pub dropdown_freeze_label: ConfigProperty<bool>,
 }

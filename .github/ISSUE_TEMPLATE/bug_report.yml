@@ -1,6 +1,6 @@
 name: Bug Report
 description: Report a bug with Wayle.
-labels: ["type:bug", "status:needs-triage"]
+type: Bug
 body:
     - type: checkboxes
       attributes:

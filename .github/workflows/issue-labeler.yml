@@ -1,0 +1,55 @@
+# Reads the area dropdown from new issues and adds the matching area:* label.
+#
+# https://github.com/stefanbuck/github-issue-parser
+# https://github.com/actions/github-script
+
+name: Label Issues
+
+on:
+    issues:
+        types: [opened, edited]
+
+permissions:
+    issues: write
+
+jobs:
+    label:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - uses: stefanbuck/github-issue-parser@v3
+              id: bug
+              with:
+                  template-path: .github/ISSUE_TEMPLATE/bug_report.yml
+
+            - uses: stefanbuck/github-issue-parser@v3
+              id: feature
+              with:
+                  template-path: .github/ISSUE_TEMPLATE/feature_request.yml
+
+            - uses: actions/github-script@v7
+              with:
+                  script: |
+                      const area = '${{ steps.bug.outputs.issueparser_area }}' || '${{ steps.feature.outputs.issueparser_area }}';
+                      if (!area || area === 'Not sure') return;
+
+                      const map = {
+                          'Bar': 'area:bar',
+                          'Dropdowns (volume, network, bluetooth, etc.)': 'area:dropdowns',
+                          'Notifications': 'area:notifications',
+                          'OSD': 'area:osd',
+                          'Theming / Appearance': 'area:theming',
+                          'Configuration': 'area:config',
+                          'CLI': 'area:cli',
+                      };
+
+                      const label = map[area];
+                      if (!label) return;
+
+                      await github.rest.issues.addLabels({
+                          owner: context.repo.owner,
+                          repo: context.repo.repo,
+                          issue_number: context.issue.number,
+                          labels: [label],
+                      });

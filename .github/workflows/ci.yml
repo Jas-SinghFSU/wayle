@@ -13,8 +13,30 @@ env:
     CARGO_TERM_COLOR: always
 
 jobs:
+    changes:
+        name: Detect changes
+        runs-on: ubuntu-latest
+        outputs:
+            code: ${{ steps.filter.outputs.code }}
+        steps:
+            - uses: actions/checkout@v4
+
+            - uses: dorny/paths-filter@v3
+              id: filter
+              with:
+                  filters: |
+                      code:
+                        - 'crates/**'
+                        - 'wayle/**'
+                        - 'resources/**'
+                        - 'scripts/**'
+                        - 'Cargo.*'
+                        - '.github/workflows/ci.yml'
+
     lint:
         name: Lint
+        needs: changes
+        if: needs.changes.outputs.code == 'true'
         runs-on: ubuntu-latest
         container:
             image: archlinux:base-devel
@@ -55,7 +77,8 @@ jobs:
 
     test:
         name: Test
-
+        needs: changes
+        if: needs.changes.outputs.code == 'true'
         runs-on: ubuntu-latest
         container:
             image: archlinux:base-devel
@@ -87,7 +110,8 @@ jobs:
 
     build:
         name: Build
-
+        needs: changes
+        if: needs.changes.outputs.code == 'true'
         runs-on: ubuntu-latest
         container:
             image: archlinux:base-devel
@@ -116,3 +140,19 @@ jobs:
 
             - name: Build workspace
               run: cargo build --workspace
+
+    ci-status:
+        name: CI Status
+        if: always()
+        needs: [lint, test, build]
+        runs-on: ubuntu-latest
+        steps:
+            - name: Check results
+              run: |
+                  if [[ "${{ needs.lint.result }}" == "failure" || \
+                        "${{ needs.test.result }}" == "failure" || \
+                        "${{ needs.build.result }}" == "failure" ]]; then
+                    echo "One or more checks failed"
+                    exit 1
+                  fi
+                  echo "All checks passed or were skipped"

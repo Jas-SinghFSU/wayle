@@ -1,6 +1,6 @@
 name: Feature Request
 description: Suggest something new or a change to existing behavior.
-labels: ["type:feature", "status:needs-triage"]
+type: Feature
 body:
     - type: checkboxes
       attributes:

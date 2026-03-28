@@ -8,7 +8,9 @@ use relm4::{gtk, prelude::*};
 use wayle_notification::core::notification::Notification;
 
 use self::messages::{NotificationItemInit, NotificationItemInput, NotificationItemOutput};
-use crate::shell::notification_popup::helpers::{ResolvedIcon, relative_time, urgency_css_class};
+use crate::shell::notification_popup::helpers::{
+    ResolvedIcon, relative_time, sanitize_markup, urgency_css_class,
+};
 
 pub(crate) struct NotificationItem {
     pub(crate) notification: Arc<Notification>,
@@ -87,7 +89,12 @@ impl FactoryComponent for NotificationItem {
                         set_lines: 2,
                         set_wrap: true,
                         set_wrap_mode: gtk::pango::WrapMode::WordChar,
-                        set_label: &self.notification.body.get().as_deref().unwrap_or(""),
+                        set_label: &self
+                            .notification
+                            .body
+                            .get()
+                            .as_deref()
+                            .map_or_else(String::new, sanitize_markup),
                         set_visible: self.notification.body.get().is_some(),
                     },
                 },

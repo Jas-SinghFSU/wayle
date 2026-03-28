@@ -57,7 +57,9 @@ impl FactoryComponent for BarItemFactory {
             BarItem::Group(group) => group
                 .modules
                 .iter()
-                .filter_map(|m| create_module(m, &init.settings, &init.services, &init.dropdowns))
+                .filter_map(|module| {
+                    create_module(module, &init.settings, &init.services, &init.dropdowns)
+                })
                 .collect(),
         };
 
@@ -111,12 +113,18 @@ impl FactoryComponent for BarItemFactory {
     }
 }
 
+impl BarItemFactory {
+    pub(crate) fn matches(&self, item: &BarItem) -> bool {
+        self.item == *item
+    }
+}
+
 fn sync_container_visibility(container: &gtk::Box) {
     let has_visible_child = container
         .observe_children()
         .into_iter()
         .filter_map(|obj| obj.ok()?.downcast::<gtk::Widget>().ok())
-        .any(|child| child.get_visible());
+        .any(|widget| widget.is_visible());
 
     container.set_visible(has_visible_child);
 }
