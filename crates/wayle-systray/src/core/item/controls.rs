@@ -137,8 +137,7 @@ impl TrayItemController {
 
     #[instrument(
         skip(connection),
-        fields(bus_name = %bus_name, menu_path = %menu_path, id),
-        err
+        fields(bus_name = %bus_name, menu_path = %menu_path, id)
     )]
     pub async fn menu_about_to_show(
         connection: &Connection,

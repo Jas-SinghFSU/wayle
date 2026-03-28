@@ -12,7 +12,10 @@ use wayle_config::{
 use wayle_notification::{NotificationService, core::notification::Notification};
 
 use super::{
-    helpers::{ResolvedIcon, relative_time, resolve_icon, urgency_bar_visible, urgency_css_class},
+    helpers::{
+        ResolvedIcon, relative_time, resolve_icon, sanitize_markup, urgency_bar_visible,
+        urgency_css_class,
+    },
     templates::NotificationContentTemplate,
 };
 use crate::i18n::t;
@@ -97,7 +100,12 @@ impl Component for NotificationPopupCard {
                     },
                     #[template_child]
                     body {
-                        set_label: &model.notification.body.get().as_deref().unwrap_or(""),
+                        set_label: &model
+                            .notification
+                            .body
+                            .get()
+                            .as_deref()
+                            .map_or_else(String::new, sanitize_markup),
                         set_visible: model.notification.body.get().is_some(),
                     },
                 },
