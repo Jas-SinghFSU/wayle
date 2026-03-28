@@ -234,8 +234,9 @@ mode = "poll"
 interval-ms = 5000
 ```
 
-**Watch** spawns the command once and updates the display on each line of stdout.
-Good for commands that stream events like `pactl subscribe` or `inotifywait`:
+**Watch** spawns the command once and updates the display on each line of
+stdout. Good for commands that stream events like `pactl subscribe` or
+`inotifywait`:
 
 ```toml
 [[modules.custom]]
@@ -307,9 +308,8 @@ scroll-up = "pactl set-sink-volume @DEFAULT_SINK@ +5%"
 scroll-down = "pactl set-sink-volume @DEFAULT_SINK@ -5%"
 ```
 
-By default, the display won't update until the next poll. To refresh
-immediately after an action, add `on-action` - its output updates the display
-right away:
+By default, the display won't update until the next poll. To refresh immediately
+after an action, add `on-action` - its output updates the display right away:
 
 ```toml
 on-action = '''
@@ -319,20 +319,20 @@ echo "{\"percentage\": $vol}"
 ```
 
 Scroll events are debounced (50ms) so rapid scrolling doesn't fire dozens of
-commands. Set `interval-ms = 0` if you only want updates from `on-action`
-(no polling at all).
+commands. Set `interval-ms = 0` if you only want updates from `on-action` (no
+polling at all).
 
 ### JSON Reserved Fields
 
 When outputting JSON, these fields have special meaning:
 
-| Field | Type | Effect |
-|-------|------|--------|
-| `text` | string | Replaces the `format` result for the label |
-| `tooltip` | string | Replaces the `tooltip-format` result |
-| `percentage` | number | 0-100, selects from `icon-names` |
-| `alt` | string | Selects from `icon-map` |
-| `class` | string/array | Adds CSS classes to the module |
+| Field        | Type         | Effect                                     |
+| ------------ | ------------ | ------------------------------------------ |
+| `text`       | string       | Replaces the `format` result for the label |
+| `tooltip`    | string       | Replaces the `tooltip-format` result       |
+| `percentage` | number       | 0-100, selects from `icon-names`           |
+| `alt`        | string       | Selects from `icon-map`                    |
+| `class`      | string/array | Adds CSS classes to the module             |
 
 All other fields are available in `format` and `tooltip-format` templates.
 
@@ -343,59 +343,59 @@ All other fields are available in `format` and `tooltip-format` templates.
 
 #### Core
 
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `id` | string | required | Unique ID, referenced in layout as `custom-<id>` |
-| `command` | string | none | Shell command (`sh -c`). JSON auto-detected |
-| `mode` | `"poll"` / `"watch"` | `"poll"` | Poll runs on interval, watch streams stdout |
-| `interval-ms` | number | `5000` | Poll interval. `0` = manual only. Ignored in watch mode |
-| `restart-policy` | `"never"` / `"on-exit"` / `"on-failure"` | `"never"` | Watch mode only |
-| `restart-interval-ms` | number | `1000` | Watch mode restart delay (doubles on rapid failures, caps 30s) |
+| Field                 | Type                                     | Default   | Description                                                    |
+| --------------------- | ---------------------------------------- | --------- | -------------------------------------------------------------- |
+| `id`                  | string                                   | required  | Unique ID, referenced in layout as `custom-<id>`               |
+| `command`             | string                                   | none      | Shell command (`sh -c`). JSON auto-detected                    |
+| `mode`                | `"poll"` / `"watch"`                     | `"poll"`  | Poll runs on interval, watch streams stdout                    |
+| `interval-ms`         | number                                   | `5000`    | Poll interval. `0` = manual only. Ignored in watch mode        |
+| `restart-policy`      | `"never"` / `"on-exit"` / `"on-failure"` | `"never"` | Watch mode only                                                |
+| `restart-interval-ms` | number                                   | `1000`    | Watch mode restart delay (doubles on rapid failures, caps 30s) |
 
 #### Display
 
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `format` | string | `"{{ output }}"` | Template for the label. Use `{{ field }}` for JSON fields |
-| `tooltip-format` | string | none | Template for hover tooltip |
-| `hide-if-empty` | bool | `false` | Hide when output is empty, `"0"`, or `"false"` |
-| `class-format` | string | none | Template for dynamic CSS classes (space-separated) |
+| Field            | Type   | Default          | Description                                               |
+| ---------------- | ------ | ---------------- | --------------------------------------------------------- |
+| `format`         | string | `"{{ output }}"` | Template for the label. Use `{{ field }}` for JSON fields |
+| `tooltip-format` | string | none             | Template for hover tooltip                                |
+| `hide-if-empty`  | bool   | `false`          | Hide when output is empty, `"0"`, or `"false"`            |
+| `class-format`   | string | none             | Template for dynamic CSS classes (space-separated)        |
 
 #### Icons
 
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `icon-name` | string | `""` | Static fallback icon |
-| `icon-names` | string[] | none | Icons indexed by JSON `percentage` (0-100) |
-| `icon-map` | table | none | Icons keyed by JSON `alt`. `"default"` key as fallback |
+| Field        | Type     | Default | Description                                            |
+| ------------ | -------- | ------- | ------------------------------------------------------ |
+| `icon-name`  | string   | `""`    | Static fallback icon                                   |
+| `icon-names` | string[] | none    | Icons indexed by JSON `percentage` (0-100)             |
+| `icon-map`   | table    | none    | Icons keyed by JSON `alt`. `"default"` key as fallback |
 
 #### Styling
 
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `icon-show` | bool | `true` | Show the icon |
-| `icon-color` | color | `"auto"` | Icon foreground color |
-| `icon-bg-color` | color | `"auto"` | Icon container background |
-| `label-show` | bool | `true` | Show the text label |
-| `label-color` | color | `"auto"` | Label text color |
-| `label-max-length` | number | `0` | Truncate after N chars (`0` = no limit) |
-| `button-bg-color` | color | theme default | Button background |
-| `border-show` | bool | `false` | Show border |
-| `border-color` | color | `"auto"` | Border color |
+| Field              | Type   | Default       | Description                             |
+| ------------------ | ------ | ------------- | --------------------------------------- |
+| `icon-show`        | bool   | `true`        | Show the icon                           |
+| `icon-color`       | color  | `"auto"`      | Icon foreground color                   |
+| `icon-bg-color`    | color  | `"auto"`      | Icon container background               |
+| `label-show`       | bool   | `true`        | Show the text label                     |
+| `label-color`      | color  | `"auto"`      | Label text color                        |
+| `label-max-length` | number | `0`           | Truncate after N chars (`0` = no limit) |
+| `button-bg-color`  | color  | theme default | Button background                       |
+| `border-show`      | bool   | `false`       | Show border                             |
+| `border-color`     | color  | `"auto"`      | Border color                            |
 
 #### Actions
 
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `left-click` | string | `""` | Command on left click |
-| `right-click` | string | `""` | Command on right click |
-| `middle-click` | string | `""` | Command on middle click |
-| `scroll-up` | string | `""` | Command on scroll up (50ms debounce) |
-| `scroll-down` | string | `""` | Command on scroll down (50ms debounce) |
-| `on-action` | string | none | Runs after any action, output updates display |
+| Field          | Type   | Default | Description                                   |
+| -------------- | ------ | ------- | --------------------------------------------- |
+| `left-click`   | string | `""`    | Command on left click                         |
+| `right-click`  | string | `""`    | Command on right click                        |
+| `middle-click` | string | `""`    | Command on middle click                       |
+| `scroll-up`    | string | `""`    | Command on scroll up (50ms debounce)          |
+| `scroll-down`  | string | `""`    | Command on scroll down (50ms debounce)        |
+| `on-action`    | string | none    | Runs after any action, output updates display |
 
-Color values: `"auto"`, hex (`"#ff0000"`), or theme token (`"red"`,
-`"primary"`, etc.).
+Color values: `"auto"`, hex (`"#ff0000"`), or theme token (`"red"`, `"primary"`,
+etc.).
 
 </details>
 
