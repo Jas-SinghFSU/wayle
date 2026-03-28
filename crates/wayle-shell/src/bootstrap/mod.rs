@@ -17,7 +17,7 @@ use wayle_battery::BatteryService;
 use wayle_bluetooth::BluetoothService;
 use wayle_brightness::BrightnessService;
 use wayle_config::{ConfigService, infrastructure::schema};
-use wayle_core::Property;
+use wayle_core::{DeferredService, Property};
 use wayle_hyprland::HyprlandService;
 use wayle_ipc::shell::APP_ID;
 use wayle_media::MediaService;
@@ -82,7 +82,6 @@ struct DaemonServices {
 }
 
 struct OptionalServices {
-    bluetooth: Option<Arc<BluetoothService>>,
     hyprland: Option<Arc<HyprlandService>>,
 }
 
@@ -121,7 +120,8 @@ pub async fn init_services() -> Result<(StartupTimer, ShellServices), Box<dyn Er
 
     let config_service = timer.time("Config", ConfigService::load()).await?;
 
-    let power_profiles: Property<Option<Arc<PowerProfilesService>>> = Property::new(None);
+    let bluetooth: DeferredService<BluetoothService> = DeferredService::new(None);
+    let power_profiles: DeferredService<PowerProfilesService> = DeferredService::new(None);
 
     let (weather, core, daemons, optional) = {
         let config = config_service.config();
@@ -138,6 +138,7 @@ pub async fn init_services() -> Result<(StartupTimer, ShellServices), Box<dyn Er
         (weather, core?, daemons, optional)
     };
 
+    spawn_deferred_bluetooth(bluetooth.clone());
     spawn_deferred_power_profiles(power_profiles.clone());
 
     let shell_ipc = match ShellIpcService::new().await {
@@ -153,7 +154,7 @@ pub async fn init_services() -> Result<(StartupTimer, ShellServices), Box<dyn Er
     let services = ShellServices {
         audio: daemons.audio,
         battery: core.battery,
-        bluetooth: optional.bluetooth,
+        bluetooth,
         brightness: core.brightness,
         config: config_service,
         hyprland: optional.hyprland,
@@ -229,21 +230,31 @@ async fn init_core_services(
 }
 
 async fn init_optional_services(timer: &StartupTimer) -> OptionalServices {
-    let bluetooth_task = tokio::spawn(BluetoothService::new());
     let hyprland_task = tokio::spawn(HyprlandService::new());
 
-    let (bluetooth, hyprland) = tokio::join!(
-        async { try_service!(timer, "Bluetooth", spawned(bluetooth_task)) },
-        async { timer.time("Hyprland", spawned(hyprland_task)).await.ok() },
-    );
+    let hyprland = timer.time("Hyprland", spawned(hyprland_task)).await.ok();
 
-    OptionalServices {
-        bluetooth,
-        hyprland,
-    }
+    OptionalServices { hyprland }
 }
 
-fn spawn_deferred_power_profiles(property: Property<Option<Arc<PowerProfilesService>>>) {
+fn spawn_deferred_bluetooth(property: DeferredService<BluetoothService>) {
+    tokio::spawn(async move {
+        let start = Instant::now();
+
+        match BluetoothService::new().await {
+            Ok(service) => {
+                let duration_ms = start.elapsed().as_millis() as u64;
+                info!(duration_ms, "Bluetooth ready (deferred)");
+                property.replace(Some(Arc::new(service)));
+            }
+            Err(err) => {
+                warn!(error = %err, "Bluetooth unavailable");
+            }
+        }
+    });
+}
+
+fn spawn_deferred_power_profiles(property: DeferredService<PowerProfilesService>) {
     tokio::spawn(async move {
         let start = Instant::now();
 
