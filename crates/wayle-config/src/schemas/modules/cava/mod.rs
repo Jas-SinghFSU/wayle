@@ -3,8 +3,10 @@
 mod types;
 
 use schemars::schema_for;
-pub use types::{BarCount, CavaDirection, CavaInput, CavaStyle, Framerate, FrequencyHz};
+pub use types::{BarCount, CavaInput, CavaStyle, Framerate, FrequencyHz};
 use wayle_derive::wayle_config;
+
+pub use crate::schemas::types::chart::Direction;
 
 use crate::{
     ClickAction, ConfigProperty,
@@ -63,8 +65,8 @@ pub struct CavaConfig {
     pub style: ConfigProperty<CavaStyle>,
 
     /// Bar growth direction.
-    #[default(CavaDirection::default())]
-    pub direction: ConfigProperty<CavaDirection>,
+    #[default(Direction::default())]
+    pub direction: ConfigProperty<Direction>,
 
     /// Bar color.
     #[default(ColorValue::Token(CssToken::Accent))]
