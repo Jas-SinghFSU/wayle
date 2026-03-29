@@ -1,7 +1,7 @@
 use gtk4::cairo;
 use wayle_config::schemas::types::barchart::BarDirection;
 
-use super::{MIN_BAR_HEIGHT, RenderParams, apply_color, fill_bar_rect};
+use super::{MIN_BAR_HEIGHT, Params, apply_color, fill_bar_rect};
 
 const PEAK_CAP_HEIGHT: f64 = 2.0;
 const PEAK_GRAVITY: f64 = 0.015;
@@ -15,11 +15,13 @@ pub(crate) fn draw_peak_bars(
     peaks: &mut PeakState,
     canvas_height: f64,
     direction: BarDirection,
-    params: &RenderParams,
+    bar_width: f64,
+    bar_spacing: f64,
+    params: &Params,
 ) {
     apply_color(cr, params);
 
-    let bar_stride = params.bar_width + params.bar_spacing;
+    let bar_stride = bar_width + bar_spacing;
 
     peaks.resize(values.len(), 0.0);
 
@@ -27,14 +29,7 @@ pub(crate) fn draw_peak_bars(
         let x = bar_idx as f64 * bar_stride;
         let bar_height = (amplitude * canvas_height).clamp(MIN_BAR_HEIGHT, canvas_height);
 
-        fill_bar_rect(
-            cr,
-            x,
-            bar_height,
-            canvas_height,
-            direction,
-            params.bar_width,
-        );
+        fill_bar_rect(cr, x, bar_height, canvas_height, direction, bar_width);
         let _ = cr.fill();
 
         update_peak(&mut peaks[bar_idx], amplitude);
@@ -47,7 +42,7 @@ pub(crate) fn draw_peak_bars(
             bar_height,
             canvas_height,
             direction,
-            params.bar_width,
+            bar_width,
         );
     }
 }

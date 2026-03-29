@@ -8,7 +8,7 @@ use wayle_config::{
     schemas::styling::{ColorValue, CssToken},
 };
 use wayle_styling::resolve_palette;
-use wayle_widgets::primitives::barchart::Rgba;
+use wayle_widgets::primitives::chart::Rgba;
 
 const REM_BASE: f32 = 16.0;
 

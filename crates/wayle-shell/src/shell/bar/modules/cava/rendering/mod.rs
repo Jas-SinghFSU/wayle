@@ -3,14 +3,11 @@ mod wave;
 
 use gtk4::cairo;
 use wayle_config::schemas::types::barchart::BarDirection;
-use wayle_widgets::primitives::barchart::{BarchartParams, MIN_BAR_HEIGHT};
+use wayle_widgets::primitives::{barchart::MIN_BAR_HEIGHT, chart::Params};
 
 pub(super) use self::{peaks::draw_peak_bars, wave::draw_wave};
 
-// Use BarchartParams directly instead of wrapper type
-pub(super) type RenderParams = BarchartParams;
-
-fn apply_color(cr: &cairo::Context, params: &RenderParams) {
+pub(super) fn apply_color(cr: &cairo::Context, params: &Params) {
     let color = &params.fill_color;
     cr.set_source_rgba(color.red, color.green, color.blue, color.alpha);
 }

@@ -193,18 +193,14 @@ fn setup_draw_func(
 
         let fill_color = super::shared::resolve_rgba(&color, &config_clone);
 
-        let params = wayle_widgets::primitives::barchart::BarchartParams {
-            bar_width,
-            bar_spacing,
-            fill_color,
-        };
-
         wayle_widgets::primitives::barchart::draw_barchart(
             cr,
             &core_data,
             pixel_height,
             direction,
-            &params,
+            bar_width,
+            bar_spacing,
+            &wayle_widgets::primitives::chart::Params { fill_color },
         );
 
         values.set(core_data);

@@ -1,7 +1,7 @@
 use gtk4::cairo;
 use wayle_config::schemas::types::barchart::BarDirection;
 
-use super::{RenderParams, apply_color};
+use super::{Params, apply_color};
 
 const MIN_WAVE_HEIGHT: f64 = 2.0;
 
@@ -11,7 +11,7 @@ pub(crate) fn draw_wave(
     canvas_width: f64,
     canvas_height: f64,
     direction: BarDirection,
-    params: &RenderParams,
+    params: &Params,
 ) {
     if values.is_empty() {
         return;

@@ -4,7 +4,8 @@ use gtk::{glib::Propagation, prelude::*};
 use relm4::prelude::*;
 use wayle_config::{ConfigService, schemas::modules::CavaStyle};
 use wayle_widgets::{
-    primitives::barchart::calculate_widget_length, primitives::barchart::draw_barchart,
+    primitives::barchart::{calculate_widget_length, draw_barchart},
+    primitives::chart::Params,
 };
 
 use super::{CavaModule, helpers, messages::CavaMsg, rendering};
@@ -73,11 +74,7 @@ impl CavaModule {
         let padding_rem = cava_config.internal_padding.get().value();
         let horizontal_padding = helpers::rem_to_px(padding_rem, bar_scale);
 
-        let render_params = rendering::RenderParams {
-            bar_width,
-            bar_spacing,
-            fill_color,
-        };
+        let chart_params = Params { fill_color };
 
         let peak_state = Cell::new(Vec::<f64>::new());
 
@@ -107,7 +104,15 @@ impl CavaModule {
 
             match style {
                 CavaStyle::Bars => {
-                    draw_barchart(cr, &values, canvas_height, direction, &render_params);
+                    draw_barchart(
+                        cr,
+                        &values,
+                        canvas_height,
+                        direction,
+                        bar_width,
+                        bar_spacing,
+                        &chart_params,
+                    );
                 }
                 CavaStyle::Wave => {
                     rendering::draw_wave(
@@ -116,7 +121,7 @@ impl CavaModule {
                         content_width,
                         canvas_height,
                         direction,
-                        &render_params,
+                        &chart_params,
                     );
                 }
                 CavaStyle::Peaks => {
@@ -127,7 +132,9 @@ impl CavaModule {
                         &mut peaks,
                         canvas_height,
                         direction,
-                        &render_params,
+                        bar_width,
+                        bar_spacing,
+                        &chart_params,
                     );
                     peak_state.set(peaks);
                 }

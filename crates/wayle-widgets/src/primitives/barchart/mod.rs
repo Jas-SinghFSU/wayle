@@ -6,6 +6,8 @@
 use gtk4::cairo;
 use wayle_config::schemas::types::barchart::BarDirection;
 
+use crate::primitives::chart::Params;
+
 /// Minimum height for a bar in pixels to ensure visibility.
 pub const MIN_BAR_HEIGHT: f64 = 2.0;
 
@@ -15,20 +17,8 @@ pub struct BarchartParams {
     pub bar_width: f64,
     /// Spacing between bars in pixels.
     pub bar_spacing: f64,
-    /// Fill color for the bars.
-    pub fill_color: Rgba,
-}
-
-/// RGBA color with components normalized to 0.0-1.0.
-pub struct Rgba {
-    /// Red component (0.0-1.0).
-    pub red: f64,
-    /// Green component (0.0-1.0).
-    pub green: f64,
-    /// Blue component (0.0-1.0).
-    pub blue: f64,
-    /// Alpha/opacity component (0.0-1.0).
-    pub alpha: f64,
+    /// Rendering parameters (color, etc.).
+    pub chart_params: super::chart::Params,
 }
 
 /// Draws a barchart visualization using Cairo.
@@ -41,24 +31,19 @@ pub fn draw_barchart(
     values: &[f64],
     canvas_height: f64,
     direction: BarDirection,
-    params: &BarchartParams,
+    bar_width: f64,
+    bar_spacing: f64,
+    params: &Params,
 ) {
-    apply_color(cr, params);
+    apply_color(cr, &params);
 
-    let bar_stride = params.bar_width + params.bar_spacing;
+    let bar_stride = bar_width + bar_spacing;
 
     for (bar_idx, &amplitude) in values.iter().enumerate() {
         let x = bar_idx as f64 * bar_stride;
         let bar_height = (amplitude * canvas_height).clamp(MIN_BAR_HEIGHT, canvas_height);
 
-        fill_bar_rect(
-            cr,
-            x,
-            bar_height,
-            canvas_height,
-            direction,
-            params.bar_width,
-        );
+        fill_bar_rect(cr, x, bar_height, canvas_height, direction, bar_width);
         let _ = cr.fill();
     }
 }
@@ -77,7 +62,7 @@ pub fn calculate_widget_length(bars: u16, bar_width: u32, bar_gap: u32, padding:
     total.round().max(1.0) as i32
 }
 
-fn apply_color(cr: &cairo::Context, params: &BarchartParams) {
+fn apply_color(cr: &cairo::Context, params: &Params) {
     let color = &params.fill_color;
     cr.set_source_rgba(color.red, color.green, color.blue, color.alpha);
 }
