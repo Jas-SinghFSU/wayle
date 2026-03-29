@@ -1,10 +1,12 @@
 mod methods;
 
-use std::{collections::HashSet, mem, sync::Arc};
+use std::{cell::RefCell, collections::HashSet, mem, rc::Rc, sync::Arc, time::Duration};
 
 use gtk::prelude::*;
 use relm4::{factory::FactoryComponent, prelude::*};
-use wayle_config::schemas::modules::{ActiveIndicator, DisplayMode, HyprlandWorkspacesConfig};
+use wayle_config::schemas::modules::{
+    ActiveIndicator, DisplayMode, HyprlandWorkspacesConfig, PreviewTrigger,
+};
 use wayle_hyprland::{Address, Client, WorkspaceId};
 
 use crate::shell::bar::modules::hyprland_workspaces::helpers::{
@@ -58,6 +60,10 @@ pub(crate) struct WorkspaceButtonInit {
     pub urgent_addresses: HashSet<Address>,
     pub empty_icon: String,
     pub icon_gap_px: i32,
+
+    pub preview_show: bool,
+    pub preview_trigger: PreviewTrigger,
+    pub preview_open_delay_ms: u32,
 }
 
 pub(super) struct AppIcon {
@@ -86,6 +92,10 @@ pub(crate) struct WorkspaceButton {
     initial_urgent_addrs: HashSet<Address>,
     pub(super) empty_icon: String,
     pub(super) icon_gap_px: i32,
+
+    preview_show: bool,
+    preview_trigger: PreviewTrigger,
+    preview_open_delay_ms: u32,
 }
 
 #[derive(Debug)]
@@ -103,6 +113,8 @@ pub(crate) enum WorkspaceButtonOutput {
     Clicked(WorkspaceId),
     ScrollUp,
     ScrollDown,
+    PreviewRequest(WorkspaceId),
+    PreviewDismiss,
 }
 
 #[relm4::factory(pub(crate))]
@@ -199,6 +211,10 @@ impl FactoryComponent for WorkspaceButton {
             initial_urgent_addrs: init.urgent_addresses,
             empty_icon: init.empty_icon,
             icon_gap_px: init.icon_gap_px,
+
+            preview_show: init.preview_show,
+            preview_trigger: init.preview_trigger,
+            preview_open_delay_ms: init.preview_open_delay_ms,
         }
     }
 
@@ -230,6 +246,64 @@ impl FactoryComponent for WorkspaceButton {
         self.populate_identity(&widgets.identity);
         let urgent_addrs = mem::take(&mut self.initial_urgent_addrs);
         self.populate_app_icons(&widgets.app_icons_container, &urgent_addrs);
+
+        // Preview trigger controllers.
+        if self.preview_show {
+            let id = self.id;
+            match self.preview_trigger {
+                PreviewTrigger::Hover => {
+                    let motion = gtk::EventControllerMotion::new();
+                    let delay_ms = self.preview_open_delay_ms;
+
+                    // Shared timer handle — cancelled on leave.
+                    let open_timer: Rc<RefCell<Option<glib::SourceId>>> =
+                        Rc::new(RefCell::new(None));
+
+                    let timer_ref = open_timer.clone();
+                    let sender_clone = sender.clone();
+                    motion.connect_enter(move |_, _, _| {
+                        // Cancel any existing timer first.
+                        if let Some(old) = timer_ref.borrow_mut().take() {
+                            old.remove();
+                        }
+                        let sender = sender_clone.clone();
+                        let inner_timer = timer_ref.clone();
+                        let source = glib::timeout_add_local_once(
+                            Duration::from_millis(u64::from(delay_ms)),
+                            move || {
+                                sender.output(WorkspaceButtonOutput::PreviewRequest(id)).ok();
+                                *inner_timer.borrow_mut() = None;
+                            },
+                        );
+                        *timer_ref.borrow_mut() = Some(source);
+                    });
+
+                    let timer_ref = open_timer;
+                    let sender_clone = sender.clone();
+                    motion.connect_leave(move |_| {
+                        if let Some(old) = timer_ref.borrow_mut().take() {
+                            old.remove();
+                        }
+                        sender_clone
+                            .output(WorkspaceButtonOutput::PreviewDismiss)
+                            .ok();
+                    });
+
+                    root.add_controller(motion);
+                }
+                PreviewTrigger::RightClick => {
+                    let click = gtk::GestureClick::new();
+                    click.set_button(3); // right-click
+                    let sender_clone = sender.clone();
+                    click.connect_released(move |_, _, _, _| {
+                        sender_clone
+                            .output(WorkspaceButtonOutput::PreviewRequest(id))
+                            .ok();
+                    });
+                    root.add_controller(click);
+                }
+            }
+        }
 
         widgets
     }
@@ -303,5 +377,9 @@ pub(crate) fn build_button_init(
         urgent_addresses,
         empty_icon: config.app_icons_empty.get(),
         icon_gap_px,
+
+        preview_show: config.preview_show.get(),
+        preview_trigger: config.preview_trigger.get(),
+        preview_open_delay_ms: config.preview_open_delay.get(),
     }
 }

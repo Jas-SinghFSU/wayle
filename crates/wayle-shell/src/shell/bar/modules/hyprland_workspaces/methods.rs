@@ -24,7 +24,8 @@ use super::{
         addresses_in_workspace, compute_display_id, has_title_patterns, prune_stale_addresses,
         workspace_contains_urgent_address,
     },
-    messages::WorkspacesCmd,
+    messages::{WorkspacesCmd, WorkspacesMsg},
+    preview::{WorkspacePreview, WorkspacePreviewInit, WorkspacePreviewOutput},
 };
 
 impl HyprlandWorkspaces {
@@ -339,6 +340,88 @@ impl HyprlandWorkspaces {
                 error!(error = %e, workspace = id, "Failed to switch workspace");
             }
         });
+    }
+
+    pub(super) fn focus_window_by_address(&self, address: &str) {
+        let Some(hyprland) = &self.hyprland else {
+            return;
+        };
+
+        let hyprland = hyprland.clone();
+        let command = format!("focuswindow address:0x{address}");
+        tokio::spawn(async move {
+            if let Err(e) = hyprland.dispatch(&command).await {
+                error!(error = %e, "Failed to focus window");
+            }
+        });
+    }
+
+    pub(super) fn compute_preview_position(
+        &self,
+        ws_id: WorkspaceId,
+        container: &gtk::Box,
+    ) -> (i32, i32) {
+        // Find the button widget for this workspace and compute its position
+        // relative to the display root, so the preview popup can be anchored
+        // below it via layer-shell margins.
+        for idx in 0..self.buttons.len() {
+            if let Some(button) = self.buttons.get(idx)
+                && button.id() == ws_id
+            {
+                let widget = self.buttons.widget();
+                if let Some(root_widget) = widget.root()
+                    && let Some(btn_widget) = widget.observe_children().item(idx as u32)
+                    && let Some(btn) = btn_widget.downcast_ref::<gtk::Widget>()
+                    && let Some(bounds) =
+                        btn.compute_bounds(root_widget.upcast_ref::<gtk::Widget>())
+                {
+                    let top = (bounds.y() + bounds.height()) as i32;
+                    let left = bounds.x() as i32;
+                    return (top, left);
+                }
+            }
+        }
+
+        // Fallback: below the container widget.
+        if let Some(root_widget) = container.root()
+            && let Some(bounds) =
+                container.compute_bounds(root_widget.upcast_ref::<gtk::Widget>())
+        {
+            return ((bounds.y() + bounds.height()) as i32, bounds.x() as i32);
+        }
+
+        (40, 0)
+    }
+
+    pub(super) fn reinitialize_preview(&mut self, sender: &ComponentSender<Self>) {
+        let config = self.config.config();
+        let ws_config = &config.modules.hyprland_workspaces;
+        let should_show = ws_config.preview_show.get();
+        let is_active = self.preview.is_some();
+
+        // Only recreate when the enabled state actually toggled.
+        // Other preview config changes (width, delay, trigger) take effect
+        // on the next hover since they're re-read from config at that time.
+        if should_show == is_active {
+            return;
+        }
+
+        if should_show {
+            let preview_ctrl = WorkspacePreview::builder()
+                .launch(WorkspacePreviewInit {
+                    preview_width: ws_config.preview_width.get(),
+                    close_delay_ms: ws_config.preview_close_delay.get(),
+                    monitor_connector: self.settings.monitor_name.clone(),
+                })
+                .forward(sender.input_sender(), |output| match output {
+                    WorkspacePreviewOutput::FocusWindow(addr) => {
+                        WorkspacesMsg::FocusWindow(addr)
+                    }
+                });
+            self.preview = Some(preview_ctrl);
+        } else {
+            self.preview = None;
+        }
     }
 
     pub(super) fn navigate_workspace(&self, direction: i64) {
