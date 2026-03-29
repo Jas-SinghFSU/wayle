@@ -70,10 +70,8 @@ pub(super) fn update_size(
         (num_cores as f64 * (bar_width + bar_spacing)) - bar_spacing + (2.0 * horizontal_padding);
 
     if is_vertical {
-        drawing_area.set_height_request(total_width as i32);
-        drawing_area.set_width_request(20);
+        drawing_area.set_size_request(-1, total_width as i32);
     } else {
-        drawing_area.set_width_request(total_width as i32);
-        drawing_area.set_height_request(20);
+        drawing_area.set_size_request(total_width as i32, -1);
     }
 }
