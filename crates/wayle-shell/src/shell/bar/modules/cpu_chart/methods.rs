@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use crate::shell::bar::modules::shared;
 use gtk4::prelude::*;
+use shared::rem_to_px;
 use wayle_config::ConfigService;
 
 pub(super) fn setup_draw_func(
@@ -28,7 +29,7 @@ pub(super) fn setup_draw_func(
         let bar_spacing = cpuchart_config.bar_gap.get() as f64;
         let bar_scale = full_config.bar.scale.get().value();
         let padding_rem = cpuchart_config.internal_padding.get().value();
-        let horizontal_padding = shared::rem_to_px(padding_rem, bar_scale);
+        let horizontal_padding = rem_to_px(padding_rem, bar_scale);
         let direction = cpuchart_config.direction.get();
         let color = cpuchart_config.color.get();
 
@@ -63,7 +64,7 @@ pub(super) fn update_size(
     let bar_width = cpuchart_config.bar_width.get() as f64;
     let bar_spacing = cpuchart_config.bar_gap.get() as f64;
     let padding_rem = cpuchart_config.internal_padding.get().value();
-    let horizontal_padding = shared::rem_to_px(padding_rem, bar_scale);
+    let horizontal_padding = rem_to_px(padding_rem, bar_scale);
 
     let total_width =
         (num_cores as f64 * (bar_width + bar_spacing)) - bar_spacing + (2.0 * horizontal_padding);

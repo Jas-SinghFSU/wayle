@@ -108,11 +108,11 @@ impl Component for CpuChartModule {
         if let Some(button_box) = bar_button_widget.child().and_downcast::<gtk4::Box>() {
             let mut child = button_box.first_child();
             while let Some(current) = child {
-                if current.css_classes().iter().any(|c| c == "label-container") {
-                    if let Some(label_container) = current.downcast_ref::<gtk4::Box>() {
-                        label_container.append(&drawing_area);
-                        break;
-                    }
+                if current.css_classes().iter().any(|c| c == "label-container")
+                    && let Some(label_container) = current.downcast_ref::<gtk4::Box>()
+                {
+                    label_container.append(&drawing_area);
+                    break;
                 }
                 child = current.next_sibling();
             }
