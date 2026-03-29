@@ -1,3 +1,7 @@
+* {
+    all: unset;
+}
+
 @import "palette";
 @import "tokens/_index";
 @import "base/_index";
