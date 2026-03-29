@@ -252,7 +252,7 @@ impl BarModule {
             Self::Cava => "cava",
             Self::Clock => "clock",
             Self::Cpu => "cpu",
-            Self::CpuChart => "cpuchart",
+            Self::CpuChart => "cpu-chart",
             Self::Dashboard => "dashboard",
             Self::KeybindMode => "keybind-mode",
             Self::HyprlandWorkspaces => "hyprland-workspaces",
@@ -358,7 +358,6 @@ impl fmt::Display for BarModule {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Custom(id) => write!(f, "{}{}", Self::CUSTOM_PREFIX, id),
-            Self::CpuChart => f.write_str("cpuchart"),
             _ => f.write_str(self.to_kebab_case()),
         }
     }

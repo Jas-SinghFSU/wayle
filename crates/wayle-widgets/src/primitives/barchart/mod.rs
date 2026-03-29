@@ -4,7 +4,7 @@
 //! configurable width, spacing, direction, and colors.
 
 use gtk4::cairo;
-use wayle_config::schemas::barchart::BarDirection;
+use wayle_config::schemas::types::barchart::BarDirection;
 
 /// Minimum height for a bar in pixels to ensure visibility.
 pub const MIN_BAR_HEIGHT: f64 = 2.0;

@@ -23,8 +23,6 @@ pub use property::{
 pub mod schemas {
     /// Bar layout configuration.
     pub mod bar;
-    /// Generic barchart configuration types.
-    pub mod barchart;
     /// General Wayle configuration.
     pub mod general;
     /// Module-specific configurations.
@@ -33,6 +31,8 @@ pub mod schemas {
     pub mod osd;
     /// Styling configuration.
     pub mod styling;
+    /// Shared configuration types.
+    pub mod types;
     /// Wallpaper service configuration.
     pub mod wallpaper;
 }

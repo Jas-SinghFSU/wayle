@@ -3,14 +3,49 @@ use wayle_derive::wayle_config;
 use crate::{
     ClickAction, ConfigProperty,
     schemas::{
-        barchart::BarDirection,
         styling::{ColorValue, CssToken, Spacing},
+        types::barchart::BarDirection,
     },
 };
 
 /// Configuration for the CPU chart module.
-#[wayle_config(bar_container)]
+#[wayle_config(bar_button)]
 pub struct CpuChartConfig {
+    /// Icon name.
+    #[serde(rename = "icon-name")]
+    #[default(String::from("ld-cpu-symbolic"))]
+    pub icon_name: ConfigProperty<String>,
+
+    /// Display module icon.
+    #[serde(rename = "icon-show")]
+    #[default(true)]
+    pub icon_show: ConfigProperty<bool>,
+
+    /// Icon foreground color.
+    #[serde(rename = "icon-color")]
+    #[default(ColorValue::Auto)]
+    pub icon_color: ConfigProperty<ColorValue>,
+
+    /// Icon container background color.
+    #[serde(rename = "icon-bg-color")]
+    #[default(ColorValue::Token(CssToken::Blue))]
+    pub icon_bg_color: ConfigProperty<ColorValue>,
+
+    /// Display label.
+    #[serde(rename = "label-show")]
+    #[default(true)]
+    pub label_show: ConfigProperty<bool>,
+
+    /// Label text color.
+    #[serde(rename = "label-color")]
+    #[default(ColorValue::Token(CssToken::Blue))]
+    pub label_color: ConfigProperty<ColorValue>,
+
+    /// Max label characters before truncation. Set to 0 to disable.
+    #[serde(rename = "label-max-length")]
+    #[default(0)]
+    pub label_max_length: ConfigProperty<u32>,
+
     /// Module background color.
     #[serde(rename = "button-bg-color")]
     #[default(ColorValue::Token(CssToken::BgSurfaceElevated))]

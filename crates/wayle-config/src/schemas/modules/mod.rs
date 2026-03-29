@@ -5,7 +5,7 @@ mod bluetooth;
 mod cava;
 mod clock;
 mod cpu;
-mod cpuchart;
+mod cpu_chart;
 mod custom;
 mod dashboard;
 mod hyprland_workspaces;
@@ -29,7 +29,7 @@ mod weather;
 mod window_title;
 mod world_clock;
 
-pub use super::barchart::BarDirection;
+pub use super::types::barchart::BarDirection;
 pub use battery::BatteryConfig;
 pub use bluetooth::BluetoothConfig;
 pub use cava::{
@@ -38,7 +38,7 @@ pub use cava::{
 };
 pub use clock::ClockConfig;
 pub use cpu::CpuConfig;
-pub use cpuchart::CpuChartConfig;
+pub use cpu_chart::CpuChartConfig;
 pub use custom::{CustomModuleDefinition, ExecutionMode, RestartDelay, RestartPolicy};
 pub use dashboard::DashboardConfig;
 pub use hyprland_workspaces::{

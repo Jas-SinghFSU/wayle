@@ -6,7 +6,7 @@ use schemars::schema_for;
 pub use types::{BarCount, CavaInput, CavaStyle, Framerate, FrequencyHz};
 use wayle_derive::wayle_config;
 
-pub use crate::schemas::barchart::BarDirection;
+pub use crate::schemas::types::barchart::BarDirection;
 
 use crate::{
     ClickAction, ConfigProperty,
@@ -65,7 +65,7 @@ pub struct CavaConfig {
     pub style: ConfigProperty<CavaStyle>,
 
     /// Bar growth direction.
-    #[default(BarDirection::Normal)]
+    #[default(BarDirection::default())]
     pub direction: ConfigProperty<BarDirection>,
 
     /// Bar color.

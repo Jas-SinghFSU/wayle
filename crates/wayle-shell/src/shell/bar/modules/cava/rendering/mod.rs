@@ -2,7 +2,7 @@ mod peaks;
 mod wave;
 
 use gtk4::cairo;
-use wayle_config::schemas::barchart::BarDirection;
+use wayle_config::schemas::types::barchart::BarDirection;
 use wayle_widgets::primitives::barchart::{BarchartParams, MIN_BAR_HEIGHT};
 
 pub(super) use self::{peaks::draw_peak_bars, wave::draw_wave};

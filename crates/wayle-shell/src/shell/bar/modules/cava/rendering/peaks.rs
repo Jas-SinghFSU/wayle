@@ -1,5 +1,5 @@
 use gtk4::cairo;
-use wayle_config::schemas::barchart::BarDirection;
+use wayle_config::schemas::types::barchart::BarDirection;
 
 use super::{MIN_BAR_HEIGHT, RenderParams, apply_color, fill_bar_rect};
 

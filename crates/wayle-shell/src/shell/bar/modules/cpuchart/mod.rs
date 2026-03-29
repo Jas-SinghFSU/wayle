@@ -65,27 +65,21 @@ impl Component for CpuChartModule {
 
         let bar_button = BarButton::builder()
             .launch(BarButtonInit {
-                icon: String::new(),
+                icon: cpuchart_config.icon_name.get().clone(),
                 label: String::new(),
                 tooltip: None,
                 colors: BarButtonColors {
-                    icon_color: ConfigProperty::new(
-                        wayle_config::schemas::styling::ColorValue::Token(CssToken::FgDefault),
-                    ),
-                    label_color: ConfigProperty::new(
-                        wayle_config::schemas::styling::ColorValue::Token(CssToken::FgDefault),
-                    ),
-                    icon_background: ConfigProperty::new(
-                        wayle_config::schemas::styling::ColorValue::Token(CssToken::BgBase),
-                    ),
+                    icon_color: cpuchart_config.icon_color.clone(),
+                    label_color: cpuchart_config.label_color.clone(),
+                    icon_background: cpuchart_config.icon_bg_color.clone(),
                     button_background: cpuchart_config.button_bg_color.clone(),
                     border_color: cpuchart_config.border_color.clone(),
                     auto_icon_color: CssToken::Blue,
                 },
                 behavior: BarButtonBehavior {
-                    label_max_chars: ConfigProperty::new(0),
-                    show_icon: ConfigProperty::new(false),
-                    show_label: ConfigProperty::new(true), // Must be true so label_container is visible
+                    label_max_chars: cpuchart_config.label_max_length.clone(),
+                    show_icon: cpuchart_config.icon_show.clone(),
+                    show_label: cpuchart_config.label_show.clone(),
                     show_border: cpuchart_config.border_show.clone(),
                     visible: ConfigProperty::new(true),
                 },
