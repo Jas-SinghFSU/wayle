@@ -130,7 +130,7 @@ impl Component for VolumeModule {
                     watchers::spawn_device_watchers(&sender, &device, token);
                 }
             }
-            VolumeCmd::VolumeOrMuteChanged | VolumeCmd::IconConfigChanged => {
+            VolumeCmd::VolumeOrMuteChanged | VolumeCmd::ConfigChanged => {
                 if let Some(device) = self.audio.default_output.get() {
                     self.update_display(volume_config, &device);
                 }

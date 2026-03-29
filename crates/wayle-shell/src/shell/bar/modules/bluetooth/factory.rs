@@ -7,7 +7,7 @@ use super::{BluetoothInit, BluetoothModule};
 use crate::shell::{
     bar::{
         dropdowns::DropdownRegistry,
-        modules::registry::{ModuleFactory, ModuleInstance, dynamic_controller, require_service},
+        modules::registry::{ModuleFactory, ModuleInstance, dynamic_controller},
     },
     services::ShellServices,
 };
@@ -21,11 +21,9 @@ impl ModuleFactory for Factory {
         dropdowns: &Rc<DropdownRegistry>,
         class: Option<String>,
     ) -> Option<ModuleInstance> {
-        let bluetooth = require_service("bluetooth", "bluetooth", services.bluetooth.clone())?;
-
         let init = BluetoothInit {
             settings: settings.clone(),
-            bluetooth,
+            bluetooth: services.bluetooth.clone(),
             config: services.config.clone(),
             dropdowns: dropdowns.clone(),
         };

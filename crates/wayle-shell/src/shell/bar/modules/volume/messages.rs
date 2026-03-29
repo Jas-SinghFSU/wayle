@@ -27,5 +27,5 @@ pub(crate) enum VolumeMsg {
 pub(crate) enum VolumeCmd {
     DeviceChanged(Option<Arc<OutputDevice>>),
     VolumeOrMuteChanged,
-    IconConfigChanged,
+    ConfigChanged,
 }

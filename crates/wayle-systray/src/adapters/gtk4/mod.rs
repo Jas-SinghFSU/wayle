@@ -3,7 +3,7 @@ use glib::Variant;
 use gtk4::{
     PopoverMenu,
     gio::{
-        Menu, MenuItem as GMenuItem, SimpleAction, SimpleActionGroup,
+        Menu, MenuItem as GMenuItem, SimpleAction, SimpleActionGroup, ThemedIcon,
         prelude::{ActionMapExt, MenuModelExt},
     },
     prelude::WidgetExt,
@@ -15,7 +15,7 @@ use crate::{
     types::menu::{MenuEvent, MenuItem, MenuItemType, ToggleState, ToggleType},
 };
 
-/// GTK4 menu model components for a tray item.
+/// Menu model, actions, and accelerators built from a tray item.
 #[derive(Debug)]
 pub struct TrayMenuModel {
     /// The GTK Menu model representing the tray item's menu structure.
@@ -64,10 +64,11 @@ impl Adapter {
         }
     }
 
-    /// Builds a GTK PopoverMenu widget from a tray item.
+    /// Builds a basic PopoverMenu from a tray item's menu model.
     ///
-    /// Creates a complete popover menu ready to display, with all actions
-    /// configured and registered to the "app" action group.
+    /// Returns a popover with actions registered under the "app" group.
+    /// The caller is responsible for CSS classes, arrow visibility, and
+    /// parenting before display.
     pub fn build_popover(tray_item: &TrayItem) -> PopoverMenu {
         let TrayMenuModel { menu, actions, .. } = Self::build_model(tray_item);
 
@@ -87,7 +88,7 @@ impl Adapter {
         let label = menu_item
             .label
             .as_ref()
-            .map(|l| l.trim_start_matches("_"))
+            .map(|label| label.trim_start_matches('_'))
             .unwrap_or("");
 
         if menu_item.has_children() {
@@ -112,7 +113,7 @@ impl Adapter {
             let tray_item = tray_item_clone.clone();
             tokio::spawn(async move {
                 if let Err(error) = tray_item
-                    .menu_event(id, MenuEvent::Clicked, Utc::now().timestamp() as u32)
+                    .menu_event(id, MenuEvent::Clicked, Utc::now().timestamp().max(0) as u32)
                     .await
                 {
                     error!(error = %error, "cannot send menu event");
@@ -140,6 +141,11 @@ impl Adapter {
         }
 
         let item = GMenuItem::new(Some(label), Some(&format!("app.{action_name}")));
+
+        if let Some(icon_name) = &menu_item.icon_name {
+            let icon = ThemedIcon::new(icon_name);
+            item.set_icon(&icon);
+        }
 
         if let Some(shortcut) = &menu_item.shortcut
             && let Some(accel) = Self::to_gtk_accelerator(shortcut)
@@ -189,7 +195,7 @@ impl Adapter {
 
         let mut result = modifiers
             .iter()
-            .filter_map(|m| match m.as_str() {
+            .filter_map(|modifier| match modifier.as_str() {
                 "Control" => Some("<Control>"),
                 "Shift" => Some("<Shift>"),
                 "Alt" => Some("<Alt>"),

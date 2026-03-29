@@ -10,12 +10,10 @@ use gtk::prelude::*;
 use relm4::prelude::*;
 use wayle_bluetooth::BluetoothService;
 use wayle_config::{ConfigProperty, ConfigService, schemas::styling::CssToken};
+use wayle_core::DeferredService;
 use wayle_widgets::{
     WatcherToken,
-    prelude::{
-        BarButton, BarButtonBehavior, BarButtonColors, BarButtonInit, BarButtonInput,
-        BarButtonOutput,
-    },
+    prelude::{BarButton, BarButtonBehavior, BarButtonColors, BarButtonInit, BarButtonOutput},
 };
 
 pub(crate) use self::{
@@ -26,8 +24,9 @@ use crate::shell::bar::dropdowns::{self, DropdownRegistry};
 
 pub(crate) struct BluetoothModule {
     bar_button: Controller<BarButton>,
+    state_watcher: WatcherToken,
     adapter_watcher: WatcherToken,
-    bluetooth: Arc<BluetoothService>,
+    bluetooth: DeferredService<BluetoothService>,
     config: Arc<ConfigService>,
     dropdowns: Rc<DropdownRegistry>,
 }
@@ -56,7 +55,7 @@ impl Component for BluetoothModule {
         let config = init.config.config();
         let bt_config = &config.modules.bluetooth;
 
-        let (initial_icon, initial_label) = Self::compute_display(bt_config, &init.bluetooth);
+        let (initial_icon, initial_label) = Self::compute_display(bt_config, &init.bluetooth.get());
 
         let bar_button = BarButton::builder()
             .launch(BarButtonInit {
@@ -88,13 +87,13 @@ impl Component for BluetoothModule {
                 BarButtonOutput::ScrollDown => BluetoothMsg::ScrollDown,
             });
 
-        watchers::spawn_watchers(&sender, bt_config, &init.bluetooth);
-
-        let mut adapter_watcher = WatcherToken::new();
-        watchers::spawn_adapter_watchers(&sender, adapter_watcher.reset(), &init.bluetooth);
+        watchers::spawn_service_watcher(&sender, &init.bluetooth);
+        let adapter_watcher = WatcherToken::new();
+        let state_watcher = WatcherToken::new();
 
         let model = Self {
             bar_button,
+            state_watcher,
             adapter_watcher,
             bluetooth: init.bluetooth,
             config: init.config,
@@ -124,18 +123,25 @@ impl Component for BluetoothModule {
         let bt_config = &self.config.config().modules.bluetooth;
 
         match msg {
-            BluetoothCmd::StateChanged | BluetoothCmd::IconConfigChanged => {
-                let (icon, label) = Self::compute_display(bt_config, &self.bluetooth);
-                self.bar_button.emit(BarButtonInput::SetIcon(icon));
-                self.bar_button.emit(BarButtonInput::SetLabel(label));
-            }
-            BluetoothCmd::AdapterChanged => {
-                let token = self.adapter_watcher.reset();
-                watchers::spawn_adapter_watchers(&sender, token, &self.bluetooth);
+            BluetoothCmd::ServiceReady(bt) => {
+                let state_token = self.state_watcher.reset();
+                watchers::spawn_watchers(&sender, state_token, bt_config, &bt);
+                watchers::spawn_adapter_watchers(&sender, self.adapter_watcher.reset(), &bt);
 
-                let (icon, label) = Self::compute_display(bt_config, &self.bluetooth);
-                self.bar_button.emit(BarButtonInput::SetIcon(icon));
-                self.bar_button.emit(BarButtonInput::SetLabel(label));
+                self.update_display(bt_config, &Some(bt));
+            }
+
+            BluetoothCmd::StateChanged | BluetoothCmd::IconConfigChanged => {
+                self.update_display(bt_config, &self.bluetooth.get());
+            }
+
+            BluetoothCmd::AdapterChanged => {
+                let Some(bt) = self.bluetooth.get() else {
+                    return;
+                };
+
+                watchers::spawn_adapter_watchers(&sender, self.adapter_watcher.reset(), &bt);
+                self.update_display(bt_config, &Some(bt));
             }
         }
     }

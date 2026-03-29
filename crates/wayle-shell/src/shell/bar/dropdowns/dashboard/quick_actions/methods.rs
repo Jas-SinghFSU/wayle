@@ -23,7 +23,7 @@ impl QuickActionsSection {
     }
 
     pub(super) fn toggle_bluetooth(&self, sender: &ComponentSender<Self>) {
-        let Some(bluetooth) = self.bluetooth.clone() else {
+        let Some(bluetooth) = self.bluetooth.get() else {
             return;
         };
 

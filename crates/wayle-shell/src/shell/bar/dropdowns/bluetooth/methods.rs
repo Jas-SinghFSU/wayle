@@ -27,7 +27,9 @@ impl BluetoothDropdown {
             self.scanning = false;
         }
 
-        let bluetooth = self.bluetooth.clone();
+        let Some(bluetooth) = self.bluetooth.clone() else {
+            return;
+        };
         sender.command(move |_out, _shutdown| async move {
             let result = if active {
                 bluetooth.enable().await
@@ -41,9 +43,12 @@ impl BluetoothDropdown {
     }
 
     pub(super) fn handle_scan_requested(&mut self, sender: &ComponentSender<Self>) {
+        let Some(bluetooth) = self.bluetooth.clone() else {
+            return;
+        };
+
         self.scanning = true;
         let token = self.scan_token.reset();
-        let bluetooth = self.bluetooth.clone();
 
         sender.command(move |out, _shutdown| async move {
             if let Err(err) = bluetooth.start_timed_discovery(SCAN_DURATION).await {
@@ -74,12 +79,20 @@ impl BluetoothDropdown {
     }
 
     pub(super) fn reset_device_watchers(&mut self, sender: &ComponentSender<Self>) {
+        let Some(bluetooth) = &self.bluetooth else {
+            return;
+        };
+
         let token = self.device_watcher.reset();
-        watchers::spawn_device_watchers(sender, &self.bluetooth, token);
+        watchers::spawn_device_watchers(sender, bluetooth, token);
     }
 
     pub(super) fn rebuild_device_lists(&mut self) {
-        let devices = self.bluetooth.devices.get();
+        let Some(bluetooth) = &self.bluetooth else {
+            return;
+        };
+
+        let devices = bluetooth.devices.get();
         let lists = build_split_device_lists(&devices);
 
         reconcile_list(&mut self.my_devices.guard(), &lists.my_devices);
@@ -94,7 +107,9 @@ impl BluetoothDropdown {
         action: DeviceActionMsg,
         sender: &ComponentSender<Self>,
     ) {
-        let bluetooth = self.bluetooth.clone();
+        let Some(bluetooth) = self.bluetooth.clone() else {
+            return;
+        };
         let path = match &action {
             DeviceActionMsg::Connect(path)
             | DeviceActionMsg::Disconnect(path)
@@ -147,7 +162,11 @@ impl BluetoothDropdown {
                     PairingRequest::RequestServiceAuthorization { device_path, .. } => device_path,
                 };
 
-                let devices = self.bluetooth.devices.get();
+                let Some(bluetooth) = &self.bluetooth else {
+                    return;
+                };
+
+                let devices = bluetooth.devices.get();
                 let matching_device = devices
                     .iter()
                     .find(|device| &device.object_path == device_path);
@@ -177,14 +196,19 @@ impl BluetoothDropdown {
         self.pairing_card.emit(PairingCardMsg::Clear);
 
         if matches!(output, PairingCardOutput::Cancelled) {
-            let bluetooth = self.bluetooth.clone();
+            let Some(bluetooth) = self.bluetooth.clone() else {
+                return;
+            };
             sender.command(move |_out, _shutdown| async move {
                 bluetooth.cancel_pending_request().await;
             });
             return;
         }
 
-        let bluetooth = self.bluetooth.clone();
+        let Some(bluetooth) = self.bluetooth.clone() else {
+            return;
+        };
+
         sender.command(move |_out, _shutdown| async move {
             let result = match output {
                 PairingCardOutput::PinSubmitted(pin)

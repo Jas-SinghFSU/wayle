@@ -27,7 +27,7 @@ const SCAN_DURATION: Duration = Duration::from_secs(30);
 const ACTION_TIMEOUT: Duration = Duration::from_secs(30);
 
 pub(crate) struct BluetoothDropdown {
-    bluetooth: Arc<BluetoothService>,
+    bluetooth: Option<Arc<BluetoothService>>,
     scaled_width: i32,
     scaled_height: i32,
     enabled: bool,
@@ -36,6 +36,7 @@ pub(crate) struct BluetoothDropdown {
     my_devices: FactoryVecDeque<DeviceItem>,
     available_devices: FactoryVecDeque<DeviceItem>,
     pairing_card: Controller<PairingCard>,
+    state_watcher: WatcherToken,
     device_watcher: WatcherToken,
     scan_token: WatcherToken,
 }
@@ -340,10 +341,11 @@ impl Component for BluetoothDropdown {
 
         let scale = init.config.config().styling.scale.get().value();
 
-        watchers::spawn(&sender, &init.config, &init.bluetooth);
+        watchers::spawn_config_watcher(&sender, &init.config);
+        watchers::spawn_service_watcher(&sender, &init.bluetooth);
 
-        let mut model = Self {
-            bluetooth: init.bluetooth,
+        let model = Self {
+            bluetooth: None,
             scaled_width: scaled_dimension(BASE_WIDTH, scale),
             scaled_height: scaled_dimension(BASE_HEIGHT, scale),
             enabled: false,
@@ -352,12 +354,10 @@ impl Component for BluetoothDropdown {
             my_devices,
             available_devices,
             pairing_card,
+            state_watcher: WatcherToken::new(),
             device_watcher: WatcherToken::new(),
             scan_token: WatcherToken::new(),
         };
-
-        model.rebuild_device_lists();
-        model.reset_device_watchers(&sender);
 
         let pairing_card_widget = model.pairing_card.widget();
         let my_devices_widget = model.my_devices.widget();
@@ -394,6 +394,18 @@ impl Component for BluetoothDropdown {
         _root: &Self::Root,
     ) {
         match msg {
+            BluetoothDropdownCmd::ServiceReady(bt) => {
+                self.available = bt.available.get();
+                self.enabled = bt.enabled.get();
+
+                let token = self.state_watcher.reset();
+                watchers::spawn_bt_watchers(&sender, &bt, token);
+
+                self.bluetooth = Some(bt);
+                self.rebuild_device_lists();
+                self.reset_device_watchers(&sender);
+            }
+
             BluetoothDropdownCmd::ScaleChanged(scale) => {
                 self.scaled_width = scaled_dimension(BASE_WIDTH, scale);
                 self.scaled_height = scaled_dimension(BASE_HEIGHT, scale);

@@ -48,6 +48,11 @@ pub use shadow::ShadowPreset;
 /// monitor = "HDMI-1"
 /// extends = "*"
 /// right = ["volume", "systray"]  # Override just this section
+///
+/// # Hide bar on a specific monitor
+/// [[bar.layout]]
+/// monitor = "HDMI-2"
+/// show = false
 /// ```
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, PartialEq)]
 #[serde(default)]
@@ -56,6 +61,9 @@ pub struct BarLayout {
     pub monitor: String,
     /// Inherit from another layout by its monitor value (e.g., `"*"`).
     pub extends: Option<String>,
+    /// Whether the bar is visible on this monitor.
+    pub show: bool,
+
     /// Modules in the left section.
     pub left: Vec<BarItem>,
     /// Modules in the center section.
@@ -69,6 +77,7 @@ impl Default for BarLayout {
         Self {
             monitor: String::from("*"),
             extends: None,
+            show: true,
             left: vec![BarItem::Module(ModuleRef::Plain(BarModule::Media))],
             center: vec![BarItem::Module(ModuleRef::Plain(BarModule::Clock))],
             right: vec![
