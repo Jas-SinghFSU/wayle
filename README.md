@@ -401,8 +401,8 @@ etc.).
 
 ## Credits
 
-Big thanks to [@M70v](https://www.instagram.com/m70v.art/) for his Wayle logo
-contribution! Check out his work at <https://www.instagram.com/m70v.art/>.
+Big thanks to [@M70v](https://www.instagram.com/m70v.art/) for the Wayle logo
+contribution! Check out their work at <https://www.instagram.com/m70v.art/>.
 
 ## License
 
