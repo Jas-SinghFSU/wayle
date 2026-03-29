@@ -35,7 +35,7 @@ pub fn draw_barchart(
     bar_spacing: f64,
     params: &Params,
 ) {
-    apply_color(cr, &params);
+    apply_color(cr, params);
 
     let bar_stride = bar_width + bar_spacing;
 
