@@ -46,7 +46,7 @@ impl Component for UserSessionSection {
         #[root]
         gtk::Box {
             set_css_classes: &["card", "dashboard-card"],
-            
+
             #[name = "session_row"]
             gtk::Box {
                 add_css_class: "dashboard-user-session",
