@@ -76,7 +76,7 @@ pub struct BatteryConfig {
     ///
     /// ## Placeholders
     ///
-    /// - `{{ percent }}` - Baterry level (0-100)
+    /// - `{{ percent }}` - Battery level (0-100)
     ///
     /// ## Examples
     ///
