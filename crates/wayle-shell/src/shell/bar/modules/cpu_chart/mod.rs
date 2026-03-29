@@ -1,5 +1,6 @@
 mod factory;
 mod messages;
+mod methods;
 mod watchers;
 
 use std::{cell::Cell, rc::Rc, sync::Arc};
@@ -11,6 +12,7 @@ use wayle_widgets::prelude::{
     BarButton, BarButtonBehavior, BarButtonColors, BarButtonInit, BarButtonOutput,
 };
 
+use self::methods::{setup_draw_func, update_size};
 pub(crate) use self::{
     factory::Factory,
     messages::{CpuChartCmd, CpuChartInit, CpuChartMsg},
@@ -158,78 +160,5 @@ impl Component for CpuChartModule {
                 self.drawing_area.queue_draw();
             }
         }
-    }
-}
-
-fn setup_draw_func(
-    drawing_area: &gtk4::DrawingArea,
-    core_values: &Rc<Cell<Vec<f64>>>,
-    config: &Arc<ConfigService>,
-) {
-    let values = core_values.clone();
-    let config_clone = config.clone();
-
-    drawing_area.set_draw_func(move |_area, cr: &gtk4::cairo::Context, _width, height| {
-        let pixel_height = height as f64;
-
-        let core_data = values.take();
-        if core_data.is_empty() {
-            values.set(core_data);
-            return;
-        }
-
-        let full_config = config_clone.config();
-        let cpuchart_config = &full_config.modules.cpuchart;
-
-        let bar_width = cpuchart_config.bar_width.get() as f64;
-        let bar_spacing = cpuchart_config.bar_gap.get() as f64;
-        let bar_scale = full_config.bar.scale.get().value();
-        let padding_rem = cpuchart_config.internal_padding.get().value();
-        let horizontal_padding = super::shared::rem_to_px(padding_rem, bar_scale);
-        let direction = cpuchart_config.direction.get();
-        let color = cpuchart_config.color.get();
-
-        cr.translate(horizontal_padding, 0.0);
-
-        let fill_color = super::shared::resolve_rgba(&color, &config_clone);
-
-        wayle_widgets::primitives::barchart::draw_barchart(
-            cr,
-            &core_data,
-            pixel_height,
-            direction,
-            bar_width,
-            bar_spacing,
-            &wayle_widgets::primitives::chart::Params { fill_color },
-        );
-
-        values.set(core_data);
-    });
-}
-
-fn update_size(
-    drawing_area: &gtk4::DrawingArea,
-    num_cores: usize,
-    config: &Arc<ConfigService>,
-    is_vertical: bool,
-) {
-    let full_config = config.config();
-    let cpuchart_config = &full_config.modules.cpuchart;
-    let bar_scale = full_config.bar.scale.get().value();
-
-    let bar_width = cpuchart_config.bar_width.get() as f64;
-    let bar_spacing = cpuchart_config.bar_gap.get() as f64;
-    let padding_rem = cpuchart_config.internal_padding.get().value();
-    let horizontal_padding = super::shared::rem_to_px(padding_rem, bar_scale);
-
-    let total_width =
-        (num_cores as f64 * (bar_width + bar_spacing)) - bar_spacing + (2.0 * horizontal_padding);
-
-    if is_vertical {
-        drawing_area.set_height_request(total_width as i32);
-        drawing_area.set_width_request(20);
-    } else {
-        drawing_area.set_width_request(total_width as i32);
-        drawing_area.set_height_request(20);
     }
 }
