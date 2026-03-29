@@ -124,7 +124,7 @@ fn sync_container_visibility(container: &gtk::Box) {
         .observe_children()
         .into_iter()
         .filter_map(|obj| obj.ok()?.downcast::<gtk::Widget>().ok())
-        .any(|widget| widget.is_visible());
+        .any(|widget| widget.get_visible());
 
     container.set_visible(has_visible_child);
 }
