@@ -4,7 +4,7 @@ use crate::{
     ClickAction, ConfigProperty,
     schemas::{
         styling::{ColorValue, CssToken, Spacing},
-        types::barchart::BarDirection,
+        types::chart::Direction,
     },
 };
 
@@ -62,8 +62,8 @@ pub struct CpuChartConfig {
     pub bar_gap: ConfigProperty<u32>,
 
     /// Bar growth direction.
-    #[default(BarDirection::Normal)]
-    pub direction: ConfigProperty<BarDirection>,
+    #[default(Direction::Normal)]
+    pub direction: ConfigProperty<Direction>,
 
     /// Bar color.
     #[default(ColorValue::Token(CssToken::Accent))]

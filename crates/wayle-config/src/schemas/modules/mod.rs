@@ -29,7 +29,7 @@ mod weather;
 mod window_title;
 mod world_clock;
 
-pub use super::types::barchart::BarDirection;
+pub use super::types::chart::Direction;
 pub use battery::BatteryConfig;
 pub use bluetooth::BluetoothConfig;
 pub use cava::{

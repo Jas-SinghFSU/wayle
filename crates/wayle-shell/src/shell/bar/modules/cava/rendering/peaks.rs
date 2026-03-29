@@ -1,5 +1,5 @@
 use gtk4::cairo;
-use wayle_config::schemas::types::barchart::BarDirection;
+use wayle_config::schemas::types::chart::Direction;
 
 use super::{MIN_BAR_HEIGHT, Params, apply_color, fill_bar_rect};
 
@@ -14,7 +14,7 @@ pub(crate) fn draw_peak_bars(
     values: &[f64],
     peaks: &mut PeakState,
     canvas_height: f64,
-    direction: BarDirection,
+    direction: Direction,
     bar_width: f64,
     bar_spacing: f64,
     params: &Params,
@@ -61,7 +61,7 @@ fn draw_peak_cap(
     peak_height: f64,
     bar_height: f64,
     canvas_height: f64,
-    direction: BarDirection,
+    direction: Direction,
     bar_width: f64,
 ) {
     if peak_height <= bar_height {
@@ -71,7 +71,7 @@ fn draw_peak_cap(
     let cap_height = PEAK_CAP_HEIGHT.min(canvas_height);
 
     match direction {
-        BarDirection::Normal => {
+        Direction::Normal => {
             cr.rectangle(
                 x,
                 canvas_height - peak_height - cap_height,
@@ -79,10 +79,10 @@ fn draw_peak_cap(
                 cap_height,
             );
         }
-        BarDirection::Reverse => {
+        Direction::Reverse => {
             cr.rectangle(x, peak_height, bar_width, cap_height);
         }
-        BarDirection::Mirror => {
+        Direction::Mirror => {
             let peak_half = peak_height / 2.0;
             let center = canvas_height / 2.0;
 

@@ -1,3 +1,3 @@
 //! Shared configuration types.
 
-pub mod barchart;
+pub mod chart;

@@ -4,7 +4,7 @@
 //! configurable width, spacing, direction, and colors.
 
 use gtk4::cairo;
-use wayle_config::schemas::types::barchart::BarDirection;
+use wayle_config::schemas::types::chart::Direction;
 
 use crate::primitives::chart::Params;
 
@@ -30,7 +30,7 @@ pub fn draw_barchart(
     cr: &cairo::Context,
     values: &[f64],
     canvas_height: f64,
-    direction: BarDirection,
+    direction: Direction,
     bar_width: f64,
     bar_spacing: f64,
     params: &Params,
@@ -67,11 +67,11 @@ fn apply_color(cr: &cairo::Context, params: &Params) {
     cr.set_source_rgba(color.red, color.green, color.blue, color.alpha);
 }
 
-fn bar_origin_y(direction: BarDirection, bar_height: f64, canvas_height: f64) -> f64 {
+fn bar_origin_y(direction: Direction, bar_height: f64, canvas_height: f64) -> f64 {
     match direction {
-        BarDirection::Normal => canvas_height - bar_height,
-        BarDirection::Reverse => 0.0,
-        BarDirection::Mirror => (canvas_height - bar_height) / 2.0,
+        Direction::Normal => canvas_height - bar_height,
+        Direction::Reverse => 0.0,
+        Direction::Mirror => (canvas_height - bar_height) / 2.0,
     }
 }
 
@@ -80,7 +80,7 @@ fn fill_bar_rect(
     x: f64,
     bar_height: f64,
     canvas_height: f64,
-    direction: BarDirection,
+    direction: Direction,
     bar_width: f64,
 ) {
     let y = bar_origin_y(direction, bar_height, canvas_height);
