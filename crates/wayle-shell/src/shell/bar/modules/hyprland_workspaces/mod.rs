@@ -16,6 +16,7 @@ mod filtering;
 mod helpers;
 mod messages;
 mod methods;
+mod preview;
 mod styling;
 mod watchers;
 
@@ -36,6 +37,7 @@ use wayle_widgets::{prelude::BarSettings, utils::force_window_resize};
 use self::{
     button::{WorkspaceButton, WorkspaceButtonOutput},
     helpers::should_update_for_monitor,
+    preview::{WorkspacePreview, WorkspacePreviewInit, WorkspacePreviewOutput},
 };
 pub(crate) use self::{
     factory::Factory,
@@ -56,6 +58,7 @@ pub(crate) struct HyprlandWorkspaces {
     blink_token: Option<CancellationToken>,
     css_provider: gtk::CssProvider,
     buttons: FactoryVecDeque<WorkspaceButton>,
+    preview: Option<Controller<WorkspacePreview>>,
 }
 
 #[relm4::component(pub(crate))]
@@ -116,8 +119,30 @@ impl Component for HyprlandWorkspaces {
                 WorkspaceButtonOutput::Clicked(id) => WorkspacesMsg::WorkspaceClicked(id),
                 WorkspaceButtonOutput::ScrollUp => WorkspacesMsg::ScrollUp,
                 WorkspaceButtonOutput::ScrollDown => WorkspacesMsg::ScrollDown,
+                WorkspaceButtonOutput::PreviewRequest(id) => {
+                    WorkspacesMsg::WorkspacePreviewRequest(id)
+                }
+                WorkspaceButtonOutput::PreviewDismiss => WorkspacesMsg::WorkspacePreviewDismiss,
             },
         );
+
+        // Initialize preview popup if enabled.
+        let preview = if workspaces_config.preview_show.get() {
+            let preview_ctrl = WorkspacePreview::builder()
+                .launch(WorkspacePreviewInit {
+                    preview_width: workspaces_config.preview_width.get(),
+                    close_delay_ms: workspaces_config.preview_close_delay.get(),
+                    monitor_connector: init.settings.monitor_name.clone(),
+                })
+                .forward(sender.input_sender(), |output| match output {
+                    WorkspacePreviewOutput::FocusWindow(addr) => {
+                        WorkspacesMsg::FocusWindow(addr)
+                    }
+                });
+            Some(preview_ctrl)
+        } else {
+            None
+        };
 
         let mut model = Self {
             hyprland: init.hyprland,
@@ -131,6 +156,7 @@ impl Component for HyprlandWorkspaces {
             blink_token: None,
             css_provider,
             buttons,
+            preview,
         };
 
         styling::apply_styling(&model.css_provider, &model.config, &model.settings);
@@ -140,7 +166,7 @@ impl Component for HyprlandWorkspaces {
         ComponentParts { model, widgets }
     }
 
-    fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, _root: &Self::Root) {
+    fn update(&mut self, msg: Self::Input, _sender: ComponentSender<Self>, root: &Self::Root) {
         match msg {
             WorkspacesMsg::WorkspaceClicked(id) => {
                 self.switch_to_workspace(id);
@@ -150,6 +176,31 @@ impl Component for HyprlandWorkspaces {
             }
             WorkspacesMsg::ScrollDown => {
                 self.navigate_workspace(1);
+            }
+            WorkspacesMsg::WorkspacePreviewRequest(id) => {
+                if let Some(ref preview) = self.preview {
+                    let (margin_top, margin_left) =
+                        self.compute_preview_position(id, root);
+                    let config = self.config.config();
+                    let ws_config = &config.modules.hyprland_workspaces;
+                    preview.emit(preview::WorkspacePreviewMsg::Show {
+                        ws_id: id,
+                        hyprland: self.hyprland.clone(),
+                        settings: Box::new(self.settings.clone()),
+                        margin_top,
+                        margin_left,
+                        preview_width: ws_config.preview_width.get(),
+                        close_delay_ms: ws_config.preview_close_delay.get(),
+                    });
+                }
+            }
+            WorkspacesMsg::WorkspacePreviewDismiss => {
+                if let Some(ref preview) = self.preview {
+                    preview.emit(preview::WorkspacePreviewMsg::Dismiss);
+                }
+            }
+            WorkspacesMsg::FocusWindow(address) => {
+                self.focus_window_by_address(&address);
             }
         }
     }
@@ -162,6 +213,7 @@ impl Component for HyprlandWorkspaces {
             }
             WorkspacesCmd::ConfigChanged => {
                 styling::apply_styling(&self.css_provider, &self.config, &self.settings);
+                self.reinitialize_preview(&sender);
                 self.rebuild_buttons();
                 force_window_resize(root);
             }

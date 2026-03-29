@@ -15,6 +15,9 @@ pub(crate) enum WorkspacesMsg {
     WorkspaceClicked(WorkspaceId),
     ScrollUp,
     ScrollDown,
+    WorkspacePreviewRequest(WorkspaceId),
+    WorkspacePreviewDismiss,
+    FocusWindow(String),
 }
 
 #[derive(Debug)]
